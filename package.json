@@ -1,0 +1,19 @@
+{
+  "name": "super-duper-guacamole",
+  "description": "Application to meet new group of people",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AdrKacz/super-duper-guacamole.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AdrKacz/super-duper-guacamole/issues"
+  },
+  "homepage": "https://github.com/AdrKacz/super-duper-guacamole#readme"
+}
