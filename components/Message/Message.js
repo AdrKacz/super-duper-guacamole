@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-export default function Message(props) {
+export default function Message({what, who, when}) {
   return (
-    <>
-    </>
+    <View>
+      <Text>{who}: {what}</Text>
+    </View>
   );
 }
 

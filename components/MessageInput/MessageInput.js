@@ -1,15 +1,37 @@
 import React, { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, Button, View } from 'react-native';
 
-export default function MessageInput(props) {
+export default function MessageInput({onMessageInput}) {
   const [text, setText] = useState('');
+
+  function handlePress() {
+    console.log(`Text input is <${text}>`);
+
+    if (text === '') {
+      return;
+    }
+
+    onMessageInput({
+      what: text,
+      who: 'Unknown',
+      when: Date.now(),
+    });
+
+    setText('');
+  }
+
   return (
     <View>
-      <TextInput>
+      <TextInput
         placeholder="Aa"
         onChangeText={text => setText(text)}
-        defaultValue={text}
+        value={text}
+      >
       </TextInput>
+      <Button
+        onPress={handlePress}
+        title="Submit"
+      />
     </View>
   );
 }
