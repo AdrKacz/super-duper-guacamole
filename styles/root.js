@@ -1,6 +1,10 @@
 export default {
   inputBackground: '#F0F2F5',
-  background: '#FFF'
+  background: '#FFF',
+  ownedMessageBackgroundColor: 'rgb(0, 132, 255)',
+  otherMessageBackgroundColor: '#E4E6EB',
+  ownedMessageTextColor: '#FFF',
+  otherMessageTextColor: '#000',
 };
 
 /*

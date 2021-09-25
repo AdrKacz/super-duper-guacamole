@@ -7,14 +7,10 @@ export default function MessageInput({onMessageInput}) {
   const [text, setText] = useState('');
 
   function handlePress() {
-    console.log(`Text input is <${text}>`);
-
     if (text === '') {
       return;
-    }
-
+    };
     onMessageInput(text);
-
     setText('');
   }
 
@@ -22,7 +18,7 @@ export default function MessageInput({onMessageInput}) {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder="Aa"
+        placeholder='Aa'
         onChangeText={text => setText(text)}
         value={text}
       >
@@ -42,14 +38,13 @@ export default function MessageInput({onMessageInput}) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     flexDirection: 'row',
     width: '100%',
     backgroundColor: stylesRoot.background,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 20,
-    paddingRight: 20,
+    marginBottom: 40,
+    marginTop: 20
   },
   input: {
     flex: 1,
@@ -57,6 +52,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     backgroundColor: stylesRoot.inputBackground,
     padding: 6,
+    paddingLeft: 12,
     marginRight: 10,
   },
   button: {

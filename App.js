@@ -1,40 +1,73 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, SafeAreaView, KeyboardAvoidingView } from 'react-native';
 
 import useMessages from './hooks/messages/useMessages';
 
 import useUser from './hooks/user/useUser';
 
+import Register from './components/Register/Register';
+
 import MessageFeed from './components/MessageFeed/MessageFeed';
 import MessageInput from './components/MessageInput/MessageInput';
 
 export default function App() {
-  const [messageQueue, sendMessage] = useMessages();
   const [user, setUser] = useUser();
+  const [messageQueue, sendMessage] = useMessages(user);
 
   function handleMessageInput(message) {
     sendMessage(message);
   };
 
-  return (
-    <View style={styles.container}>
+  function handleRegister(username) {
+    setUser(username);
+  }
+
+  let appContent = <></>
+  if (user.isRegister) {
+    appContent = (
+      <>
       <MessageFeed
         messages={messageQueue}
       />
       <MessageInput
         onMessageInput={handleMessageInput}
       />
-      <StatusBar style="auto" />
-    </View>
+      </>
+    );
+  }
+  else {
+    appContent= (
+      <Register
+        onRegister={handleRegister}
+      />
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.largecontainer}
+    >
+      <SafeAreaView style={styles.container}>
+        {appContent}
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  largecontainer: {
+    flex: 1,
+    paddingLeft: 6,
+    paddingRight: 6,
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
   },
 });

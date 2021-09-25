@@ -1,27 +1,28 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, FlatList } from 'react-native';
 
 import Message from '../Message/Message';
 
 export default function MessageFeed({messages}) {
   return (
     <View style={styles.container}>
-      {messages.map((message, i) => (
-        <Message
-          key={i}
-          what={message.what}
-          who={message.who}
-          isYours={message.isYours}
-        />
-      ))}
+      <FlatList
+        data={messages}
+        renderItem={({ item }) => (
+          <Message
+            message={item}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        inverted
+      />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    'box-sizing': 'border-box',
-    display: 'flex',
+    flex: 1,
     width: '100%',
   }
 })

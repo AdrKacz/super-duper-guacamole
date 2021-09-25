@@ -2,25 +2,19 @@ import { useState } from 'react';
 
 import useUser from '../user/useUser';
 
-export default function useMessages() {
-
-  const [user, _] = useUser()
-
-  if (user === null) {
-    return ([], (_) => (undefined))
-  }
-
+export default function useMessages(user) {
   const [messageQueue, setMessageQueue] = useState([])
 
-  const [i, setI] = useState(0)
   function send(message) {
-    console.log('Send message', message);
-    setMessageQueue([...messageQueue.slice(-10), {
+    if (!user.isRegister) {
+      return;
+    };
+    setMessageQueue([{
+      id: parseInt(Math.random() * 1e6).toString(),
       what: message,
       who: user.name,
-      isYours: i % 2 === 0 ? true : false
-    }]);
-    setI(i + 1);
+      isYours: true,
+    }, ...messageQueue.slice(-1000)]);
   };
 
   return [messageQueue, send]

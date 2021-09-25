@@ -1,13 +1,15 @@
 import { useState } from 'react';
 
 export default function useUser() {
-  const [name, setName] = useState('Mario');
+  const [name, setName] = useState();
 
   function setUserName(userName) {
     setName(userName);
   };
-
   return [{
-    name: name
-  }, setUserName];
+      name: name,
+      isRegister: name ? true : false,
+    },
+    setUserName
+  ];
 }
