@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import useUser from '../user/useUser';
 
+const ws = new WebSocket('wss://s2h01vlcgi.execute-api.eu-west-3.amazonaws.com/Prod');
 export default function useMessages(user) {
   const [messageQueue, setMessageQueue] = useState([])
 
@@ -9,36 +10,26 @@ export default function useMessages(user) {
     if (!user.isRegister) {
       return;
     };
+    // TODO: Not secure, message object should be created server side
+    ws.send(JSON.stringify({
+      action:'sendmessage',
+      data: JSON.stringify({
+        what: message,
+        key: user.key + Date.now().toString().substr(-7, 5),
+        who: user.name,
+      })
+    }));
+  };
+
+  ws.onmessage = ({data}) => {
+    const dataObject = JSON.parse(data);
+    const userKey = dataObject.key.substr(0, 5);
+
     setMessageQueue([{
-      id: parseInt(Math.random() * 1e6).toString(),
-      what: message,
-      who: user.name,
-      isYours: true,
+      ...dataObject,
+      isYours: user.key === userKey ? true : false,
     }, ...messageQueue.slice(-1000)]);
   };
 
   return [messageQueue, send]
 };
-
-
-// const ws = new WebSocket('wss://boiling-waters-84504.herokuapp.com');
-//
-// ws.onopen = () => {
-//   console.log(`[${Date.now()}] Connection Open`);
-// };
-//
-// ws.onerror = (e) => {
-//   console.log(`[${Date.now()}] Error: ${e.message}`);
-//   console.log(e);
-// }
-//
-// ws.onclose = (e) => {
-//   console.log(`[${Date.now()}] Close with code ${e.code} for reason ${e.reason}`);
-//   console.log(e);
-// }
-
-// ws.onmessage = (message) => {
-//   console.log(`[${Date.now()}] Received Message`);
-//   console.log(JSON.parse(message.data));
-//   appendMessage(JSON.parse(message.data));
-// };

@@ -13,7 +13,7 @@ export default function MessageFeed({messages}) {
             message={item}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.key}
         inverted
       />
     </View>
