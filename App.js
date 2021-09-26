@@ -8,6 +8,7 @@ import useUser from './hooks/user/useUser';
 
 import Register from './components/Register/Register';
 
+import AvatarBanner from './components/AvatarBanner/AvatarBanner';
 import MessageFeed from './components/MessageFeed/MessageFeed';
 import MessageInput from './components/MessageInput/MessageInput';
 
@@ -27,6 +28,9 @@ export default function App() {
   if (user.isRegister) {
     appContent = (
       <>
+      <AvatarBanner
+        user={user}
+      />
       <MessageFeed
         messages={messageQueue}
       />
@@ -62,6 +66,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingLeft: 6,
     paddingRight: 6,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   container: {
     flex: 1,

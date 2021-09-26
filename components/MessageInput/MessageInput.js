@@ -12,13 +12,13 @@ export default function MessageInput({onMessageInput}) {
     };
     onMessageInput(text);
     setText('');
-  }
+  };
 
   return (
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder='Aa'
+        placeholder='Awa'
         onChangeText={text => setText(text)}
         value={text}
       >
@@ -43,8 +43,7 @@ const styles = StyleSheet.create({
     backgroundColor: stylesRoot.background,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
-    marginTop: 20
+    marginTop: 6,
   },
   input: {
     flex: 1,
@@ -58,9 +57,9 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#859a9b',
     borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 6,
-
   },
   image: {
     tintColor: stylesRoot.background,
