@@ -21,7 +21,7 @@ export default function Return({onReturn}) {
 const styles = StyleSheet.create({
   button: {
     position: 'absolute',
-    top: 6,
+    top: 38,
     left: 6,
     justifyContent: 'center',
     alignItems: 'center',

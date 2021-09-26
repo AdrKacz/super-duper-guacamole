@@ -1,7 +1,6 @@
 {
-  "name": "Circle",
+  "name": "Awa",
   "description": "Application to meet new group of people",
-  "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -26,20 +25,12 @@
     "react": "16.13.1",
     "react-dom": "16.13.1",
     "react-native": "https://github.com/expo/react-native/archive/sdk-42.0.0.tar.gz",
+    "react-native-svg": "^12.1.1",
     "react-native-web": "~0.13.12"
   },
   "devDependencies": {
     "@babel/core": "^7.9.0"
   },
   "private": true,
-  "icon": "./assets/send.png",
-  "slug": "circle",
-  "ios": {
-    "bundleIdentifier": "com.circle.circle",
-    "buildNumber": "1.0.0"
-  },
-  "android": {
-    "package": "com.circle.circle",
-    "versionCode": 1
-  }
+  "icon": "./assets/send.png"
 }

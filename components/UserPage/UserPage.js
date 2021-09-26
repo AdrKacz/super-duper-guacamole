@@ -4,6 +4,8 @@ import { StyleSheet, TouchableOpacity, Image, Text, View} from 'react-native';
 
 import useUser from '../../hooks/user/useUser';
 
+import Avatar from '../Avatar/Avatar';
+
 import stylesRoot from '../../styles/root';
 
 export default function UserPage({user, onLeave}) {
@@ -12,11 +14,10 @@ export default function UserPage({user, onLeave}) {
   return (
     <View style={styles.container}>
       <View style={styles.avatarcontainer}>
-        <Image
-          style={styles.avatar}
-          source={{
-            uri: `https://avatars.dicebear.com/api/gridy/${user.key}.svg?radius=50`
-          }}
+        <Avatar
+          width={styles.avatar.width}
+          height={styles.avatar.height}
+          seed={user.key}
         />
       </View>
       <Text style={styles.username}>{user.name}</Text>

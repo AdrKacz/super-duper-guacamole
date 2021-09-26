@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View, Text, Image } from 'react-native';
 
+import Avatar from '../Avatar/Avatar';
+
 import stylesRoot from '../../styles/root';
 
 export default function Message({message, onUserSelected}) {
@@ -14,11 +16,10 @@ export default function Message({message, onUserSelected}) {
           style={styles.avatarcontainer}
           onPress={onUserSelected}
         >
-          <Image
-            style={styles.avatar}
-            source={{
-              uri: `https://avatars.dicebear.com/api/gridy/${message.key.substr(0, 5)}.svg?radius=50`
-            }}
+          <Avatar
+            width={styles.avatar.width}
+            height={styles.avatar.height}
+            seed={message.key.substr(0, 5)}
           />
         </TouchableOpacity>
       }

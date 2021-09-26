@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "AwesomeProject",
-    "slug": "AwesomeProject",
-    "version": "1.0.0",
+    "name": "Awa",
+    "slug": "Awa",
+    "version": "1.0.3",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/awa-adaptive-icon.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -18,14 +18,16 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.capriluf.awa"
+      "bundleIdentifier": "com.capryluf.awa",
+      "buildNumber": "1.0.3"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/awa-adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.capriluf.awa"
+      "package": "com.capryluf.awa",
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"

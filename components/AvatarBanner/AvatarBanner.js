@@ -1,24 +1,25 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, Image, View} from 'react-native';
 
+
+import Avatar from '../Avatar/Avatar';
+
 import stylesRoot from '../../styles/root';
 
 export default function AvatarBanner({user, onUserSelected}) {
   function handlePress() {
     onUserSelected({key: user.key, name: user.name});
   };
-
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.avatarcontainer}
         onPress={handlePress}
       >
-        <Image
-          style={styles.avatar}
-          source={{
-            uri: `https://avatars.dicebear.com/api/gridy/${user.key}.svg?radius=50`
-          }}
+        <Avatar
+          width={styles.avatar.width}
+          height={styles.avatar.height}
+          seed={user.key}
         />
       </TouchableOpacity>
     </View>

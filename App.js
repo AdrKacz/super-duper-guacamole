@@ -35,8 +35,7 @@ export default function App() {
       name: name,
     })
   }
-  console.log('Re-render with user')
-  console.dir(user)
+
   let appContent = <></>
   if (user.isRegister) {
     if (lookAtUser) {
@@ -108,5 +107,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+    paddingTop: Platform.OS === 'android' ? 32 : 0, // safe view for android
   },
 });
