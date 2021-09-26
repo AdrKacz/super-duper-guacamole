@@ -3,6 +3,7 @@ import { StyleSheet, View, FlatList } from 'react-native';
 
 import Message from '../Message/Message';
 
+// TODO: Only display avatar on last message of someone when multiple messages next to eachothers
 export default function MessageFeed({messages}) {
   return (
     <View style={styles.container}>
@@ -24,6 +25,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
+    height: 1,
+    overflow: 'scroll',
   }
 })
 
