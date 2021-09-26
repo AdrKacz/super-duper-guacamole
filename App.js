@@ -6,13 +6,18 @@ import useMessages from './hooks/messages/useMessages';
 
 import useUser from './hooks/user/useUser';
 
+import Return from './components/Return/Return';
+
 import Register from './components/Register/Register';
+
+import UserPage from './components/UserPage/UserPage';
 
 import AvatarBanner from './components/AvatarBanner/AvatarBanner';
 import MessageFeed from './components/MessageFeed/MessageFeed';
 import MessageInput from './components/MessageInput/MessageInput';
 
 export default function App() {
+  const [lookAtUser, setLookAtUser] = useState()
   const [user, setUser] = useUser();
   const [messageQueue, sendMessage] = useMessages(user);
 
@@ -24,21 +29,49 @@ export default function App() {
     setUser(username);
   }
 
+  function handleUserSelected({key, name}) {
+    setLookAtUser({
+      key: key,
+      name: name,
+    })
+  }
+  console.log('Re-render with user')
+  console.dir(user)
   let appContent = <></>
   if (user.isRegister) {
-    appContent = (
-      <>
-      <AvatarBanner
-        user={user}
-      />
-      <MessageFeed
-        messages={messageQueue}
-      />
-      <MessageInput
-        onMessageInput={handleMessageInput}
-      />
-      </>
-    );
+    if (lookAtUser) {
+      appContent = (
+        <>
+        <AvatarBanner
+          user={user}
+          onUserSelected={handleUserSelected}
+        />
+        <UserPage
+          user={lookAtUser}
+          onLeave={() => {setUser(''); setLookAtUser(null)}}
+        />
+        <Return
+          onReturn={() => (setLookAtUser(null))}
+        />
+        </>
+      );
+    } else {
+      appContent = (
+        <>
+        <AvatarBanner
+          user={user}
+          onUserSelected={handleUserSelected}
+        />
+        <MessageFeed
+          messages={messageQueue}
+          onUserSelected={handleUserSelected}
+        />
+        <MessageInput
+          onMessageInput={handleMessageInput}
+        />
+        </>
+      );
+    }
   }
   else {
     appContent= (

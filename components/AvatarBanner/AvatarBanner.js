@@ -3,9 +3,9 @@ import { StyleSheet, TouchableOpacity, Image, View} from 'react-native';
 
 import stylesRoot from '../../styles/root';
 
-export default function AvatarBanner({user}) {
+export default function AvatarBanner({user, onUserSelected}) {
   function handlePress() {
-    return;
+    onUserSelected({key: user.key, name: user.name});
   };
 
   return (
@@ -17,7 +17,7 @@ export default function AvatarBanner({user}) {
         <Image
           style={styles.avatar}
           source={{
-            uri: `https://avatars.dicebear.com/api/gridy/${user.key.substr(0, 5)}.svg?radius=50`
+            uri: `https://avatars.dicebear.com/api/gridy/${user.key}.svg?radius=50`
           }}
         />
       </TouchableOpacity>

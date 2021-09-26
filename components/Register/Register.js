@@ -17,7 +17,7 @@ export default function Register({onRegister}) {
     <View style={styles.container}>
       <TextInput
         style={styles.input}
-        placeholder='Username'
+        placeholder="What's your name?"
         onChangeText={text => setUsername(text)}
         value={username}
       >
@@ -26,7 +26,7 @@ export default function Register({onRegister}) {
         style={styles.button}
         onPress={handlePress}
       >
-        <Text>Register</Text>
+        <Text>Enter</Text>
       </TouchableOpacity>
     </View>
   )

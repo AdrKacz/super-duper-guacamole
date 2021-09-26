@@ -4,7 +4,7 @@ import { StyleSheet, View, FlatList } from 'react-native';
 import Message from '../Message/Message';
 
 // TODO: Only display avatar on last message of someone when multiple messages next to eachothers
-export default function MessageFeed({messages}) {
+export default function MessageFeed({messages, onUserSelected}) {
   return (
     <View style={styles.container}>
       <FlatList
@@ -12,6 +12,7 @@ export default function MessageFeed({messages}) {
         renderItem={({ item }) => (
           <Message
             message={item}
+            onUserSelected={() => onUserSelected({key: item.key.substr(0, 5), name: item.who})}
           />
         )}
         keyExtractor={(item) => item.key}

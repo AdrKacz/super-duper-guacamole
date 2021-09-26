@@ -1,23 +1,26 @@
 import React from 'react';
-import { StyleSheet, View, Text, Image } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Text, Image } from 'react-native';
 
 import stylesRoot from '../../styles/root';
 
-export default function Message({message}) {
+export default function Message({message, onUserSelected}) {
   const what = message.what;
   const isYours = message.isYours;
 
   return (
     <View style={[styles.container, {flexDirection: isYours ? 'row-reverse' : 'row'}]}>
       {!isYours &&
-        <View style={styles.avatarcontainer}>
+        <TouchableOpacity
+          style={styles.avatarcontainer}
+          onPress={onUserSelected}
+        >
           <Image
             style={styles.avatar}
             source={{
               uri: `https://avatars.dicebear.com/api/gridy/${message.key.substr(0, 5)}.svg?radius=50`
             }}
           />
-        </View>
+        </TouchableOpacity>
       }
       <View
         style={[styles.message, {
