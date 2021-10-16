@@ -1,112 +1,114 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
  *
  * @format
  * @flow strict-local
  */
 
-import React from 'react';
-import type {Node} from 'react';
+/* Dark Mode Support
+import { useColorScheme } from 'react-native';
+const isDarkMode = useColorScheme() === 'dark';
+color: isDarkMode ? Colors.white : Colors.black,
+backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+*/
+
+import React, {useState} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
+  Platform,
   StyleSheet,
-  Text,
-  useColorScheme,
-  View,
+  SafeAreaView,
+  KeyboardAvoidingView,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import useMessages from './hooks/messages/useMessages';
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
+import useUser from './hooks/user/useUser';
+
+import Return from './components/Return/Return';
+
+import Register from './components/Register/Register';
+
+import UserPage from './components/UserPage/UserPage';
+
+import AvatarBanner from './components/AvatarBanner/AvatarBanner';
+import MessageFeed from './components/MessageFeed/MessageFeed';
+import MessageInput from './components/MessageInput/MessageInput';
+
+export default function App() {
+  const [lookAtUser, setLookAtUser] = useState();
+  const [user, setUser] = useUser();
+  const [messageQueue, sendMessage] = useMessages(user);
+  console.log(messageQueue)
+
+  function handleMessageInput(message) {
+    sendMessage(message);
+  }
+
+  function handleRegister(username) {
+    setUser(username);
+  }
+
+  function handleUserSelected({key, name}) {
+    setLookAtUser({
+      key: key,
+      name: name,
+    });
+  }
+
+  let appContent = <></>;
+  if (user.isRegister) {
+    if (lookAtUser) {
+      appContent = (
+        <>
+          <AvatarBanner user={user} onUserSelected={handleUserSelected} />
+          <UserPage
+            user={lookAtUser}
+            onLeave={() => {
+              setUser('');
+              setLookAtUser(null);
+            }}
+          />
+          <Return onReturn={() => setLookAtUser(null)} />
+        </>
+      );
+    } else {
+      appContent = (
+        <>
+          <AvatarBanner user={user} onUserSelected={handleUserSelected} />
+          <MessageFeed
+            messages={messageQueue}
+            onUserSelected={handleUserSelected}
+          />
+          <MessageInput onMessageInput={handleMessageInput} />
+        </>
+      );
+    }
+  } else {
+    appContent = <Register onRegister={handleRegister} />;
+  }
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.largecontainer}>
+      <SafeAreaView style={styles.container}>{appContent}</SafeAreaView>
+    </KeyboardAvoidingView>
   );
-};
-
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-};
+}
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  largecontainer: {
+    flex: 1,
+    paddingLeft: 6,
+    paddingRight: 6,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingTop: Platform.OS === 'android' ? 32 : 0, // safe view for android
   },
 });
-
-export default App;
