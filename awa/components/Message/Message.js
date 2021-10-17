@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 8,
     paddingHorizontal: 20,
-    alignItems: 'flex-end',
+    alignItems: 'center',
     flexDirection: 'row',
   },
   message: {
