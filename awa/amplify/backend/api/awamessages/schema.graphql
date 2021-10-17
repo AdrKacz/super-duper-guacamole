@@ -1,0 +1,6 @@
+type Message @model {
+  id: ID!
+  who: String!
+  what: String!
+  userkey: String!
+}

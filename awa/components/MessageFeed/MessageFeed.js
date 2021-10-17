@@ -13,11 +13,11 @@ export default function MessageFeed({messages, onUserSelected}) {
           <Message
             message={item}
             onUserSelected={() =>
-              onUserSelected({key: item.key.substr(0, 5), name: item.who})
+              onUserSelected({key: item.userkey, name: item.who})
             }
           />
         )}
-        keyExtractor={item => item.key}
+        keyExtractor={item => item.id}
         inverted
       />
     </View>

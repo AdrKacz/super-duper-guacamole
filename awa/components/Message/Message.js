@@ -21,7 +21,7 @@ export default function Message({message, onUserSelected}) {
     avatar = (
       <TouchableOpacity style={styles.avatarcontainer} onPress={onUserSelected}>
         <Avatar
-          seed={message.key.substring(0, 5)}
+          seed={message.userkey}
           width={styles.avatar.width}
           height={styles.avatar.height}
         />
