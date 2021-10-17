@@ -10,41 +10,44 @@ export default function Message({message, onUserSelected}) {
   const what = message.what;
   const isYours = message.isYours;
 
-  return (
+  let avatar = (
     <View
-      style={[
-        styles.container,
-        {flexDirection: isYours ? 'row-reverse' : 'row'},
-      ]}>
-      {!isYours && (
-        <TouchableOpacity
-          style={styles.avatarcontainer}
-          onPress={onUserSelected}>
-          <Avatar
-            seed={message.key.substring(0, 5)}
-            width={styles.avatar.width}
-            height={styles.avatar.height}
-          />
-        </TouchableOpacity>
-      )}
-      <View
-        style={[
-          styles.message,
-          {
-            backgroundColor: isYours
-              ? stylesRoot.ownedMessageBackgroundColor
-              : stylesRoot.otherMessageBackgroundColor,
-            textAlign: isYours ? 'right' : 'left',
-          },
-        ]}>
-        <Text
+      style={{
+        width:styles.avatar.width + styles.avatarcontainer.paddingRight,
+        height: styles.avatar.height}}>
+    </View>
+  );
+
+  if (!isYours && message.isLast) {
+    avatar = (
+      <TouchableOpacity
+        style={styles.avatarcontainer}
+        onPress={onUserSelected}>
+        <Avatar
+          seed={message.key.substring(0, 5)}
+          width={styles.avatar.width}
+          height={styles.avatar.height}
+        />
+      </TouchableOpacity>
+    );
+  }
+  return (
+    <View style={styles.container}>
+      {avatar}
+      <View style={{flex: 1, flexDirection: isYours ? 'row-reverse' : 'row'}}>
+        <View
           style={{
-            color: isYours
-              ? stylesRoot.ownedMessageTextColor
-              : stylesRoot.otherMessageTextColor,
-          }}>
-          {what}
-        </Text>
+            backgroundColor: isYours ? 'lightblue' : 'white',
+            ...styles.message}}>
+          <Text
+            style={{
+              color: isYours
+                ? 'white'
+                : 'black',
+            }}>
+            {what}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -52,26 +55,24 @@ export default function Message({message, onUserSelected}) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 3,
+    flex: 1,
+    padding: 8,
+    paddingHorizontal: 20,
+    alignItems: 'flex-end',
+    flexDirection: 'row',
   },
   message: {
-    borderRadius: 20,
-    lineHeight: 24,
-    padding: 6,
-    paddingLeft: 12,
-    paddingRight: 12,
+    borderRadius: 25,
+    padding: 12,
   },
   avatarcontainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 2,
+    paddingRight: 8,
   },
   avatar: {
     resizeMode: 'contain',
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
   },
 });
-
-// background-image: linear-gradient(rgb(42, 127, 227), rgb(0, 191, 145), rgb(159, 213, 45));
-// background-image: linear-gradient(rgb(42, 127, 227) 0%, rgb(0, 191, 145) 50%, rgb(159, 213, 45) 100%);

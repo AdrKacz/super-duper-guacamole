@@ -1,62 +1,35 @@
-import React, {useState} from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-} from 'react-native';
+import React from 'react';
+
+import { StyleSheet, TouchableOpacity, Image} from 'react-native';
 
 import stylesRoot from '../../styles/root';
 
-export default function Register({onRegister}) {
-  const [username, setUsername] = useState('');
-
-  function handlePress() {
-    if (username === '') {
-      return;
-    }
-    onRegister(username);
-  }
-
+export default function Return({onReturn}) {
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="What's your name?"
-        onChangeText={text => setUsername(text)}
-        value={username}
+    <TouchableOpacity
+      style={styles.button}
+      onPress={onReturn}
+    >
+      <Image
+        style={styles.image}
+        source={require('./left-arrow.png')}
       />
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text>Enter</Text>
-      </TouchableOpacity>
-    </View>
-  );
+    </TouchableOpacity>
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    width: '100%',
-    margin: 20,
-  },
-  input: {
-    width: '100%',
-    borderRadius: 20,
-    lineHeight: 24,
-    backgroundColor: stylesRoot.inputBackground,
-    padding: 6,
-    paddingLeft: 12,
-    marginRight: 10,
-    marginBottom: 12,
-    alignSelf: 'center',
-  },
   button: {
-    width: '100%',
-    backgroundColor: '#E4E6EB',
-    borderRadius: 20,
+    position: 'absolute',
+    top: 38,
+    left: 6,
+    justifyContent: 'center',
     alignItems: 'center',
-    padding: 6,
   },
+  image: {
+    tintColor: '#000',
+    resizeMode: 'contain',
+    width: 24,
+    height: 24,
+  }
 });

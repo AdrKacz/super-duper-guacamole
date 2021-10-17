@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-import stylesRoot from '../../styles/root';
+import getColor from '../../styles/Colors';
 
 export default function Register({onRegister}) {
   const [username, setUsername] = useState('');
@@ -22,13 +22,22 @@ export default function Register({onRegister}) {
   return (
     <View style={styles.container}>
       <TextInput
-        style={styles.input}
+        style={{
+          backgroundColor: getColor('interactiveColor'),
+          color: getColor('textColor'),
+          ...styles.input}}
         placeholder="What's your name?"
         onChangeText={text => setUsername(text)}
         value={username}
       />
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text>Enter</Text>
+      <TouchableOpacity
+        style={{
+          backgroundColor: getColor('interactiveColor'),
+          color: getColor('textColor'),
+          ...styles.button}}
+        onPress={handlePress}
+      >
+        <Text>Chat</Text>
       </TouchableOpacity>
     </View>
   );
@@ -37,26 +46,23 @@ export default function Register({onRegister}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    padding: 20,
     justifyContent: 'center',
-    width: '100%',
-    margin: 20,
+    alignItems: 'center',
   },
   input: {
-    width: '100%',
-    borderRadius: 20,
-    lineHeight: 24,
-    backgroundColor: stylesRoot.inputBackground,
-    padding: 6,
-    paddingLeft: 12,
-    marginRight: 10,
-    marginBottom: 12,
-    alignSelf: 'center',
+    height: 50,
+    marginBottom: 32,
+    padding: 8,
+    borderRadius: 25,
+    minWidth: 256,
+    paddingHorizontal: 18,
   },
   button: {
-    width: '100%',
-    backgroundColor: '#E4E6EB',
-    borderRadius: 20,
+    marginBottom: 10,
+    borderRadius: 24,
+    width: 128,
+    padding: 12,
     alignItems: 'center',
-    padding: 6,
   },
 });

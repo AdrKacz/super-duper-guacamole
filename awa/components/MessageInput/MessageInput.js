@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 
-import stylesRoot from '../../styles/root';
+import getColor from '../../styles/Colors';
 
 export default function MessageInput({onMessageInput}) {
   const [text, setText] = useState('');
@@ -22,14 +22,32 @@ export default function MessageInput({onMessageInput}) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="Awa"
-        onChangeText={t => setText(t)}
-        value={text}
-      />
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Image style={styles.image} source={require('../../assets/send.png')} />
+      <View
+        style={{
+          backgroundColor: getColor('interactiveColor'),
+          ...styles.inputview}}
+      >
+        <TextInput
+          multiline
+          style={{
+            color: getColor('textColor'),
+            ...styles.input}}
+          placeholder='Awa'
+          onChangeText={t => setText(t)}
+          value={text}
+        />
+      </View>
+      <TouchableOpacity
+        style={{
+          backgroundColor: getColor('interactiveColor'),
+          ...styles.button}}
+        onPress={handlePress}>
+        <Image
+          style={{
+            tintColor: getColor('textColor'),
+            ...styles.image}}
+          source={require('./send.png')}
+        />
       </TouchableOpacity>
     </View>
   );
@@ -38,33 +56,34 @@ export default function MessageInput({onMessageInput}) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    width: '100%',
-    backgroundColor: stylesRoot.background,
-    alignItems: 'center',
+    padding: 10,
+    paddingHorizontal: 20,
+    alignItems: 'flex-start',
+  },
+  inputview: {
+    flex: 1,
+    minHeight: 50,
+    maxHeight: 150,
+    borderRadius: 25,
+    padding: 4,
+    paddingHorizontal: 18,
+    marginRight: 12,
     justifyContent: 'center',
-    marginTop: 6,
   },
   input: {
-    flex: 1,
-    borderRadius: 20,
-    lineHeight: 24,
-    backgroundColor: stylesRoot.inputBackground,
-    padding: 6,
-    paddingLeft: 12,
-    marginRight: 10,
-    alignSelf: 'center',
+    padding: 8,
+    textAlignVertical: 'top',
   },
   button: {
-    backgroundColor: '#859a9b',
-    borderRadius: 20,
-    justifyContent: 'center',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
-    padding: 6,
+    justifyContent: 'center',
   },
   image: {
-    tintColor: stylesRoot.background,
     resizeMode: 'contain',
-    width: 24,
-    height: 24,
+    width: 25,
+    height: 25,
   },
 });

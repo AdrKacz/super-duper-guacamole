@@ -27,10 +27,6 @@ export default function MessageFeed({messages, onUserSelected}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%',
-    height: 1,
     overflow: 'scroll',
   },
 });
-
-// 'background-image': 'linear-gradient(rgb(42, 127, 227) 0%, rgb(0, 191, 145) 50%, rgb(159, 213, 45) 100%)'

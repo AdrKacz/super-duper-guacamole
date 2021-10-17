@@ -13,11 +13,15 @@ backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
 
 import React, {useState} from 'react';
 import {
+  useColorScheme,
+  StatusBar,
   Platform,
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
 } from 'react-native';
+
+import getColor, { setColor } from './styles/Colors';
 
 import useMessages from './hooks/messages/useMessages';
 
@@ -34,10 +38,14 @@ import MessageFeed from './components/MessageFeed/MessageFeed';
 import MessageInput from './components/MessageInput/MessageInput';
 
 export default function App() {
+  const isDarkMode = useColorScheme() === 'dark';
+  setColor('backgroundColor', isDarkMode ? 'black' : 'light');
+  setColor('interactiveColor', isDarkMode ? 'dark' : 'white');
+  setColor('textColor', isDarkMode ? 'white' : 'black');
+
   const [lookAtUser, setLookAtUser] = useState();
   const [user, setUser] = useUser();
   const [messageQueue, sendMessage] = useMessages(user);
-  console.log(messageQueue)
 
   function handleMessageInput(message) {
     sendMessage(message);
@@ -89,26 +97,12 @@ export default function App() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.largecontainer}>
-      <SafeAreaView style={styles.container}>{appContent}</SafeAreaView>
+      style={{flex:1, backgroundColor: getColor('backgroundColor')}}
+    >
+      <SafeAreaView style={{flex: 1}}>
+        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+        {appContent}
+      </SafeAreaView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  largecontainer: {
-    flex: 1,
-    paddingLeft: 6,
-    paddingRight: 6,
-    paddingTop: 6,
-    paddingBottom: 6,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    paddingTop: Platform.OS === 'android' ? 32 : 0, // safe view for android
-  },
-});
