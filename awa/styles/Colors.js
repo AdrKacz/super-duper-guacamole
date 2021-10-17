@@ -6,9 +6,9 @@ const Color = {
 };
 
 let CurrentColor = {
-  'backgroundColor': Color.light,
-  'interactiveColor': Color.white,
-  'textColor': Color.black,
+  backgroundColor: Color.light,
+  interactiveColor: Color.white,
+  textColor: Color.black,
 };
 
 export function setColor(key, color_key) {

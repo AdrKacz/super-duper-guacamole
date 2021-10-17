@@ -4,13 +4,6 @@
  * @flow strict-local
  */
 
-/* Dark Mode Support
-import { useColorScheme } from 'react-native';
-const isDarkMode = useColorScheme() === 'dark';
-color: isDarkMode ? Colors.white : Colors.black,
-backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-*/
-
 import React, {useState} from 'react';
 import {
   useColorScheme,
@@ -21,7 +14,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 
-import getColor, { setColor } from './styles/Colors';
+import getColor, {setColor} from './styles/Colors';
 
 import useMessages from './hooks/messages/useMessages';
 
@@ -97,8 +90,7 @@ export default function App() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{flex:1, backgroundColor: getColor('backgroundColor')}}
-    >
+      style={{flex: 1, backgroundColor: getColor('backgroundColor')}}>
       <SafeAreaView style={{flex: 1}}>
         <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
         {appContent}

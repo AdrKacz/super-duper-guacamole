@@ -1,35 +1,48 @@
 import React from 'react';
 
-import { StyleSheet, TouchableOpacity, Image} from 'react-native';
+import {StyleSheet, TouchableOpacity, Image, Text, View} from 'react-native';
 
-import stylesRoot from '../../styles/root';
+import getColor from '../../styles/Colors';
 
 export default function Return({onReturn}) {
   return (
-    <TouchableOpacity
-      style={styles.button}
-      onPress={onReturn}
-    >
-      <Image
-        style={styles.image}
-        source={require('./left-arrow.png')}
-      />
-    </TouchableOpacity>
-  )
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.button} onPress={onReturn}>
+        <Image
+          style={{
+            tintColor: getColor('textColor'),
+            ...styles.image,
+          }}
+          source={require('./left-arrow.png')}
+        />
+        <Text
+          style={{
+            color: getColor('textColor'),
+          }}>
+          Return to chat
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    position: 'absolute',
-    top: 38,
-    left: 6,
-    justifyContent: 'center',
+  container: {
     alignItems: 'center',
   },
+  button: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: 128,
+    padding: 12,
+    marginBottom: 10,
+    borderRadius: 24,
+  },
   image: {
-    tintColor: '#000',
     resizeMode: 'contain',
     width: 24,
     height: 24,
-  }
+    paddingRight: 8,
+  },
 });

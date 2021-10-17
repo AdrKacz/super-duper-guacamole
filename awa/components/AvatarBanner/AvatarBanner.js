@@ -3,7 +3,7 @@ import {StyleSheet, TouchableOpacity, View} from 'react-native';
 
 import Avatar from '../Avatar/Avatar';
 
-import stylesRoot from '../../styles/root';
+import getColor from '../../styles/Colors';
 
 export default function AvatarBanner({user, onUserSelected}) {
   function handlePress() {
@@ -11,7 +11,11 @@ export default function AvatarBanner({user, onUserSelected}) {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={{
+        borderBottomColor: getColor('textColor'),
+        ...styles.container,
+      }}>
       <TouchableOpacity styles={styles.avatarcontainer} onPress={handlePress}>
         <Avatar
           seed={user.key}
@@ -26,24 +30,18 @@ export default function AvatarBanner({user, onUserSelected}) {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    width: '100%',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'center',
-    marginBottom: 6,
+    padding: 10,
     borderBottomWidth: 2,
-    borderBottomColor: '#859a9b',
   },
   avatarcontainer: {
-    backgroundColor: stylesRoot.inputBackground,
-    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 6,
-    margin: 3,
   },
   avatar: {
     resizeMode: 'contain',
-    width: 24,
-    height: 24,
+    width: 30,
+    height: 30,
   },
 });

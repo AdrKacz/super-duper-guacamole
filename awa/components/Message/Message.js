@@ -4,8 +4,6 @@ import {StyleSheet, TouchableOpacity, View, Text} from 'react-native';
 
 import Avatar from '../Avatar/Avatar';
 
-import stylesRoot from '../../styles/root';
-
 export default function Message({message, onUserSelected}) {
   const what = message.what;
   const isYours = message.isYours;
@@ -13,16 +11,15 @@ export default function Message({message, onUserSelected}) {
   let avatar = (
     <View
       style={{
-        width:styles.avatar.width + styles.avatarcontainer.paddingRight,
-        height: styles.avatar.height}}>
-    </View>
+        width: styles.avatar.width + styles.avatarcontainer.paddingRight,
+        height: styles.avatar.height,
+      }}
+    />
   );
 
   if (!isYours && message.isLast) {
     avatar = (
-      <TouchableOpacity
-        style={styles.avatarcontainer}
-        onPress={onUserSelected}>
+      <TouchableOpacity style={styles.avatarcontainer} onPress={onUserSelected}>
         <Avatar
           seed={message.key.substring(0, 5)}
           width={styles.avatar.width}
@@ -38,12 +35,11 @@ export default function Message({message, onUserSelected}) {
         <View
           style={{
             backgroundColor: isYours ? 'lightblue' : 'white',
-            ...styles.message}}>
+            ...styles.message,
+          }}>
           <Text
             style={{
-              color: isYours
-                ? 'white'
-                : 'black',
+              color: isYours ? 'white' : 'black',
             }}>
             {what}
           </Text>

@@ -25,14 +25,15 @@ export default function MessageInput({onMessageInput}) {
       <View
         style={{
           backgroundColor: getColor('interactiveColor'),
-          ...styles.inputview}}
-      >
+          ...styles.inputview,
+        }}>
         <TextInput
           multiline
           style={{
             color: getColor('textColor'),
-            ...styles.input}}
-          placeholder='Awa'
+            ...styles.input,
+          }}
+          placeholder="Awa"
           onChangeText={t => setText(t)}
           value={text}
         />
@@ -40,12 +41,14 @@ export default function MessageInput({onMessageInput}) {
       <TouchableOpacity
         style={{
           backgroundColor: getColor('interactiveColor'),
-          ...styles.button}}
+          ...styles.button,
+        }}
         onPress={handlePress}>
         <Image
           style={{
             tintColor: getColor('textColor'),
-            ...styles.image}}
+            ...styles.image,
+          }}
           source={require('./send.png')}
         />
       </TouchableOpacity>

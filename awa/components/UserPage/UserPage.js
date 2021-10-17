@@ -2,11 +2,11 @@ import React from 'react';
 
 import {StyleSheet, TouchableOpacity, Text, View} from 'react-native';
 
+import getColor from '../../styles/Colors';
+
 import useUser from '../../hooks/user/useUser';
 
 import Avatar from '../Avatar/Avatar';
-
-import stylesRoot from '../../styles/root';
 
 export default function UserPage({user, onLeave}) {
   const [localUser] = useUser();
@@ -22,8 +22,18 @@ export default function UserPage({user, onLeave}) {
       </View>
       <Text style={styles.username}>{user.name}</Text>
       {localUser.key === user.key && (
-        <TouchableOpacity style={styles.button} onPress={onLeave}>
-          <Text style={styles.leavetext}>Leave Awa</Text>
+        <TouchableOpacity
+          style={{
+            backgroundColor: getColor('interactiveColor'),
+            ...styles.button,
+          }}
+          onPress={onLeave}>
+          <Text
+            style={{
+              color: getColor('textColor'),
+            }}>
+            Leave chat
+          </Text>
         </TouchableOpacity>
       )}
     </View>
@@ -33,21 +43,16 @@ export default function UserPage({user, onLeave}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column',
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   username: {
-    fontSize: 42,
+    padding: 20,
   },
   avatarcontainer: {
-    backgroundColor: stylesRoot.inputBackground,
     borderRadius: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
-    margin: 12,
   },
   avatar: {
     resizeMode: 'contain',
@@ -55,15 +60,10 @@ const styles = StyleSheet.create({
     height: 64,
   },
   button: {
-    marginTop: 24,
-    backgroundColor: '#859a9b',
-    justifyContent: 'center',
+    marginBottom: 10,
+    borderRadius: 24,
+    width: 128,
+    padding: 12,
     alignItems: 'center',
-    padding: 6,
-    borderRadius: 6,
-  },
-  leavetext: {
-    color: '#fff',
-    fontSize: 24,
   },
 });

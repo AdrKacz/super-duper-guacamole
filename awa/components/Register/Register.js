@@ -25,7 +25,8 @@ export default function Register({onRegister}) {
         style={{
           backgroundColor: getColor('interactiveColor'),
           color: getColor('textColor'),
-          ...styles.input}}
+          ...styles.input,
+        }}
         placeholder="What's your name?"
         onChangeText={text => setUsername(text)}
         value={username}
@@ -34,10 +35,15 @@ export default function Register({onRegister}) {
         style={{
           backgroundColor: getColor('interactiveColor'),
           color: getColor('textColor'),
-          ...styles.button}}
-        onPress={handlePress}
-      >
-        <Text>Chat</Text>
+          ...styles.button,
+        }}
+        onPress={handlePress}>
+        <Text
+          style={{
+            color: getColor('textColor'),
+          }}>
+          Chat
+        </Text>
       </TouchableOpacity>
     </View>
   );
