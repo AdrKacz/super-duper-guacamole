@@ -28,6 +28,7 @@ export default function Register({onRegister}) {
           ...styles.input,
         }}
         placeholder="What's your name?"
+        placeholderTextColor={getColor('placeholder')}
         onChangeText={text => setUsername(text)}
         value={username}
       />

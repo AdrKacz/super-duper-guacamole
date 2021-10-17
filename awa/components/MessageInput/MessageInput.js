@@ -34,6 +34,7 @@ export default function MessageInput({onMessageInput}) {
             ...styles.input,
           }}
           placeholder="Awa"
+          placeholderTextColor={getColor('placeholder')}
           onChangeText={t => setText(t)}
           value={text}
         />

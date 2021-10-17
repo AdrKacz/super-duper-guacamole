@@ -20,7 +20,9 @@ export default function UserPage({user, onLeave}) {
           seed={user.key}
         />
       </View>
-      <Text style={styles.username}>{user.name}</Text>
+      <Text
+        style={{color: getColor('textColor'), ...styles.username}}
+      >{user.name}</Text>
       {localUser.key === user.key && (
         <TouchableOpacity
           style={{

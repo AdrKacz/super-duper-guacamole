@@ -35,6 +35,7 @@ export default function App() {
   setColor('backgroundColor', isDarkMode ? 'black' : 'light');
   setColor('interactiveColor', isDarkMode ? 'dark' : 'white');
   setColor('textColor', isDarkMode ? 'white' : 'black');
+  setColor('placeholder', isDarkMode ? 'placeholder' : 'placeholderDarkMode');
 
   const [lookAtUser, setLookAtUser] = useState();
   const [user, setUser] = useUser();
