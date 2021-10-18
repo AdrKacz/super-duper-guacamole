@@ -343,6 +343,8 @@ PODS:
     - React-Core
   - RNCAsyncStorage (1.15.9):
     - React-Core
+  - RNCPushNotificationIOS (1.10.1):
+    - React-Core
   - RNSVG (12.1.1):
     - React
   - Yoga (1.14.0)
@@ -405,6 +407,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - RNAWSCognito (from `../node_modules/amazon-cognito-identity-js`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCPushNotificationIOS (from `../node_modules/@react-native-community/push-notification-ios`)"
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -490,6 +493,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/amazon-cognito-identity-js"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCPushNotificationIOS:
+    :path: "../node_modules/@react-native-community/push-notification-ios"
   RNSVG:
     :path: "../node_modules/react-native-svg"
   Yoga:
@@ -541,6 +546,7 @@ SPEC CHECKSUMS:
   ReactCommon: 620442811dc6f707b4bf5e3b27d4f19c12d5a821
   RNAWSCognito: 97f1dbed4b9f42d61adfbcfe58e053843df532f6
   RNCAsyncStorage: 26f25150da507524a7815f2ada06ca0967f65633
+  RNCPushNotificationIOS: 87b8d16d3ede4532745e05b03c42cff33a36cc45
   RNSVG: 551acb6562324b1d52a4e0758f7ca0ec234e278f
   Yoga: 2b4a01651f42a32f82e6cef3830a3ba48088237f
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a

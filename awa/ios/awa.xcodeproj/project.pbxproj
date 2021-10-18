@@ -38,6 +38,8 @@
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = awa/main.m; sourceTree = "<group>"; };
 		2752756165526E92E70BCF32 /* Pods-awa-awaTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-awa-awaTests.debug.xcconfig"; path = "Target Support Files/Pods-awa-awaTests/Pods-awa-awaTests.debug.xcconfig"; sourceTree = "<group>"; };
 		5130DC8718195C439506AB4A /* libPods-awa.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-awa.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		63B439B5271DF174009702F7 /* awa.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = awa.entitlements; path = awa/awa.entitlements; sourceTree = "<group>"; };
+		63B439B6271DF184009702F7 /* awaRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = awaRelease.entitlements; path = awa/awaRelease.entitlements; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = awa/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8769573FC46915854F0506A0 /* Pods-awa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-awa.debug.xcconfig"; path = "Target Support Files/Pods-awa/Pods-awa.debug.xcconfig"; sourceTree = "<group>"; };
 		C83888AFC4067B1F22E26118 /* libPods-awa-awaTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-awa-awaTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -86,6 +88,8 @@
 		13B07FAE1A68108700A75B9A /* awa */ = {
 			isa = PBXGroup;
 			children = (
+				63B439B6271DF184009702F7 /* awaRelease.entitlements */,
+				63B439B5271DF174009702F7 /* awa.entitlements */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.m */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -485,6 +489,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = awa/awa.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 376E7RMFX3;
 				ENABLE_BITCODE = NO;
@@ -498,8 +505,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = org.awa.ma.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.awama.awa.dev;
 				PRODUCT_NAME = awa;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -512,6 +520,9 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = awa/awaRelease.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 376E7RMFX3;
 				INFOPLIST_FILE = awa/Info.plist;
@@ -524,8 +535,9 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = org.awa.ma.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = com.awama.awa.dev;
 				PRODUCT_NAME = awa;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
