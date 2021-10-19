@@ -9,7 +9,7 @@
                         "authenticationType": "API_KEY",
                         "apiKeyConfig": {
                             "apiKeyExpirationDays": 1,
-                            "description": "awamessages API key"
+                            "description": ""
                         }
                     },
                     "additionalAuthenticationProviders": []
@@ -17,24 +17,7 @@
             }
         }
     },
-    "auth": {
-        "cognitoacd87356": {
-            "service": "Cognito",
-            "serviceType": "managed",
-            "providerPlugin": "awscloudformation",
-            "frontendAuthConfig": {
-                "loginMechanisms": [
-                    "PREFERRED_USERNAME"
-                ],
-                "signupAttributes": [],
-                "passwordProtectionSettings": {
-                    "passwordPolicyCharacters": []
-                },
-                "mfaTypes": [],
-                "verificationMechanisms": []
-            }
-        }
-    },
+    "auth": {},
     "analytics": {
         "awa": {
             "service": "Pinpoint",
@@ -46,6 +29,23 @@
             "service": "Pinpoint",
             "channels": [
                 "APNS"
+            ]
+        }
+    },
+    "function": {
+        "awaa75c1c71": {
+            "build": true,
+            "providerPlugin": "awscloudformation",
+            "service": "Lambda",
+            "dependsOn": [
+                {
+                    "category": "api",
+                    "resourceName": "awamessages",
+                    "attributes": [
+                        "GraphQLAPIIdOutput",
+                        "GraphQLAPIEndpointOutput"
+                    ]
+                }
             ]
         }
     }

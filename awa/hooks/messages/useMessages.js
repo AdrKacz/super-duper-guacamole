@@ -29,7 +29,7 @@ export default function useMessages(user) {
           ...messageQueue.slice(-1000),
         ]);
       },
-      error: error => console.warn(error)
+      error: error => console.warn(error.error)
     });
 
     return () => {

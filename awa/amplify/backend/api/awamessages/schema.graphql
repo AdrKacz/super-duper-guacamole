@@ -1,4 +1,4 @@
-type Message @model {
+type Message @model @auth(rules: [{allow: public }]) {
   id: ID!
   who: String!
   what: String!
