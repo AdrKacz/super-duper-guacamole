@@ -7,7 +7,7 @@ export const onCreateMessage = /* GraphQL */ `
       id
       who
       what
-      userkey
+      avatar
       createdAt
       updatedAt
     }
@@ -19,7 +19,7 @@ export const onUpdateMessage = /* GraphQL */ `
       id
       who
       what
-      userkey
+      avatar
       createdAt
       updatedAt
     }
@@ -31,7 +31,40 @@ export const onDeleteMessage = /* GraphQL */ `
       id
       who
       what
-      userkey
+      avatar
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onCreateUser = /* GraphQL */ `
+  subscription OnCreateUser {
+    onCreateUser {
+      id
+      token
+      avatar
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onUpdateUser = /* GraphQL */ `
+  subscription OnUpdateUser {
+    onUpdateUser {
+      id
+      token
+      avatar
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const onDeleteUser = /* GraphQL */ `
+  subscription OnDeleteUser {
+    onDeleteUser {
+      id
+      token
+      avatar
       createdAt
       updatedAt
     }

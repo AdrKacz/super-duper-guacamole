@@ -2,5 +2,11 @@ type Message @model @auth(rules: [{allow: public }]) {
   id: ID!
   who: String!
   what: String!
-  userkey: String!
+  avatar: String!
+}
+
+type User @model @auth(rules: [{allow: public }]) {
+  id: ID!
+  token: String
+  avatar: String
 }

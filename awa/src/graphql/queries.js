@@ -7,7 +7,7 @@ export const getMessage = /* GraphQL */ `
       id
       who
       what
-      userkey
+      avatar
       createdAt
       updatedAt
     }
@@ -24,7 +24,36 @@ export const listMessages = /* GraphQL */ `
         id
         who
         what
-        userkey
+        avatar
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getUser = /* GraphQL */ `
+  query GetUser($id: ID!) {
+    getUser(id: $id) {
+      id
+      token
+      avatar
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listUsers = /* GraphQL */ `
+  query ListUsers(
+    $filter: ModelUserFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listUsers(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        token
+        avatar
         createdAt
         updatedAt
       }

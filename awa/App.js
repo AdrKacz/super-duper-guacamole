@@ -49,9 +49,9 @@ export default function App() {
     setUser(username);
   }
 
-  function handleUserSelected({key, name}) {
+  function handleUserSelected({userid, name}) {
     setLookAtUser({
-      key: key,
+      avatar: userid,
       name: name,
     });
   }

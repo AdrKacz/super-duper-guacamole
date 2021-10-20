@@ -23,6 +23,21 @@
     "apiawamessagesGraphQLAPIEndpointOutput": {
       "Type": "String",
       "Default": "apiawamessagesGraphQLAPIEndpointOutput"
+    },
+    "analyticsawaId": {
+      "Type": "String",
+      "Default": "analyticsawaId"
+    },
+    "analyticsawaRegion": {
+      "Type": "String",
+      "Default": "analyticsawaRegion"
+    },
+    "apiAwamessagesGraphqlapikeyoutput": {
+      "Type": "String"
+    },
+    "apiawamessagesGraphQLAPIKeyOutput": {
+      "Type": "String",
+      "Default": "apiawamessagesGraphQLAPIKeyOutput"
     }
   },
   "Conditions": {
@@ -77,6 +92,21 @@
             },
             "REGION": {
               "Ref": "AWS::Region"
+            },
+            "ANALYTICS_AWA_ID": {
+              "Ref": "analyticsawaId"
+            },
+            "ANALYTICS_AWA_REGION": {
+              "Ref": "analyticsawaRegion"
+            },
+            "API_AWAMESSAGES_GRAPHQLAPIKEYOUTPUT": {
+              "Ref": "apiawamessagesGraphQLAPIKeyOutput"
+            },
+            "API_AWAMESSAGES_GRAPHQLAPIIDOUTPUT": {
+              "Ref": "apiawamessagesGraphQLAPIIdOutput"
+            },
+            "API_AWAMESSAGES_GRAPHQLAPIENDPOINTOUTPUT": {
+              "Ref": "apiawamessagesGraphQLAPIEndpointOutput"
             }
           }
         },
@@ -227,6 +257,103 @@
           ]
         },
         "StartingPosition": "LATEST"
+      }
+    },
+    "AmplifyResourcesPolicy": {
+      "DependsOn": [
+        "LambdaExecutionRole"
+      ],
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "amplify-lambda-execution-policy",
+        "Roles": [
+          {
+            "Ref": "LambdaExecutionRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "appsync:GraphQL"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:appsync:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":apis/",
+                      {
+                        "Ref": "apiawamessagesGraphQLAPIIdOutput"
+                      },
+                      "/types/Query/*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "mobiletargeting:Put*",
+                "mobiletargeting:Create*",
+                "mobiletargeting:Send*",
+                "mobiletargeting:Update*"
+              ],
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:mobiletargeting:",
+                      {
+                        "Ref": "analyticsawaRegion"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":apps/",
+                      {
+                        "Ref": "analyticsawaId"
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:mobiletargeting:",
+                      {
+                        "Ref": "analyticsawaRegion"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":apps/",
+                      {
+                        "Ref": "analyticsawaId"
+                      },
+                      "/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        }
       }
     }
   },

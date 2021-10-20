@@ -17,13 +17,13 @@ export default function UserPage({user, onLeave}) {
         <Avatar
           width={styles.avatar.width}
           height={styles.avatar.height}
-          seed={user.key}
+          seed={user.avatar}
         />
       </View>
       <Text
         style={{color: getColor('textColor'), ...styles.username}}
       >{user.name}</Text>
-      {localUser.key === user.key && (
+      {localUser.avatar === user.avatar && (
         <TouchableOpacity
           style={{
             backgroundColor: getColor('interactiveColor'),

@@ -13,7 +13,7 @@ export default function MessageFeed({messages, onUserSelected}) {
           <Message
             message={item}
             onUserSelected={() =>
-              onUserSelected({key: item.userkey, name: item.who})
+              onUserSelected({userid: item.avatar, name: item.who}) // TODO: avatar != userid
             }
           />
         )}

@@ -1,6 +1,6 @@
 import {useState} from 'react';
 
-const userKey = Math.random()
+const avatar = Math.random()
   .toString(36)
   .replace(/[^a-z]+/g, '')
   .substring(0, 5);
@@ -14,7 +14,7 @@ export default function useUser() {
 
   return [
     {
-      key: userKey,
+      avatar: avatar,
       name: name,
       isRegister: name ? true : false,
     },

@@ -21,7 +21,7 @@ export default function Message({message, onUserSelected}) {
     avatar = (
       <TouchableOpacity style={styles.avatarcontainer} onPress={onUserSelected}>
         <Avatar
-          seed={message.userkey}
+          seed={message.avatar}
           width={styles.avatar.width}
           height={styles.avatar.height}
         />
@@ -52,7 +52,7 @@ export default function Message({message, onUserSelected}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 8,
+    padding: 4,
     paddingHorizontal: 20,
     alignItems: 'center',
     flexDirection: 'row',

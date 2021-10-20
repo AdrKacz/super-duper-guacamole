@@ -7,7 +7,7 @@ import getColor from '../../styles/Colors';
 
 export default function AvatarBanner({user, onUserSelected}) {
   function handlePress() {
-    onUserSelected({key: user.key, name: user.name});
+    onUserSelected({userid: user.avatar, name: user.name});
   }
 
   return (
@@ -18,7 +18,7 @@ export default function AvatarBanner({user, onUserSelected}) {
       }}>
       <TouchableOpacity styles={styles.avatarcontainer} onPress={handlePress}>
         <Avatar
-          seed={user.key}
+          seed={user.avatar}
           width={styles.avatar.width}
           height={styles.avatar.height}
         />

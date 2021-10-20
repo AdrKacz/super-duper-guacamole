@@ -1,3 +1,23 @@
 {
-  "lambdaLayers": []
+  "lambdaLayers": [],
+  "secretNames": [],
+  "environmentVariableList": [
+    {
+      "cloudFormationParameterName": "apiAwamessagesGraphqlapikeyoutput",
+      "environmentVariableName": "API_AWAMESSAGES_GRAPHQLAPIKEYOUTPUT"
+    }
+  ],
+  "permissions": {
+    "api": {
+      "awamessages": [
+        "Query"
+      ]
+    },
+    "analytics": {
+      "awa": [
+        "create",
+        "update"
+      ]
+    }
+  }
 }

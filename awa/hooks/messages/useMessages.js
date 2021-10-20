@@ -13,17 +13,17 @@ export default function useMessages(user) {
     subscription = API.graphql(graphqlOperation(onCreateMessage)).subscribe({
       next: ({ provider, value }) => {
         message = value.data.onCreateMessage;
-        if (messageQueue.length > 0 && messageQueue[0].userkey === message.userkey) {
+        if (messageQueue.length > 0 && messageQueue[0].avatar === message.avatar) {
           messageQueue[0].isLast = false;
         }
-        console.log('Receive', message);
+        console.log('Received', message);
         setMessageQueue([
           {
             id: message.id,
             what: message.what,
-            userkey: message.userkey,
+            avatar: message.avatar,
             who: message.who,
-            isYours: user.key === message.userkey ? true : false,
+            isYours: user.avatar === message.avatar ? true : false,
             isLast: true,
           },
           ...messageQueue.slice(-1000),
@@ -46,7 +46,7 @@ export default function useMessages(user) {
       const message = {
         what: text,
         who: user.name,
-        userkey: user.key,
+        avatar: user.avatar,
       };
       await API.graphql(graphqlOperation(createMessage, {input: message}))
     } catch (err) {
