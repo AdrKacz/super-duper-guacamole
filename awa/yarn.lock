@@ -3363,7 +3363,7 @@ ajv@^6.10.0, ajv@^6.10.2, ajv@^6.12.4:
     json-schema-traverse "^0.4.1"
     uri-js "^4.2.2"
 
-amazon-cognito-identity-js@5.2.0, amazon-cognito-identity-js@^5.2.0:
+amazon-cognito-identity-js@5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/amazon-cognito-identity-js/-/amazon-cognito-identity-js-5.2.0.tgz#784c802bc352cbbfd182bef4f6f2a5ab28d7f9f4"
   integrity sha512-7nRkGb9Cinf1rD5t34B0NDWXO7lmyapXzLmSXq4IBOdiBMrmxToEHcRwfwT2jJfBWzzZiOS0gvQhKI32A+rmvg==
