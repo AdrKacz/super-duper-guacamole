@@ -72,18 +72,6 @@ function createMessageRequest({addresses, action, message, priority, silent, tit
   return messageRequest;
 }
 
-function showOutput(data) {
-  console.log('No error in pinpoint, process output data...');
-  let status;
-  if (data["MessageResponse"]["Result"][recipient["token"]]["DeliveryStatus"] == "SUCCESSFUL") {
-    status = "Message sent! Response information: ";
-  } else {
-    status = "The message wasn't sent. Response information: ";
-  }
-  console.log(status);
-  console.dir(data, { depth: null });
-}
-
 const parameters = {
   // The title that appears at the top of the push notification.
   title: 'You just received a message',
@@ -130,11 +118,11 @@ async function sendMessages(parameters) {
   const pinpoint = new AWS.Pinpoint();
 
   // Try to send the message.
-  await pinpoint.sendMessages({
+  return await pinpoint.sendMessages({
     "ApplicationId": parameters['applicationId'],
     "MessageRequest": messageRequest
   }).promise()
-  .then(data => console.log('Received data: ', data))
+  .then(data => {console.log('Received data: ', data); return data})
   .catch(err => console.log('error in pinpoint send messages: ', err));
 }
 
@@ -195,7 +183,7 @@ exports.handler = async (event) => {
         ...parameters,
         addresses: tokens.map((token, i) => ({
           token: token,
-          service: 'APNS_SANDBOX', // TODO: Handle Google AND Apple
+          service: 'APNS', // TODO: Handle Google AND Apple
         })),
         title: `${record.who}`,
         message: record.what,

@@ -1,6 +1,9 @@
 import React from 'react';
 
-import {StyleSheet, TouchableOpacity, Text, View} from 'react-native';
+// [DEV]
+import Analytics from '@aws-amplify/analytics';
+
+import {StyleSheet, TouchableOpacity, Text, View, Clipboard} from 'react-native';
 
 import getColor from '../../styles/Colors';
 
@@ -10,6 +13,11 @@ import Avatar from '../Avatar/Avatar';
 
 export default function UserPage({user, onLeave}) {
   const [localUser] = useUser();
+
+  // DEV
+  function copyEndpointIdToClipboard() {
+    Clipboard.setString(Analytics.getPluggable('AWSPinpoint')._config.endpointId);
+  }
 
   return (
     <View style={styles.container}>
@@ -23,6 +31,21 @@ export default function UserPage({user, onLeave}) {
       <Text
         style={{color: getColor('textColor'), ...styles.username}}
       >{user.name}</Text>
+      <TouchableOpacity
+        style={{
+          backgroundColor: getColor('interactiveColor'),
+          ...styles.button,
+          width: undefined,
+        }}
+        onPress={copyEndpointIdToClipboard}
+      >
+        <Text
+          style={{
+            color: getColor('textColor'),
+          }}>
+          Copy Endpoint ID
+        </Text>  
+      </TouchableOpacity>
       {localUser.avatar === user.avatar && (
         <TouchableOpacity
           style={{
