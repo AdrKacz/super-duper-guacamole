@@ -6,36 +6,18 @@
  * @flow strict-local
  */
 
-/** //Init not used (why ??)
-import 'gun/lib/mobile.js'; // most important!
-import GUN from 'gun/gun';
-import SEA from 'gun/sea';
-import 'gun/lib/radix.js';
-import 'gun/lib/radisk.js';
-import 'gun/lib/store.js';
-import AsyncStorage from '@react-native-community/async-storage';
-import asyncStore from 'gun/lib/ras.js';
-
-// Warning: Android AsyncStorage has 6mb limit by default!
-Gun({store: asyncStore({AsyncStorage})});
-*/
-
-import Gun from 'gun/gun';
-const gun = new Gun('http://gunjs.herokuapp.com/gun'); // or use your own GUN relay
-
-import React, {useState} from 'react';
-import {
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  useColorScheme,
-} from 'react-native';
+import React from 'react';
+import {StatusBar, useColorScheme} from 'react-native';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 import {Chat} from '@flyerhq/react-native-chat-ui';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
+import useMessages from './src/hooks/useMessages';
+
+// ===== ===== =====
+// To be move to a useUser hook or userReducer
 const uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     const r = Math.floor(Math.random() * 16);
@@ -43,41 +25,18 @@ const uuidv4 = () => {
     return v.toString(16);
   });
 };
+const userId = uuidv4();
+// ===== ===== =====
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
-  const [messages, setMessages] = useState([]);
-  const user = {id: '06c33e8b-e835-4736-80f4-63f44b66666c'};
-
-  const addMessage = message => {
-    setMessages([message, ...messages]);
-  };
+  const [messages, user, sendMessage] = useMessages(userId);
 
   const handleSendPress = message => {
-    const textMessage = {
-      author: user,
-      createdAt: Date.now(),
-      id: uuidv4(),
-      text: message.text,
-      type: 'text',
-    };
-    addMessage(textMessage);
+    sendMessage(message);
   };
-
-  // let hello = gun.get('hello');
-  // hello.on((data, key) => {
-  //   const n = data.name;
-  //   if (name !== n) {
-  //     setName(n);
-  //   }
-  // });
-
-  // function handleOnPress() {
-  //   hello.put({name: text});
-  //   setText('');
-  // }
-
+  console.log(messages);
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
@@ -90,6 +49,7 @@ const App = () => {
   );
 };
 
+/**
 const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 32,
@@ -108,5 +68,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+*/
 
 export default App;
