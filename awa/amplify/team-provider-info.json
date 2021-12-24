@@ -22,7 +22,7 @@
       "function": {
         "awaa75c1c71": {
           "deploymentBucketName": "amplify-awa-dev-170816-deployment",
-          "s3Key": "amplify-builds/awaa75c1c71-78417343544231584348-build.zip",
+          "s3Key": "amplify-builds/awaa75c1c71-55706e562b7739314332-build.zip",
           "apiAwamessagesGraphqlapikeyoutput": "da2-3nph7oeowrbdhe7zd4bu5lsujy"
         }
       }

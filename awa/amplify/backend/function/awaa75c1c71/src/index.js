@@ -158,6 +158,7 @@ async function retreiveUserTokens() {
 }
 
 exports.handler = async (event) => {
+  return;
   //eslint-disable-line
   console.log(JSON.stringify(event, null, 2));
   if (!event.Records) {
@@ -183,7 +184,7 @@ exports.handler = async (event) => {
         ...parameters,
         addresses: tokens.map((token, i) => ({
           token: token,
-          service: 'APNS', // TODO: Handle Google AND Apple
+          service: '', // TODO: Handle Google AND Apple
         })),
         title: `${record.who}`,
         message: record.what,
