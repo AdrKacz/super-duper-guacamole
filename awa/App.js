@@ -26,54 +26,67 @@ const gun = new Gun('http://gunjs.herokuapp.com/gun'); // or use your own GUN re
 import React, {useState} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
-  Text,
   useColorScheme,
-  View,
-  TextInput,
-  Button,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {Colors} from 'react-native/Libraries/NewAppScreen';
+
+import {Chat} from '@flyerhq/react-native-chat-ui';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+
+const uuidv4 = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.floor(Math.random() * 16);
+    const v = c === 'x' ? r : (r % 4) + 8;
+    return v.toString(16);
+  });
+};
 
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
-  const [text, setText] = useState('What is your name?');
-  const [name, setName] = useState('');
+  const [messages, setMessages] = useState([]);
+  const user = {id: '06c33e8b-e835-4736-80f4-63f44b66666c'};
 
-  let hello = gun.get('hello');
-  hello.on((data, key) => {
-    const n = data.name;
-    if (name !== n) {
-      setName(n);
-    }
-  });
+  const addMessage = message => {
+    setMessages([message, ...messages]);
+  };
 
-  function handleOnPress() {
-    hello.put({name: text});
-    setText('');
-  }
+  const handleSendPress = message => {
+    const textMessage = {
+      author: user,
+      createdAt: Date.now(),
+      id: uuidv4(),
+      text: message.text,
+      type: 'text',
+    };
+    addMessage(textMessage);
+  };
+
+  // let hello = gun.get('hello');
+  // hello.on((data, key) => {
+  //   const n = data.name;
+  //   if (name !== n) {
+  //     setName(n);
+  //   }
+  // });
+
+  // function handleOnPress() {
+  //   hello.put({name: text});
+  //   setText('');
+  // }
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
+    <SafeAreaProvider style={backgroundStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <Text style={styles.welcome}>Hello {name}</Text>
-      <TextInput value={text} onChangeText={value => setText(value)} />
-      <Button title="Update" onPress={handleOnPress} />
-    </SafeAreaView>
+      <Chat messages={messages} onSendPress={handleSendPress} user={user} />
+    </SafeAreaProvider>
   );
 };
 

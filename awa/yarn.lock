@@ -773,6 +773,29 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
+"@flyerhq/react-native-chat-ui@^1.4.3":
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/@flyerhq/react-native-chat-ui/-/react-native-chat-ui-1.4.3.tgz#1a2cbf382080ab76099ba155ad7a4014e53eb31e"
+  integrity sha512-qrk6qQbvLXQruIQcHBWbf7FEyz6Sq0E+1man740VydBcvx5DuUlCwQwS2c7FMVKsvpOwmtxxFlKXdwPbOpZtnA==
+  dependencies:
+    "@flyerhq/react-native-keyboard-accessory-view" "^2.3.3"
+    "@flyerhq/react-native-link-preview" "^1.5.2"
+    dayjs "^1.10.7"
+    react-native-image-viewing "^0.2.1"
+    react-native-parsed-text "^0.0.22"
+
+"@flyerhq/react-native-keyboard-accessory-view@^2.3.3":
+  version "2.3.3"
+  resolved "https://registry.yarnpkg.com/@flyerhq/react-native-keyboard-accessory-view/-/react-native-keyboard-accessory-view-2.3.3.tgz#e79f9f8150d3eff06839698b1e0fde2ea1a7bc0c"
+  integrity sha512-qaigS/vKa2j6T0sJveCCL81xJjmf6Sw7JNjb85oVnfHQZMebvJvhX+ABNpc4G9tje2naOUlAduRBPaznTbZxkA==
+
+"@flyerhq/react-native-link-preview@^1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@flyerhq/react-native-link-preview/-/react-native-link-preview-1.5.2.tgz#a3c97820dca7b548efa58ee43019272463634861"
+  integrity sha512-pGd10hSCZAwM0ESjPFoXVKNJ7NTrJsQAPadtnOK/FcJ6D2lAkx6MoCa/KCAJUzDfNA1OTbz33qED+m0FlbR08g==
+  dependencies:
+    html-entities "^2.3.2"
+
 "@hapi/hoek@^9.0.0":
   version "9.2.1"
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.2.1.tgz#9551142a1980503752536b5050fd99f4a7f13b17"
@@ -2284,7 +2307,7 @@ data-urls@^2.0.0:
     whatwg-mimetype "^2.3.0"
     whatwg-url "^8.0.0"
 
-dayjs@^1.8.15:
+dayjs@^1.10.7, dayjs@^1.8.15:
   version "1.10.7"
   resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.10.7.tgz#2cf5f91add28116748440866a0a1d26f3a6ce468"
   integrity sha512-P6twpd70BcPK34K26uJ1KT3wlhpuOAPoMwJzpsIWUxHZ7wpmbdZL/hQqBDfz7hGurYSa5PhzdhDHtt319hL3ig==
@@ -3263,6 +3286,11 @@ html-encoding-sniffer@^2.0.1:
   integrity sha512-D5JbOMBIR/TVZkubHT+OyT2705QvogUW4IBn6nHd756OwieSF9aDYFj4dv6HHEVGYbHaLETa3WggZYWWMyy3ZQ==
   dependencies:
     whatwg-encoding "^1.0.5"
+
+html-entities@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-2.3.2.tgz#760b404685cb1d794e4f4b744332e3b00dcfe488"
+  integrity sha512-c3Ab/url5ksaT0WyleslpBEthOzWhrjQbg75y7XUsfSzi3Dgzt0l8w5e7DylRn15MTlMMD58dTfzddNS2kcAjQ==
 
 html-escaper@^2.0.0:
   version "2.0.2"
@@ -5299,7 +5327,7 @@ prompts@^2.0.1, prompts@^2.4.0:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.5.10, prop-types@^15.7.2:
+prop-types@^15.5.10, prop-types@^15.7.2, prop-types@^15.7.x:
   version "15.8.0"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.0.tgz#d237e624c45a9846e469f5f31117f970017ff588"
   integrity sha512-fDGekdaHh65eI3lMi5OnErU6a8Ighg2KjcjQxO7m8VHyWjcPyj5kiOgV1LQDOOOgVy3+5FgjXvdSSX7B8/5/4g==
@@ -5381,6 +5409,23 @@ react-native-get-random-values@^1.7.2:
   integrity sha512-28KRYGpIG/upV8+k/qFA+TwGW+yGjmtOHaCduJHpOQK1QUTyhiA6E2IgL4UvvU2dybeCTYFmUi9wcEQ0GiWe5g==
   dependencies:
     fast-base64-decode "^1.0.0"
+
+react-native-image-viewing@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/react-native-image-viewing/-/react-native-image-viewing-0.2.1.tgz#ab06ed41d932cd12d0c54f48316de505fc5c06c0"
+  integrity sha512-A34hsGJk8utKGhWU6Y4i39E38K7ls0XvSC4irfr2guP47uehyU5OjXbWG3wvC4oFVJlTMj8x+N8TL09GHeIETw==
+
+react-native-parsed-text@^0.0.22:
+  version "0.0.22"
+  resolved "https://registry.yarnpkg.com/react-native-parsed-text/-/react-native-parsed-text-0.0.22.tgz#a23c756eaa5d6724296814755085127f9072e5f5"
+  integrity sha512-hfD83RDXZf9Fvth3DowR7j65fMnlqM9PpxZBGWkzVcUTFtqe6/yPcIoIAgrJbKn6YmtzkivmhWE2MCE4JKBXrQ==
+  dependencies:
+    prop-types "^15.7.x"
+
+react-native-safe-area-context@^3.3.2:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/react-native-safe-area-context/-/react-native-safe-area-context-3.3.2.tgz#9549a2ce580f2374edb05e49d661258d1b8bcaed"
+  integrity sha512-yOwiiPJ1rk+/nfK13eafbpW6sKW0jOnsRem2C1LPJjM3tfTof6hlvV5eWHATye3XOpu2cJ7N+HdkUvUDGwFD2Q==
 
 react-native-webview-bridge@^0.40.1:
   version "0.40.1"
