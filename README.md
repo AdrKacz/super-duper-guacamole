@@ -10,3 +10,9 @@ Development Branch, decentralised application.
 > TODO: Detailed steps and errors
 
 * Too many re-renders
+
+Not working with hot-reload (user not persistent)
+
+No local storage
+
+TODO: How to publish / build
