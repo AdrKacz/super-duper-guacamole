@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@flyerhq/react-native-chat-ui": "^1.4.3",
+    "@notifee/react-native": "^4.0.1",
     "@react-native-community/async-storage": "^1.12.1",
     "buffer": "^6.0.3",
     "gun": "^0.2020.1235",

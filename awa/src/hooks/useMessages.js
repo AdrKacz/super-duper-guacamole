@@ -10,20 +10,7 @@ import Gun from 'gun/gun';
 // import 'gun/lib/store.js';
 // import Store from 'gun/lib/ras.js';
 
-const gun = new Gun('http://gunjs.herokuapp.com/gun'); // or use your own GUN relay
-
-// let hello = gun.get('hello');
-// hello.on((data, key) => {
-//   const n = data.name;
-//   if (name !== n) {
-//     setName(n);
-//   }
-// });
-
-// function handleOnPress() {
-//   hello.put({name: text});
-//   setText('');
-// }
+const gun = new Gun('https://awa-gun-relay-server.herokuapp.com/gun'); // or use your own GUN relay
 
 const uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -69,7 +56,7 @@ function reducer(state, action) {
       const sendedMessage = {
         authorId: user.id,
         createdAt: Date.now(),
-        id: uuidv4(),
+        id: Date.now() + '-' + uuidv4(),
         text: action.text,
         type: 'text',
       };

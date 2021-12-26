@@ -5,7 +5,7 @@ Development Branch, decentralised application.
 
 ### Notes
 
-* Cannot run on Android
+* Cannot run on Android (run `npx react-native run-android` when possible to update for Notifee)
 
 > TODO: Detailed steps and errors
 

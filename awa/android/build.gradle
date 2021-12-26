@@ -33,5 +33,10 @@ allprojects {
 
         google()
         maven { url 'https://www.jitpack.io' }
+
+        // This is how Notifee finds it's Android library:
+        maven {
+        url "$rootDir/../node_modules/@notifee/react-native/android/libs"
+        }
     }
 }

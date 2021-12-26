@@ -1013,6 +1013,11 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
+"@notifee/react-native@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@notifee/react-native/-/react-native-4.0.1.tgz#342ee79695f5753f8f32b9de48f428f6354c102e"
+  integrity sha512-vkRJnDMg7z21APm6RytD6ddHk4Og+zro/V0/Fk2a3Hvk1apDfSDXo1n4e3S+WPqsJEJSCXVGkRNWxam9Wq22sQ==
+
 "@peculiar/asn1-schema@^2.0.44":
   version "2.0.44"
   resolved "https://registry.yarnpkg.com/@peculiar/asn1-schema/-/asn1-schema-2.0.44.tgz#dcb1b8f84a4dd5f07f674028beade9c3de43cc06"

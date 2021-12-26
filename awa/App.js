@@ -11,10 +11,15 @@ import {StatusBar, useColorScheme} from 'react-native';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
-import {Chat} from '@flyerhq/react-native-chat-ui';
+import {Chat, defaultTheme} from '@flyerhq/react-native-chat-ui';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import useMessages from './src/hooks/useMessages';
+
+import {
+  displayNotification,
+  requestUserPermission,
+} from './src/helpers/notifications';
 
 // ===== ===== =====
 // To be move to a useUser hook or userReducer
@@ -33,7 +38,8 @@ const App = () => {
 
   const [messages, user, sendMessage] = useMessages(userId);
 
-  const handleSendPress = message => {
+  const handleSendPress = async message => {
+    await displayNotification();
     sendMessage(message);
   };
   console.log(messages);
@@ -44,7 +50,15 @@ const App = () => {
   return (
     <SafeAreaProvider style={backgroundStyle}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <Chat messages={messages} onSendPress={handleSendPress} user={user} />
+      <Chat
+        theme={{
+          ...defaultTheme,
+          colors: {...defaultTheme.colors, inputBackground: 'blue'},
+        }}
+        messages={messages}
+        onSendPress={handleSendPress}
+        user={user}
+      />
     </SafeAreaProvider>
   );
 };
