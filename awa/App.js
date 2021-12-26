@@ -16,11 +16,6 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import useMessages from './src/hooks/useMessages';
 
-import {
-  displayNotification,
-  requestUserPermission,
-} from './src/helpers/notifications';
-
 // ===== ===== =====
 // To be move to a useUser hook or userReducer
 const uuidv4 = () => {
@@ -39,10 +34,9 @@ const App = () => {
   const [messages, user, sendMessage] = useMessages(userId);
 
   const handleSendPress = async message => {
-    await displayNotification();
     sendMessage(message);
   };
-  console.log(messages);
+
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
@@ -53,7 +47,7 @@ const App = () => {
       <Chat
         theme={{
           ...defaultTheme,
-          colors: {...defaultTheme.colors, inputBackground: 'blue'},
+          colors: {...defaultTheme.colors, inputBackground: 'green'},
         }}
         messages={messages}
         onSendPress={handleSendPress}

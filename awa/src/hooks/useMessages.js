@@ -10,6 +10,8 @@ import Gun from 'gun/gun';
 // import 'gun/lib/store.js';
 // import Store from 'gun/lib/ras.js';
 
+import {displayNotification} from '../helpers/notifications';
+
 const gun = new Gun('https://awa-gun-relay-server.herokuapp.com/gun'); // or use your own GUN relay
 
 const uuidv4 = () => {
@@ -37,7 +39,12 @@ const user = {};
 const messages = {};
 
 function getState() {
-  return {messages: Object.values(messages).slice().reverse(), user: user};
+  return {
+    messages: Object.values(messages)
+      .slice()
+      .sort((a, b) => a.createdAt < b.createdAt),
+    user: user,
+  };
 }
 
 function reducer(state, action) {
@@ -65,6 +72,7 @@ function reducer(state, action) {
       chat.get(index).put(sendedMessage);
       return getState();
     case 'add message':
+      console.log(`\t${user.id}Add message: `, action.message.text);
       const addedMessage = {
         author: {id: action.message.authorId},
         createdAt: action.message.createdAt,
@@ -91,16 +99,18 @@ function useMessage(userId) {
   };
 
   const collectMessages = () => {
-    chat.map(recentMatcher).once((value, key) => {
+    chat.map(recentMatcher).once(async value => {
+      console.log(`\n${user.id}>>>Receive Message`);
       if (value && !messages[value.id]) {
-        dispatch({type: 'add message', id: value.id, message: value});
+        await displayNotification({message: value.text});
+        dispatch({type: 'add message', message: value});
       }
     });
   };
 
   useEffect(() => {
     collectMessages();
-  });
+  }, []);
 
   return [state.messages, state.user, sendMessage];
 }
