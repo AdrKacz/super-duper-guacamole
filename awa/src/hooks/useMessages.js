@@ -1,18 +1,26 @@
 import {useReducer, useEffect} from 'react';
 
-// import WebviewCrypto from 'react-native-webview-crypto';
-// import 'react-native-get-random-values';
-
-import Gun from 'gun/gun';
-// import SEA from 'gun/sea';
-// import 'gun/lib/radix.js';
-// import 'gun/lib/radisk.js';
-// import 'gun/lib/store.js';
-// import Store from 'gun/lib/ras.js';
+// import "gun/lib/mobile.js" // most important!
+// mobile.js content, not available in last yarn import
+// ===== =====
+import Buffer from 'buffer';
+import {TextEncoder, TextDecoder} from 'text-encoding';
+global.Buffer = global.Buffer || Buffer.Buffer;
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+// ===== =====
+import GUN from 'gun/gun';
+// import SEA from 'gun/sea'
+import 'gun/lib/radix.js';
+import 'gun/lib/radisk.js';
+import 'gun/lib/store.js';
+import AsyncStorage from '@react-native-community/async-storage';
+import asyncStore from 'gun/lib/ras.js';
 
 import {displayNotification} from '../helpers/notifications';
 
-const gun = new Gun('https://awa-gun-relay-server.herokuapp.com/gun'); // or use your own GUN relay
+GUN({store: asyncStore({AsyncStorage})});
+const gun = new GUN('https://awa-gun-relay-server.herokuapp.com/gun'); // or use your own GUN relay
 
 const uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
