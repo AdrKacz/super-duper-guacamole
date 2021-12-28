@@ -1,26 +1,10 @@
 import {useReducer, useEffect} from 'react';
 
-// import "gun/lib/mobile.js" // most important!
-// mobile.js content, not available in last yarn import
-// ===== =====
-import Buffer from 'buffer';
-import {TextEncoder, TextDecoder} from 'text-encoding';
-global.Buffer = global.Buffer || Buffer.Buffer;
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
-// ===== =====
-import GUN from 'gun/gun';
-// import SEA from 'gun/sea'
-import 'gun/lib/radix.js';
-import 'gun/lib/radisk.js';
-import 'gun/lib/store.js';
-import AsyncStorage from '@react-native-community/async-storage';
-import asyncStore from 'gun/lib/ras.js';
+import gun from '../gun/gun';
 
-import {displayNotification} from '../helpers/notifications';
+import {displayNotification, sendNotifications} from '../helpers/notifications';
 
-GUN({store: asyncStore({AsyncStorage})});
-const gun = new GUN('https://awa-gun-relay-server.herokuapp.com/gun'); // or use your own GUN relay
+import {getRawTokens, getTokens} from '../gun/tokens';
 
 const uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
@@ -80,7 +64,7 @@ function reducer(state, action) {
       chat.get(index).put(sendedMessage);
       return getState();
     case 'add message':
-      console.log(`\t${user.id}Add message: `, action.message.text);
+      console.log(`[${user.id}]\tAdd:\t\t${action.message.text}`);
       const addedMessage = {
         author: {id: action.message.authorId},
         createdAt: action.message.createdAt,
@@ -101,16 +85,19 @@ function useMessage(userId) {
     dispatch({type: 'set user id', id: userId});
   }
 
-  const sendMessage = message => {
+  const sendMessage = async message => {
     // Only handle text message for now (message.text)
     dispatch({type: 'send message text', text: message.text});
+    // Send notification
+    // console.log(await getRawTokens());
+    sendNotifications({tokens: await getTokens()});
   };
 
   const collectMessages = () => {
     chat.map(recentMatcher).once(async value => {
-      console.log(`\n${user.id}>>>Receive Message`);
+      console.log(`[${user.id}]\tReceive:\t${value.text}`);
       if (value && !messages[value.id]) {
-        await displayNotification({message: value.text});
+        // await displayNotification({message: value.text});
         dispatch({type: 'add message', message: value});
       }
     });

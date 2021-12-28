@@ -9,10 +9,7 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-async function sendMessage() {
-  // Fetch the tokens from an external datastore (e.g. database)
-  const token = process.env.REGISTRATION_TOKEN;
-
+exports.sendMessageDebug = async (token) => {
   // Send a message to devices with the registered tokens
   await admin.messaging().send({
     token,
@@ -23,7 +20,18 @@ async function sendMessage() {
   }).catch((error) => {
     console.log('Error sending message:', error);
   });
-}
+};
 
-// Send messages to our users
-sendMessage();
+exports.sendMessages = async (tokens) => {
+  // Send a message to devices with the registered tokens
+  console.log('Send messages to:', tokens);
+  await admin.messaging().sendMulticast({
+    tokens,
+    data: { hello: 'Alice!' },
+  }).then((response) => {
+    // Response is a message ID string.
+    console.log('Successfully sent messages:', response);
+  }).catch((error) => {
+    console.log('Error sending messages:', error);
+  });
+}

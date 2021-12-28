@@ -12,6 +12,20 @@ export async function requestUserPermission() {
   }
 }
 
+export async function sendNotifications({tokens}) {
+  console.log('Send Notifications to:', tokens);
+  fetch('http://localhost:8080/notifications', {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      tokens: tokens,
+    }),
+  });
+}
+
 export async function displayNotification({author, message}) {
   // Ask for permission if not already done
   await requestUserPermission();

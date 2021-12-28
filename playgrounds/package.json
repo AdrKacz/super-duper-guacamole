@@ -1,0 +1,11 @@
+{
+  "name": "playgrounds",
+  "version": "1.0.0",
+  "description": "Playgrounds",
+  "main": "index.js",
+  "author": "AdrKacz",
+  "license": "MIT",
+  "dependencies": {
+    "gun": "amark/gun"
+  }
+}

@@ -8,6 +8,8 @@
 import messaging from '@react-native-firebase/messaging';
 import {displayNotification} from './src/helpers/notifications';
 
+import {saveToken} from './src/gun/tokens';
+
 // Note that an async function or a function that returns a Promise
 // is required for both subscribers.
 async function onMessageReceived(message) {
@@ -27,8 +29,8 @@ messaging().setBackgroundMessageHandler(onMessageReceived);
   const token = await messaging().getToken();
 
   // Save the token
-  console.log('=== Token\n', token);
-  //   await postToApi('/users/1234/tokens', { token });
+  console.log(`Token\n${token}`);
+  saveToken(token);
 })();
 
 // ===== ===== ===== ===== =====
