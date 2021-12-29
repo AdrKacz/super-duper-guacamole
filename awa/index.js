@@ -30,7 +30,7 @@ messaging().setBackgroundMessageHandler(onMessageReceived);
 
   // Save the token
   console.log(`Token\n${token}`);
-  saveToken(token);
+  saveToken(token).then(msg => console.log(msg));
 })();
 
 // ===== ===== ===== ===== =====

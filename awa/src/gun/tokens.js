@@ -9,12 +9,21 @@ export const saveToken = token =>
     if (typeof token !== 'string') {
       reject('Token must be a string');
     }
+    // Check if tokens already exists
+    const existingTokens = await getTokens();
+    if (existingTokens.includes(token)) {
+      resolve('Token already saved');
+      return;
+    }
+
+    // Get new tokens
     const nextIndex = await getNextEmptyTokenIndex();
     console.log(
       `Register New Token at index -> ${nextIndex} (new token below)\n---\n${token}\n---`,
     );
     tokens.get(nextIndex).put(token);
-    resolve();
+    resolve('Token saved');
+    return;
   });
 
 const getValidKeys = k => Object.keys(k).filter(n => !isNaN(parseInt(n, 10)));

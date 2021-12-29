@@ -23,8 +23,6 @@ TODO: Remove FCM, we don't want the messages to be centralised (don't know how t
 
 ERROR: [notifee] no background event handler has been set. Set a handler via the "onBackgroundEvent" method.
 
-TODO: Token ID are store and append each time, so many time the same one at each connection (may result in problem in memory in prod, for exemple, only with 2 devices, if they restart 10 times the app each, that will be 20 entries, but only 2 differents values) => see in `saveToken` function
-
 WARN: Something don't receive notification for no real reason (use case found below, but not reproductible)
 
 1.  Open Snap, listen Audio, send notificaion with other device -> no notification
