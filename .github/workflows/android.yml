@@ -12,7 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    - uses: actions/setup-node@master
+    - uses: c-hive/gha-yarn-cache@v1
+    - name: Install node modules
+      run: |
+        cd awa && yarn install
     - name: Cache Gradle Wrapper
       uses: actions/cache@v2
       with:
