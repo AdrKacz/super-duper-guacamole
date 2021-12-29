@@ -39,7 +39,10 @@ yarn-error.log
 # BUCK
 buck-out/
 \.buckd/
+# to generate > sudo keytool -genkey -v -keystore awa-gun-upload.keystore -alias awa-gun-key -keyalg RSA -keysize 2048 -validity 10000
 *.keystore
+# to generate > openssl base64 < awa-gun-upload.keystore | tr -d '\n' | tee awa-gun-upload.keystore.base64.txt
+*.keystore.base64.txt
 !debug.keystore
 
 # fastlane
