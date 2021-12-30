@@ -5,7 +5,7 @@ const cors = require('cors');
 const { sendMessages } = require('./src/firebase');
 
 const app = express();
-const port = process.env.SERVER_PORT;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json()); // for parsing application/json

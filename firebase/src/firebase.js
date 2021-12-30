@@ -34,4 +34,4 @@ exports.sendMessages = async (tokens) => {
   }).catch((error) => {
     console.log('Error sending messages:', error);
   });
-}
+};
