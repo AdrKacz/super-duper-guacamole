@@ -506,7 +506,7 @@
 				CODE_SIGN_ENTITLEMENTS = awa/awa.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 376E7RMFX3;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = awa/Info.plist;
@@ -537,7 +537,7 @@
 				CODE_SIGN_ENTITLEMENTS = awa/awa.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 376E7RMFX3;
 				INFOPLIST_FILE = awa/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
