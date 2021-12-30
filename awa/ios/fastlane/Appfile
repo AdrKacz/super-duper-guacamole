@@ -1,0 +1,8 @@
+app_identifier("com.awama.awa.dev") # The bundle identifier of your app
+apple_id("adrien.kaczmarek@gmail.com") # Your Apple email address
+
+itc_team_id("123396838") # App Store Connect Team ID
+team_id("376E7RMFX3") # Developer Portal Team ID
+
+# For more information about the Appfile, see:
+#     https://docs.fastlane.tools/advanced/#appfile

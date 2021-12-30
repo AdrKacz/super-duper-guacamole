@@ -2,11 +2,11 @@ require('dotenv').config();
 
 const admin = require('firebase-admin');
 
-const serviceAccount = require(process.env.SERVICE_ACCOUNT); // Never upload this file to the cloud
+const JSONServiceAccount = JSON.parse(process.env.JSON_ADMIN_SDK);
 
 // Initialise Firebase
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert(JSONServiceAccount),
 });
 
 exports.sendMessageDebug = async (token) => {
