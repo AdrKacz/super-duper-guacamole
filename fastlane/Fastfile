@@ -70,7 +70,7 @@ platform :ios do
       in_house: false
     )
     
-    increment_build_number(xcodeproj: "awa.xcodeproj")
+    increment_build_number(xcodeproj: "./awa/ios/awa.xcodeproj")
     
     cocoapods(
       clean_install: true
@@ -88,7 +88,7 @@ platform :ios do
 
     gym(
       configuration: "Release",
-      workspace: "awa.xcworkspace",
+      workspace: "./awa/ios/awa.xcworkspace",
       scheme: "awa",
       export_method: "app-store",
       export_options: {
@@ -105,7 +105,7 @@ platform :ios do
       skip_submission: true,
       distribute_external: false,
       notify_external_testers: false,
-      ipa: "./awa.ipa"
+      ipa: "./awa/ios/awa.ipa"
     )
 
     delete_temp_keychain(keychain_name)
