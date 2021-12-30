@@ -105,7 +105,7 @@ platform :ios do
       skip_submission: true,
       distribute_external: false,
       notify_external_testers: false,
-      ipa: "awa.ipa"
+      ipa: "./awa.ipa"
     )
 
     delete_temp_keychain(keychain_name)
