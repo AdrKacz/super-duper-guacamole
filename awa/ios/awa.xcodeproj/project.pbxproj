@@ -504,6 +504,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = awa/awa.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 376E7RMFX3;
 				ENABLE_BITCODE = NO;
@@ -519,6 +521,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.awama.awa.dev;
 				PRODUCT_NAME = awa;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.awama.awa.dev";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -532,6 +535,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = awa/awa.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 376E7RMFX3;
 				INFOPLIST_FILE = awa/Info.plist;
@@ -546,6 +551,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.awama.awa.dev;
 				PRODUCT_NAME = awa;
+				PROVISIONING_PROFILE_SPECIFIER = "match AppStore com.awama.awa.dev";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
 			};
