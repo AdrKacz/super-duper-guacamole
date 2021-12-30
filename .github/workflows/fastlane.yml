@@ -26,9 +26,8 @@ jobs:
       - name: Setup Ruby 2.7.2
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '2.7.2'
+          ruby-version: head
           working-directory: ./awa/ios
-          bundler-cache: true
       - name: Deploy iOS Beta to TestFlight via Fastlane
         uses: maierj/fastlane-action@v2.1.0
         with:
