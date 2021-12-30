@@ -1,4 +1,4 @@
-name: FastLane CD
+name: FastLane iOS CD
 
 on:
   push:
@@ -13,6 +13,9 @@ jobs:
   deploy:
     name: Deploying to Testflight
     runs-on: macOS-latest
+    defaults:
+      run:
+        working-directory: ./awa/ios
     
     steps:
       - name: Checkout repository
@@ -20,6 +23,7 @@ jobs:
 
       - name: Deploy iOS Beta to TestFlight via Fastlane
         uses: maierj/fastlane-action@v1.4.0
+        run: cd awa/ios/
         with:
           lane: closed_beta
         env:
