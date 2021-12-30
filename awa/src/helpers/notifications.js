@@ -14,7 +14,7 @@ export async function requestUserPermission() {
 
 export async function sendNotifications({tokens}) {
   console.log('Send Notifications to:', tokens);
-  fetch('http://localhost:8080/notifications', {
+  fetch('https://awa-firebase-app.herokuapp.com/notifications', {
     method: 'POST',
     headers: {
       Accept: 'application/json',
@@ -23,7 +23,10 @@ export async function sendNotifications({tokens}) {
     body: JSON.stringify({
       tokens: tokens,
     }),
-  });
+  })
+    .then(response => response.text())
+    .then(text => console.log(`Received: ${text}`))
+    .catch(error => console.error(error));
 }
 
 export async function displayNotification({author, message}) {

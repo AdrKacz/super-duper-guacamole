@@ -2,9 +2,9 @@ import {useReducer, useEffect} from 'react';
 
 import gun from '../gun/gun';
 
-import {displayNotification, sendNotifications} from '../helpers/notifications';
+import {sendNotifications} from '../helpers/notifications';
 
-import {getRawTokens, getTokens} from '../gun/tokens';
+import {getTokens} from '../gun/tokens';
 
 const uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
