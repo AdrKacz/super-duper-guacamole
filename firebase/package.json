@@ -6,7 +6,8 @@
   "author": "AdrKacz",
   "license": "MIT",
   "scripts": {
-    "start": "nodemon",
+    "dev": "nodemon",
+    "start": "node app.js",
     "lint": "eslint ."
   },
   "dependencies": {

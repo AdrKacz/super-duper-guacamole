@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const {sendMessages} = require('./src/firebase');
+const { sendMessages } = require('./src/firebase');
 
 const app = express();
 const port = process.env.SERVER_PORT;
