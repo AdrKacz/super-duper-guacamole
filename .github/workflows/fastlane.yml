@@ -21,7 +21,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '16'
-          cache: 'yarn'
       - name: Install packages in ./awa
         run: cd awa && yarn install
       - name: Deploy iOS Beta to TestFlight via Fastlane
