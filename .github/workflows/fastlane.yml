@@ -2,9 +2,9 @@ name: FastLane iOS CD
 
 on:
   push:
-    branches: [ dev-gun ]
+    branches: [ main ]
   pull_request:
-    branches: [ dev-gun ]
+    branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions a tab
   workflow_dispatch:

@@ -27,7 +27,6 @@ messaging().setBackgroundMessageHandler(onMessageReceived);
 
   // Get the token
   const token = await messaging().getToken();
-
   // Save the token
   console.log(`Token\n${token}`);
   saveToken(token).then(msg => console.log(msg));

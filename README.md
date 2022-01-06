@@ -18,15 +18,13 @@ No local storage
 TODO: How to publish / build
 
 TODO: Firebase Android Setup not done (only iOS for now)
+ - Google-services.json added, still not working
 
 TODO: Remove FCM, we don't want the messages to be centralised (don't know how to do if not for now)
 
+WARN: Notifications seem to need to open the app once before begin received and processed ...
+ - Example: open a emulator, send message > nothing on iPhone, go the app (receive notifications -*why just knoz, and just one*-), quit the application, send a message with the emulator, and here you go you get the notification ! As if the token isn't working before you open the app.
+
 ERROR: [notifee] no background event handler has been set. Set a handler via the "onBackgroundEvent" method.
-
-WARN: Something don't receive notification for no real reason (use case found below, but not reproductible)
-
-1.  Open Snap, listen Audio, send notificaion with other device -> no notification
-2.  Then, go to App, send notificaion with other device -> receive notification in app
-3.  Then, go back to Snap, listen Audio, send notification with other device -> receive notification (well ...)
 
 TODO: Chat message are not saved betweend successives runs, but tokens are (well.. kind of annoying)
