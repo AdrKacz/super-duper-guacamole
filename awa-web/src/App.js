@@ -1,33 +1,16 @@
-import logo from './logo.svg';
+// import logo from './logo.svg';
 import './App.css';
 
-import Chat, { Bubble, useMessages } from '@chatui/core';
+import Chat, { Bubble } from '@chatui/core';
 import '@chatui/core/dist/index.css';
 // https://github.com/alibaba/ChatUI
 // https://chatui.io
 // https://market.m.taobao.com/app/chatui/theme-builder/index.html
 
+import useMessages from './hooks/useMessages';
+
 function App() {
-  const { messages, appendMsg, setTyping } = useMessages([]);
-
-  function handleSend(type, val) {
-    if (type === 'text' && val.trim()) {
-      appendMsg({
-        type: 'text',
-        content: {text: val},
-        position: 'right',
-      });
-
-      setTyping(true);
-
-      setTimeout(() => {
-        appendMsg({
-          type: 'text',
-          content: { text : 'I\'m Awa' },
-        });
-      }, 1000);
-    }
-  }
+  const { messages, handleMessage } = useMessages();
 
   function renderMessageContent(msg) {
     const { content } = msg;
@@ -41,7 +24,7 @@ function App() {
       navbar={{ title: 'Awa Web' }}
       messages={messages}
       renderMessageContent={renderMessageContent}
-      onSend={handleSend}
+      onSend={handleMessage}
       placeholder='Awa'
     />
   );
