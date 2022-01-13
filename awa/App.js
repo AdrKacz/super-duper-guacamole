@@ -16,25 +16,13 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import useMessages from './src/hooks/useMessages';
 
-// ===== ===== =====
-// To be move to a useUser hook or userReducer
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.floor(Math.random() * 16);
-    const v = c === 'x' ? r : (r % 4) + 8;
-    return v.toString(16);
-  });
-};
-const userId = uuidv4();
-// ===== ===== =====
-
 const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
-  const [messages, user, sendMessage] = useMessages(userId);
+  const {messages, user, handleMessage} = useMessages();
 
   const handleSendPress = async message => {
-    sendMessage(message);
+    handleMessage(message);
   };
 
   const backgroundStyle = {
@@ -47,7 +35,7 @@ const App = () => {
       <Chat
         theme={{
           ...defaultTheme,
-          colors: {...defaultTheme.colors, inputBackground: 'green'},
+          colors: {...defaultTheme.colors},
         }}
         messages={messages}
         onSendPress={handleSendPress}

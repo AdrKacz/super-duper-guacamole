@@ -1,113 +1,86 @@
+/**
+ * message format : <date><user><uuid><text>
+ * date: Date.now() (20 char)
+ * user: user uuidv4 (36 char)
+ * uuid: message uuidv4 (36 char)
+ * text: message
+ * uuid format : xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx
+ */
+
+import 'react-native-get-random-values';
+import {v4 as uuidv4} from 'uuid';
+
 import {useReducer, useEffect} from 'react';
 
 import gun from '../gun/gun';
 
-import {sendNotifications} from '../helpers/notifications';
-
-import {getTokens} from '../gun/tokens';
-
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.floor(Math.random() * 16);
-    const v = c === 'x' ? r : (r % 4) + 8;
-    return v.toString(16);
-  });
-};
-
-const recentMatcher = {
-  // lexical queries are kind of like a limited RegEx or Glob.
-  '.': {
-    // property selector
-    '>': new Date(+new Date() - 1 * 1000 * 60 * 60 * 3).toISOString(), // find any indexed property larger ~3 hours ago
-  },
-  '-': 1, // filter in reverse
-};
-
-const chat = gun.get('chat');
-
-// TODO: ensure that user is alays empty if it has no id
-const user = {};
+const chat = gun.get('chatapp-dev1');
 
 const messages = {};
+const getMessages = () =>
+  Object.values(messages)
+    .slice()
+    .sort((a, b) => a.createdAt < b.createdAt);
 
-function getState() {
-  return {
-    messages: Object.values(messages)
-      .slice()
-      .sort((a, b) => a.createdAt < b.createdAt),
-    user: user,
-  };
-}
+const zeroPad = (num, places) => String(num).padStart(places, '0');
+
+const userId = uuidv4();
 
 function reducer(state, action) {
-  // console.log('Call Reducer');
-  // console.log('\tState:', state);
-  // console.log('\tAction:', action);
   switch (action.type) {
-    case 'set user id':
-      user.id = action.id;
-      return getState();
-    case 'send message text':
-      if (!user.id) {
-        console.warn('No user defined');
-        return getState();
-      }
-      const sendedMessage = {
-        authorId: user.id,
-        createdAt: Date.now(),
-        id: Date.now() + '-' + uuidv4(),
-        text: action.text,
-        type: 'text',
-      };
-      // Put Message in Db
-      const index = new Date().toISOString();
-      chat.get(index).put(sendedMessage);
-      return getState();
     case 'add message':
-      console.log(`[${user.id}]\tAdd:\t\t${action.message.text}`);
-      const addedMessage = {
-        author: {id: action.message.authorId},
-        createdAt: action.message.createdAt,
-        id: action.message.id,
-        text: action.message.text,
-        type: 'text',
-      };
-      messages[addedMessage.id] = addedMessage;
-      return getState();
+      messages[action.message.id] = action.message;
+      return {messages: getMessages()};
     default:
-      throw new Error();
+      throw new Error("Action Type doesn't exist");
   }
 }
 
-function useMessage(userId) {
-  const [state, dispatch] = useReducer(reducer, {});
-  if (!state.user) {
-    dispatch({type: 'set user id', id: userId});
-  }
+function useMessages() {
+  const [state, dispatch] = useReducer(reducer, {messages: getMessages()});
 
-  const sendMessage = async message => {
-    // Only handle text message for now (message.text)
-    dispatch({type: 'send message text', text: message.text});
-    // Send notification
-    // console.log(await getRawTokens());
-    sendNotifications({tokens: await getTokens()});
+  const handleMessage = ({type, text}) => {
+    if (type === 'text' && text.trim()) {
+      const d = zeroPad(Date.now(), 20).toString();
+      const u = userId.toString();
+      const uuid = uuidv4();
+      const t = text.toString();
+      sendMessage(d + u + uuid + t);
+    }
   };
 
-  const collectMessages = () => {
-    chat.map(recentMatcher).once(async value => {
-      console.log(`[${user.id}]\tReceive:\t${value.text}`);
-      if (value && !messages[value.id]) {
-        // await displayNotification({message: value.text});
-        dispatch({type: 'add message', message: value});
-      }
-    });
+  const sendMessage = async value => {
+    chat.set(value);
   };
 
   useEffect(() => {
-    collectMessages();
+    chat.map().once(async value => {
+      if (value) {
+        const d = value.slice(0, 20);
+        const u = value.slice(20, 56);
+        const uuid = value.slice(56, 92);
+        const t = value.slice(92);
+        if (!(uuid in messages)) {
+          dispatch({
+            type: 'add message',
+            message: {
+              author: {id: u},
+              type: 'text',
+              text: t,
+              createdAt: parseInt(d, 10),
+              id: d + uuid,
+            },
+          });
+        }
+      }
+    });
   }, []);
 
-  return [state.messages, state.user, sendMessage];
+  return {
+    messages: state.messages,
+    handleMessage,
+    user: {id: userId},
+  };
 }
 
-export default useMessage;
+export default useMessages;

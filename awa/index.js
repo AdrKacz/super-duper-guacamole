@@ -2,6 +2,7 @@
  * @format
  */
 
+/**
 // ===== ===== ===== ===== =====
 // ===== ===== ===== ===== =====
 // Firebase setup
@@ -31,6 +32,7 @@ messaging().setBackgroundMessageHandler(onMessageReceived);
   console.log(`Token\n${token}`);
   saveToken(token).then(msg => console.log(msg));
 })();
+*/
 
 // ===== ===== ===== ===== =====
 // ===== ===== ===== ===== =====
