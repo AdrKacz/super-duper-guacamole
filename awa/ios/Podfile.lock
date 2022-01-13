@@ -331,7 +331,7 @@ PODS:
     - React-Core
   - react-native-safe-area-context (3.3.2):
     - React-Core
-  - react-native-webview (11.15.0):
+  - react-native-webview (11.16.0):
     - React-Core
   - React-perflogger (0.66.4)
   - React-RCTActionSheet (0.66.4):
@@ -400,10 +400,10 @@ PODS:
     - React-perflogger (= 0.66.4)
   - RNCAsyncStorage (1.12.1):
     - React-Core
-  - RNFBApp (14.1.0):
+  - RNFBApp (14.2.2):
     - Firebase/CoreOnly (= 8.10.0)
     - React-Core
-  - RNFBMessaging (14.1.0):
+  - RNFBMessaging (14.2.2):
     - Firebase/Messaging (= 8.10.0)
     - React-Core
     - RNFBApp
@@ -622,7 +622,7 @@ SPEC CHECKSUMS:
   React-logger: 933f80c97c633ee8965d609876848148e3fef438
   react-native-get-random-values: 30b3f74ca34e30e2e480de48e4add2706a40ac8f
   react-native-safe-area-context: 584dc04881deb49474363f3be89e4ca0e854c057
-  react-native-webview: e89bf2dba26a04cda967814df3ed1be99f291233
+  react-native-webview: 28a8636d97ee641f2ee8f20492d7a6c269c1d703
   React-perflogger: 93075d8931c32cd1fce8a98c15d2d5ccc4d891bd
   React-RCTActionSheet: 7d3041e6761b4f3044a37079ddcb156575fb6d89
   React-RCTAnimation: 743e88b55ac62511ae5c2e22803d4f503f2a3a13
@@ -636,8 +636,8 @@ SPEC CHECKSUMS:
   React-runtimeexecutor: dec32ee6f2e2a26e13e58152271535fadff5455a
   ReactCommon: 57b69f6383eafcbd7da625bfa6003810332313c4
   RNCAsyncStorage: b03032fdbdb725bea0bd9e5ec5a7272865ae7398
-  RNFBApp: e884e9a2dcc5edfa73e2651ef6638df5e0672f89
-  RNFBMessaging: 8b7c281136bf8fbd78b332b5b9db7e604853174f
+  RNFBApp: 78d0446e8b28dc30616c134a9e4d8d4b01f9f966
+  RNFBMessaging: 79910a2eb2fa5955f38259367b14431bd78bef19
   RNNotifee: ed6c0b5ffc0b021507fe196a1c4cfd1fe002410c
   Yoga: e7dc4e71caba6472ff48ad7d234389b91dadc280
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
