@@ -8,8 +8,7 @@
     "start": "react-native start",
     "test": "jest",
     "lint": "eslint .",
-    "react-link": "react-native link",
-    "detox-init": "detox init"
+    "react-link": "react-native link"
   },
   "dependencies": {
     "@flyerhq/react-native-chat-ui": "^1.4.3",
