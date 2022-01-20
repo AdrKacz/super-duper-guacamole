@@ -1,70 +1,86 @@
-**Version 0**
+**Version 0.0.0**
 
 # Model to assign people to conversation groups
 
 ## Introduction
-One of the main idea of the project is to develop a software solution to assign people **apparently randomly** to conversation groups. However, we aim to create groups which have a positive dynamic, hence, an automatic learning answering to 'how to assign people' is required. In a distributed architecture, we haven't access to people information globally, so we have to do everything 'locally'.
+One of the main ideas of the project is to develop a software solution to assign people **apparently randomly** to conversation groups. However, we aim to create groups that have a positive dynamic, hence automatic learning answering to "how to assign people" is required. In a distributed architecture, we have not access to people's information globally, so we have to do everything 'locally'.
 
 
 # Local information available
-Each individual has access to :
-
+Let `m` be the number of users/IDs. \
+Let `m_conv` be the number of users/IDs in a conversation. (Parameter fixed by the developer.)
+The IDs are public. \
+The 'conversational graph' (who talked to who) is not.\
+Then, locally each user has access to :
 - Its own ID
-- The ID of the people he has talked with
-- The message that were exchange in the different conversations he was involved in.
+- The knowledge that he has talked with some users/IDs.
+- The messages that were exchanged in the different conversations he was involved in.
 
-If a conversation is composed of m members : All of those members know each others (access to the m ID) and the messages exchanged.
+Then, for a conversation composed of `m_conv` members: All of those members know they have talked together. They have access to the knowledge they have talked with these `m_conv-1` IDs, and the messages exchanged.
+
 
 # Create a new conversation
-Lets first introduce the notion of **Relationship representation**.
+Let's first introduce the notion of **Relationship representation**.
 
-## Relationship private representation
-With the local information available (detailled later), we compute scores/weights, of n dim, **in the vision of each ID/individual**. This reprensentation is **PRIVATE**.
+## Private Relationship representation
+With the local information available (further detailed later), we compute scores/weights, of `n` dim, **in the vision of each ID/user**. This representation is **PRIVATE**. (Only obtainable by the corresponding user). \
+If the vector **e<sub>i,j</sub>** is the vectorized representation of the score of `i` in the vision of a `j`, the whole representation of the relationships can be expressed as a **sparse** matrix **M = (M<sub>i, j</sub>) <sub> (i,j)∈[0,m]²</sub>** - sparse because by convention, e<sub>i,j</sub> = `None` if user<sub>i</sub> doesn't know user<sub>j</sub>. \
+Note: The matrix M is a way to represent this architecture, but since everything is done locally, it is not possible to compute wholly this Matrix.
 
-e.g : See below, reprensentation in 2D (let's say it is a PCAof the generated weights)
-In the vision of e<sub>1</sub>, he is closer to e<sub>3</sub>  than to e<sub>2</sub> , but in the vision of e<sub>3</sub>, e<sub>2</sub> is closer than e<sub>1</sub>. This vision is -or at least can be- **INDIVIDUALS DEPENDENT** (depends of how weights are generated, potential absence of symmetry). 
+If we consider euclidian distances between the e<sub>i,j</sub>, M is not symetric. Given the method to compute the e<sub>i,j</sub>, e<sub>i,j</sub> != e<sub>j,i</sub> is probable, since their interactions are not symetric (they don't use the exact same words, same frequency or anwers,..). \
+This raise the point that (e<sub>i,j</sub>)<sub> i∈[0,m]</sub> is a vision for user<sub>j</sub> of the the other users. This vision is -or at least can be- **USER DEPENDENT**. 
 
-![img.png](images/rpz-2d.png)
 
 
 ## From Relationship Reprensentation (RR) to recommendations
-Hence, to create a new conversation : For conversations of max m individuals, if :
-- e<sub>1</sub> knows e<sub>i</sub> for i∈[1,m]
-- e<sub>2</sub> is the closest individual to e<sub>1</sub>
-- e<sub>2</sub> knows e<sub>j</sub> for j∈[m+1,2m] because he is involved in an other conversation.\
---> **e<sub>2</sub> recommand APPROPRIATE individuals to e<sub>1</sub> (close to him in the e<sub>2</sub> RR**, whom would be unkown for e<sub>1</sub> : He meets new people, with a kind of 'recommendation system'.
-Needs to be clear : e<sub>2</sub> only provides a e<sub>j</sub> ID, j∈[m+1,2m], and not his distance to  e<sub>1</sub> in the  e<sub>2</sub> representation. **The RR is private, and is never transmitted in whole**.
+Hence, to create a new conversation : For conversations of max `m_conv` individuals, if :
+- user<sub>j1</sub> knows user<sub>j</sub> for j∈[1,m_conv]
+- user<sub>i1</sub> is the closest individual to user<sub>j1</sub> (given scores/weights (e<sub>i,j1</sub>), i∈[1,m_conv])
+- user<sub>i1</sub> knows user<sub>i</sub> for i∈[1,2m_conv] because he is involved in an other conversation.\
+
+--> **user<sub>i1</sub> recommand APPROPRIATE individuals to user<sub>j1</sub> (close to user<sub>j1</sub> in the RR of user<sub>i1</sub>**, whom would be unkown for user<sub>j1</sub> : He meets new people, with a kind of 'recommendation system'.
+
+To clarify : user<sub>i1</sub> only provides a user<sub>i</sub> ID, i∈[m+1,2m], and not his distance to  user<sub>j1</sub> in the user<sub>i1</sub>  representation ((e<sub>i,i1</sub>), i∈[1,m_conv]) . **The RR is private, and is never transmitted in whole**.
 
 To recap :
-- Each individual in the e<sub>1</sub> RR will recommend him somebody.
+- Each user<sub>i</sub> in the ((e<sub>i,j1</sub>), i∈[1,m_conv]) RR will recommend him somebody. 
 - Sometimes it can be the same individual.
-- We will introduce weights that depends of e<sub>1</sub> proximity to the 'recommender' e<sub>i</sub>, i∈[1,m]. (The closest the 'recommender' is, the more we should listen to him, he is a 'close friend').
-
-
-Below : A graphic illustration of this 'loophole' point of view. \
-- Recommendation by e<sub>2</sub> : e<sub>6</sub>
-- Recommendation by e<sub>3</sub> : e<sub>4</sub>
-- e<sub>4</sub> will have a larger weight than e<sub>6</sub> because e<sub>3</sub> is closer from e<sub>1</sub> than e<sub>2</sub>
-![img.png](images/reco-2d.png)
-
+- We will introduce weighting terms that depends of user<sub>j1</sub> proximity to the 'recommender' user<sub>i</sub>, i∈[1,m]. (The closest the 'recommender' is, the more we should listen to him, he is a 'close friend').
 
 
 # Main points still to determine :
 ## Weight the recommendations
 2 options are possible :
-- Distance (continuous) weighting : Compute d(e<sub>1</sub>, e<sub>i</sub>), where d is an distance to define. Then the weithing term is
-- Discrete weighting : Giving the rank of the e<sub>i</sub> in the 'Proximity ranking', we attribute fixed weights. Could be appropriate if we don't have a distance to compute. (Example: In the beginning we could compute logic gates on the weights computed.)
+- Distance (continuous) weighting : Compute (d(e<sub>i,j</sub>, e<sub>j,j</sub>)), i∈[1,m] , where d is an distance to define. Then the weithing term is a softmax of (d(e<sub>i,j</sub>, e<sub>j,j</sub>)), i∈[1,m].
+- Discrete weighting: Giving the rank of the e<sub>i</sub> in the 'Proximity ranking', we attribute fixed weights. Could be appropriate if we don't have access to a distance to compute. In the beginning we could use logic gates on the weights computed.
 
 
 ## n-representation Features for clustering system
 
-- Frequency of answer to somebody
-- Content of the messages --> Sentiment analysis : Pay attention to the ironie/insults that can skew the results
+- Frequency of answer to somebody (to implement)
+- Content of the messages --> Sentiment analysis: Pay attention to the irony/insults that can skew the results
 - Topics identified
 
-### Test : Use GPT-2 to see if it is working correctly.
+### Sentiment Analysis :
+Word embeddings :
+The most popular word embedding algorithms are :
+- <cite>[Word2Vec][3]</cite> (Google)
+- <cite>[GloVe][4]</cite> (Stanford)
+- <cite>[FastText][5]</cite> (Facebook)
+
+### Test idea : Use of <cite>[GPT-2][6]</cite> to see if it is working correctly. 
 
 ## Uses of a Meta-Model
-- Which clustering models would be the most relevant ? 
-- Do we need to select it in function of the individuals ?
+Algorithm for the selection of the best model.
+- Which clustering models would be the most relevant? 
+- Do we need to select it in the function of the users?
 - Would it be a good idea to switch models randomly in order to create noise in the clustering and vary the recommended people.
+
+
+## Citations
+[1]: https://fr.wikipedia.org/wiki/Analyse_en_composantes_principales
+[2]: https://fr.wikipedia.org/wiki/Algorithme_t-SNE
+[3]: https://github.com/tmikolov/word2vec
+[4]: https://github.com/stanfordnlp/GloVe
+[5]: https://github.com/facebookresearch/fastText
+[6]: https://github.com/openai/gpt-2
