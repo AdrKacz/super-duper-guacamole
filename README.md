@@ -1,5 +1,7 @@
 # super-duper-guacamole - *dev-gun*
 
+> Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
+
 Development branch of **awa** application.
 
 This branch aims to build a version based on a **decentralised** data storage technologie and puts **privacy** first.
@@ -64,25 +66,30 @@ yarn remove -D detox-cli
 yarn remove -D detox
 ```
 
-# Export
+# How to build?
+
+## Android
+
+Go to `awa/android/app/build.gradle` and increase **Version code**.
+
+```
+cd awa/android
+./gradlew bundleRelease
+```
+
+If there are errors, open **Android Studio** and build from here to see what are the problems. Most of the time file are duplicated, which causes problem when instantiate classes.
+
+Then go to Google Play Console, update a new build.
+
+## Web
+
+```
+heroku login
+git subtree push --prefix awa-web heroku master
+```
 
 ## iOS
 
 Increment build number at `awa/ios/awa.xcodeproj`
 
 Push to main
-
-## Android
-
-Increment build number at `awa/android/app/build.gradle`
-
-```
-cd awa/androidd
-.grandlew bundleRelease
-```
-
-## Web
-
-```
-git subtree push --prefix awa-web heroku master
-```

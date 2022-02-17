@@ -6,7 +6,7 @@ import gun from '../gun/gun';
 
 import { useMessages as chatuiUseMessages } from '@chatui/core';
 
-const chat = gun.get('chatapp-dev1');
+const chat = gun.get('chatapp-dev2');
 
 const zeroPad = (num, places) => String(num).padStart(places, '0');
 
