@@ -92,4 +92,4 @@ git subtree push --prefix awa-web heroku master
 
 Increment build number at `awa/ios/awa.xcodeproj`
 
-Push to main
+Go to `Action` and run `Fastlane iOS CD`
