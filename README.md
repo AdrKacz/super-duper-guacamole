@@ -90,4 +90,6 @@ git subtree push --prefix awa-web heroku master
 
 ## iOS
 
-Just push to the main branche.
+Increment build number at `awa/ios/awa.xcodeproj`
+
+Push to main
