@@ -63,3 +63,26 @@ yarn add -D detox
 yarn remove -D detox-cli
 yarn remove -D detox
 ```
+
+# Export
+
+## iOS
+
+Increment build number at `awa/ios/awa.xcodeproj`
+
+Push to main
+
+## Android
+
+Increment build number at `awa/android/app/build.gradle`
+
+```
+cd awa/androidd
+.grandlew bundleRelease
+```
+
+## Web
+
+```
+git subtree push --prefix awa-web heroku master
+```
