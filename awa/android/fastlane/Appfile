@@ -1,2 +1,2 @@
-json_key_file("") # Path to the json secret file - Follow https://docs.fastlane.tools/actions/supply/#setup to get one
-package_name("") # e.g. com.krausefx.app
+json_key_file("./fastlane/pc-api-6480164718890486100-688-4084fe84fb14.json") # Path to the json secret file - Follow https://docs.fastlane.tools/actions/supply/#setup to get one
+package_name("com.awa.ma.dev.app") # e.g. com.krausefx.app

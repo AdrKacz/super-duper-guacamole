@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:291398352335:android:f857d9a4bf841480df26ba",
+        "mobilesdk_app_id": "1:291398352335:android:98ea6afcd5e94197df26ba",
         "android_client_info": {
-          "package_name": "com.awa"
+          "package_name": "com.awa.ma.dev.app"
         }
       },
       "oauth_client": [

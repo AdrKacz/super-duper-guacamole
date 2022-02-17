@@ -14,7 +14,7 @@ import {useReducer, useEffect} from 'react';
 
 import gun from '../gun/gun';
 
-const chat = gun.get('chatapp-dev1');
+const chat = gun.get('chatapp-dev2');
 
 const messages = {};
 const getMessages = () =>
