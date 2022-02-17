@@ -3,7 +3,7 @@
 # Model to assign people to conversation groups
 
 ## Introduction
-One of the main ideas of the project is to develop a software solution to assign people **apparently randomly** to conversation groups. However, we aim to create groups that have a positive dynamic, hence automatic learning answering to "how to assign people" is required. In a distributed architecture, we have not access to people's information globally, so we have to do everything 'locally'.
+One of the main ideas of the project is to develop a software solution to assign people **apparently randomly** to conversation groups. However, we aim to create groups that have a positive dynamic, hence automatic learning answering to "how to assign people" is required. In a distributed architecture, we don't have access to people's information globally, so we have to do everything 'locally'.
 
 
 # Local information available
