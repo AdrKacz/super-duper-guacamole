@@ -1,18 +1,14 @@
+import {v4 as uuidv4} from 'uuid';
+
 import { useEffect } from 'react';
 
 import gun from '../gun/gun';
 
 import { useMessages as chatuiUseMessages } from '@chatui/core';
 
-const chat = gun.get('chatweb-dev0');
+const chat = gun.get('chatapp-dev1');
 
-const uuidv4 = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.floor(Math.random() * 16);
-      const v = c === 'x' ? r : (r % 4) + 8;
-      return v.toString(16);
-    });
-  };
+const zeroPad = (num, places) => String(num).padStart(places, '0');
 
 const userId = uuidv4();
 
@@ -21,7 +17,11 @@ function useMessages() {
 
     const handleMessage = (type, value) => {
         if (type === 'text' && value.trim()) {
-            sendMessage(userId + value);
+            const d = zeroPad(Date.now(), 20).toString();
+            const u = userId.toString();
+            const uuid = uuidv4();
+            const t = value.toString();
+            sendMessage(d + u + uuid + t);
         }
     }
 
@@ -32,10 +32,14 @@ function useMessages() {
     useEffect(() => {
         chat.map().once(async value => {
             if (value) {
+                const d = value.slice(0, 20);
+                const u = value.slice(20, 56);
+                const uuid = value.slice(56, 92);
+                const t = value.slice(92);
                 appendMsg({
                     type: 'text',
-                    content: {text: value.slice(36)},
-                    position: value.slice(0, 36) === userId ? 'right' : 'left',
+                    content: {text: t},
+                    position: u === userId ? 'right' : 'left',
                 });
             }
         })
