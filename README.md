@@ -1,5 +1,18 @@
 # super-duper-guacamole - *dev-gun*
 
+# Inspect the number of lines
+
+```sh
+# From https://stackoverflow.com/questions/26881441/can-you-get-the-number-of-lines-of-code-from-a-github-repository
+# Needed brew install cloc
+git clone --depth 1 -b "$2" --single-branch "$1" temp-linecount-repo &&
+  printf "('temp-linecount-repo' will be deleted automatically)\n\n\n" &&
+  cloc temp-linecount-repo &&
+  rm -rf temp-linecount-repo
+```
+
+# TODO: REWRITE
+
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
 Development branch of **awa** application.
