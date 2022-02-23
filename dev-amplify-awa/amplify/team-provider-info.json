@@ -1,0 +1,31 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-awa-dev-170816-authRole",
+      "UnauthRoleArn": "arn:aws:iam::010661011891:role/amplify-awa-dev-170816-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::010661011891:role/amplify-awa-dev-170816-authRole",
+      "Region": "eu-west-3",
+      "DeploymentBucketName": "amplify-awa-dev-170816-deployment",
+      "UnauthRoleName": "amplify-awa-dev-170816-unauthRole",
+      "StackName": "amplify-awa-dev-170816",
+      "StackId": "arn:aws:cloudformation:eu-west-3:010661011891:stack/amplify-awa-dev-170816/1028aa80-2f5c-11ec-9d83-0e41d639d7a4",
+      "AmplifyAppId": "d22srsxd00eu6a"
+    },
+    "categories": {
+      "notifications": {
+        "Pinpoint": {
+          "Name": "awa-dev",
+          "Id": "b68b53ad8eea46f09e8001a80da4e3aa",
+          "Region": "eu-west-1"
+        }
+      },
+      "function": {
+        "awaa75c1c71": {
+          "deploymentBucketName": "amplify-awa-dev-170816-deployment",
+          "s3Key": "amplify-builds/awaa75c1c71-55706e562b7739314332-build.zip",
+          "apiAwamessagesGraphqlapikeyoutput": "da2-3nph7oeowrbdhe7zd4bu5lsujy"
+        }
+      }
+    }
+  }
+}

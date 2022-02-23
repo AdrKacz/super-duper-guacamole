@@ -1,0 +1,61 @@
+{
+  "api": {
+    "awamessages": {
+      "service": "AppSync",
+      "providerPlugin": "awscloudformation",
+      "output": {
+        "authConfig": {
+          "defaultAuthentication": {
+            "authenticationType": "API_KEY",
+            "apiKeyConfig": {
+              "apiKeyExpirationDays": 1,
+              "description": ""
+            }
+          },
+          "additionalAuthenticationProviders": []
+        }
+      }
+    }
+  },
+  "auth": {},
+  "analytics": {
+    "awa": {
+      "service": "Pinpoint",
+      "providerPlugin": "awscloudformation"
+    }
+  },
+  "notifications": {
+    "awa": {
+      "service": "Pinpoint",
+      "channels": [
+        "APNS"
+      ]
+    }
+  },
+  "function": {
+    "awaa75c1c71": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda",
+      "dependsOn": [
+        {
+          "category": "api",
+          "resourceName": "awamessages",
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ]
+        },
+        {
+          "category": "analytics",
+          "resourceName": "awa",
+          "attributes": [
+            "Id",
+            "Region"
+          ]
+        }
+      ]
+    }
+  }
+}

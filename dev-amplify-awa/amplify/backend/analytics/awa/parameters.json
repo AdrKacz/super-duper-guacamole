@@ -1,0 +1,21 @@
+{
+    "appName": "awa",
+    "roleName": "pinpointLambdaRolece6b3253",
+    "cloudformationPolicyName": "cloudformationPolicyce6b3253",
+    "cloudWatchPolicyName": "cloudWatchPolicyce6b3253",
+    "pinpointPolicyName": "pinpointPolicyce6b3253",
+    "authPolicyName": "pinpoint_amplify_ce6b3253",
+    "unauthPolicyName": "pinpoint_amplify_ce6b3253",
+    "authRoleName": {
+        "Ref": "AuthRoleName"
+    },
+    "unauthRoleName": {
+        "Ref": "UnauthRoleName"
+    },
+    "authRoleArn": {
+        "Fn::GetAtt": [
+            "AuthRole",
+            "Arn"
+        ]
+    }
+}
