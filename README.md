@@ -102,20 +102,64 @@ In a **centralised architecture**, the code that infers the correct set of users
 > `Federated` architecture will simply remove the **_client models_ database**
 # super-duper-guacamole - *dev-godot*
 
-# Inspect the number of lines
+# Architecture
 
-```sh
-# From https://stackoverflow.com/questions/26881441/can-you-get-the-number-of-lines-of-code-from-a-github-repository
-# Needed brew install cloc
-git clone --depth 1 -b dev-godot --single-branch \
-https://github.com/AdrKacz/super-duper-guacamole.git \
-temp-linecount-repo && \
-printf "('temp-linecount-repo' will be deleted automatically)\n\n\n" && \
-cloc temp-linecount-repo && \
-rm -rf temp-linecount-repo
+```mermaid
+sequenceDiagram
+    participant User
+    participant Matchmaker
+    participant UserAPI
+    participant WorldAPI
+    participant GameServer
+    User ->> Matchmaker : I want to play
+    Matchmaker -->> UserAPI : Who are the best users for this user?
+    UserAPI -->> Matchmaker : Set of user
+    Matchmaker -->> WorldAPI : What are is best worlds for these users?
+    WorldAPI -->> Matchmaker : World
+    Matchmaker -->> GameServer : Give me an endpoint for this world
+    GameServer -->> Matchmaker : World endpoint
+    Matchmaker ->> User : World endpoint
 ```
 
-# TODO: REWRITE
+```mermaid
+graph LR
+    World --> C{Is alive?}
+    C{Is alive?} -.-> |Yes|C_1{Can enter?}
+    C{Is alive?} -.-> |No|C_2{Can create?}
+    C_1 -.-> |Yes|E[Endpoint]
+    C_1 -.-> |No|C_2
+    C_2 -.-> |Yes|E
+    C_2 -.-> |No|Wait
+```
+
+> Will user who likes the same worlds will like eachothers? What dependence with the number of world?
+
+### Codebase
+
+```sh
+# macOS: brew install cloc
+>> cloc .
+      21 text files.
+      13 unique files.                              
+      15 files ignored.
+
+github.com/AlDanial/cloc v 1.92  T=0.02 s (824.1 files/s, 42345.6 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Markdown                         2             67              0            173
+Godot Scene                      1             23              0            129
+GDScript                         2             29              5            114
+JavaScript                       4             10              5             61
+JSON                             1              0              0             28
+Godot Resource                   2              5              0             17
+Bourne Shell                     1              0              1              1
+-------------------------------------------------------------------------------
+SUM:                            13            134             11            523
+-------------------------------------------------------------------------------
+```
+
+# Below isn't up to date
 
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
