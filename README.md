@@ -102,6 +102,30 @@ In a **centralised architecture**, the code that infers the correct set of users
 > `Federated` architecture will simply remove the **_client models_ database**
 # super-duper-guacamole - *dev-godot*
 
+### Codebase
+
+```sh
+# macOS: brew install cloc
+>> cloc --exclude-ext=md .
+      21 text files.
+      11 unique files.                              
+      17 files ignored.
+
+github.com/AlDanial/cloc v 1.92  T=0.01 s (817.9 files/s, 31824.0 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Godot Scene                      1             23              0            129
+GDScript                         2             29              5            114
+JavaScript                       4             10              5             61
+JSON                             1              0              0             28
+Godot Resource                   2              5              0             17
+Bourne Shell                     1              0              1              1
+-------------------------------------------------------------------------------
+SUM:                            11             67             11            350
+-------------------------------------------------------------------------------
+```
+
 # Architecture
 
 ```mermaid
@@ -134,30 +158,6 @@ graph LR
 
 > Will user who likes the same worlds will like eachothers? What dependence with the number of world?
 
-### Codebase
-
-```sh
-# macOS: brew install cloc
->> cloc .
-      21 text files.
-      13 unique files.                              
-      15 files ignored.
-
-github.com/AlDanial/cloc v 1.92  T=0.02 s (824.1 files/s, 42345.6 lines/s)
--------------------------------------------------------------------------------
-Language                     files          blank        comment           code
--------------------------------------------------------------------------------
-Markdown                         2             67              0            173
-Godot Scene                      1             23              0            129
-GDScript                         2             29              5            114
-JavaScript                       4             10              5             61
-JSON                             1              0              0             28
-Godot Resource                   2              5              0             17
-Bourne Shell                     1              0              1              1
--------------------------------------------------------------------------------
-SUM:                            13            134             11            523
--------------------------------------------------------------------------------
-```
 
 # Below isn't up to date
 
