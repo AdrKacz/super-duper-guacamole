@@ -1,4 +1,38 @@
-# super-duper-guacamole - *dev-gun*
+# super-duper-guacamole
+
+# Codebase
+
+```sh
+# macOS: brew install cloc
+>> cloc --exclude-ext=md .  
+     113 text files.
+      74 unique files.                              
+      87 files ignored.
+
+github.com/AlDanial/cloc v 1.92  T=0.05 s (1458.5 files/s, 50713.5 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+JavaScript                      24             94            121            436
+JSON                            12              0              0            323
+XML                             13              6              3            319
+HTML                             2              5             20            144
+Gradle                           3             27            123            139
+Bourne Shell                     3             24             39            132
+Java                             3             16             25            126
+Objective-C                      3             27              0            112
+YAML                             2              8              1             89
+DOS Batch                        1             21              2             66
+CSS                              2              6              0             45
+Starlark                         1              2              1             16
+Properties                       2              7             19             10
+C/C++ Header                     1              3              0              5
+SVG                              1              0              0              1
+ProGuard                         1              1              9              0
+-------------------------------------------------------------------------------
+SUM:                            74            247            363           1963
+-------------------------------------------------------------------------------
+```
 
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
