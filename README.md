@@ -159,7 +159,9 @@ graph LR
 
 > Will user who likes the same worlds will like eachothers? What dependence with the number of world?
 
-# How to run the server on Docker
+# How to run your server?
+
+**The following only concerns world that works over UDP. Do not use the following instruction if your world uses WebRTC.**
 
 ## Export your Godot server
 
@@ -202,12 +204,11 @@ Well done! You now have your docker image built. Run `docker images` to see it.
 6. Run `godot`
 7. Your client is now open, verify that everything behave correctly
 
+Well done! You now have an image that can run a container correctly.
+
 > **Tips:** you can look at the *logs* of your container with `docker logs <CONTAINER ID>`, you'll find your *CONTAINER ID* with `docker ps`
 
 > **Tips:** you can stop and remove your container with `docker rm -f <CONTAINER ID>`
-
-Well done! You now have an image that can run a container correctly.
-
 
 ## Export your Docker image to DockerHub
 
