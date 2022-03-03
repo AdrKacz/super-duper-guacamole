@@ -22,7 +22,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	leave_chat()
-	print("Closed connection")
+	print("Connection closed")
 	
 func leave_chat() -> void:
 	get_tree().network_peer = null
