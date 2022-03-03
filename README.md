@@ -107,11 +107,11 @@ In a **centralised architecture**, the code that infers the correct set of users
 ```sh
 # macOS: brew install cloc
 >> cloc --exclude-ext=md .
-      21 text files.
-      11 unique files.                              
-      17 files ignored.
+      23 text files.
+      12 unique files.                              
+      19 files ignored.
 
-github.com/AlDanial/cloc v 1.92  T=0.01 s (817.9 files/s, 31824.0 lines/s)
+github.com/AlDanial/cloc v 1.92  T=0.02 s (516.5 files/s, 19627.1 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
@@ -119,10 +119,11 @@ Godot Scene                      1             23              0            129
 GDScript                         2             29              5            114
 JavaScript                       4             10              5             61
 JSON                             1              0              0             28
+Dockerfile                       1              6              5             17
 Godot Resource                   2              5              0             17
 Bourne Shell                     1              0              1              1
 -------------------------------------------------------------------------------
-SUM:                            11             67             11            350
+SUM:                            12             73             16            367
 -------------------------------------------------------------------------------
 ```
 
