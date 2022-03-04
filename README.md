@@ -169,6 +169,16 @@ sudo usermod -a -G docker ec2-user
 
 Well done! You now have a working server that you can connect to anywhere in the world.
 
+# How to export your Godot project for iOS?
+
+Follow the instruction at [Export for iOS](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_ios.html)
+
+>To explained: *How to get your App Store Team ID and Bundler?* *How to get the required icons?*
+
+# How to export your Godot project for Android?
+
+Follow the instruction at [Export for Android](https://docs.godotengine.org/en/stable/tutorials/export/exporting_for_android.html)
+
 ---
 
 # Below isn't up to date
