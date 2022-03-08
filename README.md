@@ -34,6 +34,51 @@ SUM:                            74            247            363           1963
 -------------------------------------------------------------------------------
 ```
 
+# Sequence
+
+```mermaid
+sequenceDiagram
+      participant Client as Client
+      participant Model as Model provider
+      participant Match as Match maker
+      participant Server as Server
+      Client ->> Model: GET Model Y
+      Model ->> Client: Model Y
+      Client ->> Client: Inference
+      par Actualise model
+      Client ->> Model: POST Inference Gradient
+      Model ->> Model: Actualise Model Y
+      and Get UDP server
+      Client ->> Match: POST Set of users
+      Match ->> Match: Match users
+      Match ->> Server: GET UDP Server
+      Server ->> Match: PORT UDP Server
+      Match ->> Client: PORT UDP Server
+      end
+```
+
+```mermaid
+sequenceDiagram
+      participant Client as Client
+      participant Model as Model provider
+      participant Match as Match maker
+      participant Server as Server
+      Client ->> Model: GET Set of users
+      par Client model
+      Model ->> Model: Get Model X of Client
+      and Global model
+      Model ->> Model: Get Model Y
+      end
+      Model ->> Model: Inference
+      Model ->> Model: Actualise Model Y
+      Model ->> Client: Set of users
+      Client ->> Match: POST Set of users
+      Match ->> Match: Match users
+      Match ->> Server: GET UDP Server
+      Server ->> Match: PORT UDP Server
+      Match ->> Client: PORT UDP Server
+```
+
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
 Development branch of **awa** application.
