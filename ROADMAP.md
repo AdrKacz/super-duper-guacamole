@@ -1,17 +1,26 @@
+# Roadmap
+
 ```mermaid
 gantt
     dateFormat YYYY-MM-DD
     axisFormat %a %e %b %Y
+    excludes weekends, 2022-03-14, 2022-03-15
 
-    section Software
-        Task A : done, s1, 2022-03-04, 7d 
-        Task B : active, s2, after s1, 5d
-        Task C : s31, after s2, 5d 
-        Task C : s32, after s2, 7d 
+    section SDE
+        UDP Server Workflow : s11, 2022-03-10, 1d 
+        Fleet Manager with Queue : s12, after s11, 1d
+        Matchmaking at start : s13, after s12, 1d 
+        Testflight and GPC Beta ready : s14, after s13, 1d
 
-    section Matchmaking
-        Task A : done, s1, 2022-03-04, 2d 
-        Task B : active, s21, after s1, 4d
-        Task C : active, s22, after s1, 5d 
-        Task C : s3, after s21 s22, 4d
+    section MLE
+        Learn AWS: s20, 2022-03-10, 2d 
+        Setup Endpoint and Lambda trigger : s21, 2022-03-10, 1d
+        Cloud based federated learning : s22, after s21, 2d 
+        Beta registration form: s231, after s22, 1d
+        ECL communication : s232, after s22, 1d
+        Media (Reddit, Twitter) communication : s233, after s22, 1d
 ```
+
+> Une tâche est considéré comme terminée une fois qu'elle est *merged* dans la *main branch* avec sa documentation.
+
+> La soutenance aura lieu de 24 mars, la *roadmap* se termine le 18 mars. Cela nous laisse le 23 mars pour une gérer d'éventuels *bug* et corriger la documentation.
