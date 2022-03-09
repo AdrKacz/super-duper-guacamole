@@ -1,27 +1,27 @@
 # super-duper-guacamole - *dev-godot*
 
+### Note on development
+
+Using **Godot** for a simple chat may *not be the best idea*. Indeed, **Godot** is really useful when it comes to *real-time 2D* and *real-time 3D*. Using a standard technology (*ReactNative*) would be more appropriate here.
+
 ### Codebase
 
 ```sh
 # macOS: brew install cloc
->> cloc --exclude-ext=md .
-      23 text files.
-      12 unique files.                              
-      19 files ignored.
+>> cloc --exclude-ext=md awa-chat
+      19 text files.
+       5 unique files.                              
+      24 files ignored.
 
-github.com/AlDanial/cloc v 1.92  T=0.02 s (516.5 files/s, 19627.1 lines/s)
+github.com/AlDanial/cloc v 1.92  T=0.01 s (417.8 files/s, 29159.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-Godot Scene                      1             23              0            129
-GDScript                         2             29              5            114
-JavaScript                       4             10              5             61
-JSON                             1              0              0             28
-Dockerfile                       1              6              5             17
+Godot Scene                      1             23              0            133
+GDScript                         2             37              5            129
 Godot Resource                   2              5              0             17
-Bourne Shell                     1              0              1              1
 -------------------------------------------------------------------------------
-SUM:                            12             73             16            367
+SUM:                             5             65              5            279
 -------------------------------------------------------------------------------
 ```
 
