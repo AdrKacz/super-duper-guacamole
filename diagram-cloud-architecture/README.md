@@ -14,4 +14,4 @@ pip install --upgrade pip
 pip install diagrams
 ```
 
-To compute a diagram `diagram.py`, run `python diagram.py`
+To compute a diagram `diagram.py`, run `python diagram.py`.

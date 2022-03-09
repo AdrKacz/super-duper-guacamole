@@ -63,6 +63,8 @@ sequenceDiagram
       end
 ```
 
+In a **distributed architecture**, the code that infers the correct set of users belongs to the **client app**. Thus, it uses the client technologies: Godot and GDScript.
+
 ### Centralised
 
 ```mermaid
@@ -87,11 +89,17 @@ sequenceDiagram
       Match ->> Client: PORT UDP Server
 ```
 
+In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
+
+> We will first choose the **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we'll keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The objective is to verify as quickly as possible that the model works.
+
 ## Cloud
 
 ### Centralised
 
 ![awa-services](./diagram-cloud-architecture/awa_service.png)
+
+> `Federated` architecture will simply remove the **_client models_ database**
 
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
