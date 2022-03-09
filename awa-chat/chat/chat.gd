@@ -3,6 +3,8 @@ extends Control
 var is_valid_ip_address : bool = false
 var is_valid_port : bool = false
 
+var error_offset : int = 0
+
 onready var join_ip : LineEdit = $MarginContainer/VBoxContainer/JoinContainer/IPContainer/LineEdit
 onready var join_port : LineEdit = $MarginContainer/VBoxContainer/JoinContainer/PortContainer/LineEdit
 
@@ -91,3 +93,24 @@ func _on_Peer_Connected(id : int) -> void:
 	
 func _on_Peer_Disconnected(id : int) -> void:
 	chat.text += "\n[%010d] leaves the chat" % id
+
+
+var focus_on_input : bool = false
+onready var main_margin_container : MarginContainer = $MarginContainer
+func _process(_delta):
+	if not focus_on_input:
+		main_margin_container.add_constant_override("margin_bottom", 64)
+		return
+		
+	if OS.get_virtual_keyboard_height() > 0:
+		main_margin_container.add_constant_override("margin_bottom", 664)
+	else:
+		main_margin_container.add_constant_override("margin_bottom", 64)
+
+
+func _on_LineEdit_focus_entered():
+	focus_on_input = true
+
+
+func _on_LineEdit_focus_exited():
+	focus_on_input = false
