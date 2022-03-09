@@ -1,38 +1,27 @@
-# super-duper-guacamole
+# super-duper-guacamole - *dev-godot*
 
-# Codebase
+### Note on development
+
+Using **Godot** for a simple chat may *not be the best idea*. Indeed, **Godot** is really useful when it comes to *real-time 2D* and *real-time 3D*. Using a standard technology (*ReactNative*) would be more appropriate here.
+
+### Codebase
 
 ```sh
 # macOS: brew install cloc
->> cloc --exclude-ext=md --exclude-dir=.venv .  
-     208 text files.
-     123 unique files.                                          
-     176 files ignored.
+>> cloc --exclude-ext=md awa-chat
+      19 text files.
+       5 unique files.                              
+      24 files ignored.
 
-github.com/AlDanial/cloc v 1.92  T=0.10 s (1288.0 files/s, 84567.4 lines/s)
+github.com/AlDanial/cloc v 1.92  T=0.01 s (417.8 files/s, 29159.0 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-JSON                            29              0              0           3963
-JavaScript                      42            199            188           1440
-XML                             18              8              7            535
-Gradle                           5             53            243            264
-Objective-C                      4             42              6            191
-HTML                             2              5             20            144
-Bourne Shell                     3             24             39            132
-Java                             3             16             25            126
-YAML                             3              8              1            104
-DOS Batch                        1             21              2             66
-CSS                              2              6              0             45
-Python                           1              4              1             20
-Properties                       4             13             38             18
-Starlark                         1              2              1             16
-C/C++ Header                     2              6              0             11
-GraphQL                          1              1              0             11
-SVG                              1              0              0              1
-ProGuard                         1              1              9              0
+Godot Scene                      1             23              0            133
+GDScript                         2             37              5            129
+Godot Resource                   2              5              0             17
 -------------------------------------------------------------------------------
-SUM:                           123            409            580           7087
+SUM:                             5             65              5            279
 -------------------------------------------------------------------------------
 ```
 
@@ -100,34 +89,7 @@ In a **centralised architecture**, the code that infers the correct set of users
 ![awa-services](./diagram-cloud-architecture/awa_service.png)
 
 > `Federated` architecture will simply remove the **_client models_ database**
-# super-duper-guacamole - *dev-godot*
 
-### Codebase
-
-```sh
-# macOS: brew install cloc
->> cloc --exclude-ext=md .
-      23 text files.
-      12 unique files.                              
-      19 files ignored.
-
-github.com/AlDanial/cloc v 1.92  T=0.02 s (516.5 files/s, 19627.1 lines/s)
--------------------------------------------------------------------------------
-Language                     files          blank        comment           code
--------------------------------------------------------------------------------
-Godot Scene                      1             23              0            129
-GDScript                         2             29              5            114
-JavaScript                       4             10              5             61
-JSON                             1              0              0             28
-Dockerfile                       1              6              5             17
-Godot Resource                   2              5              0             17
-Bourne Shell                     1              0              1              1
--------------------------------------------------------------------------------
-SUM:                            12             73             16            367
--------------------------------------------------------------------------------
-```
-
-# Architecture
 
 ```mermaid
 sequenceDiagram
