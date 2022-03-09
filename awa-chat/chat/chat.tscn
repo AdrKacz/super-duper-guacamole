@@ -1,0 +1,152 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://chat/chat-theme.tres" type="Theme" id=1]
+[ext_resource path="res://chat/chat.gd" type="Script" id=2]
+
+[sub_resource type="StyleBoxFlat" id=1]
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Chat" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+rect_rotation = 0.0487848
+theme = ExtResource( 1 )
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_constants/margin_right = 8
+custom_constants/margin_left = 8
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 712.0
+margin_bottom = 1072.0
+alignment = 1
+
+[node name="JoinContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_right = 704.0
+margin_bottom = 306.0
+
+[node name="IPContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/JoinContainer"]
+margin_right = 704.0
+margin_bottom = 77.0
+alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/JoinContainer/IPContainer"]
+margin_left = 65.0
+margin_top = 5.0
+margin_right = 177.0
+margin_bottom = 72.0
+text = "IP  "
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/JoinContainer/IPContainer"]
+margin_left = 181.0
+margin_right = 639.0
+margin_bottom = 77.0
+placeholder_text = "xxx.xxx.xxx.xxx"
+
+[node name="PortContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/JoinContainer"]
+margin_top = 81.0
+margin_right = 704.0
+margin_bottom = 158.0
+alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/JoinContainer/PortContainer"]
+margin_left = 65.0
+margin_top = 5.0
+margin_right = 176.0
+margin_bottom = 72.0
+text = "Port"
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/JoinContainer/PortContainer"]
+margin_left = 180.0
+margin_right = 638.0
+margin_bottom = 77.0
+placeholder_text = "xxxx"
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/JoinContainer"]
+margin_top = 162.0
+margin_right = 704.0
+margin_bottom = 229.0
+text = "You're not connected"
+align = 1
+autowrap = true
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/JoinContainer"]
+margin_top = 233.0
+margin_right = 704.0
+margin_bottom = 306.0
+disabled = true
+text = "Join"
+
+[node name="ChatContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+margin_top = 310.0
+margin_right = 704.0
+margin_bottom = 1064.0
+size_flags_vertical = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/ChatContainer"]
+margin_right = 704.0
+margin_bottom = 657.0
+size_flags_vertical = 3
+custom_styles/bg = SubResource( 1 )
+scroll_horizontal_enabled = false
+
+[node name="ChatContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/ChatContainer/ScrollContainer"]
+margin_right = 704.0
+margin_bottom = 83.0
+size_flags_horizontal = 3
+size_flags_vertical = 0
+custom_constants/margin_left = 8
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/ChatContainer/ScrollContainer/ChatContainer"]
+margin_left = 8.0
+margin_top = 8.0
+margin_right = 704.0
+margin_bottom = 75.0
+size_flags_vertical = 3
+text = "The chat is empty..."
+autowrap = true
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="InputContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer/ChatContainer"]
+margin_top = 661.0
+margin_right = 704.0
+margin_bottom = 754.0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/ChatContainer/InputContainer"]
+margin_top = 8.0
+margin_right = 704.0
+margin_bottom = 85.0
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/VBoxContainer/ChatContainer/InputContainer/HBoxContainer"]
+margin_right = 577.0
+margin_bottom = 77.0
+size_flags_horizontal = 3
+placeholder_text = "Awa"
+
+[node name="Button" type="Button" parent="MarginContainer/VBoxContainer/ChatContainer/InputContainer/HBoxContainer"]
+margin_left = 581.0
+margin_right = 704.0
+margin_bottom = 77.0
+disabled = true
+text = "Send"
+
+[connection signal="text_changed" from="MarginContainer/VBoxContainer/JoinContainer/IPContainer/LineEdit" to="." method="_on_IP_text_changed"]
+[connection signal="text_changed" from="MarginContainer/VBoxContainer/JoinContainer/PortContainer/LineEdit" to="." method="_on_Port_text_changed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/JoinContainer/Button" to="." method="_on_Join_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ChatContainer/InputContainer/HBoxContainer/Button" to="." method="_on_Input_pressed"]
