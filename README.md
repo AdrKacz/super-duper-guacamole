@@ -1,37 +1,47 @@
 # super-duper-guacamole
 
+# Development
+
+**Flutter** is quicker to setup than **React Native** *(I mean, literally quicker, it doesn't burn my laptop)*. I've used (Flutter Chat UI)[https://pub.dev/packages/flutter_chat_ui] to get a first chat without coding. *The same framework was available with **React Native***
+
 # Codebase
 
 ```sh
 # macOS: brew install cloc
 >> cloc --exclude-ext=md .  
-     113 text files.
-      74 unique files.                              
-      87 files ignored.
+     266 text files.
+     120 unique files.                                          
+     400 files ignored.
 
-github.com/AlDanial/cloc v 1.92  T=0.05 s (1458.5 files/s, 50713.5 lines/s)
--------------------------------------------------------------------------------
-Language                     files          blank        comment           code
--------------------------------------------------------------------------------
-JavaScript                      24             94            121            436
-JSON                            12              0              0            323
-XML                             13              6              3            319
-HTML                             2              5             20            144
-Gradle                           3             27            123            139
-Bourne Shell                     3             24             39            132
-Java                             3             16             25            126
-Objective-C                      3             27              0            112
-YAML                             2              8              1             89
-DOS Batch                        1             21              2             66
-CSS                              2              6              0             45
-Starlark                         1              2              1             16
-Properties                       2              7             19             10
-C/C++ Header                     1              3              0              5
-SVG                              1              0              0              1
-ProGuard                         1              1              9              0
--------------------------------------------------------------------------------
-SUM:                            74            247            363           1963
--------------------------------------------------------------------------------
+github.com/AlDanial/cloc v 1.92  T=0.15 s (781.9 files/s, 57922.8 lines/s)
+-----------------------------------------------------------------------------------
+Language                         files          blank        comment           code
+-----------------------------------------------------------------------------------
+XML                                 39              7             45           3089
+C/C++ Header                        26            348           1937            773
+JSON                                11              1              0            603
+C++                                  5             81             29            317
+CMake                                4             34             30            167
+Bourne Shell                         3             24             26            155
+Dart                                 4             34             23            152
+Bourne Again Shell                   1             19             20            121
+YAML                                 4             26             82            109
+Gradle                               3             19              3             88
+HTML                                 1              9             15             80
+Windows Resource File                1             23             29             69
+DOS Batch                            1             24              2             64
+JavaScript                           4             10              5             61
+Markdown                             1              6              0             26
+Objective-C                          3              6              4             21
+Java                                 1              3              5             16
+Swift                                1              1              0             12
+Ruby                                 1              1              6             11
+Properties                           3              0              1             10
+Kotlin                               1              2              0              4
+D                                    2              0              0              2
+-----------------------------------------------------------------------------------
+SUM:                               120            678           2262           5950
+-----------------------------------------------------------------------------------
 ```
 
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
