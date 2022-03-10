@@ -39,7 +39,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // WebSocket Server
-  final _channel = WebSocketChannel.connect(Uri.parse("ws://172.20.10.3:8765"));
+  // TODO: URL in env variable
+  final _channel =
+      WebSocketChannel.connect(Uri.parse("ws://13.37.214.198:8082"));
 
   // Messages
   final List<types.Message> _messages = [];
