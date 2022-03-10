@@ -3,10 +3,12 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 // For the testing purposes, you should probably use https://pub.dev/packages/uuid
+Uuid uuid = const Uuid();
 String randomString() {
   final random = Random.secure();
   final values = List<int>.generate(16, (i) => random.nextInt(255));
@@ -37,28 +39,29 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // WebSocket Server
-  final _channel = WebSocketChannel.connect(Uri.parse("ws://172.20.10.2:8765"));
+  final _channel = WebSocketChannel.connect(Uri.parse("ws://172.20.10.3:8765"));
 
   // Messages
   final List<types.Message> _messages = [];
-  final _user = const types.User(id: '06c33e8b-e835-4736-80f4-63f44b66666c');
+  final _user = types.User(id: uuid.v4());
 
-  void _addMessage(types.Message message) {
-    setState(() {
-      _messages.insert(0, message);
-    });
-  }
+  // void _addMessage(types.Message message) {
+  //   setState(() {
+  //     _messages.insert(0, message);
+  //   });
+  // }
 
   void _handleSendPressed(types.PartialText message) {
-    final textMessage = types.TextMessage(
-      author: _user,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: randomString(),
-      text: message.text,
-    );
+    // final textMessage = types.TextMessage(
+    //   author: _user,
+    //   createdAt: DateTime.now().millisecondsSinceEpoch,
+    //   id: randomString(),
+    //   text: message.text,
+    // );
 
     // Send to server
-    _channel.sink.add(message.text);
+    print(randomString());
+    _channel.sink.add("${_user.id}::${message.text}");
   }
 
   @override
@@ -69,16 +72,22 @@ class _MyHomePageState extends State<MyHomePage> {
           child: StreamBuilder(
             stream: _channel.stream,
             builder: (context, snapshot) {
-              print(snapshot.hasData);
-              print(snapshot.data);
-              _messages.insert(
-                  0,
-                  types.TextMessage(
-                    author: _user,
-                    createdAt: DateTime.now().millisecondsSinceEpoch,
-                    id: randomString(),
-                    text: "From Server",
-                  ));
+              if (snapshot.hasData) {
+                print(snapshot.data);
+                List<String> data =
+                    snapshot.data.toString().split(RegExp(r"::"));
+                print(data);
+                if (data.length == 2) {
+                  _messages.insert(
+                      0,
+                      types.TextMessage(
+                        author: types.User(id: data[0]),
+                        createdAt: DateTime.now().millisecondsSinceEpoch,
+                        id: randomString(),
+                        text: data[1],
+                      ));
+                }
+              }
               return Chat(
                 messages: _messages,
                 onSendPressed: _handleSendPressed,
