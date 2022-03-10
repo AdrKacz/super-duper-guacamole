@@ -1,5 +1,4 @@
 import asyncio
-from multiprocessing.sharedctypes import Value
 import pathlib
 import ssl
 import websockets
@@ -53,7 +52,7 @@ async def register(websocket):
 # ssl_context.load_cert_chain(localhost_pem)
 
 async def main():
-    async with websockets.serve(chat, "172.20.10.3", 8765): #, ssl=ssl_context):
+    async with websockets.serve(chat, "0.0.0.0", 8765): #, ssl=ssl_context):
         await asyncio.Future() # Run forever
 
 if __name__ == "__main__":
