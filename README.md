@@ -27,7 +27,6 @@ SUM:                             5             65              5            279
 
 # Architecture
 
-<<<<<<< HEAD
 ## Sequence
 
 ### Distributed
@@ -92,8 +91,6 @@ In a **centralised architecture**, the code that infers the correct set of users
 > `Federated` architecture will simply remove the **_client models_ database**
 
 
-=======
->>>>>>> 7b4e78d7d82698b52dc72c965b1fe422adee7f96
 ```mermaid
 sequenceDiagram
     participant User
