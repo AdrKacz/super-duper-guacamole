@@ -39,3 +39,7 @@ zip -r fleet-manager.zip ./src
 > Make sure `tmux` is installed: `yum install tmux`and `tmux --version`
 
 > Do not open the port 8000 publicly, it will only be used by the **match-maker** locally
+
+```sh
+# Download zip at https://github.com/AdrKacz/super-duper-guacamole/raw/dev-matchmaker/fleet-manager/fleet-manager.zip
+```
