@@ -44,6 +44,71 @@ SUM:                               120            678           2262           5
 -----------------------------------------------------------------------------------
 ```
 
+# Architecture
+
+## Sequence
+
+### Distributed
+
+```mermaid
+sequenceDiagram
+      participant Client as Client
+      participant Model as Model provider
+      participant Match as Match maker
+      participant Server as Server
+      Client ->> Model: GET Model Y
+      Model ->> Client: Model Y
+      Client ->> Client: Inference
+      par Actualise model
+      Client ->> Model: POST Inference Gradient
+      Model ->> Model: Actualise Model Y
+      and Get UDP server
+      Client ->> Match: POST Set of users
+      Match ->> Match: Match users
+      Match ->> Server: GET UDP Server
+      Server ->> Match: PORT UDP Server
+      Match ->> Client: PORT UDP Server
+      end
+```
+
+In a **distributed architecture**, the code that infers the correct set of users belongs to the **client app**. Thus, it uses the client technologies: Godot and GDScript.
+
+### Centralised
+
+```mermaid
+sequenceDiagram
+      participant Client as Client
+      participant Model as Model provider
+      participant Match as Match maker
+      participant Server as Server
+      Client ->> Model: GET Set of users
+      par Client model
+      Model ->> Model: Get Model X of Client
+      and Global model
+      Model ->> Model: Get Model Y
+      end
+      Model ->> Model: Inference
+      Model ->> Model: Actualise Model Y
+      Model ->> Client: Set of users
+      Client ->> Match: POST Set of users
+      Match ->> Match: Match users
+      Match ->> Server: GET UDP Server
+      Server ->> Match: PORT UDP Server
+      Match ->> Client: PORT UDP Server
+```
+
+In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
+
+> We will first choose the **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we'll keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The objective is to verify as quickly as possible that the model works.
+
+## Cloud
+
+### Centralised
+
+![awa-services](./diagram-cloud-architecture/awa_service.png)
+
+> `Federated` architecture will simply remove the **_client models_ database**
+
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
 Development branch of **awa** application.
