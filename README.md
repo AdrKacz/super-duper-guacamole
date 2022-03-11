@@ -4,35 +4,102 @@
 
 ```sh
 # macOS: brew install cloc
->> cloc --exclude-ext=md .  
-     113 text files.
-      74 unique files.                              
-      87 files ignored.
+>> cloc --exclude-ext=md --exclude-dir=.venv .  
+     208 text files.
+     123 unique files.                                          
+     176 files ignored.
 
-github.com/AlDanial/cloc v 1.92  T=0.05 s (1458.5 files/s, 50713.5 lines/s)
+github.com/AlDanial/cloc v 1.92  T=0.10 s (1288.0 files/s, 84567.4 lines/s)
 -------------------------------------------------------------------------------
 Language                     files          blank        comment           code
 -------------------------------------------------------------------------------
-JavaScript                      24             94            121            436
-JSON                            12              0              0            323
-XML                             13              6              3            319
+JSON                            29              0              0           3963
+JavaScript                      42            199            188           1440
+XML                             18              8              7            535
+Gradle                           5             53            243            264
+Objective-C                      4             42              6            191
 HTML                             2              5             20            144
-Gradle                           3             27            123            139
 Bourne Shell                     3             24             39            132
 Java                             3             16             25            126
-Objective-C                      3             27              0            112
-YAML                             2              8              1             89
+YAML                             3              8              1            104
 DOS Batch                        1             21              2             66
 CSS                              2              6              0             45
+Python                           1              4              1             20
+Properties                       4             13             38             18
 Starlark                         1              2              1             16
-Properties                       2              7             19             10
-C/C++ Header                     1              3              0              5
+C/C++ Header                     2              6              0             11
+GraphQL                          1              1              0             11
 SVG                              1              0              0              1
 ProGuard                         1              1              9              0
 -------------------------------------------------------------------------------
-SUM:                            74            247            363           1963
+SUM:                           123            409            580           7087
 -------------------------------------------------------------------------------
 ```
+
+# Architecture
+
+## Sequence
+
+### Distributed
+
+```mermaid
+sequenceDiagram
+      participant Client as Client
+      participant Model as Model provider
+      participant Match as Match maker
+      participant Server as Server
+      Client ->> Model: GET Model Y
+      Model ->> Client: Model Y
+      Client ->> Client: Inference
+      par Actualise model
+      Client ->> Model: POST Inference Gradient
+      Model ->> Model: Actualise Model Y
+      and Get UDP server
+      Client ->> Match: POST Set of users
+      Match ->> Match: Match users
+      Match ->> Server: GET UDP Server
+      Server ->> Match: PORT UDP Server
+      Match ->> Client: PORT UDP Server
+      end
+```
+
+In a **distributed architecture**, the code that infers the correct set of users belongs to the **client app**. Thus, it uses the client technologies: Godot and GDScript.
+
+### Centralised
+
+```mermaid
+sequenceDiagram
+      participant Client as Client
+      participant Model as Model provider
+      participant Match as Match maker
+      participant Server as Server
+      Client ->> Model: GET Set of users
+      par Client model
+      Model ->> Model: Get Model X of Client
+      and Global model
+      Model ->> Model: Get Model Y
+      end
+      Model ->> Model: Inference
+      Model ->> Model: Actualise Model Y
+      Model ->> Client: Set of users
+      Client ->> Match: POST Set of users
+      Match ->> Match: Match users
+      Match ->> Server: GET UDP Server
+      Server ->> Match: PORT UDP Server
+      Match ->> Client: PORT UDP Server
+```
+
+In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
+
+> We will first choose the **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we'll keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The objective is to verify as quickly as possible that the model works.
+
+## Cloud
+
+### Centralised
+
+![awa-services](./diagram-cloud-architecture/awa_service.png)
+
+> `Federated` architecture will simply remove the **_client models_ database**
 
 > Go to [https://awa-web-app.herokuapp.com](https://awa-web-app.herokuapp.com) for the Web version.
 
