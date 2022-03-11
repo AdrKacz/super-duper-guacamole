@@ -13,9 +13,9 @@ gantt
         Testflight and GPC Beta ready : s14, after s13, 1d
 
     section MLE
-        Learn AWS: s20, 2022-03-10, 2d 
-        Setup Endpoint and Lambda trigger : s21, 2022-03-10, 1d
-        Cloud based federated learning : s22, after s21, 2d 
+        Learn AWS: active, s20, 2022-03-10, 2d 
+        Setup Endpoint and Lambda trigger : done, s21, 2022-03-10, 1d
+        Cloud based federated learning : active, s22, after s21, 2d 
         Beta registration form: s231, after s22, 1d
         ECL communication : s232, after s22, 1d
         Media (Reddit, Twitter) communication : s233, after s22, 1d
