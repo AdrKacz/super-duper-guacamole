@@ -1,5 +1,5 @@
 # diagram.py
-from diagrams import Diagram
+from diagrams import Diagram, Edge
 from diagrams.generic.device import Mobile
 from diagrams.onprem.container import Docker
 from diagrams.aws.compute import Lambda, Lightsail
@@ -21,5 +21,6 @@ with Diagram("Awa service", show=False):
     udp_server_port - dockers
     
     client = Mobile("Client")
-    client >> [model_provider_endpoint, match_maker_endpoint]
+    client >> match_maker_endpoint
     client - udp_server_port
+    client >> Edge() << model_provider_endpoint
