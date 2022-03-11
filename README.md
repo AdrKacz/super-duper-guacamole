@@ -1,4 +1,4 @@
-# super-duper-guacamole - *dev-godot*
+# super-duper-guacamole - *dev-flutter*
 
 ### Note on development
 
