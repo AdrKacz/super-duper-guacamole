@@ -22,7 +22,7 @@ pip install docker
 # Run the server
 
 ```sh
-uvicorn main:app
+uvicorn src.main:app
 ```
 
 # Upload to AWS Lightsail
@@ -42,4 +42,22 @@ zip -r fleet-manager.zip ./src
 
 ```sh
 # Download zip at https://github.com/AdrKacz/super-duper-guacamole/raw/dev-matchmaker/fleet-manager/fleet-manager.zip
+mkdir fleet-manager
+cd fleet-manager
+wget https://github.com/AdrKacz/super-duper-guacamole/raw/dev-matchmaker/fleet-manager/fleet-manager.zip
+unzip fleet-manager.zip
+rm fleet-manager.zip
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install fastapi
+pip install "uvicorn[standard]"
+pip install docker
+deactivate
+tmux
+source venv/bin/activate
+uvicorn src.main:app
+# Ctrl+b d
+# tmux ls to see sessions
+# tmux attach-session -t 0 to get back to session 0
 ```
