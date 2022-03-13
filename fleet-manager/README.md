@@ -22,8 +22,12 @@ pip install docker
 # Run the server
 
 ```sh
-uvicorn src.main:app
+uvicorn src.main:app --host 0.0.0.0 --port 8000
+# or, for debugging
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+> Go to [http://127.0.0.1:8000/docs]() to play with your API.
 
 # Upload to AWS Lightsail
 
@@ -35,6 +39,11 @@ zip -r fleet-manager.zip ./src
 ```
 
 # Instance
+
+```sh
+# Connect to your instance
+ssh -i <path-to-your-key> ec2-user@<public-ip>
+```
 
 > Make sure `tmux` is installed: `yum install tmux`and `tmux --version`
 
@@ -56,7 +65,7 @@ pip install docker
 deactivate
 tmux
 source venv/bin/activate
-uvicorn src.main:app
+uvicorn src.main:app --host 0.0.0.0 --port 8000
 # Ctrl+b d
 # tmux ls to see sessions
 # tmux attach-session -t 0 to get back to session 0

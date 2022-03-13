@@ -15,9 +15,11 @@ current_room_size : int = MAXIMUM_ROOM_SIZE
 def create_new_room():
     # host.docker.internal works on macOS - not tested in Amazon Linux 2 instance
     # See https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
-    r = requests.get("http://host.docker.internal:8000/")
+    # 172.17.0.1, work on Linux
+    # See https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal
+    r = requests.get("http://host.docker.internal:8000")
     print(r.json())
-    return "0.0.0.0", 8081
+    return "13.37.214.198", 8081
 
 @app.get("/")
 def read_root():
