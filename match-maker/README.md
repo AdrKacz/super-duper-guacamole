@@ -2,7 +2,7 @@
 
 The **match maker** is a *Lambda* function that creates rooms for users.
 
-Users have to send their preference (coming from the **recommender system**), and the **match maker** try to satisfies as many user as possible.
+Users have to send their preference (coming from the **recommender system**), and the **match maker** try to satisfy as many users as possible.
 
 We already have a *Lightsail* instance running in the cloud. For simplicity, we will not use *Lambda* for now. The **match maker** will communicate with the **fleet manager** through an open port, both on the same machine.
 
