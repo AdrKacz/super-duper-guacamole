@@ -3,7 +3,7 @@
 Fleet Manager is running on the *LightSail* instance that runs the *Docker containers*.
 It offers an **API** to **open** and **close** container.
 
-This **API** will be used by the **match-maker** to create new room as player came in.
+This **API** will be used by the **matchmaker** to create new room as player came in.
 
 > That may not be the most efficient method, but it will be enought for now.
 
@@ -42,7 +42,7 @@ zip -r fleet-manager.zip ./src
 
 > Make sure `tmux` is installed: `yum install tmux`and `tmux --version`
 
-> Do not open the port 8000 publicly, it will only be used by the **match-maker** locally
+> Do not open the port 8000 publicly, it will only be used by the **matchmaker** locally
 
 ## Copy development to your instance
 
