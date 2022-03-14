@@ -143,7 +143,54 @@ graph LR
     C_2 -.-> |No|Wait
 ```
 
-> Will user who likes the same worlds will like eachothers? What dependence with the number of world?
+> Will user who likes the same worlds will like eachothers? Will it work with few worlds?
+
+# How room are managed?
+
+## User ask for a room
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant MM as Match Maker
+    participant FM as Fleet Manager
+    User ->> MM: GET room (IP, port)
+    alt is current room full
+        MM ->> FM: create new room
+        FM ->> FM: update active ports
+        alt is space for new room
+            FM ->> MM: new room port
+            MM ->> User: new room (IP, port)
+        else
+            FM ->> MM: error
+            MM ->> User: error
+        end
+    else
+      MM ->> User: current room (IP, port)
+    end
+```
+
+## Fleet manager update active ports
+
+```mermaid
+sequenceDiagram
+    participant FM as Fleet Manager
+    participant D as Docker API
+    loop container
+        D ->> FM: container image
+        alt is from server image
+            D ->> FM: container status
+            alt is container running
+                D ->> FM: container open ports
+                alt has open ports
+                    FM ->> FM: lock open ports
+                end
+            end
+        end
+    end
+```
+
+---
 
 # How to run your server?
 
