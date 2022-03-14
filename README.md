@@ -48,6 +48,15 @@ SUM:                               120            678           2262           5
 -----------------------------------------------------------------------------------
 ```
 
+# App state
+
+```mermaid
+stateDiagram-v2
+    HomePage --> MainPage: join
+    MainPage --> MainPage: chat
+    MainPage --> HomePage: quit
+```
+
 # Architecture
 
 ## Sequence Diagram

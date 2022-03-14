@@ -7,6 +7,9 @@ import 'package:uuid/uuid.dart';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+// Endpoints
+const String matchmakerEndpoint = "http://13.37.214.198:8080";
+
 // For the testing purposes, you should probably use https://pub.dev/packages/uuid
 Uuid uuid = const Uuid();
 String randomString() {
@@ -54,13 +57,6 @@ class _MyHomePageState extends State<MyHomePage> {
   // }
 
   void _handleSendPressed(types.PartialText message) {
-    // final textMessage = types.TextMessage(
-    //   author: _user,
-    //   createdAt: DateTime.now().millisecondsSinceEpoch,
-    //   id: randomString(),
-    //   text: message.text,
-    // );
-
     // Send to server
     print(randomString());
     _channel.sink.add("${_user.id}::${message.text}");
