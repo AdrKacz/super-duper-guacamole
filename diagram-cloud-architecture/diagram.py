@@ -9,7 +9,7 @@ from diagrams.aws.network import APIGateway, Endpoint
 with Diagram("Awa service", show=False):
     model_provider_endpoint = APIGateway("Model provider endpoint")
     dockers = Docker("UDP Server")
-    match_maker_endpoint = APIGateway("Match maker endpoint")
+    match_maker_endpoint = APIGateway("Matchmaker endpoint")
     udp_server_port = Endpoint("UDP Server Port")
 
     model_provider_endpoint >> Lambda("Model provider") >> [
@@ -17,7 +17,7 @@ with Diagram("Awa service", show=False):
         Dynamodb("Client Models"),
     ]
 
-    (match_maker_endpoint >> Lambda("Match maker") >> Lightsail("UDP Server Fleet")) - dockers
+    (match_maker_endpoint >> Lambda("Matchmaker") >> Lightsail("UDP Server Fleet")) - dockers
     udp_server_port - dockers
     
     client = Mobile("Client")
