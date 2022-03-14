@@ -1,15 +1,15 @@
-# Match maker
+# Matchmaker
 
-The **match maker** is a *Lambda* function that creates rooms for users.
+The **matchmaker** is a *Lambda* function that creates rooms for users.
 
-Users have to send their preference (coming from the **recommender system**), and the **match maker** try to satisfy as many users as possible.
+Users have to send their preference (coming from the **recommender system**), and the **matchmaker** try to satisfy as many users as possible.
 
-We already have a *Lightsail* instance running in the cloud. For simplicity, we will not use *Lambda* for now. The **match maker** will communicate with the **fleet manager** through an open port, both on the same machine.
+We already have a *Lightsail* instance running in the cloud. For simplicity, we will not use *Lambda* for now. The **matchmaker** will communicate with the **fleet manager** through an open port, both on the same machine.
 
 # Development
 
 ```sh
-cd match-maker
+cd matchmaker
 docker build -t <your-image> .
 docker run -dp <your-port>:8080 <your-image>
 # Go to http://localhost:<your-port>/docs to test your API
