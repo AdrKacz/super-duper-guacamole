@@ -58,7 +58,7 @@ SUM:                               120            678           2262           5
 sequenceDiagram
       participant Client as Client
       participant Model as Model provider
-      participant Match as Match maker
+      participant Match as Matchmaker
       participant Server as Server
       Client ->> Model: GET Model Y
       Model ->> Client: Model Y
@@ -83,7 +83,7 @@ In a **distributed architecture**, the code that infers the correct set of users
 sequenceDiagram
       participant Client as Client
       participant Model as Model provider
-      participant Match as Match maker
+      participant Match as Matchmaker
       participant Server as Server
       Client ->> Model: GET Set of users
       par Client model
@@ -117,30 +117,27 @@ In a **centralised architecture**, the code that infers the correct set of users
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Matchmaker
-    participant UserAPI
-    participant WorldAPI
-    participant GameServer
-    User ->> Matchmaker : I want to play
-    Matchmaker -->> UserAPI : Who are the best users for this user?
-    UserAPI -->> Matchmaker : Set of user
-    Matchmaker -->> WorldAPI : What are is best worlds for these users?
-    WorldAPI -->> Matchmaker : World
-    Matchmaker -->> GameServer : Give me an endpoint for this world
-    GameServer -->> Matchmaker : World endpoint
-    Matchmaker ->> User : World endpoint
+    participant RS as Recommender system
+    actor User
+    participant MM as Matchmaker
+    participant FM as Fleet manager
+    User ->> RS: who are the best users for me?
+    RS ->> User: Set of users
+    User ->> MM: I want a room with these users
+    MM ->> MM: find best rooms
+    MM -->> FM : create new rooms
+    FM -->> MM : endpoints
+    MM ->> User : endpoint
 ```
 
 ```mermaid
 graph LR
-    World --> C{Is alive?}
-    C{Is alive?} -.-> |Yes|C_1{Can enter?}
-    C{Is alive?} -.-> |No|C_2{Can create?}
-    C_1 -.-> |Yes|E[Endpoint]
-    C_1 -.-> |No|C_2
-    C_2 -.-> |Yes|E
-    C_2 -.-> |No|Wait
+    room --> C{is full?}
+    C -.-> |yes|C_1{has space for new room?}
+    C -.-> |no|E_0[return current room]
+    C_1 -.-> |yes|E_1[update current room]
+    C_1 -.-> |no|E_2[return error]
+    E_1 -.-> E_0
 ```
 
 > Will user who likes the same worlds will like eachothers? Will it work with few worlds?
@@ -152,7 +149,7 @@ graph LR
 ```mermaid
 sequenceDiagram
     actor User
-    participant MM as Match Maker
+    participant MM as Matchmaker
     participant FM as Fleet Manager
     User ->> MM: GET room (IP, port)
     alt is current room full
