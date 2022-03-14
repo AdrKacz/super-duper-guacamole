@@ -8,8 +8,8 @@ gantt
 
     section SDE
         UDP Server Workflow : done, s11, 2022-03-10, 1d 
-        Fleet Manager with Queue : active, s12, after s11, 1d
-        Matchmaking at start : s13, after s12, 1d 
+        Fleet Manager with Queue : done, s12, after s11, 1d
+        Matchmaking at start : active, s13, after s12, 1d 
         Testflight and GPC Beta ready : s14, after s13, 1d
 
     section MLE
