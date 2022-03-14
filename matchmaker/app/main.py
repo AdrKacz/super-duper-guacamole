@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 
 import requests
 
@@ -24,7 +24,7 @@ def create_new_room():
     if port:
         # TODO: replace 127.0.0.1 by environment variable
         print("\tport:", port)
-        return "127.0.0.1", port, False
+        return "172.20.10.3", port, False
     else:
         error = response.get("error", "unknown error")
         print("\terror:", error)
@@ -34,8 +34,8 @@ def create_new_room():
 def read_root():
     return {"Match": "Maker"}
 
-@app.get("/room/{user_id}")
-def read_room(user_id : str):
+@app.get("/room/{user_id}", status_code=200)
+def read_room(user_id : str, response: Response):
     global current_room_address, current_room_port, current_room_size
     if current_room_size >= MAXIMUM_ROOM_SIZE:
         # Reset and new room
@@ -43,6 +43,7 @@ def read_room(user_id : str):
         current_room_address, current_room_port, error = create_new_room()
         if error:
             current_room_size = MAXIMUM_ROOM_SIZE # to force creation a next call
+            response.status_code = 204 # TODO: use status.NO_CONTENT
             return {"user_id": user_id, "error": error}
     current_room_size += 1
     return {"user_id": user_id, "room_address": current_room_address, "room_port": current_room_port}

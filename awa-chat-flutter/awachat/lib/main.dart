@@ -7,8 +7,48 @@ import 'package:uuid/uuid.dart';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import 'package:http/http.dart' as http;
+
 // Endpoints
-const String matchmakerEndpoint = "http://13.37.214.198:8080";
+// TODO: correct user_id
+// const String matchmakerEndpoint = "http://13.37.214.198:8080/room/1";
+
+const String matchmakerEndpoint =
+    "http://172.20.10.3:8080/room/1"; // TODO: correct user_id
+
+// Room
+class Room {
+  final String ipAddress;
+  final int port;
+  final WebSocketChannel channel;
+
+  const Room({
+    required this.ipAddress,
+    required this.port,
+    required this.channel,
+  });
+
+  factory Room.fromJson(Map<String, dynamic> json) {
+    print("Create room with room ${json["room_address"]}:${json["room_port"]}");
+    WebSocketChannel channel = WebSocketChannel.connect(
+        Uri.parse("ws://${json["room_address"]}:${json["room_port"]}"));
+    return Room(
+      ipAddress: json["room_address"],
+      port: json["room_port"],
+      channel: channel,
+    );
+  }
+}
+
+Future<Room> fetchRoom() async {
+  final response = await http.get(Uri.parse(matchmakerEndpoint));
+
+  if (response.statusCode == 200) {
+    return Room.fromJson(jsonDecode(response.body));
+  } else {
+    return Future.error("Failed to load room");
+  }
+}
 
 // For the testing purposes, you should probably use https://pub.dev/packages/uuid
 Uuid uuid = const Uuid();
@@ -41,25 +81,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  // WebSocket Server
-  // TODO: URL in env variable
-  final _channel =
-      WebSocketChannel.connect(Uri.parse("ws://13.37.214.198:8082"));
+  // WebSocket room
+  late Future<Room> futureRoom;
 
   // Messages
   final List<types.Message> _messages = [];
   final _user = types.User(id: uuid.v4());
 
-  // void _addMessage(types.Message message) {
-  //   setState(() {
-  //     _messages.insert(0, message);
-  //   });
-  // }
-
-  void _handleSendPressed(types.PartialText message) {
-    // Send to server
-    print(randomString());
-    _channel.sink.add("${_user.id}::${message.text}");
+  // Init
+  @override
+  void initState() {
+    super.initState();
+    futureRoom = fetchRoom();
   }
 
   @override
@@ -67,30 +100,44 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: SafeArea(
           bottom: false,
-          child: StreamBuilder(
-            stream: _channel.stream,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                print(snapshot.data);
-                List<String> data =
-                    snapshot.data.toString().split(RegExp(r"::"));
-                print(data);
-                if (data.length == 2) {
-                  _messages.insert(
-                      0,
-                      types.TextMessage(
-                        author: types.User(id: data[0]),
-                        createdAt: DateTime.now().millisecondsSinceEpoch,
-                        id: randomString(),
-                        text: data[1],
-                      ));
-                }
+          child: FutureBuilder<Room>(
+            future: futureRoom,
+            builder: (roomContext, roomSnapshot) {
+              if (roomSnapshot.hasData) {
+                return StreamBuilder(
+                  stream: roomSnapshot.data!.channel.stream,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      print(snapshot.data);
+                      List<String> data =
+                          snapshot.data.toString().split(RegExp(r"::"));
+                      print(data);
+                      if (data.length == 2) {
+                        _messages.insert(
+                            0,
+                            types.TextMessage(
+                              author: types.User(id: data[0]),
+                              createdAt: DateTime.now().millisecondsSinceEpoch,
+                              id: randomString(),
+                              text: data[1],
+                            ));
+                      }
+                    }
+                    return Chat(
+                      messages: _messages,
+                      onSendPressed: (types.PartialText message) {
+                        roomSnapshot.data!.channel.sink
+                            .add("${_user.id}::${message.text}");
+                      },
+                      user: _user,
+                    );
+                  },
+                );
+              } else if (roomSnapshot.hasError) {
+                return Text("${roomSnapshot.error}");
+              } else {
+                return const CircularProgressIndicator();
               }
-              return Chat(
-                messages: _messages,
-                onSendPressed: _handleSendPressed,
-                user: _user,
-              );
             },
           )),
     );
