@@ -42,7 +42,7 @@ zip -r fleet-manager.zip ./src
 
 > Make sure `tmux` is installed: `yum install tmux`and `tmux --version`
 
-> Do not open the port 8000 publicly, it will only be used by the **match-maker** locally
+> Do not open the port 8000 publicly, it will only be used by the **matchmaker** locally
 
 ## Copy development to your instance
 
