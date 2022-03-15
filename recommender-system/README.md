@@ -49,6 +49,8 @@ CMD [ "app.handler" ]
 `docker build -t 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`  
 `docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
 
+ATTENTION : To be in the folder of the Dockerfile while building is required!
+
 ### Create a Database with DynamoDB
 
 1. Create a table:
@@ -110,7 +112,7 @@ sequenceDiagram
       Client ->> Model: POST ∇ Y
       Model ->> Client: Response: 200
       Model ->> Model: Master model Y update
-
+```
 
 
 ### References
@@ -118,18 +120,7 @@ sequenceDiagram
 [0] : [Use of DynamoDB tables in the lambda function](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html)  
 [1] : [Calling an AWS Lambda function from another Lambda function](https://www.sqlshack.com/calling-an-aws-lambda-function-from-another-lambda-function/)
 
-
-```
-
-
 #### Container :
-
-
 [0] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)
-
 [1] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)
-
-#### Calling A Lambda with another Lambda:
-
-[0] : [Calling an AWS Lambda function from another Lambda function](https://www.sqlshack.com/calling-an-aws-lambda-function-from-another-lambda-function/)
 
