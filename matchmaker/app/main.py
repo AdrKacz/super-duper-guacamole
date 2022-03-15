@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import FastAPI, Response
+from fastapi.responses import JSONResponse
 
 import requests
 
@@ -24,11 +25,11 @@ def create_new_room():
     if port:
         # TODO: replace 127.0.0.1 by environment variable
         print("\tport:", port)
-        return "172.20.10.3", port, False
+        return "172.20.10.3", port, ""
     else:
         error = response.get("error", "unknown error")
         print("\terror:", error)
-        return None, None, error
+        return "", 0, error
 
 @app.get("/")
 def read_root():
@@ -37,16 +38,17 @@ def read_root():
 @app.get("/room/{user_id}", status_code=200)
 def read_room(user_id : str, response: Response):
     global current_room_address, current_room_port, current_room_size
+    error = ""
     if current_room_size >= MAXIMUM_ROOM_SIZE:
         # Reset and new room
         current_room_size = 0
         current_room_address, current_room_port, error = create_new_room()
         if error:
             current_room_size = MAXIMUM_ROOM_SIZE # to force creation a next call
-            response.status_code = 204 # TODO: use status.NO_CONTENT
-            return {"user_id": user_id, "error": error}
+            response.status_code = 200 # TODO: use status.NO_CONTENT
+            # Error on 204 ContentLength: https://github.com/tiangolo/fastapi/issues/717
     current_room_size += 1
-    return {"user_id": user_id, "room_address": current_room_address, "room_port": current_room_port}
+    return {"user_id": user_id, "room_address": current_room_address, "room_port": current_room_port, "error": error}
 
 
 

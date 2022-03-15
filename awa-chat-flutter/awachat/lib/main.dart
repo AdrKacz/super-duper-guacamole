@@ -29,7 +29,7 @@ class Room {
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
-    print("Create room with room ${json["room_address"]}:${json["room_port"]}");
+    print("Create room with ${json["room_address"]}:${json["room_port"]}");
     WebSocketChannel channel = WebSocketChannel.connect(
         Uri.parse("ws://${json["room_address"]}:${json["room_port"]}"));
     return Room(
@@ -43,14 +43,16 @@ class Room {
 Future<Room> fetchRoom() async {
   final response = await http.get(Uri.parse(matchmakerEndpoint));
 
-  if (response.statusCode == 200) {
-    return Room.fromJson(jsonDecode(response.body));
+  final body = jsonDecode(response.body);
+  if (body["error"] == "") {
+    //TODO: use statusCode instead 200 vs 204
+    await Future.delayed(const Duration(seconds: 1), () {});
+    return Room.fromJson(body);
   } else {
     return Future.error("Failed to load room");
   }
 }
 
-// For the testing purposes, you should probably use https://pub.dev/packages/uuid
 Uuid uuid = const Uuid();
 String randomString() {
   final random = Random.secure();
@@ -85,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late Future<Room> futureRoom;
 
   // Messages
+  // TODO: history is kept between room (problem)
   final List<types.Message> _messages = [];
   final _user = types.User(id: uuid.v4());
 
@@ -95,49 +98,84 @@ class _MyHomePageState extends State<MyHomePage> {
     futureRoom = fetchRoom();
   }
 
+  //TODO: Change room in AppBar ONLY if already connected
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar:
+          AppBar(backgroundColor: const Color(0xff1d1c21), actions: <Widget>[
+        PopupMenuButton<int>(onSelected: (int result) {
+          setState(() {
+            futureRoom = fetchRoom();
+          });
+        }, itemBuilder: (BuildContext context) {
+          return [
+            const PopupMenuItem<int>(value: 0, child: Text("Change room")),
+          ];
+        })
+      ]),
       body: SafeArea(
           bottom: false,
           child: FutureBuilder<Room>(
             future: futureRoom,
             builder: (roomContext, roomSnapshot) {
-              if (roomSnapshot.hasData) {
-                return StreamBuilder(
-                  stream: roomSnapshot.data!.channel.stream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      print(snapshot.data);
-                      List<String> data =
-                          snapshot.data.toString().split(RegExp(r"::"));
-                      print(data);
-                      if (data.length == 2) {
-                        _messages.insert(
-                            0,
-                            types.TextMessage(
-                              author: types.User(id: data[0]),
-                              createdAt: DateTime.now().millisecondsSinceEpoch,
-                              id: randomString(),
-                              text: data[1],
-                            ));
+              print(roomSnapshot);
+              if (roomSnapshot.connectionState == ConnectionState.done) {
+                if (roomSnapshot.hasData) {
+                  print(
+                      "Connected to room ${roomSnapshot.data!.ipAddress}:${roomSnapshot.data!.port}");
+                  return StreamBuilder(
+                    stream: roomSnapshot.data!.channel.stream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        print(snapshot.data);
+                        List<String> data =
+                            snapshot.data.toString().split(RegExp(r"::"));
+                        print(data);
+                        if (data.length == 2) {
+                          _messages.insert(
+                              0,
+                              types.TextMessage(
+                                author: types.User(id: data[0]),
+                                createdAt:
+                                    DateTime.now().millisecondsSinceEpoch,
+                                id: randomString(),
+                                text: data[1],
+                              ));
+                        }
                       }
-                    }
-                    return Chat(
-                      messages: _messages,
-                      onSendPressed: (types.PartialText message) {
-                        roomSnapshot.data!.channel.sink
-                            .add("${_user.id}::${message.text}");
-                      },
-                      user: _user,
-                    );
-                  },
-                );
-              } else if (roomSnapshot.hasError) {
-                return Text("${roomSnapshot.error}");
-              } else {
-                return const CircularProgressIndicator();
+                      return Chat(
+                        messages: _messages,
+                        onSendPressed: (types.PartialText message) {
+                          print(
+                              "Send message to ${roomSnapshot.data!.ipAddress}:${roomSnapshot.data!.port}");
+                          roomSnapshot.data!.channel.sink
+                              .add("${_user.id}::${message.text}");
+                        },
+                        user: _user,
+                      );
+                    },
+                  );
+                } else if (roomSnapshot.hasError) {
+                  return Center(
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                        const Text("You didn't find any room"),
+                        ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              primary: const Color(0xff1d1c21),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                futureRoom = fetchRoom();
+                              });
+                            },
+                            child: const Text("Retry"))
+                      ]));
+                }
               }
+              return const Center(child: CircularProgressIndicator());
             },
           )),
     );
