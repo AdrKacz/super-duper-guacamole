@@ -31,8 +31,12 @@ def update_y_matrix(db, key_name, key_value, matrix_y_update):
 def handler(event, context):
     print("Event: ", event)
     update_y_bool = bool(event['update'])
+    user_id = event["user_id"]
+    try:
+        assert type(user_id)==str and type(update_y_bool) == bool
+    except:
+        return "ERROR 203"
     matrix_y_update = np.random.rand(K_VAL, N_USERS)
-
     # Variables
     user_id = event["user_id"] # 1
 
@@ -41,8 +45,10 @@ def handler(event, context):
 
     #### Get item matrix_y from the table (the Y matrix)
     y_matrix = get_matrix_y(db_model_y, 'user_id', 'matrix_y', 'matrix')
-    print("Y matrix shape and Y[0]", y_matrix.shape, y_matrix[0,:])
-    assert isinstance(y_matrix, np.ndarray) and y_matrix.shape == (K_VAL, N_USERS)
+    try:
+        assert isinstance(y_matrix, np.ndarray) and y_matrix.shape == (K_VAL, N_USERS)
+    except:
+        return "ERROR 204"
 
     ### Interaction with the AWS lambda of the x-part of the model (users)
     # Define the input parameters that will be passed on to the model x function
@@ -61,11 +67,9 @@ def handler(event, context):
     print("PayLoad :", x_response)
 
     x_json = json.loads(json.loads(x_response))
-    assert type(x_json) == dict
     print("PayLoad JSON:", x_json)
     user_id_x = x_json["user_id"]
     inference_x = np.array(x_json['inference_x'])
-    assert type(user_id_x) == str and isinstance(inference_x, np.ndarray)
     print(inference_x.shape)
 
     return json.dumps({'user_id' : user_id_x,

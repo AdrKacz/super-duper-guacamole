@@ -24,11 +24,15 @@ def handler(event, context):
     K_VAL = event["K_VAL"]  # Int
     # Variables
     user_id = str(event["user_id"]) # str
-    print("Type :", type(user_id), type(K_VAL))
-    assert type(user_id) == str and type(K_VAL) == int
     y_matrix = np.array(event["y_matrix"])
-    print("Y_matrix :", type(y_matrix), y_matrix.shape)
-    assert isinstance(y_matrix, np.ndarray) and y_matrix.shape[0] == K_VAL
+    print("Type :", type(user_id), type(K_VAL))
+    try:
+        assert type(user_id) == str and type(K_VAL) == int 
+        assert isinstance(y_matrix, np.ndarray) and y_matrix.shape[0] == K_VAL
+    except:
+        return "ERROR 204"
+
+    print("Y_matrix :", type(y_matrix), y_matrix.shape) 
 
     # Check if it is a new user:
     response = db_model_x.get_item(Key={'user_id': str(user_id)})
@@ -39,18 +43,22 @@ def handler(event, context):
         create_new_user(db_model_x, 'user_id', user_id, K_VAL)
 
     x_u = get_xu_vector(db_model_x, user_id) # Vector in a matrix shape (1,k)
-    print("x_u :", x_u.shape, x_u)
+    print("x_u :", x_u.shape)
     assert isinstance(x_u, np.ndarray) and x_u.shape == (K_VAL,1)
 
     ### Inference
     # 1st step : Check is the matrix computation is possible
     Y = y_matrix
     alpha = 0.5
+    lambda_reg = 0.5
     # r_ui = np.dot(x_u.T, y_matrix[:,i])
     r_u = np.dot(x_u.T, y_matrix) # (1,K)x(K,N) = # (1,N)
+    # p_ui = int(bool(r_ui != 0.0))
+    # p_u = r_u
     # c_ui = 1 + alpha*r_ui
     c_u = 1 + alpha * r_u
-    # x_u_opt = np.dot(np.linalg.inv(Y @ C_u @ Y.T + lambda_reg*np.identity(K_VAL)), Y @ C_u @ p(u))
+    C_u_diag = np.diag(c_u)
+    # x_u_opt = np.dot(np.linalg.inv(Y @ C_u_diag @ Y.T + lambda_reg*np.identity(K_VAL)), Y @ C_u_diag @ p_u)
 
 
     ### Gradient computation

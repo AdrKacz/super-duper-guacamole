@@ -14,9 +14,9 @@ def handler(event, context):
     
 ```
 
-3. In your project directory, add a file named requirements.txt. List each required library as a separate line in this file.
-4. Create a Dockerfile like so:  
-Install any dependencies under the ${LAMBDA_TASK_ROOT} directory alongside the function handler to ensure that the Lambda runtime can locate them when the function is invoked.
+3. In your project directory, add a file named `requirements.txt`. List each required library as a separate line in this file.
+4. Create a Dockerfile:  
+Install dependencies under the `${LAMBDA_TASK_ROOT}` directory alongside the function handler to ensure that the Lambda runtime can locate them when the function is invoked.
 ```
 FROM public.ecr.aws/lambda/python:3.9
 
@@ -33,7 +33,7 @@ RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 CMD [ "app.handler" ]
 ```
 
-5. Create an Amazon ECR
+5. Create an Amazon ECR repository
 
 6. Build your Docker image with `docker build -t hello-world .`
 7. Authenticate the Docker CLI to your Amazon ECR registry.  
