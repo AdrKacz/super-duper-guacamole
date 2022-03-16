@@ -40,6 +40,7 @@ async def register(websocket):
     if number_of_peers >= MAX_PEERS:
         return False
     # Alert other peers
+    print(f"Peer {len(peers) + 1} just entered the chat")
     for peer in peers:
         if peer:
             await peer.send(f"0::Someone just entered the chat!")
