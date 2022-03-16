@@ -8,5 +8,4 @@ RUN pip install websockets
 
 WORKDIR /app
 COPY src/main.py main.py
-COPY src/client.py client.py
 CMD python -u main.py
