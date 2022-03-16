@@ -154,17 +154,13 @@ sequenceDiagram
 
 # Screenshots
 
-- | - | -
--- | -- | --
-![](./screenshots/screenshot_0693.PNG) | ![](./screenshots/screenshot_0694.PNG) | ![](./screenshots/screenshot_0695.PNG)
-![](./screenshots/screenshot_0696.PNG) | ![](./screenshots/screenshot_0697.PNG)
-
-
-<img src="./screenshots/screenshot_0693.PNG" height="300">
-<img src="./screenshots/screenshot_0694.PNG" height="300">
-<img src="./screenshots/screenshot_0695.PNG" height="300">
-<img src="./screenshots/screenshot_0696.PNG" height="300">
-<img src="./screenshots/screenshot_0697.PNG" height="300">
+<p float="left">
+    <img src="./screenshots/screenshot_0693.PNG" height="300">
+    <img src="./screenshots/screenshot_0694.PNG" height="300">
+    <img src="./screenshots/screenshot_0695.PNG" height="300">
+    <img src="./screenshots/screenshot_0696.PNG" height="300">
+    <img src="./screenshots/screenshot_0697.PNG" height="300">
+</p>
 
 ---
 
