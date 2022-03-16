@@ -154,12 +154,12 @@ sequenceDiagram
 
 # Screenshots
 
-<p float="left">
-    <img src="./screenshots/screenshot_0693.PNG" height="300">
-    <img src="./screenshots/screenshot_0694.PNG" height="300">
-    <img src="./screenshots/screenshot_0695.PNG" height="300">
-    <img src="./screenshots/screenshot_0696.PNG" height="300">
-    <img src="./screenshots/screenshot_0697.PNG" height="300">
+<p float="left" align="middle">
+    <img src="./screenshots/screenshot_0693.PNG" width="32%">
+    <img src="./screenshots/screenshot_0694.PNG" width="32%">
+    <img src="./screenshots/screenshot_0695.PNG" width="32%">
+    <img src="./screenshots/screenshot_0696.PNG" width="32%">
+    <img src="./screenshots/screenshot_0697.PNG" width="32%">
 </p>
 
 ---
