@@ -154,11 +154,12 @@ sequenceDiagram
 
 # Screenshots
 
-![screenshot](./screenshots/screenshot_0693.PNG)
-![screenshot](./screenshots/screenshot_0694.PNG)
-![screenshot](./screenshots/screenshot_0695.PNG)
-![screenshot](./screenshots/screenshot_0696.PNG)
-![screenshot](./screenshots/screenshot_0697.PNG)
+
+<img src="./screenshots/screenshot_0693.PNG" height="300">
+<img src="./screenshots/screenshot_0694.PNG" height="300">
+<img src="./screenshots/screenshot_0695.PNG" height="300">
+<img src="./screenshots/screenshot_0696.PNG" height="300">
+<img src="./screenshots/screenshot_0697.PNG" height="300">
 
 ---
 
