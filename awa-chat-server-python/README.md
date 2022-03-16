@@ -1,5 +1,33 @@
 # WebSocket Server
 
+```mermaid
+sequenceDiagram
+    participant m as main
+    participant a as alive
+    participant s as server
+    participant WS as WebSocket
+
+    par run server
+        m ->> s: await task
+        par for each connect socket
+            s ->> WS: connect to peer
+            s ->> m: increase number of peers
+            loop while peer connected
+                WS ->> WS: broadcast socket to peers
+            end
+            s ->> m: decrease number of peers
+        end
+    and run alive test
+        m ->> a: await task
+        a ->> a: wait 1 seconds
+        loop while at least 1 peer
+            a ->> a: wait 10 seconds
+        end
+        a ->> m: resolve alive test
+        m ->> s: cancel server
+    end
+```
+
 ### Development
 
 ```sh
