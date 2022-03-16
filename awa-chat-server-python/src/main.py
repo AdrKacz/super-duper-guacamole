@@ -54,12 +54,13 @@ async def register(websocket):
 # ssl_context.load_cert_chain(localhost_pem)
 
 async def server():
+    print("Start server on port 8765")
     # TODO: add try, except asyncio.CancelledError:, finally to close the server properly
     async with websockets.serve(chat, "0.0.0.0", 8765): #, ssl=ssl_context):
         await asyncio.Future() # Run forever
 
 async def alive():
-    await asyncio.sleep(1)
+    await asyncio.sleep(10)
     while number_of_peers > 0:
         # TODO: Add date-time on print
         print(f"Server is alive with {number_of_peers} peers connected.")
