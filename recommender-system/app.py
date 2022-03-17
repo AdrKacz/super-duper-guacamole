@@ -76,6 +76,13 @@ def handler(event, context):
     x_json = json.loads(json.loads(x_response))
     print("PayLoad JSON:", x_json)
     user_id_x = x_json["user_id"]
+
+    try:
+        assert isinstance(x_json['inference_x'], list) and user_id_x == user_id
+    except:
+        return {'statusCode': '400',
+            'body': "Wrong inference format"}
+    
     inference_x = np.array(x_json['inference_x'])
     print(inference_x.shape)
 
