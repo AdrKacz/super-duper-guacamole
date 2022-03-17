@@ -82,27 +82,4 @@ def handler(event, context):
     return {'statusCode': response['ResponseMetadata']['HTTPStatusCode'],
             'body': json.dumps(inference_x.tolist())}
 
-    # return json.dumps({'user_id' : user_id_x,
-    #         'inference_x' : inference_x.tolist()},
-    #          separators=(',', ':'), sort_keys=True, indent=4)
-
-    # json.dumps({
-    # "isBase64Encoded": False,
-    # "statusCode": 200,
-    # "body": "Hello from Lambda!",
-    # "headers": {
-    #     "content-type": "application/json"
-    # }
-    # })
-
-##### Output format of a Lambda function for proxy integration
-# {
-#     "isBase64Encoded": true|false,
-#     "statusCode": httpStatusCode,
-#     "headers": { "headerName": "headerValue", ... },
-#     "multiValueHeaders": { "headerName": ["headerValue", "headerValue2", ...], ... },
-#     "body": "..."
-# }
-
-
 ###### Connexion between 2 LAMBDAS : Need to json.dumps() the dictonnary you're sending, but no need to json.loads to get it in the other lambda !!
