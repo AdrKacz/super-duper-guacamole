@@ -19,20 +19,20 @@ def get_xu_vector(table, user_id):
     return x_u
 
 def handler(event, context):
-    print("Event: ", event)
+    print('Event: ', event)
     # Variables
-    K_VAL = event["K_VAL"]  # Int
-    user_id = str(event["user_id"]) # str
-    y_matrix = np.array(event["y_matrix"])
-    print("Type :", type(user_id), type(K_VAL))
+    k_val = event['K_VAL']  # Int
+    user_id = str(event['user_id']) # str
+    y_matrix = np.array(event['y_matrix'])
+    print('Type :', type(user_id), type(k_val))
     try:
-        assert type(user_id) == str and type(K_VAL) == int 
-        assert isinstance(y_matrix, np.ndarray) and y_matrix.shape[0] == K_VAL
+        assert type(user_id) == str and type(k_val) == int 
+        assert isinstance(y_matrix, np.ndarray) and y_matrix.shape[0] == k_val
     except:
         return {'statusCode': '400',
-            'body': "Wrong data type"}
+            'body': 'Wrong data type'}
 
-    print("Y_matrix :", type(y_matrix), y_matrix.shape) 
+    print('Y_matrix :', type(y_matrix), y_matrix.shape) 
 
     # Check if it is a new user:
     response = table_model_x.get_item(Key={'user_id': str(user_id)})
@@ -40,15 +40,15 @@ def handler(event, context):
     ### User creation
     if 'Item' not in response:
         # Matrix initialisation
-        create_new_user(table_model_x, 'user_id', user_id, K_VAL)
+        create_new_user(table_model_x, 'user_id', user_id, k_val)
 
     x_u = get_xu_vector(table_model_x, user_id) # Vector in a matrix shape (1,k)
-    print("x_u :", x_u.shape)
+    print('x_u :', x_u.shape)
     try:
-        assert x_u.shape == (K_VAL,1)
+        assert x_u.shape == (k_val,1)
     except:
         return {'statusCode': '400',
-            'body': "Wrong data shape"}
+            'body': 'Wrong data shape'}
 
     ### Inference
     # 1st step : Check is the matrix computation is possible
@@ -59,16 +59,16 @@ def handler(event, context):
     r_u = np.dot(x_u.T, y_matrix) # (1,K)x(K,N) = # (1,N)   # Note supposé être >0, prendre valeur absolue ?
     # p_ui = r_ui != 0.0
     p_u = r_u!=0.0 # (1,N)
-    print("Shape Y : ", Y.shape)
-    print("Shape r_u : ", r_u.shape)
-    print("Shape p_u : ", p_u.shape)
+    print('Shape Y : ', Y.shape)
+    print('Shape r_u : ', r_u.shape)
+    print('Shape p_u : ', p_u.shape)
     # c_ui = 1 + alpha*r_ui
     c_u = 1 + alpha * r_u
-    print("Shape c_u : ", c_u.shape)
+    print('Shape c_u : ', c_u.shape)
     C_u_diag = np.diag(c_u.tolist())
-    print("Shape C_u_diag : ", C_u_diag.shape)
-    # x_u_opt = np.dot(np.linalg.inv(Y @ C_u_diag @ Y.T + lambda_reg*np.identity(K_VAL)), Y @ C_u_diag @ p_u)
-    # print("Shape x_u_diag : ", x_u_opt.shape)
+    print('Shape C_u_diag : ', C_u_diag.shape)
+    # x_u_opt = np.dot(np.linalg.inv(Y @ C_u_diag @ Y.T + lambda_reg*np.identity(k_val)), Y @ C_u_diag @ p_u)
+    # print('Shape x_u_diag : ', x_u_opt.shape)
 
     ### Gradient computation
 
