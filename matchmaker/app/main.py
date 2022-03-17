@@ -8,6 +8,7 @@ import requests
 app = FastAPI()
 
 MAXIMUM_ROOM_SIZE = 2
+IP_ADDRESS = "13.37.214.198"
 
 current_room_address : str = None
 current_room_port : int = None
@@ -19,13 +20,13 @@ def create_new_room():
     # See https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
     # 172.17.0.1, work on Linux
     # See https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal
-    r = requests.get("http://host.docker.internal:8000/container")
+    r = requests.get("http://172.17.0.1:8000/container")
     response = r.json()
     port = response.get("port", 0)
     if port:
         # TODO: replace 127.0.0.1 by environment variable
         print("\tport:", port)
-        return "172.20.10.3", port, ""
+        return IP_ADDRESS, port, ""
     else:
         error = response.get("error", "unknown error")
         print("\terror:", error)

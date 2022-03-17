@@ -1,0 +1,50 @@
+# Update AWS
+
+## Prepare image locally
+
+```sh
+sh scripts/build-all.sh <path-to-your-ssh-key> <instance-ip-address> <dockerhub-username>
+```
+
+## Update your instance
+
+### Step 1. Connect to your instance
+
+```sh
+ssh -i <path-to-your-ssh-key> ec2-user@<instance-ip-address>
+```
+
+### Step 2. Start Matchmaker and prepare Fleet manager
+
+> **WARNING**: close all running Docker container.
+
+> **WARNING**: shut down fleet manager if it is already running
+
+```sh
+docker pull adrkacz/awa-match-maker:latest
+docker pull adrkacz/awa-server:python
+docker run -dp 8080:8080 adrkacz/awa-match-maker:latest
+cd fleet-manager
+rm -rf src/ venv/
+unzip fleet-manager.zip
+rm fleet-manager.zip
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install fastapi
+pip install "uvicorn[standard]"
+pip install docker
+deactivate
+tmux
+```
+
+> 8080: `<instance-api-port>`
+
+
+### Step 3. Run Fleet manager
+
+```
+source venv/bin/activate
+echo "Enter Ctrl+b d after uvicorn starts"
+uvicorn src.main:app --host 0.0.0.0 --port 8000
+```
