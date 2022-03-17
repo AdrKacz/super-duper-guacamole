@@ -42,7 +42,6 @@ CMD [ "app.handler" ]
 7. Push it with  
 `docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
 
-
 8. Tag your image to match your repository name, and deploy the image to Amazon ECR using the docker push command.  
 `docker tag  hello-world:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`  
 `docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
@@ -52,7 +51,8 @@ ATTENTION : To be in the right folder of the Dockerfile while building is requir
 ## Create a Database with DynamoDB
 
 1. Create a table:
-    - Key partitioning: `chain`
+    - Primary key partitioning type: `chain`
+    - Primary key partitioning name: `user_id`
 2. Possibly create elements within the table if needed
 3. Get the ARN (to connect to the Lambda function)
 
@@ -104,7 +104,8 @@ output = responseFromChild["output_2"]
 ```
 
 ### Define environment variable
-For instance : **The second lambda ARN must not be in the code**. To define it as an envrionment variable:
+For instance : *The second lambda ARN must not be in the code*:  
+To define it as an envrionment variable:
 1. Define it with the AWS Console Interface: Lambda --> Configuration --> Environment variables
 2. Get it in the code with:
 ```
@@ -116,36 +117,34 @@ ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ## Actual sequence diagram
 ```mermaid
 sequenceDiagram
-      participant Client as Client
+      participant User as User
       participant Model as Master Model Y
       participant Model2 as User Model X
-      Client ->> Model: GET Recommendation for user u (HTTP API Gateway)
-      Note right of Client: API Gateway HTTP - user_id in the path
+      User ->> Model: GET Recommendation for user u (HTTP API Gateway)
+      Note right of User: API Gateway HTTP - user_id in the path
       Model ->> Model: Process & Check HTTP request
-      Model ->> Model2: Call User Model X for ∇grad and reco. computation
+      Model ->> Model2: GET User gradient of Master Model and Recommendation
       Note right of Model: Call between lambdas on AWS
       Model2 ->> Model2: Process and update User Model X
-      Model2 ->> Model: Reco. and ∇grad transmission
-      Model ->> Client: Recommendation transmission
-      Model ->> Model: Master model Y update 
+      Model2 ->> Model: Recommendation. and gradient transmission
+      Model ->> User: Recommendation transmission
+      Model ->> Model: Master Model Y update 
 ```
 
 ## Desired sequence diagram
 ```mermaid
 sequenceDiagram
-      participant Client as Client-User Model X
+      participant User as User - Model X
       participant Model as Master Model Y
-      Client ->> Model: GET Master model Y
-      Note right of Client: API Gateway HTTP
-      Model ->> Client: Response: Master Model Y matrix
-      Client ->> Client: Reco., ∇grad computation, update User Model X
-      Client ->> Model: POST ∇grad Master Model Y matrix
-      Model ->> Client: Response : StatusCode: 200
-      Model ->> Model: Master model update
+      User ->> Model: GET Master Model Y
+      Note right of User: API Gateway HTTP
+      Model ->> User: Response: Master Model Y matrix
+      User ->> User: Reco., gradient computation, update User Model X
+      User ->> Model: POST gradient Master Model Y matrix
+      Model ->> User: Response : StatusCode: 200
+      Model ->> Model: Master Model update
 ```
-
-
-### References
+## References
 #### Code :
 [0] : [Use of DynamoDB tables in the lambda function](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html)  
 [1] : [Calling an AWS Lambda function from another Lambda function](https://www.sqlshack.com/calling-an-aws-lambda-function-from-another-lambda-function/)
@@ -156,4 +155,3 @@ sequenceDiagram
 
 ### Models 
 [0] : [Federated Collaborative Filtering for Privacy-Preserving Personalized Recommendation System](https://arxiv.org/abs/1901.09888)
-
