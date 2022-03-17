@@ -1,22 +1,21 @@
 # Recommender system
 
-## AWS Setup:
-We want to use Python and the NumPy module in an AWS Lambda function. In this objective, the only solution found was to create a dockerized environnement.
+# AWS Setup:
+We want to use Python and the NumPy module in an AWS Lambda function. NumPy is not available in the Python AWS default envrionment. Hence, the only working solution found was to create a dockerized environnement.
 
-### Container setup with Docker for Python
-1. On your local machine, create a project directory for your new function.
-2. In your project directory, add a file named app.py containing your function code, then add your function handler code to the app.py function. Example 
+## Container setup with Docker for Python
+1. On your local machine, create a project directory for your new function (here *recommerder-system*).
+2. In your project directory, add a file named `app.py` containing your function code, within a handler function. Example:
 ```
 import numpy
 
 def handler(event, context):
     return np.zeros((10,10))
-    
 ```
 
 3. In your project directory, add a file named `requirements.txt`. List each required library as a separate line in this file.
 4. Create a Dockerfile:  
-Install dependencies under the `${LAMBDA_TASK_ROOT}` directory alongside the function handler to ensure that the Lambda runtime can locate them when the function is invoked.
+(Install dependencies under the `${LAMBDA_TASK_ROOT}` directory alongside the function handler to ensure that the Lambda runtime can locate them when the function is invoked.)
 ```
 FROM public.ecr.aws/lambda/python:3.9
 
@@ -33,58 +32,84 @@ RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 CMD [ "app.handler" ]
 ```
 
-5. Create an Amazon ECR repository
+5. Create an Amazon ECR repository. Use the AWS Console (easier). Copy the corresponding URI.
 
-6. Build your Docker image with `docker build -t hello-world .`
-7. Authenticate the Docker CLI to your Amazon ECR registry.  
-`aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.us-east-1.amazonaws.com`
+6. Authenticate the Docker CLI to your Amazon ECR registry.  
+`aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.eu-west-3.amazonaws.com`
 
-8. Create a repository in Amazon ECR directly with the ECR interface (easier).
+6. Build your Docker image with  
+`docker build -t 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest` 
+7. Push it with  
+`docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
 
-9. Tag your image to match your repository name, and deploy the image to Amazon ECR using the docker push command.  
+
+8. Tag your image to match your repository name, and deploy the image to Amazon ECR using the docker push command.  
 `docker tag  hello-world:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`  
 `docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
 
-10. To update the version :  
-`docker build -t 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`  
-`docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
+ATTENTION : To be in the right folder of the Dockerfile while building is required!
 
-ATTENTION : To be in the folder of the Dockerfile while building is required!
-
-### Create a Database with DynamoDB
+## Create a Database with DynamoDB
 
 1. Create a table:
     - Key partitioning: Chain
-2. Possibly create elements within the table if required
-3. Get the ARN (required to connect to the Lambda function)
+2. Possibly create elements within the table if needed
+3. Get the ARN (to connect to the Lambda function)
 
+
+## Setup a Lambda
 ### Create a Lambda
 
 1. Conteneur image (Using URL of the conteneur)
-2. Create an API Gateway
+2. Create an HTTP API Gateway.
 3. Manage the IAM (Configuration--> Authorization) to allow the Lambda to access the DynamoDB (Get, Put Method for example)
+
+### To configure the HTTP API
+No special configuration for the API Gateway HTTP.  
+Call : `api_endpoint?userid=çamarche&maman=kklm`  
+(ex: `.../hello-world?user_id=2&tomato=abcd&potato=1234)  
+
+To get the input parameters:
+``` 
+from urllib import parse
+def handler(event, context):
+    url_parsed = parse.parse_qs(event["rawQueryString"])
+    # Return {'user_id': ['2'], 'tomato':['abcd'], 'potato': ['1234']}
+```
 
 ### To use a Lambda within another Lambda
 1. Create the second Lambda
-2. Manage the IAM of the first Lambda to access the second (InvokeFunction, InvokeAsync)
-3. Test the connexion with this kind of code :
-```        
+2. Manage the IAM of the first Lambda to access the second:  
+In the AWS Console Interface of Lambda: --> Configuration --> Permissions --> Execution Role (click, IAM page will open). --> Add permissions --> Create Inline Policy :
+    - Service: Lambda
+    - Actions: InvokeFunction, InvokeAsync
+    - Resource: ARN of the targeted Lambda
+3. To test the connexion, put in the handler function:
+```
+import boto3
 # Define the client to interact with AWS Lambda
 client_lambda = boto3.client('lambda')
 # Define the input parameters that will be passed on to the model x function
 inputParams = {"user_id" : user_id,
-                "model_inference": model_inference,
-                "user_creation" : user_creation
+                "tomato": tomato,
+                "potato" : potato
                 }
 
 response = client_lambda.invoke(
-    FunctionName = 'arn:aws:lambda:eu-west-3:010661011891:function:awa-get-recommender-system-temporary',
+    FunctionName = 'arn:aws:lambda:eu-west-3:000000000000:function:hello-world-2',
     InvocationType = 'RequestResponse',
     Payload = json.dumps(inputParams))
-
 responseFromChild = json.load(response['Payload'])
-user_id_x = responseFromChild["user_id"]
-inference_x = responseFromChild['inference_x']
+output = responseFromChild["output_2"]
+```
+
+### Define environment variable
+For instance : **The second lambda ARN must not be in the code**. To define it as an envrionment variable:
+1. Define it with the AWS Console Interface: Lambda --> Configuration --> Environment variables
+2. Get it in the code with:
+```
+import os
+ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ```
 
 
@@ -94,11 +119,15 @@ sequenceDiagram
       participant Client as Client
       participant Model as Lambda Y
       participant Model2 as Lambda X
-      Client ->> Model: GET Recommendation List
-      Model ->> Model2: Call X, ∇ and inference computation
-      Model2 ->> Model: Inference and ∇ transmission
-      Model ->> Client: Inference transmission
-      Model ->> Model: Master model Y update  
+      Client ->> Model: GET Recommendation for user u (HTTP API Gateway)
+      Note right of Client: API Gateway HTTP - user_id in the path
+      Model ->> Model: Process & Check HTTP request
+      Model ->> Model2: Call Lambda X for ∇grad and reco. computation
+      Note right of Model: Call between lambdas on AWS
+      Model2 ->> Model2: Process and update local X_u
+      Model2 ->> Model: Reco. and ∇grad transmission
+      Model ->> Client: Recommendation transmission
+      Model ->> Model: Master model Y update 
 ```
 
 ## Desired sequence diagram
@@ -123,4 +152,5 @@ sequenceDiagram
 #### Container :
 [0] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)
 [1] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)
+
 
