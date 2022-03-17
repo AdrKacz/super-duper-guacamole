@@ -1,4 +1,4 @@
-package com.example.awachat
+package com.awa.ma.dev.app
 
 import io.flutter.embedding.android.FlutterActivity
 

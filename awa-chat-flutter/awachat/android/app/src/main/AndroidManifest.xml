@@ -1,9 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.awachat">
+    package="com.awa.ma.dev.app">
     <!-- Required to fetch data from the internet. -->
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission
+        android:name="android.permission.INTERNET" />
    <application
-        android:label="awachat"
+        android:label="Awa"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
