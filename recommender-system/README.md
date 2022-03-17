@@ -52,7 +52,7 @@ ATTENTION : To be in the right folder of the Dockerfile while building is requir
 ## Create a Database with DynamoDB
 
 1. Create a table:
-    - Key partitioning: Chain
+    - Key partitioning: `chain`
 2. Possibly create elements within the table if needed
 3. Get the ARN (to connect to the Lambda function)
 
@@ -60,7 +60,7 @@ ATTENTION : To be in the right folder of the Dockerfile while building is requir
 ## Setup a Lambda
 ### Create a Lambda
 
-1. Conteneur image (Using URL of the conteneur)
+1. Conteneur image (Use URL of the conteneur)
 2. Create an HTTP API Gateway.
 3. Manage the IAM (Configuration--> Authorization) to allow the Lambda to access the DynamoDB (Get, Put Method for example)
 
@@ -77,7 +77,7 @@ def handler(event, context):
     # Return {'user_id': ['2'], 'tomato':['abcd'], 'potato': ['1234']}
 ```
 
-### To use a Lambda within another Lambda
+### To use a Lambda from another Lambda
 1. Create the second Lambda
 2. Manage the IAM of the first Lambda to access the second:  
 In the AWS Console Interface of Lambda: --> Configuration --> Permissions --> Execution Role (click, IAM page will open). --> Add permissions --> Create Inline Policy :
@@ -99,7 +99,7 @@ response = client_lambda.invoke(
     FunctionName = 'arn:aws:lambda:eu-west-3:000000000000:function:hello-world-2',
     InvocationType = 'RequestResponse',
     Payload = json.dumps(inputParams))
-responseFromChild = json.load(response['Payload'])
+response_from_child = json.load(response['Payload'])
 output = responseFromChild["output_2"]
 ```
 
@@ -117,14 +117,14 @@ ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ```mermaid
 sequenceDiagram
       participant Client as Client
-      participant Model as Lambda Y
-      participant Model2 as Lambda X
+      participant Model as Master Model Y
+      participant Model2 as User Model X
       Client ->> Model: GET Recommendation for user u (HTTP API Gateway)
       Note right of Client: API Gateway HTTP - user_id in the path
       Model ->> Model: Process & Check HTTP request
-      Model ->> Model2: Call Lambda X for ∇grad and reco. computation
+      Model ->> Model2: Call User Model X for ∇grad and reco. computation
       Note right of Model: Call between lambdas on AWS
-      Model2 ->> Model2: Process and update local X_u
+      Model2 ->> Model2: Process and update User Model X
       Model2 ->> Model: Reco. and ∇grad transmission
       Model ->> Client: Recommendation transmission
       Model ->> Model: Master model Y update 
@@ -133,14 +133,15 @@ sequenceDiagram
 ## Desired sequence diagram
 ```mermaid
 sequenceDiagram
-      participant Client as Client-X
-      participant Model as Lambda Y
+      participant Client as Client-User Model X
+      participant Model as Master Model Y
       Client ->> Model: GET Master model Y
-      Model ->> Client: Response: Y matrix
-      Client ->> Client: Inference and ∇ computation
-      Client ->> Model: POST ∇ Y
-      Model ->> Client: Response: 200
-      Model ->> Model: Master model Y update
+      Note right of Client: API Gateway HTTP
+      Model ->> Client: Response: Master Model Y matrix
+      Client ->> Client: Reco., ∇grad computation, update User Model X
+      Client ->> Model: POST ∇grad Master Model Y matrix
+      Model ->> Client: Response : StatusCode: 200
+      Model ->> Model: Master model update
 ```
 
 
