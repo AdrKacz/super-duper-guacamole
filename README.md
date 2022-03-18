@@ -79,7 +79,6 @@ sequenceDiagram
             f ->> u: notify user
         end
     end
-
 ```
 
 ## User - Ask for a room
