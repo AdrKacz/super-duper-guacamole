@@ -118,7 +118,7 @@ sequenceDiagram
     participant m as matchmaker
     participant s as websocket server
     participant f as firebase
-    link m: process @ #user-ask-for-a-room
+    link m: process @ https://github.com/AdrKacz/super-duper-guacamole#user-ask-for-a-room
     u ->> u: GET room on disk
     alt has room
         u ->> s: connect to websocket server
