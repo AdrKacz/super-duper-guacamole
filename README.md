@@ -109,6 +109,41 @@ graph LR
 
 # How room are managed?
 
+## User start Awa
+
+```mermaid
+sequenceDiagram
+    participant oth as other room users
+    participant u as user
+    participant m as matchmaker
+    participant s as websocket server
+    participant f as firebase
+    link m: process @ #user-ask-for-a-room
+    u ->> u: GET room on disk
+    alt has room
+        u ->> s: connect to websocket server
+        alt connection not accepted
+            u ->> f: unsubscribe to room_id topic
+            u ->> u: delete room
+        end
+    end
+    alt room is not defined
+        u ->> m: GET room
+        m ->> m: process
+        m ->> u: room_id, room_address, room_port
+    end
+    u ->> s: connect to websocket server
+    u ->> f: subscribe to room_id topic
+    loop while room alive
+        oth ->> s: send message
+        alt is user app in foreground
+            s ->> u: broadcast message
+        else
+            f ->> u: notify user
+        end
+    end
+```
+
 ## User ask for a room
 
 ```mermaid
