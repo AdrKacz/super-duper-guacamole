@@ -4,7 +4,6 @@
 
 > We chose a **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The goal is to verify the model works.
 
-
 ## Current Architecture - Centralised
 
 ![awa-services](./diagram-cloud-architecture/awa_service.png)

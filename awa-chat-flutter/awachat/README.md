@@ -25,6 +25,8 @@ samples, guidance on mobile development, and a full API reference.
 
 > **WARNING**: update **minimum iOS version** supported from **9.0** to **11.0** to support `firebase_messaging`
 
+> **WARNING**: update **minSdkVersion** supported from **flutter.minSdkVersion *16*** to **19** to support `firebase_messaging`
+
 ## Change App Package Name
 
 [**Change app package name**](https://pub.dev/packages/change_app_package_name)
