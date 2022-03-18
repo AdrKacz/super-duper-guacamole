@@ -39,6 +39,8 @@ samples, guidance on mobile development, and a full API reference.
 
 ### iOS
 
+> [Flutter documentation - iOS deployment](https://docs.flutter.dev/deployment/ios)
+
 > **Update `ios/Runner.xcodeproj/project/pbxproj` to use build information from `pubspec.yaml` (see [StackOverflow - Update Version and Build number](https://stackoverflow.com/questions/61922857/how-to-force-flutter-to-update-my-version-and-build-number/67080868#67080868))
 
 ```
@@ -55,6 +57,8 @@ iPad Pro (3rd Gen) 12.9" Display | iPad Pro (12.9-inch) (3rd generation)
 iPad Pro (2nd Gen) 12.9" Display | iPad Pro (12.9-inch) (2nd generation)
 
 ### Android
+
+> [Flutter documentation - Android deployment](https://docs.flutter.dev/deployment/android)
 
 ```
 flutter build appbundle
