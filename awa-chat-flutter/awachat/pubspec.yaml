@@ -38,6 +38,7 @@ dependencies:
   web_socket_channel: ^2.1.0
   uuid: ^3.0.6
   http: ^0.13.4
+  firebase_core: ^1.13.1
 
 dev_dependencies:
   change_app_package_name: ^1.0.0
