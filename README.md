@@ -160,6 +160,7 @@ sequenceDiagram
     <img src="./screenshots/screenshot_0695.PNG" width="32%">
     <img src="./screenshots/screenshot_0696.PNG" width="32%">
     <img src="./screenshots/screenshot_0697.PNG" width="32%">
+    <img src="./screenshots/screenshot_0703.PNG" width="32%">
 </p>
 
 ---
