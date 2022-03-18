@@ -22,17 +22,17 @@ In a **distributed architecture**, the code that infers the correct set of users
 
 ```mermaid
 sequenceDiagram
-    participant RS as Recommender system
-    actor User
-    participant MM as Matchmaker
-    participant FM as Fleet manager
-    User ->> RS: who are the best users for me?
-    RS ->> User: Set of users
-    User ->> MM: I want a room with these users
+    participant RS as recommender system
+    actor u as user
+    participant MM as matchmaker
+    participant FM as fleet manager
+    u ->> RS: who are the best users for me?
+    RS ->> u: Set of users
+    u ->> MM: I want a room with these users
     MM ->> MM: find best rooms
     MM -->> FM : create new rooms
     FM -->> MM : endpoints
-    MM ->> User : endpoint
+    MM ->> u : endpoint
 ```
 
 ```mermaid
@@ -52,7 +52,7 @@ graph LR
 ```mermaid
 sequenceDiagram
     participant oth as other room users
-    participant u as user
+    actor u as user
     participant m as matchmaker
     participant s as websocket server
     participant f as firebase
@@ -85,22 +85,22 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant MM as Matchmaker
-    participant FM as Fleet Manager
-    User ->> MM: GET room (IP, port)
+    actor user
+    participant MM as matchmaker
+    participant FM as fleet manager
+    user ->> MM: GET room (IP, port)
     alt is current room full
         MM ->> FM: create new room
         FM ->> FM: process [update active ports]
         alt is space for new room
             FM ->> MM: new room port
-            MM ->> User: new room (IP, port)
+            MM ->> user: new room (IP, port)
         else
             FM ->> MM: error
-            MM ->> User: error
+            MM ->> user: error
         end
     else
-      MM ->> User: current room (IP, port)
+      MM ->> user: current room (IP, port)
     end
 ```
 
@@ -108,8 +108,8 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant FM as Fleet Manager
-    participant D as Docker API
+    participant FM as fleet manager
+    participant D as docker API
     loop container
         D ->> FM: container image
         alt is from server image
