@@ -34,8 +34,10 @@ class Room {
 
   factory Room.fromJson(Map<String, dynamic> json) {
     print("Create room with ${json["room_address"]}:${json["room_port"]}");
+    // Connect to WebSocket
     WebSocketChannel channel = WebSocketChannel.connect(
         Uri.parse("ws://${json["room_address"]}:${json["room_port"]}"));
+    // Create room
     return Room(
       ipAddress: json["room_address"],
       port: json["room_port"],
@@ -48,9 +50,12 @@ Future<Room> fetchRoom() async {
   final response = await http.get(Uri.parse(matchmakerEndpoint));
 
   final body = jsonDecode(response.body);
+  //TODO: use statusCode instead of error (200 vs 204)
   if (body["error"] == "") {
-    //TODO: use statusCode instead 200 vs 204
+    // Create Room
     await Future.delayed(const Duration(seconds: 1), () {});
+    // Connect to Firebase Room Topic
+    await FirebaseMessaging.instance.subscribeToTopic('room-1');
     return Room.fromJson(body);
   } else {
     return Future.error("Failed to load room");
