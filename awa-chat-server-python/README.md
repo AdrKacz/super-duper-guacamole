@@ -32,7 +32,7 @@ sequenceDiagram
 
 ```sh
 # zsh
-cd server
+cd awa-chat-server-python
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip

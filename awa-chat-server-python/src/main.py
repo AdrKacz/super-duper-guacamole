@@ -32,9 +32,11 @@ async def chat(websocket):
             break
         print(f"Peer index {peer_index} <<< {message} <<< {user}")
 
+        # Broadcast message to peers
         for peer in peers:
             if peer:
                 await peer.send(f"{user}::{message}")
+        # Send notification
 
 async def register(websocket):
     global MAX_PEERS, number_of_peers, peers

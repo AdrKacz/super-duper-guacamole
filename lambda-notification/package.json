@@ -1,0 +1,11 @@
+{
+  "name": "awa-notification",
+  "version": "1.0.0",
+  "description": "Lambda handler for Awa notifications with Firebase SDK",
+  "main": "index.js",
+  "author": "AdrKacz",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^10.0.2"
+  }
+}
