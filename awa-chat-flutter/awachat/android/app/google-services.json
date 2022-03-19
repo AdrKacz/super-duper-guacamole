@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "114631492097",
+    "project_id": "awa-chat-f689f",
+    "storage_bucket": "awa-chat-f689f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114631492097:android:28f91d6afabec80f6d7600",
+        "android_client_info": {
+          "package_name": "com.awa.ma.dev.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "114631492097-31trfkb16np8dncgh76hm9sd0n13gc6n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCubth7gSmp1wk6Sa3lBsrXZs_Pk_mfoOk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "114631492097-31trfkb16np8dncgh76hm9sd0n13gc6n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "114631492097-toaa3ml04fgjl9qjdimurt2oqu1n035p.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.awama.awa.dev",
+                "app_store_id": "1596586478"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

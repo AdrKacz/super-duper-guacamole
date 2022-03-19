@@ -1,3 +1,7 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -9,13 +13,13 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:http/http.dart' as http;
 
+// ===== ===== =====
 // Endpoints
-// TODO: correct user_id
-// const String matchmakerEndpoint = "http://13.37.214.198:8080/room/1";
-
 const String matchmakerEndpoint =
     "http://13.37.214.198:8080/room/1"; // TODO: correct user_id
+// ===== ===== =====
 
+// ===== ===== =====
 // Room
 class Room {
   final String ipAddress;
@@ -30,8 +34,10 @@ class Room {
 
   factory Room.fromJson(Map<String, dynamic> json) {
     print("Create room with ${json["room_address"]}:${json["room_port"]}");
+    // Connect to WebSocket
     WebSocketChannel channel = WebSocketChannel.connect(
         Uri.parse("ws://${json["room_address"]}:${json["room_port"]}"));
+    // Create room
     return Room(
       ipAddress: json["room_address"],
       port: json["room_port"],
@@ -44,37 +50,84 @@ Future<Room> fetchRoom() async {
   final response = await http.get(Uri.parse(matchmakerEndpoint));
 
   final body = jsonDecode(response.body);
+  //TODO: use statusCode instead of error (200 vs 204)
   if (body["error"] == "") {
-    //TODO: use statusCode instead 200 vs 204
+    // Create Room
     await Future.delayed(const Duration(seconds: 1), () {});
+    // Connect to Firebase Room Topic
+    await FirebaseMessaging.instance.subscribeToTopic('room-1');
     return Room.fromJson(body);
   } else {
     return Future.error("Failed to load room");
   }
 }
+// ===== ===== =====
 
+// ===== ===== =====
+// uuid
 Uuid uuid = const Uuid();
 String randomString() {
   final random = Random.secure();
   final values = List<int>.generate(16, (i) => random.nextInt(255));
   return base64UrlEncode(values);
 }
+// ===== ===== =====
 
-void main() {
+// ===== ===== =====
+// Firebase Push Notification
+class PushNotificationService {
+  final FirebaseMessaging messaging;
+
+  PushNotificationService(this.messaging);
+
+  Future initialise() async {
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    print('User granted permission: ${settings.authorizationStatus}');
+
+    String? token = await messaging.getToken();
+    print("Firebase messaging token: <$token>");
+  }
+}
+
+// ===== ===== =====
+
+// ===== ===== =====
+// App initialisation
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
+  static FirebaseMessaging messaging = FirebaseMessaging.instance;
+
   @override
   Widget build(BuildContext context) {
+    final pushNotificationService = PushNotificationService(messaging);
+    pushNotificationService.initialise();
     return const MaterialApp(
       home: MyHomePage(),
     );
   }
 }
+// ===== ===== =====
 
+// ===== ===== =====
+// Home Page
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
 
@@ -181,3 +234,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+// ===== ===== =====
