@@ -22,27 +22,21 @@ In a **distributed architecture**, the code that infers the correct set of users
 
 ```mermaid
 sequenceDiagram
-    participant RS as recommender system
+    participant r as recommender system
     actor u as user
-    participant MM as matchmaker
-    participant FM as fleet manager
-    u ->> RS: who are the best users for me?
-    RS ->> u: Set of users
-    u ->> MM: I want a room with these users
-    MM ->> MM: find best rooms
-    MM -->> FM : create new rooms
-    FM -->> MM : endpoints
-    MM ->> u : endpoint
-```
-
-```mermaid
-graph LR
-    room --> C{is full?}
-    C -.-> |yes|C_1{has space for new room?}
-    C -.-> |no|E_0[return current room]
-    C_1 -.-> |yes|E_1[update current room]
-    C_1 -.-> |no|E_2[return error]
-    E_1 -.-> E_0
+    participant m as matchmaker
+    participant f as fleet manager
+    u ->> r: who are the best users for me?
+    r ->> u: Set of users
+    u ->> m: I want a room with these users
+    m ->> m: find best existing room
+    alt room is not good enough
+      m -->> f : create new room
+      f -->> m : room endpoint
+      m -->> m : save room endpoint
+    end
+    m ->> u: room endpoint
+    m ->> u : endpoint
 ```
 
 # How room are managed?
@@ -68,12 +62,12 @@ sequenceDiagram
         u ->> m: GET room
         m ->> m: process [user ask for a room]
         m ->> u: room_id, room_address, room_port
+        u ->> f: subscribe to room_id topic
     end
     u ->> s: connect to websocket server
-    u ->> f: subscribe to room_id topic
     loop while room alive
         oth ->> s: send message
-        alt is user app in foreground
+        alt is app in foreground
             s ->> u: broadcast message
         else
             f ->> u: notify user
@@ -82,6 +76,8 @@ sequenceDiagram
 ```
 
 ## User - Ask for a room
+
+### 
 
 ```mermaid
 sequenceDiagram
@@ -102,6 +98,23 @@ sequenceDiagram
     else
       MM ->> user: current room (IP, port)
     end
+```
+
+### Matchmaker memory logic
+
+> `current room` is a variable holding the endpoint for the current room returned by the **matchmaker**. Updating the `current room` is updating its value by a new value.
+
+> This is architecture doesn't handle recommendation from user. It queues user in room by order of arrival. **It will change in a future update.**
+
+```mermaid
+graph LR
+    room --> C{is full?}
+    C -.-> |yes|C_1{has space for new room?}
+    C -.-> |no|E_0[return current room]
+    C_1 -.-> |yes|E_1[create new room]
+    E_1 -.-> E_3[update current room]
+    C_1 -.-> |no|E_2[return error]
+    E_3 -.-> E_0
 ```
 
 ## Fleet manager - Update active ports
