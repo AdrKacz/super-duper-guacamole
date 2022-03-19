@@ -15,8 +15,8 @@ import 'package:http/http.dart' as http;
 
 // ===== ===== =====
 // Endpoints
-const String matchmakerEndpoint =
-    "http://13.37.214.198:8080/room/1"; // TODO: correct user_id
+const String matchmakerEndpoint = "http://192.168.1.15:8080/room/";
+// const String matchmakerEndpoint = "http://13.37.214.198:8080/room/";
 // ===== ===== =====
 
 // ===== ===== =====
@@ -24,38 +24,43 @@ const String matchmakerEndpoint =
 class Room {
   final String ipAddress;
   final int port;
-  final WebSocketChannel channel;
+  WebSocketChannel? channel;
 
-  const Room({
+  Room({
     required this.ipAddress,
     required this.port,
-    required this.channel,
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
     print("Create room with ${json["room_address"]}:${json["room_port"]}");
-    // Connect to WebSocket
-    WebSocketChannel channel = WebSocketChannel.connect(
-        Uri.parse("ws://${json["room_address"]}:${json["room_port"]}"));
     // Create room
     return Room(
       ipAddress: json["room_address"],
       port: json["room_port"],
-      channel: channel,
     );
   }
+
+  void connectRoom() {
+    print("Connect to room ws://$ipAddress:$port");
+    channel = WebSocketChannel.connect(Uri.parse("ws://$ipAddress:$port"));
+  }
+
+  // TODO: Override ondelete
 }
 
-Future<Room> fetchRoom() async {
-  final response = await http.get(Uri.parse(matchmakerEndpoint));
+Future<Room> fetchRoom(String userId) async {
+  final response = await http.get(Uri.parse(matchmakerEndpoint + userId));
 
   final body = jsonDecode(response.body);
   //TODO: use statusCode instead of error (200 vs 204)
   if (body["error"] == "") {
+    // TODO: Await in parrallel
     // Create Room
     await Future.delayed(const Duration(seconds: 1), () {});
     // Connect to Firebase Room Topic
-    await FirebaseMessaging.instance.subscribeToTopic('room-1');
+    print('Connect to Firebase topic room-${body['room_id']}');
+    await FirebaseMessaging.instance
+        .subscribeToTopic('room-${body['room-id']}');
     return Room.fromJson(body);
   } else {
     return Future.error("Failed to load room");
@@ -148,7 +153,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    futureRoom = fetchRoom();
+    futureRoom = fetchRoom(_user.id);
   }
 
   //TODO: Change room in AppBar ONLY if already connected
@@ -159,7 +164,7 @@ class _MyHomePageState extends State<MyHomePage> {
           AppBar(backgroundColor: const Color(0xff1d1c21), actions: <Widget>[
         PopupMenuButton<int>(onSelected: (int result) {
           setState(() {
-            futureRoom = fetchRoom();
+            futureRoom = fetchRoom(_user.id);
           });
         }, itemBuilder: (BuildContext context) {
           return [
@@ -175,10 +180,13 @@ class _MyHomePageState extends State<MyHomePage> {
               print(roomSnapshot);
               if (roomSnapshot.connectionState == ConnectionState.done) {
                 if (roomSnapshot.hasData) {
+                  // Connect to room
+                  // TODO: verify connection
+                  roomSnapshot.data!.connectRoom();
                   print(
                       "Connected to room ${roomSnapshot.data!.ipAddress}:${roomSnapshot.data!.port}");
                   return StreamBuilder(
-                    stream: roomSnapshot.data!.channel.stream,
+                    stream: roomSnapshot.data!.channel!.stream,
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         print(snapshot.data);
@@ -202,7 +210,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         onSendPressed: (types.PartialText message) {
                           print(
                               "Send message to ${roomSnapshot.data!.ipAddress}:${roomSnapshot.data!.port}");
-                          roomSnapshot.data!.channel.sink
+                          roomSnapshot.data!.channel!.sink
                               .add("${_user.id}::${message.text}");
                         },
                         user: _user,
@@ -221,7 +229,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                             onPressed: () {
                               setState(() {
-                                futureRoom = fetchRoom();
+                                futureRoom = fetchRoom(_user.id);
                               });
                             },
                             child: const Text("Retry"))

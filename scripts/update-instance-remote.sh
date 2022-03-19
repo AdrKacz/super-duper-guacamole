@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ "$USER" != "ec2-user" ]
+then
+    echo "User is not ec2-user."
+    exit
+fi
+
 # Pull updated images
 docker pull adrkacz/awa-match-maker:latest
 docker pull adrkacz/awa-server:python
