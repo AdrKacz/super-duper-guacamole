@@ -3,6 +3,14 @@ from typing import Optional
 
 from fastapi import FastAPI
 
+import os
+LAMBDA_NOTIFICATION_ARN = os.getenv('LAMBDA_NOTIFICATION_ARN')
+HOME = os.getenv('HOME')
+print("ENVIRONMENT\n===== ===== =====")
+print("LAMBDA_NOTIFICATION_ARN:", LAMBDA_NOTIFICATION_ARN)
+print("HOME:", HOME)
+print("===== ===== =====")
+
 import docker
 client = docker.from_env()
 
@@ -17,7 +25,7 @@ from_port : int = 8081
 to_port : int = 8082
 ports = [False] * (to_port - from_port + 1)
 
-# room count
+# room count - used for room id
 room_created : int = 0
 
 def update_active_ports():
@@ -54,9 +62,15 @@ def read_container():
         local_index = ports.index(False) # Get the first unsused port
         print("Run container at port:", from_port + local_index)
         # TODO: catch error if port already allocated
-        container = client.containers.run(CONTAINER_IMAGE, auto_remove=True, detach=True, ports={"8765/tcp": from_port + local_index})
-        ports[local_index] = container.id
         room_created += 1
+        container = client.containers.run(
+            CONTAINER_IMAGE,
+            auto_remove=True,
+            detach=True,
+            ports={"8765/tcp": from_port + local_index},
+            environment={"MAX_PEERS": 5, "ROOM_ID": room_created, "LAMBDA_NOTIFICATION_ARN": LAMBDA_NOTIFICATION_ARN},
+            volumes=[f"{HOME}/.aws:/root/.aws:ro"])
+        ports[local_index] = container.id
         return {"port": from_port + local_index, "room_id": room_created}
     except ValueError:
         return {"error": "no available space"}

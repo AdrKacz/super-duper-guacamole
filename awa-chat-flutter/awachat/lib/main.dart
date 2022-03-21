@@ -59,7 +59,7 @@ Future<Room> fetchRoom(String userId) async {
     // Connect to Firebase Room Topic
     print('Connect to Firebase topic room-${body['room_id']}');
     await FirebaseMessaging.instance
-        .subscribeToTopic('room-${body['room-id']}');
+        .subscribeToTopic('room-${body['room_id']}');
     return Room.fromJson(body);
   } else {
     return Future.error("Failed to load room");

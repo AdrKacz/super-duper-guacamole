@@ -28,6 +28,14 @@ sequenceDiagram
     end
 ```
 
+# Environment
+
+Variable | Expected value
+-- | --
+**LAMBDA_NOTIFICATION_ARN** | Lambda function to call for push notifications
+**ROOM_ID** | Room identifier to send push notifications to target topic
+**MAX_PEERS** | Maximum number of peer connected
+
 ### Development
 
 ```sh
@@ -37,6 +45,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install websockets
+pip install boto3
 ```
 
 ```sh

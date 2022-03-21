@@ -14,10 +14,19 @@ const notification = {
 exports.handler = async (event) => {
   // Log event
   console.log('Received event:\n', event)
+  const roomId = event.room_id
+  if (!roomId) {
+    const response = {
+      statusCode: 500,
+      body: JSON.stringify('Room ID is not defined <event.room_id>')
+    }
+    return response
+  }
+
   // Error Flag
   let hasError = false
   // Retreive topic
-  const topic = 'room-1'
+  const topic = `room-${roomId}`
   // Send message
   await admin
     .messaging()
