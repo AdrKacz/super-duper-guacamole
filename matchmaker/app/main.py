@@ -7,9 +7,8 @@ import requests
 
 app = FastAPI()
 
-MAXIMUM_ROOM_SIZE = 2
-# IP_ADDRESS = "13.37.214.198"
-IP_ADDRESS = "192.168.1.15"
+MAXIMUM_ROOM_SIZE = 5
+IP_ADDRESS = "13.37.214.198"
 
 current_room_address : str = None
 current_room_port : int = None
@@ -23,7 +22,7 @@ def create_new_room():
     # 172.17.0.1, work on Linux
     # See https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal
     # r = requests.get("http://172.17.0.1:8000/container")
-    r = requests.get("http://host.docker.internal:8000/container")
+    r = requests.get("http://172.17.0.1:8000/container")
     response = r.json()
     port = response.get("port", 0)
     room_id = response.get("room_id", 0)

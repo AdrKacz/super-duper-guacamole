@@ -15,8 +15,7 @@ import 'package:http/http.dart' as http;
 
 // ===== ===== =====
 // Endpoints
-const String matchmakerEndpoint = "http://192.168.1.15:8080/room/";
-// const String matchmakerEndpoint = "http://13.37.214.198:8080/room/";
+const String matchmakerEndpoint = "http://13.37.214.198:8080/room/";
 // ===== ===== =====
 
 // ===== ===== =====

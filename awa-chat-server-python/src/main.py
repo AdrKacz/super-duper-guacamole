@@ -4,7 +4,7 @@ import ssl
 import websockets
 
 # TODO: Set MAX_PEERS as environment variable
-MAX_PEERS = 4
+MAX_PEERS = 5
 number_of_peers = 0
 peers = []
 
