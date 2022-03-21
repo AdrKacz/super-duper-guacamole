@@ -17,4 +17,5 @@ jobs:
         working-directory: ./lambda-notification
         run: yarn
       - name: Run ESLint
+        working-directory: ./lambda-notification
         run: yarn run eslint .
