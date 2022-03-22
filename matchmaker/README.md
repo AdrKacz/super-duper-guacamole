@@ -27,6 +27,7 @@ docker run -dp <your-port>:8080 <your-image>
 
 Simply use your image in **DockerHub** in your *AWS Lightsail* instance. Don't forget to open a port in your *AWS Lightsail Networking* section.
 
-### Error
+### Connect Docker to Host
 
-`host.docker.internal` cannot be reached from within docker container on Amazon Linux 2
+- [host.docker.internal - macOS](https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach)
+- [172.17.0.1 - Linux](https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal)
