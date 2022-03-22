@@ -13,6 +13,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:http/http.dart' as http;
 
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
 // ===== ===== =====
 // Endpoints
 const String matchmakerEndpoint = "http://13.37.214.198:8080/room/";
@@ -21,48 +24,100 @@ const String matchmakerEndpoint = "http://13.37.214.198:8080/room/";
 // ===== ===== =====
 // Room
 class Room {
+  final int id;
   final String ipAddress;
   final int port;
-  WebSocketChannel? channel;
+  late WebSocketChannel channel;
 
   Room({
+    required this.id,
     required this.ipAddress,
     required this.port,
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
-    print("Create room with ${json["room_address"]}:${json["room_port"]}");
+    print("[Room] Create from ${json.toString()}");
     // Create room
     return Room(
+      id: json["room_id"],
       ipAddress: json["room_address"],
       port: json["room_port"],
     );
   }
 
   void connectRoom() {
-    print("Connect to room ws://$ipAddress:$port");
     channel = WebSocketChannel.connect(Uri.parse("ws://$ipAddress:$port"));
+    print("[Room] Connected to ws://$ipAddress:$port");
   }
 
-  // TODO: Override ondelete
+  Future<void> subscribeTopic() async {
+    await FirebaseMessaging.instance.subscribeToTopic('room-$id');
+    print('Subscribed to Firebase topic <room-$id>');
+  }
+
+  Future<void> unsubscribeTopic() async {
+    await FirebaseMessaging.instance.unsubscribeFromTopic('room-$id');
+    print('Unsbscribed from Firebase topic <room-$id>');
+  }
+
+  void sendMessage(types.PartialText message) {
+    print("Send message to $ipAddress:$port");
+    channel.sink.add("${user.id}::${message.text}");
+  }
+
+  void saveRoom() {
+    boxRoom.put('id', id.toString());
+    boxRoom.put('ipAddress', ipAddress);
+    boxRoom.put('port', port.toString());
+  }
+
+  // TODO: Override ondelete > disconnect
 }
 
-Future<Room> fetchRoom(String userId) async {
-  final response = await http.get(Uri.parse(matchmakerEndpoint + userId));
+Future<Room> loadRoom() async {
+  print("Load room from disk");
+  // Wait to prevent errors
+  await Future.delayed(const Duration(seconds: 1), () {});
+  String? id = boxRoom.get('id');
+  String? ipAddress = boxRoom.get('ipAddress');
+  String? port = boxRoom.get('port');
+  if (id != null && ipAddress != null && port != null) {
+    return Room.fromJson({
+      "room_id": int.parse(id),
+      "room_address": ipAddress,
+      "room_port": int.parse(port)
+    });
+  } else {
+    return Future.error(
+        "Impossible de se connecter à la conversation en cours");
+  }
+}
+
+Future<Room> fetchRoom() async {
+  print("Fetch room to ${Uri.parse(matchmakerEndpoint + user.id)}");
+
+  final response = await http.get(Uri.parse(matchmakerEndpoint + user.id));
 
   final body = jsonDecode(response.body);
   //TODO: use statusCode instead of error (200 vs 204)
   if (body["error"] == "") {
     // TODO: Await in parrallel
     // Create Room
+    Room room = Room.fromJson(body);
+
+    // Wait to prevent errors
     await Future.delayed(const Duration(seconds: 1), () {});
     // Connect to Firebase Room Topic
-    print('Connect to Firebase topic room-${body['room_id']}');
-    await FirebaseMessaging.instance
-        .subscribeToTopic('room-${body['room_id']}');
-    return Room.fromJson(body);
+    await room.subscribeTopic();
+    // Update Room box
+    room.saveRoom();
+    // Update Room messages
+    lazyBoxMessages.clear();
+    boxRoom.put("end", "0"); // TODO: verify it correctly erase disk
+    return room;
   } else {
-    return Future.error("Failed to load room");
+    return Future.error(
+        "Impossible de se connecter à une nouvelle conversation");
   }
 }
 // ===== ===== =====
@@ -105,12 +160,45 @@ class PushNotificationService {
 // ===== ===== =====
 
 // ===== ===== =====
+// Disk management
+types.User user = types.User(id: uuid.v4());
+late Box<String> boxRoom;
+late LazyBox<String> lazyBoxMessages;
+
+types.Message messageFrom(List<String> data) {
+  return types.TextMessage(
+    author: types.User(id: data[0]),
+    createdAt: DateTime.now().millisecondsSinceEpoch,
+    id: randomString(),
+    text: data[1],
+  );
+}
+
+Future<List<types.Message>> loadMessages() async {
+  List<types.Message> messages = [];
+
+  for (int i = 0; i < int.parse(boxRoom.get('end') ?? '0'); i++) {
+    String partial = await lazyBoxMessages.getAt(i) ?? "::";
+    List<String> data = partial.split(RegExp(r"::"));
+    messages.insert(0, messageFrom(data));
+  }
+  return messages;
+}
+
+// ===== ===== =====
+
+// ===== ===== =====
 // App initialisation
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await Hive.initFlutter();
+  boxRoom = await Hive.openBox<String>('room');
+  lazyBoxMessages = await Hive.openLazyBox<String>('messages');
+
   runApp(const MyApp());
 }
 
@@ -144,18 +232,29 @@ class _MyHomePageState extends State<MyHomePage> {
   late Future<Room> futureRoom;
 
   // Messages
-  // TODO: history is kept between room (problem)
   final List<types.Message> _messages = [];
-  final _user = types.User(id: uuid.v4());
+
+  Future<void> localLoadMessages() async {
+    List<types.Message> loadedMessages = await loadMessages();
+    print("Loaded messages: $loadedMessages");
+    setState(() {
+      _messages.addAll(loadedMessages);
+    });
+  }
 
   // Init
   @override
   void initState() {
     super.initState();
-    futureRoom = fetchRoom(_user.id);
+    String? roomId = boxRoom.get("id");
+    if (roomId != null) {
+      futureRoom = loadRoom();
+      localLoadMessages();
+    } else {
+      futureRoom = fetchRoom();
+    }
   }
 
-  //TODO: Change room in AppBar ONLY if already connected
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,11 +262,13 @@ class _MyHomePageState extends State<MyHomePage> {
           AppBar(backgroundColor: const Color(0xff1d1c21), actions: <Widget>[
         PopupMenuButton<int>(onSelected: (int result) {
           setState(() {
-            futureRoom = fetchRoom(_user.id);
+            _messages.clear();
+            futureRoom = fetchRoom();
           });
         }, itemBuilder: (BuildContext context) {
           return [
-            const PopupMenuItem<int>(value: 0, child: Text("Change room")),
+            const PopupMenuItem<int>(
+                value: 0, child: Text("Change de conversation")),
           ];
         })
       ]),
@@ -180,39 +281,28 @@ class _MyHomePageState extends State<MyHomePage> {
               if (roomSnapshot.connectionState == ConnectionState.done) {
                 if (roomSnapshot.hasData) {
                   // Connect to room
-                  // TODO: verify connection
-                  roomSnapshot.data!.connectRoom();
-                  print(
-                      "Connected to room ${roomSnapshot.data!.ipAddress}:${roomSnapshot.data!.port}");
+                  roomSnapshot.data!.connectRoom(); // TODO: verify connection
                   return StreamBuilder(
-                    stream: roomSnapshot.data!.channel!.stream,
+                    stream: roomSnapshot.data!.channel.stream,
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
-                        print(snapshot.data);
-                        List<String> data =
-                            snapshot.data.toString().split(RegExp(r"::"));
-                        print(data);
+                        print("Raw data received: ${snapshot.data}");
+                        String dataString = snapshot.data.toString();
+                        List<String> data = dataString.split(RegExp(r"::"));
+                        print("\tData received: $data");
                         if (data.length == 2) {
-                          _messages.insert(
-                              0,
-                              types.TextMessage(
-                                author: types.User(id: data[0]),
-                                createdAt:
-                                    DateTime.now().millisecondsSinceEpoch,
-                                id: randomString(),
-                                text: data[1],
-                              ));
+                          // Add message
+                          _messages.insert(0, messageFrom(data));
+                          // Store message in disk (lazy)
+                          lazyBoxMessages.add(dataString);
+                          int end = int.parse(boxRoom.get("end") ?? "0");
+                          boxRoom.put("end", (end + 1).toString());
                         }
                       }
                       return Chat(
                         messages: _messages,
-                        onSendPressed: (types.PartialText message) {
-                          print(
-                              "Send message to ${roomSnapshot.data!.ipAddress}:${roomSnapshot.data!.port}");
-                          roomSnapshot.data!.channel!.sink
-                              .add("${_user.id}::${message.text}");
-                        },
-                        user: _user,
+                        onSendPressed: roomSnapshot.data!.sendMessage,
+                        user: user,
                       );
                     },
                   );
@@ -221,17 +311,18 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                        const Text("You didn't find any room"),
+                        Text(roomSnapshot.error.toString()),
                         ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               primary: const Color(0xff1d1c21),
                             ),
                             onPressed: () {
                               setState(() {
-                                futureRoom = fetchRoom(_user.id);
+                                _messages.clear();
+                                futureRoom = fetchRoom();
                               });
                             },
-                            child: const Text("Retry"))
+                            child: const Text("Cherche une conversation"))
                       ]));
                 }
               }
