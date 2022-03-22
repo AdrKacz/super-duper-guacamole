@@ -1,6 +1,6 @@
+import json
 import boto3
 import numpy as np
-import json
 import os
 from botocore.exceptions import ClientError
 
@@ -9,12 +9,12 @@ client_dynamodb = boto3.resource('dynamodb')
 # Access the desired table resource
 table_model_x = client_dynamodb.Table('awa-model-x-users-simul')
 table_implicit_feedbacks_R = client_dynamodb.Table('awa-implicit-feedback-R')
-mapping_table = client_dynamodb.Table('awa-mapping-table')
+
 ARN_LAMBDA_USERS_MARKS_R = os.environ.get('ARN_LAMBDA_R')
 ALPHA = float(os.environ.get('ALPHA'))
 LAMBDA_REG = float(os.environ.get('LAMBDA_REG'))
 VERBOSE = bool(os.environ.get('VERBOSE'))
-assert ARN_LAMBDA_USERS_MARKS_R != None and ALPHA != None and LAMBDA_REG != None
+assert ARN_LAMBDA_USERS_MARKS_R is not None and ALPHA is not None and LAMBDA_REG is not None
 
 def create_new_user(table, key_name, key, k, item_name, verbose=False):
     response = table.put_item(Item={key_name: key,
@@ -104,7 +104,7 @@ def handler(event, context):
     try:
         # Variables
         k_val = event['K_VAL']  # Int
-        n_users = event['N_USERS'] # Int
+        n_users = event['n_users'] # Int
         user_id = event['user_id'] # str
         y_matrix = np.array(event['y_matrix'])
         assert isinstance(user_id, str) and isinstance(k_val, int) and \
@@ -175,7 +175,7 @@ def handler(event, context):
     ### Update of the User-Model X
     
     try:
-        response = update_x_u_model_vector(table_model_x, 'user_id', user_id, x_u_opt)
+        response = update_x_u_model_vector(table_model_x, 'user_id', user_id, x_u_opt.squeeze())
         print(response)
         assert str(response['ResponseMetadata']['HTTPStatusCode']) == '200'
     except:
@@ -184,16 +184,20 @@ def handler(event, context):
 
     inference_x = np.dot(x_u_opt.T, Y) # (1,n_users)
     print(inference_x)
-    
+
     ### Gradient computation
     # Formally: y_i = y_i - gamma*dJ/dy_i
-    # f_u_i = 
-    f_u = (c_u.T*(p_u_T - Y.T@x_u))*x_u.T
+    try:
+        print(c_u.shape, p_u_T.shape, Y.shape, x_u.shape)
+        f_u = (c_u.T*(p_u_T - Y.T@x_u))@x_u.T #(n_users,k_val)
+        print(f_u.shape)
+        assert f_u.shape == (n_users, k_val)
+    except:
+        return {'statusCode': '500', 'body': 'Error computing f_u'}
 
-    return json.dumps({'user_id' : user_id,
-            'inference_x' : inference_x.tolist(),
-            'gradient_y': f_u.tolist()},
-             separators=(',', ':'), sort_keys=True, indent=4)
+    return json.dumps({'inference_x' : inference_x.tolist(),
+            'f_u': f_u.tolist()},
+            separators=(',', ':'), sort_keys=True, indent=4)
 
 ##### TEST: Call Lambda Y
 # Y = np.zeros((50,50))
