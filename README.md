@@ -134,6 +134,30 @@ graph LR
     E_3 -.-> E_0
 ```
 
+```
+stateDiagram
+    state i1 <<choice>>
+    [*] --> i1
+    i1 --> n: has next room
+    i1 --> c: no more room
+    n: next room
+    v: valid room
+
+    state i2 <<choice>>
+    n --> i2
+    i2 --> v: room has space
+    i2 --> n: room is full
+    an: add user to room
+    v --> an
+
+    c: new room
+    ac: add new room with user
+    c --> ac
+
+    an --> [*]
+    ac --> [*]
+```
+
 ## Fleet manager - Update active ports
 
 ```mermaid
