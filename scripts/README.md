@@ -1,3 +1,31 @@
+# Run service locally
+
+## Prepare environment
+
+```sh
+cd fleet-manager
+rm -rf venv/
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install fastapi
+pip install "uvicorn[standard]"
+pip install docker
+deactivate
+cd ../matchmaker
+docker build -t local-matchmaker .
+cd ..
+```
+
+## Start service
+
+```sh
+docker run -dp 8080:8080 local-matchmaker
+cd fleet-manager
+source venv/bin/activate
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
 # Update AWS
 
 ## Prepare image locally

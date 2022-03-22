@@ -1,5 +1,11 @@
 #!/bin/zsh
 
+if [ "$USER" == "ec2-user" ]
+then
+    echo "User is not ec2-user."
+    exit
+fi
+
 # Fleet manager
 cd fleet-manager
 rm -rf src/__pycache__/

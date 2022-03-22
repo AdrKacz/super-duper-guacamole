@@ -2,11 +2,22 @@ import asyncio
 import pathlib
 import ssl
 import websockets
+import os
+import json
+import boto3
+client_lambda = boto3.client('lambda')
 
-# TODO: Set MAX_PEERS as environment variable
-MAX_PEERS = 4
+LAMBDA_NOTIFICATION_ARN = os.getenv('LAMBDA_NOTIFICATION_ARN')
+ROOM_ID = os.getenv('ROOM_ID')
+MAX_PEERS = int(os.getenv('MAX_PEERS'))
 number_of_peers = 0
 peers = []
+
+print("ENVIRONMENT\n===== ===== =====")
+print("LAMBDA_NOTIFICATION_ARN:", LAMBDA_NOTIFICATION_ARN)
+print("ROOM_ID:", ROOM_ID)
+print("MAX_PEERS:", MAX_PEERS)
+print("===== ===== =====")
 
 async def chat(websocket):
     global number_of_peers, peers
@@ -32,9 +43,16 @@ async def chat(websocket):
             break
         print(f"Peer index {peer_index} <<< {message} <<< {user}")
 
+        # Broadcast message to peers
         for peer in peers:
             if peer:
                 await peer.send(f"{user}::{message}")
+        # Send notification
+        response = client_lambda.invoke(
+            FunctionName=LAMBDA_NOTIFICATION_ARN,
+            InvocationType='Event',
+            Payload=json.dumps({'room_id': ROOM_ID})
+        )
 
 async def register(websocket):
     global MAX_PEERS, number_of_peers, peers
@@ -45,6 +63,13 @@ async def register(websocket):
     for peer in peers:
         if peer:
             await peer.send(f"0::Someone just entered the chat!")
+    # Send notification
+    response = client_lambda.invoke(
+        FunctionName=LAMBDA_NOTIFICATION_ARN,
+        InvocationType='Event',
+        Payload=json.dumps({'room_id': ROOM_ID})
+    )
+    # Add peer to active sockets
     peers.append(websocket)
     number_of_peers += 1
     return len(peers)
@@ -54,7 +79,7 @@ async def register(websocket):
 # ssl_context.load_cert_chain(localhost_pem)
 
 async def server():
-    print("Start server on port 8765")
+    print("Start server #{ROOM_ID} on port 8765")
     # TODO: add try, except asyncio.CancelledError:, finally to close the server properly
     async with websockets.serve(chat, "0.0.0.0", 8765): #, ssl=ssl_context):
         await asyncio.Future() # Run forever
@@ -63,7 +88,7 @@ async def alive():
     await asyncio.sleep(10)
     while number_of_peers > 0:
         # TODO: Add date-time on print
-        print(f"Server is alive with {number_of_peers} peers connected.")
+        print(f"Server #{ROOM_ID} is alive with {number_of_peers} peers connected.")
         await asyncio.sleep(10)
 
 async def main():
