@@ -134,6 +134,12 @@ graph TB
     E_3 -.-> E_0
 ```
 
+<p float="left" align="middle">
+    <img src="./diagrams/room-from-disk.png" width="32%">
+</p>
+
+> `stateDiagram` isn't supported by Github yet.
+
 ```
 stateDiagram
     direction TB
