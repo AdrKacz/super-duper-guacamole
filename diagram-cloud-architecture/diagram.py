@@ -18,7 +18,7 @@ with Diagram(
     "Awa Cloud",
     show=False,
     graph_attr=graph_attr,
-    curvestyle="curved",
+    curvestyle="ortho",
     edge_attr=edge_attr,
     direction="TB",
     ):
@@ -45,7 +45,7 @@ with Diagram(
 
     mobile = Mobile()
     messaging >> Edge(style="dotted") >> mobile
-    mobile << Edge(style="dotted") << messaging
+    mobile >> Edge(style="dotted") >> messaging
     mobile >> Edge(
         style="bold",
         labeldistance= "5",
