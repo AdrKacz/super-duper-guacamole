@@ -10,10 +10,6 @@
 
 > This architecture is *centralised*
 
-## Ideal Architecture
-
-> `Federated` architecture will simply remove the **_client models_ database**
-
 # App states
 
 ```mermaid
