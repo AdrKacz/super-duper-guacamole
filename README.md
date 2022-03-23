@@ -119,21 +119,6 @@ sequenceDiagram
 
 ### Matchmaker memory logic
 
-> `current room` is a variable holding the endpoint for the current room returned by the **matchmaker**. Updating the `current room` is updating its value by a new value.
-
-> This is architecture doesn't handle recommendation from user. It queues user in room by order of arrival. **It will change in a future update.**
-
-```mermaid
-graph TB
-    room --> C{is full?}
-    C -.-> |yes|C_1{has space for new room?}
-    C -.-> |no|E_0[return current room]
-    C_1 -.-> |yes|E_1[create new room]
-    E_1 -.-> E_3[update current room]
-    C_1 -.-> |no|E_2[return error]
-    E_3 -.-> E_0
-```
-
 <p float="left" align="middle">
     <img src="./diagrams/room-from-disk.png" width="32%">
 </p>
