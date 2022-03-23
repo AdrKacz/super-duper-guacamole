@@ -20,7 +20,6 @@ with Diagram(
     graph_attr=graph_attr,
     curvestyle="curved",
     edge_attr=edge_attr,
-    direction="TB",
     ):
       
     with Cluster("Lighsail"): 
