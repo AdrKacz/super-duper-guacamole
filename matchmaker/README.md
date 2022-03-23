@@ -6,6 +6,13 @@ Users have to send their preference (coming from the **recommender system**), an
 
 We already have a *Lightsail* instance running in the cloud. For simplicity, we will not use *Lambda* for now. The **matchmaker** will communicate with the **fleet manager** through an open port, both on the same machine.
 
+# Environment
+
+Variable | Expected value
+-- | --
+**MAXIMUM_ROOM_SIZE** | Maximum number of users in a room
+**IP_ADDRESS** | Public host IP address
+
 # Development
 
 ```sh

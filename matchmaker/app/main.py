@@ -7,13 +7,17 @@ Matchmacker matches user in room according to their preferences
 
 # from typing import Optional
 from fastapi import FastAPI
-
 import requests
+import os
+
+MAXIMUM_ROOM_SIZE = int(os.getenv('MAXIMUM_ROOM_SIZE'))
+IP_ADDRESS = os.getenv('IP_ADDRESS')
+print("ENVIRONMENT\n===== ===== =====")
+print("MAXIMUM_ROOM_SIZE:", MAXIMUM_ROOM_SIZE)
+print("IP_ADDRESS:", IP_ADDRESS)
+print("===== ===== =====")
 
 app = FastAPI()
-
-MAXIMUM_ROOM_SIZE = 5
-IP_ADDRESS = "13.37.214.198"
 
 ROOMS = {}
 
@@ -35,7 +39,6 @@ def create_new_room():
     port = response.get("port", 0)
     error = ""
     if port:
-        # TODO: replace 127.0.0.1 by environment variable
         print("\tport:", port)
     else:
         error = response.get("error", "unknown error")
@@ -52,8 +55,9 @@ def read_room(user_id : str):
     """Get room for given user"""
     error = ""
     for room_id, room in ROOMS.items():
-        if len(room['users']) < MAXIMUM_ROOM_SIZE:
+        if len(room['users']) < MAXIMUM_ROOM_SIZE and user_id not in room['users']:
             # Room pass criteria, return it
+            room['users'].append(user_id)
             return response_from_room_id(user_id, room_id)
 
     # No room left, create one

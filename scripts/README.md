@@ -51,7 +51,7 @@ ssh -i <path-to-your-ssh-key> ec2-user@<instance-ip-address>
 ```sh
 docker pull adrkacz/awa-match-maker:latest
 docker pull adrkacz/awa-server:python
-docker run -dp 8080:8080 adrkacz/awa-match-maker:latest
+docker run -dp 8080:8080 -e MAXIMUM_ROOM_SIZE=$MAXIMUM_ROOM_SIZE -e IP_ADDRESS=$IP_ADDRESS adrkacz/awa-match-maker:latest 
 cd fleet-manager
 rm -rf src/ venv/
 unzip fleet-manager.zip
