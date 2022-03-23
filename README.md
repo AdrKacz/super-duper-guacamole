@@ -1,5 +1,7 @@
 # super-duper-guacamole
 
+> [Awa Lookup](https://docs.google.com/presentation/d/1QThoIvIGAeG6SlSOOstbqLRikrF3WBQCePyzSukguPY/edit?usp=sharing) *(written in French for our university)*
+
 # Cloud Architecture
 
 ## Current Architecture

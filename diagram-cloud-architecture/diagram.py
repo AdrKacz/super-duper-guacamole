@@ -6,7 +6,12 @@ from diagrams.aws.compute import Lambda, Lightsail
 from diagrams.aws.database import Dynamodb
 from diagrams.aws.network import APIGateway, Endpoint
 
-with Diagram("Awa service", show=False):
+graph_attr = {
+    # "fontsize": "45",
+    # "bgcolor": "transparent"
+}
+
+with Diagram("Awa service", show=False, graph_attr=graph_attr):
     model_provider_endpoint = APIGateway("Model provider endpoint")
     dockers = Docker("UDP Server")
     match_maker_endpoint = APIGateway("Matchmaker endpoint")
