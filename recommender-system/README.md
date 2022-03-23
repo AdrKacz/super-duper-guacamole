@@ -118,29 +118,29 @@ ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ```mermaid
 sequenceDiagram
       actor User as User
-      participant Model as Master Model Y
-      participant Model2 as User Model X
+      participant Model as Master Model
+      participant Model2 as User Model
       User ->> Model: GET Recommendation for user u (HTTP API Gateway)
       Note right of User: API Gateway HTTP - user_id in the path
       Model ->> Model: Process & Check HTTP request
       Model ->> Model2: GET User gradient of Master Model and Recommendation
       Note right of Model: Call between lambdas on AWS
-      Model2 ->> Model2: Process and update User Model X
+      Model2 ->> Model2: Process and update User Model
       Model2 ->> Model: Recommendation. and gradient transmission
       Model ->> User: Recommendation transmission
-      Model ->> Model: Master Model Y update 
+      Model ->> Model: Master Model update 
 ```
 
 ## Desired sequence diagram
 ```mermaid
 sequenceDiagram
-      actor User as User - Model X
-      participant Model as Master Model Y
-      User ->> Model: GET Master Model Y
+      actor User as User - Model
+      participant Model as Master Model
+      User ->> Model: GET Master Model
       Note right of User: API Gateway HTTP
-      Model ->> User: Response: Master Model Y matrix
-      User ->> User: Reco., gradient computation, update User Model X
-      User ->> Model: POST gradient Master Model Y matrix
+      Model ->> User: Response: Master Model matrix
+      User ->> User: Reco., gradient computation, update User Model
+      User ->> Model: POST gradient Master Model matrix
       Model ->> User: Response : StatusCode: 200
       Model ->> Model: Master Model update
 ```
