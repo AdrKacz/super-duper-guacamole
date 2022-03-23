@@ -2,7 +2,7 @@
 from diagrams import Cluster, Diagram, Edge
 from diagrams.generic.device import Mobile
 from diagrams.onprem.container import Docker
-from diagrams.aws.compute import Lambda, Lightsail
+from diagrams.aws.compute import Lambda
 from diagrams.aws.network import Endpoint
 from diagrams.firebase.grow import Messaging
 
