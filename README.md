@@ -124,7 +124,7 @@ sequenceDiagram
 > This is architecture doesn't handle recommendation from user. It queues user in room by order of arrival. **It will change in a future update.**
 
 ```mermaid
-graph LR
+graph TB
     room --> C{is full?}
     C -.-> |yes|C_1{has space for new room?}
     C -.-> |no|E_0[return current room]
