@@ -136,6 +136,7 @@ graph LR
 
 ```
 stateDiagram
+    direction TB
     state i1 <<choice>>
     [*] --> i1
     i1 --> n: has next room
