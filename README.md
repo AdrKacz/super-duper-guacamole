@@ -146,6 +146,7 @@ sequenceDiagram
 ### Matchmaker memory logic
 
 ```mermaid
+%%{config: { "themeCSS": ".label foreignObject { overflow: visible; }"} }%%
 stateDiagram
     direction TB
     state i1 <<choice>>
@@ -222,8 +223,6 @@ Using **Godot** for a simple chat may *not be the best idea*. Indeed, **Godot** 
 
 <details><summary>Codebase</summary>
 <p>
-# Codebase
-
 ```sh
 # macOS: brew install cloc
 >> cloc --exclude-ext=md .
