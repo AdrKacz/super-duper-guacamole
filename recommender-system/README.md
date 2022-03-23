@@ -128,7 +128,7 @@ sequenceDiagram
       Model2 ->> Model2: Process and update User Model
       Model2 ->> Model: Recommendation. and gradient transmission
       Model ->> User: Recommendation transmission
-      Model ->> Model: Master Model update 
+      Model ->> Model: Master Model update
 ```
 
 ## Desired sequence diagram
