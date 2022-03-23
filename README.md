@@ -219,6 +219,9 @@ Using **Godot** for a simple chat may *not be the best idea*. Indeed, **Godot** 
 
 **Flutter** is quicker to setup than **React Native** *(I mean, literally quicker, it doesn't burn my laptop)*. I've used (Flutter Chat UI)[https://pub.dev/packages/flutter_chat_ui] to get a first chat without coding. *The same framework was available with **React Native***
 
+
+<details><summary>Codebase</summary>
+<p>
 # Codebase
 
 ```sh
@@ -258,3 +261,6 @@ D                                    2              0              0            
 SUM:                               603           7553          13603          37309
 -----------------------------------------------------------------------------------
 ```
+
+</p>
+</details>
