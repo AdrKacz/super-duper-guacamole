@@ -124,34 +124,28 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor user
-    participant MM as matchmaker
-    participant FM as fleet manager
-    user ->> MM: GET room (IP, port)
-    alt is current room full
-        MM ->> FM: create new room
-        FM ->> FM: process [update active ports]
-        alt is space for new room
-            FM ->> MM: new room port
-            MM ->> user: new room (IP, port)
+    actor u as user
+    participant m as matchmaker
+    participant f as fleet manager
+    u ->> m: GET room
+    m ->> m: GET room for user in memory
+    alt has no room
+        m ->> f: GET new room
+        f ->> f: create new room
+        alt has room
+            f ->> m: RETURN room
         else
-            FM ->> MM: error
-            MM ->> user: error
+            f ->> m: RETURN error
+            m ->> u: RETURN error
         end
-    else
-      MM ->> user: current room (IP, port)
     end
+    m ->> m: update room in memory
+    m ->> u: RETURN room
 ```
 
 ### Matchmaker memory logic
 
-<p float="left" align="middle">
-    <img src="./diagrams/room-from-disk.png" width="100%">
-</p>
-
-> `stateDiagram` isn't supported by Github yet.
-
-```
+```mermaid
 stateDiagram
     direction TB
     state i1 <<choice>>
@@ -176,23 +170,30 @@ stateDiagram
     ac --> [*]
 ```
 
-## Fleet manager - Update active ports
+## Fleet manager - Create new room
 
 ```mermaid
 sequenceDiagram
-    participant FM as fleet manager
-    participant D as docker API
-    loop container
-        D ->> FM: container image
-        alt is from server image
-            D ->> FM: container status
-            alt is container running
-                D ->> FM: container open ports
+    participant f as fleet manager
+    participant dd as docker daemon
+    participant w as websocket server
+    f ->> dd: GET containers
+    loop containers
+        f ->> dd: GET container image
+        alt is websocket server
+            f ->> dd: GET container status
+            alt is running
+                f ->> dd: GET container open ports
                 alt has open ports
-                    FM ->> FM: lock open ports
+                    f ->> f: update available ports
                 end
             end
         end
+    end
+
+    f ->> f: GET available port
+    alt is available port
+        f ->> w: RUN container on available port
     end
 ```
 
