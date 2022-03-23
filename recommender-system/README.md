@@ -117,7 +117,7 @@ ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ## Actual sequence diagram
 ```mermaid
 sequenceDiagram
-      participant User as User
+      actor User as User
       participant Model as Master Model Y
       participant Model2 as User Model X
       User ->> Model: GET Recommendation for user u (HTTP API Gateway)
@@ -134,7 +134,7 @@ sequenceDiagram
 ## Desired sequence diagram
 ```mermaid
 sequenceDiagram
-      participant User as User - Model X
+      actor User as User - Model X
       participant Model as Master Model Y
       User ->> Model: GET Master Model Y
       Note right of User: API Gateway HTTP
