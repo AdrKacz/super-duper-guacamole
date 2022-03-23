@@ -75,7 +75,9 @@ sequenceDiagram
     end
 ```
 
-### GET room on disk
+## Disk management
+
+### On open
 
 ```mermaid
 sequenceDiagram
@@ -83,15 +85,39 @@ sequenceDiagram
     participant d as disk
     participant m as matchmaker
     participant w as websocket server
-    u -> d: GET box
-    note over u,d: <List<String>>
-    alt box has room
-        u ->> u: Load room messages
+    u -> d: CONNECT room BOX
+    u -> d: CONNECT messages LAZYBOX
+    alt room BOX has id
+        u ->> d: GET messages LAZYBOX - end
+        loop 0..end
+            u ->> d: GET messages LAZYBOX - i
+        end
     else
-        u -> m: GET room
+        u ->> m: GET room
+        u ->> d: PUT room BOX - room
         
     end
-    u -> w: connect to room
+    u -> w: CONNECT room
+```
+
+### On send message
+
+```mermaid
+sequenceDiagram
+    participant u as user
+    participant d as disk
+    participant m as matchmaker
+    participant w as websocket server
+    u -> w: CONNECT room
+    loop until deconnexion
+        par
+            u ->> w: SEND message
+        and
+            w ->> u: RECEIVE message
+            u ->> u: update local messages
+            u ->> d: ADD messages LAZYBOX - message
+        end
+    end
 ```
 
 ## User - Ask for a room
