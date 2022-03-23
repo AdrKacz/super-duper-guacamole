@@ -6,7 +6,7 @@
 
 ## Current Architecture
 
-![awa-services](./diagram-cloud-architecture/awa_service.png)
+![awa-cloud](./diagram-cloud-architecture/awa_cloud.png)
 
 > This architecture is *centralised*
 
