@@ -147,7 +147,7 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram
-%%{config: { 'fontFamily': 'Menlo', 'fontSize': 18, 'fontWeight': 400} }%%
+%%{config: { "themeCSS": ".label foreignObject { overflow: visible; }" }%%
     direction TB
     state i1 <<choice>>
     [*] --> i1
