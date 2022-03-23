@@ -39,45 +39,49 @@ sequenceDiagram
     m ->> u : endpoint
 ```
 
-# How room are managed?
+# Rooms lifecycle
 
-## User - Start Awa
+## What happens when you change room?
 
 ```mermaid
 sequenceDiagram
-    participant oth as other room users
+    actor oth as other users
+    participant d as disk
     actor u as user
     participant m as matchmaker
     participant s as websocket server
     participant f as firebase
-    u ->> u: GET room on disk
-    alt has room
-        u ->> s: connect to websocket server
-        alt connection not accepted
-            u ->> f: unsubscribe to room_id topic
-            u ->> u: delete room
+    alt room
+        u ->> f: UNSUBSCRIBE from room
+    end
+    u ->> m: GET room
+    u ->> d: PUT room BOX - room
+    u ->> f: SUBSCRIBE to room
+    u -> s: CONNECT to room
+    loop room is alive
+        par
+            oth ->> s: SEND messages
+        and
+            u ->> s: SEND messages
         end
-    end
-    alt room is not defined
-        u ->> m: GET room
-        m ->> m: process [user ask for a room]
-        m ->> u: room_id, room_address, room_port
-        u ->> f: subscribe to room_id topic
-    end
-    u ->> s: connect to websocket server
-    loop while room alive
-        oth ->> s: send message
-        alt is app in foreground
-            s ->> u: broadcast message
-        else
-            f ->> u: notify user
+        par 
+            s ->> u: SEND messages
+            alt app in foreground
+                u ->> u: PROCESS incomming messages
+            end
+        and
+            s ->> f: SEND messages
+            f ->> u: SEND push notifications
+            alt app in background
+                u ->> u: PROCESS push notifications
+            end
         end
     end
 ```
 
-## Disk management
+# Disk management
 
-### On open
+## On open
 
 ```mermaid
 sequenceDiagram
@@ -100,7 +104,7 @@ sequenceDiagram
     u -> w: CONNECT room
 ```
 
-### On send message
+## On send message
 
 ```mermaid
 sequenceDiagram
@@ -120,7 +124,7 @@ sequenceDiagram
     end
 ```
 
-## User - Ask for a room
+# How to get a new room?
 
 ```mermaid
 sequenceDiagram
@@ -143,7 +147,7 @@ sequenceDiagram
     m ->> u: RETURN room
 ```
 
-### Matchmaker memory logic
+## How does the matchmaker manage rooms?
 
 ```mermaid
 stateDiagram
@@ -171,7 +175,7 @@ stateDiagram
     ac --> [*]
 ```
 
-## Fleet manager - Create new room
+## How does the fleet manager manage rooms?
 
 ```mermaid
 sequenceDiagram
