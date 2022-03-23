@@ -120,7 +120,7 @@ sequenceDiagram
 ### Matchmaker memory logic
 
 <p float="left" align="middle">
-    <img src="./diagrams/room-from-disk.png" width="32%">
+    <img src="./diagrams/room-from-disk.png" width="100%">
 </p>
 
 > `stateDiagram` isn't supported by Github yet.
