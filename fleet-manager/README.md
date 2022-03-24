@@ -7,6 +7,12 @@ This **API** will be used by the **matchmaker** to create new room as player cam
 
 > That may not be the most efficient method, but it will be enought for now.
 
+# Environment
+
+Variable | Expected value
+-- | --
+**LAMBDA_NOTIFICATION_ARN** | Lambda function to call for push notifications
+
 # Development
 
 ```sh

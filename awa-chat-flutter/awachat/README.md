@@ -15,6 +15,18 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+## Set up notications
+
+[**Add Firebase to your Flutter app**](https://firebase.google.com/docs/flutter/setup?platform=ios)
+
+[**Firebase - Flutter - Messaging - Usage**](https://firebase.flutter.dev/docs/messaging/usage/)
+
+> **WARNING**: install `Firebase CLI` with *auto install script*: https://firebase.google.com/docs/cli
+
+> **WARNING**: update **minimum iOS version** supported from **9.0** to **11.0** to support `firebase_messaging`
+
+> **WARNING**: update **minSdkVersion** supported from **flutter.minSdkVersion *16*** to **19** to support `firebase_messaging`
+
 ## Change App Package Name
 
 [**Change app package name**](https://pub.dev/packages/change_app_package_name)
