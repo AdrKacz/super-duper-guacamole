@@ -16,7 +16,7 @@ edge_attr = {
 }
 
 with Diagram(
-    "Awa Recommender Model",
+    "Awa Recommender System",
     show=False,
     graph_attr=graph_attr,
     curvestyle="ortho",
@@ -35,7 +35,7 @@ with Diagram(
     with Cluster("Lambdas"):
         lambda_y = LambdaFunction("Master Model")
         lambda_mapping = LambdaFunction("Mapping")
-        lambda_R = LambdaFunction("Notation Update")
+        lambda_R = LambdaFunction("Ratings Update")
         lambda_x = LambdaFunction("User Model - X")
         lambdas = [lambda_y, lambda_mapping, lambda_R, lambda_x]
         for i, api in enumerate(apis):
@@ -54,7 +54,7 @@ with Diagram(
             table_demapping = DynamodbTable("De-Mapping")
             mapping_tables = [table_mapping, table_demapping]
         
-        table_R_notation = DynamodbTable("Notation Matrix")
+        table_R_ratings = DynamodbTable("Ratings Matrix")
         table_x_user_model = DynamodbTable("User Model Weights")
         with Cluster("Master Model Tables"):
             table_y_master_model = DynamodbTable("Weights")
@@ -67,7 +67,7 @@ with Diagram(
         lambda_mapping >> mapping_tables
 
         lambda_R >> Edge(style="dotted") >> table_mapping
-        lambda_R >> table_R_notation
+        lambda_R >> table_R_ratings
 
         lambda_x >> table_x_user_model
 

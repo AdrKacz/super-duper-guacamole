@@ -40,7 +40,7 @@ with Diagram(
     
     messaging = Messaging()
     notification = Lambda("Notification Handler")
-    dockers << Edge(style="dotted") << notification
+    dockers >> Edge(style="dotted") >> notification
     notification >> Edge(style="dotted") >> messaging
 
     mobile = Mobile()
