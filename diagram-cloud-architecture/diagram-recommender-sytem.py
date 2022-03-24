@@ -22,15 +22,14 @@ with Diagram(
     curvestyle="ortho",
     edge_attr=edge_attr,
     direction="TB",
-    ):
+):
     mobile = Mobile()
-    
+
     with Cluster("API Gateway - HTTP Endpoints"):
         api_gateway_get_recommendation = APIGatewayEndpoint()
         api_gateway_mapping = APIGatewayEndpoint()
         api_gateway_marks = APIGatewayEndpoint()
         apis = [api_gateway_get_recommendation, api_gateway_mapping, api_gateway_marks]
-
 
     with Cluster("Lambdas"):
         lambda_y = LambdaFunction("Master Model")
@@ -43,17 +42,14 @@ with Diagram(
         lambda_y >> lambda_x
 
     ecr_lambdas = EC2ContainerRegistry("ECR Lambdas")
-    ecr_lambdas >> Edge(
-        fontsize="24",
-        color="black",
-        labelfontcolor="red") >> lambdas
+    ecr_lambdas >> Edge(fontsize="24", color="black", labelfontcolor="red") >> lambdas
 
     with Cluster("DynamoDB"):
         with Cluster("Mapping Tables"):
             table_mapping = DynamodbTable("Mapping")
             table_demapping = DynamodbTable("De-Mapping")
             mapping_tables = [table_mapping, table_demapping]
-        
+
         table_R_ratings = DynamodbTable("Ratings Matrix")
         table_x_user_model = DynamodbTable("User Model Weights")
         with Cluster("Master Model Tables"):
@@ -70,6 +66,5 @@ with Diagram(
         lambda_R >> table_R_ratings
 
         lambda_x >> table_x_user_model
-
 
     mobile >> Edge() >> apis
