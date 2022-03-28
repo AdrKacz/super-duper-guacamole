@@ -276,6 +276,35 @@ class _MyAppPresentationState extends State<MyAppPresentation> {
   bool hasSignedRGPD = false;
   bool hasSignedEULA = false;
 
+  void checkAgreements(BuildContext context) {
+    if (hasSignedRGPD && hasSignedEULA) {
+      print("You're all good!");
+      widget.signAgreements!();
+    } else {
+      print("You didn't sign RGPD and EULA.");
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text(
+                "Je ne peux pas continuer sans toi 😖",
+                textAlign: TextAlign.center,
+              ),
+              content: const Text(
+                  "Clique sur \"J'ai compris 👍\" et \"Je m'engage 😎\"",
+                  textAlign: TextAlign.center),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text("J'ai compris"))
+              ],
+            );
+          });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -302,23 +331,13 @@ C'est moi qui te place en fonction de tes préférences.
                 setState(() {
                   hasSignedRGPD = true;
                 });
-                if (hasSignedRGPD && hasSignedEULA) {
-                  print("You're all good!");
-                  widget.signAgreements!();
-                } else {
-                  print("You didn't sign RGPD and EULA.");
-                }
+                checkAgreements(context);
               }),
               EULASlide(sign: () {
                 setState(() {
                   hasSignedEULA = true;
                 });
-                if (hasSignedRGPD && hasSignedEULA) {
-                  print("You're all good!");
-                  widget.signAgreements!();
-                } else {
-                  print("You didn't sign RGPD and EULA.");
-                }
+                checkAgreements(context);
               }),
             ]),
           ),
@@ -376,12 +395,18 @@ Je m'engage à ne pas conserver tes données personnelles.
   🔐 Les messages s'enregistrent uniquement sur ton téléphone,
   🔐 Quand tu changes de conversation, tout est supprimé,
   🔐 Tu n'as pas de profil, tu peux changer d'identité à tout moment.
-
-Si tu te demandes comment je te trouve une conversation engagente et amusante sans ne rien savoir sur toi, je t'invite à venir voir comment je fonctionne et me poser une question 🌍
+""", textAlign: TextAlign.center),
+        ElevatedButton(onPressed: sign, child: const Text("J'ai compris 👍")),
+        const Divider(
+          height: 32,
+          thickness: 1,
+        ),
+        const Text("""
+Tu te demandes comment je te trouve une conversation engagente et amusante sans ne rien savoir sur toi ? 
+Viens voir comment je fonctionne et pose moi des questions 🌍
 """, textAlign: TextAlign.center),
         ElevatedButton(
             onPressed: () {}, child: const Text("Comment je fonctionne ? 🧠")),
-        ElevatedButton(onPressed: sign, child: const Text("J'ai compris 👍"))
       ],
     ));
   }
