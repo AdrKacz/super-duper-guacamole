@@ -213,22 +213,46 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   static FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // State
+  late bool hasSignedAgreements;
+
+  @override
+  void initState() {
+    super.initState();
+    hasSignedAgreements = false;
+    String? savedHasSignedAgreements = boxUser.get('hasSignedAgreements');
+    if (savedHasSignedAgreements != null &&
+        savedHasSignedAgreements == "true") {
+      hasSignedAgreements = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final pushNotificationService = PushNotificationService(messaging);
     pushNotificationService.initialise();
-    if (boxUser.get('hasSignedAgreements') == null) {
-      return const MaterialApp(
-        home: MyAppPresentation(),
-      );
-    } else {
+    if (hasSignedAgreements) {
       return const MaterialApp(
         home: MyHomePage(),
+      );
+    } else {
+      return MaterialApp(
+        home: MyAppPresentation(signAgreements: () {
+          setState(() {
+            hasSignedAgreements = true;
+          });
+          boxUser.put('hasSignedAgreements', "true");
+        }),
       );
     }
   }
@@ -237,38 +261,66 @@ class MyApp extends StatelessWidget {
 
 // ===== ===== =====
 
-const List<Widget> slides = <Widget>[
-  Slide(text: """
-Je suis Awa.
-Je vais te présenter l'application.
-"""),
-  Slide(
-      text:
-          "Chaque personne est placée dans une conversation avec quatres autres personnes."),
-  Slide(text: """
-Tu ne t'occupes de rien !
-C'est moi qui te place en fonction de tes préférences.
-"""),
-  RGPDSlide(),
-  EULASlide(),
-];
+class MyAppPresentation extends StatefulWidget {
+  const MyAppPresentation({Key? key, required this.signAgreements})
+      : super(key: key);
 
-class MyAppPresentation extends StatelessWidget {
-  const MyAppPresentation({Key? key}) : super(key: key);
+  final VoidCallback? signAgreements;
+
+  @override
+  _MyAppPresentationState createState() => _MyAppPresentationState();
+}
+
+class _MyAppPresentationState extends State<MyAppPresentation> {
+  // Agreements
+  bool hasSignedRGPD = false;
+  bool hasSignedEULA = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: SafeArea(
             child: DefaultTabController(
-      length: slides.length,
-      // Use a Builder here, otherwise `DefaultTabController.of(context)` below
-      // returns null.
+      length: 5,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const <Widget>[
+        children: <Widget>[
           Expanded(
-            child: TabBarView(children: slides),
+            child: TabBarView(children: <Widget>[
+              const Slide(text: """
+Je suis Awa.
+Je vais te présenter l'application.
+"""),
+              const Slide(
+                  text:
+                      "Chaque personne est placée dans une conversation avec quatres autres personnes."),
+              const Slide(text: """
+Tu ne t'occupes de rien !
+C'est moi qui te place en fonction de tes préférences.
+"""),
+              RGPDSlide(sign: () {
+                setState(() {
+                  hasSignedRGPD = true;
+                });
+                if (hasSignedRGPD && hasSignedEULA) {
+                  print("You're all good!");
+                  widget.signAgreements!();
+                } else {
+                  print("You didn't sign RGPD and EULA.");
+                }
+              }),
+              EULASlide(sign: () {
+                setState(() {
+                  hasSignedEULA = true;
+                });
+                if (hasSignedRGPD && hasSignedEULA) {
+                  print("You're all good!");
+                  widget.signAgreements!();
+                } else {
+                  print("You didn't sign RGPD and EULA.");
+                }
+              }),
+            ]),
           ),
           TabPageSelector(),
         ],
@@ -281,6 +333,8 @@ class SlideContainer extends StatelessWidget {
   const SlideContainer({Key? key, required this.child}) : super(key: key);
 
   final Widget child;
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
@@ -307,7 +361,9 @@ class Slide extends StatelessWidget {
 }
 
 class RGPDSlide extends StatelessWidget {
-  const RGPDSlide({Key? key}) : super(key: key);
+  const RGPDSlide({Key? key, required this.sign}) : super(key: key);
+
+  final VoidCallback? sign;
 
   @override
   Widget build(BuildContext context) {
@@ -315,7 +371,7 @@ class RGPDSlide extends StatelessWidget {
         child: ListView(
       shrinkWrap: true,
       children: [
-        Text("""
+        const Text("""
 Je m'engage à ne pas conserver tes données personnelles.
   🔐 Les messages s'enregistrent uniquement sur ton téléphone,
   🔐 Quand tu changes de conversation, tout est supprimé,
@@ -324,15 +380,17 @@ Je m'engage à ne pas conserver tes données personnelles.
 Si tu te demandes comment je te trouve une conversation engagente et amusante sans ne rien savoir sur toi, je t'invite à venir voir comment je fonctionne et me poser une question 🌍
 """, textAlign: TextAlign.center),
         ElevatedButton(
-            onPressed: () {}, child: Text("Comment je fonctionne ? 🧠")),
-        ElevatedButton(onPressed: () {}, child: Text("J'ai compris 👍"))
+            onPressed: () {}, child: const Text("Comment je fonctionne ? 🧠")),
+        ElevatedButton(onPressed: sign, child: const Text("J'ai compris 👍"))
       ],
     ));
   }
 }
 
 class EULASlide extends StatelessWidget {
-  const EULASlide({Key? key}) : super(key: key);
+  const EULASlide({Key? key, required this.sign}) : super(key: key);
+
+  final VoidCallback? sign;
 
   @override
   Widget build(BuildContext context) {
@@ -341,7 +399,7 @@ class EULASlide extends StatelessWidget {
             child: ListView(
       shrinkWrap: true,
       children: [
-        Text("""
+        const Text("""
 Je ne respecterai mes engagements seulement si tu es respecteux et tolérant.
 
 Tu dois t'engager à :
@@ -354,7 +412,7 @@ De plus, si tu planifie un rendez-vous dans le monde réel avec les membres de t
 
 Tu t'engages à bien respecter cela ?
 """, textAlign: TextAlign.center),
-        ElevatedButton(onPressed: () {}, child: Text("Je m'engage 😎"))
+        ElevatedButton(onPressed: sign, child: const Text("Je m'engage 😎"))
       ],
     )));
   }
