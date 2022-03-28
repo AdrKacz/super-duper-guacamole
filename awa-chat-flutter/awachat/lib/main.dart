@@ -13,7 +13,6 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:http/http.dart' as http;
 
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 // ===== ===== =====
@@ -161,9 +160,10 @@ class PushNotificationService {
 
 // ===== ===== =====
 // Disk management
-types.User user = types.User(id: uuid.v4());
+late types.User user;
 late Box<String> boxRoom;
 late LazyBox<String> lazyBoxMessages;
+late Box<String> boxUser;
 
 types.Message messageFrom(List<String> data) {
   return types.TextMessage(
@@ -198,6 +198,17 @@ void main() async {
   await Hive.initFlutter();
   boxRoom = await Hive.openBox<String>('room');
   lazyBoxMessages = await Hive.openLazyBox<String>('messages');
+  boxUser = await Hive.openBox<String>('user');
+
+  // Set user
+  String? userId = boxUser.get('id');
+  if (userId == null) {
+    user = types.User(id: uuid.v4());
+    boxUser.put('id', user.id);
+  } else {
+    user = types.User(id: userId);
+  }
+  print("User ID is <${user.id}>.");
 
   runApp(const MyApp());
 }
@@ -211,11 +222,144 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final pushNotificationService = PushNotificationService(messaging);
     pushNotificationService.initialise();
-    return const MaterialApp(
-      home: MyHomePage(),
+    if (boxUser.get('hasSignedAgreements') == null) {
+      return const MaterialApp(
+        home: MyAppPresentation(),
+      );
+    } else {
+      return const MaterialApp(
+        home: MyHomePage(),
+      );
+    }
+  }
+}
+// ===== ===== =====
+
+// ===== ===== =====
+
+const List<Widget> slides = <Widget>[
+  Slide(text: """
+Je suis Awa.
+Je vais te présenter l'application.
+"""),
+  Slide(
+      text:
+          "Chaque personne est placée dans une conversation avec quatres autres personnes."),
+  Slide(text: """
+Tu ne t'occupes de rien !
+C'est moi qui te place en fonction de tes préférences.
+"""),
+  RGPDSlide(),
+  EULASlide(),
+];
+
+class MyAppPresentation extends StatelessWidget {
+  const MyAppPresentation({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SafeArea(
+            child: DefaultTabController(
+      length: slides.length,
+      // Use a Builder here, otherwise `DefaultTabController.of(context)` below
+      // returns null.
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const <Widget>[
+          Expanded(
+            child: TabBarView(children: slides),
+          ),
+          TabPageSelector(),
+        ],
+      ),
+    )));
+  }
+}
+
+class SlideContainer extends StatelessWidget {
+  const SlideContainer({Key? key, required this.child}) : super(key: key);
+
+  final Widget child;
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Center(
+        child: child,
+      ),
     );
   }
 }
+
+class Slide extends StatelessWidget {
+  const Slide({Key? key, required this.text}) : super(key: key);
+
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class RGPDSlide extends StatelessWidget {
+  const RGPDSlide({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: ListView(
+      shrinkWrap: true,
+      children: [
+        Text("""
+Je m'engage à ne pas conserver tes données personnelles.
+  🔐 Les messages s'enregistrent uniquement sur ton téléphone,
+  🔐 Quand tu changes de conversation, tout est supprimé,
+  🔐 Tu n'as pas de profil, tu peux changer d'identité à tout moment.
+
+Si tu te demandes comment je te trouve une conversation engagente et amusante sans ne rien savoir sur toi, je t'invite à venir voir comment je fonctionne et me poser une question 🌍
+""", textAlign: TextAlign.center),
+        ElevatedButton(
+            onPressed: () {}, child: Text("Comment je fonctionne ? 🧠")),
+        ElevatedButton(onPressed: () {}, child: Text("J'ai compris 👍"))
+      ],
+    ));
+  }
+}
+
+class EULASlide extends StatelessWidget {
+  const EULASlide({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: Center(
+            child: ListView(
+      shrinkWrap: true,
+      children: [
+        Text("""
+Je ne respecterai mes engagements seulement si tu es respecteux et tolérant.
+
+Tu dois t'engager à :
+  ✅ ne pas envoyer de messages insultants,
+  ✅ respecter chaque personnes, quelque soit vos divergences.
+
+De plus, si tu planifie un rendez-vous dans le monde réel avec les membres de ta conversations, tu dois t'engager à :
+  ✅ ne pas effectuer d'actions reprimendables par la loi avec ton groupe,
+  ✅ ne pas mentir sur les tenants de la rencontre dans le but de pieger un ou plusieurs membre.
+
+Tu t'engages à bien respecter cela ?
+""", textAlign: TextAlign.center),
+        ElevatedButton(onPressed: () {}, child: Text("Je m'engage 😎"))
+      ],
+    )));
+  }
+}
+
 // ===== ===== =====
 
 // ===== ===== =====
@@ -268,7 +412,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }, itemBuilder: (BuildContext context) {
           return [
             const PopupMenuItem<int>(
-                value: 0, child: Text("Change de conversation")),
+                value: 0, child: Text("Je veux changer de groupe")),
           ];
         })
       ]),
