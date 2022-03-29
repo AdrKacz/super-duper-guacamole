@@ -4,7 +4,7 @@
 We want to:
 - Assign people to conversation groups. The challenge is to match them with people they will like while not matching them always with the same people.
 - Preserve the privacy of the users  
-To fulfill these objectives, we will implement an machine learning algorithm working with local user data, and without transmitting it to a server.
+To fulfill these objectives, we will implement an machine learning algorithm[^model0] working with local user data, and without transmitting it to a server.
 
 # Local information available
 Locally each user has access to, at a given time:
@@ -84,7 +84,7 @@ sequenceDiagram
 # AWS Setup:
 We use Python with NumPy in an AWS Lambda function. NumPy is not available in the Python AWS default environment. The only solution proposed in the AWS documentation that we succeded to implement was to create a dockerized environnement.
 
-## Container setup with Docker for Python
+## Container setup with Docker for Python[^cont0][^cont1]
 1. On your local machine, create a project directory for your new function (here *recommerder-system*).
 2. In your project directory, add a file named `app.py` containing your function code, within a handler function. Example:
 ```
@@ -161,7 +161,7 @@ def handler(event, context):
     # Return {'user_id': ['2'], 'tomato':['abcd'], 'potato': ['1234']}
 ```
 
-### To use a Lambda from another Lambda
+### To use a Lambda from another Lambda[^cloud1]
 1. Create the second Lambda
 2. Manage the IAM of the first Lambda to access the second:  
 In the AWS Console Interface of Lambda: --> Configuration --> Permissions --> Execution Role (click, IAM page will open). --> Add permissions --> Create Inline Policy :
@@ -203,7 +203,7 @@ ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 
 ### Container:
 [^cont0]: [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)  
-[^cont1]: [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)
+[^cont1]: [Deploy Python Lambda functions with container images-2](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)
 
 ### Model papers:
 [^model0]: [Federated Collaborative Filtering for Privacy-Preserving Personalized Recommendation System](https://arxiv.org/abs/1901.09888)
