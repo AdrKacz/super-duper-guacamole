@@ -282,8 +282,8 @@ class _MyAppPresentationState extends State<MyAppPresentation> {
     if (hasSignedRGPD && hasSignedEULA) {
       print("You're all good!");
       widget.signAgreements!();
-    } else {
-      print("You didn't sign RGPD and EULA.");
+    } else if (!hasSignedRGPD) {
+      print("You didn't sign RGPD");
       showDialog(
           context: context,
           builder: (BuildContext context) {
