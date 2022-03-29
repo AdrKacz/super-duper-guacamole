@@ -149,6 +149,8 @@ sequenceDiagram
 
 ## How does the matchmaker manage rooms?
 
+> The following executes on `GET room` from `user`.
+
 ```mermaid
 stateDiagram
 %%{config: { "themeCSS": ".label foreignObject { overflow: visible; }" }%%
