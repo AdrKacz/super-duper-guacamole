@@ -73,6 +73,6 @@ tmux
 
 ```
 source venv/bin/activate
-echo "Enter Ctrl+b d after uvicorn starts"
+echo -e "\033[0;35mEnter Ctrl+b d after uvicorn starts\033[0m"
 uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```

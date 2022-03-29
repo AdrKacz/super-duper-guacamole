@@ -79,3 +79,9 @@ def read_room(user_id : str):
 def read_rooms():
     """Read all rooms"""
     return ROOMS
+
+@app.get("/clear-all-rooms/")
+def read_rooms():
+    global ROOMS
+    """Clear all rooms"""
+    ROOMS = {}
