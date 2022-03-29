@@ -15,6 +15,8 @@ import 'package:http/http.dart' as http;
 
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
 // ===== ===== =====
 // Endpoints
 const String matchmakerEndpoint = "http://13.37.214.198:8080/room/";
@@ -406,7 +408,14 @@ Tu te demandes comment je te trouve une conversation engagente et amusante sans 
 Viens voir comment je fonctionne et pose moi des questions 🌍
 """, textAlign: TextAlign.center),
         ElevatedButton(
-            onPressed: () {}, child: const Text("Comment je fonctionne ? 🧠")),
+            onPressed: () async {
+              const String url =
+                  "https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6";
+              if (!await launch(url)) {
+                throw "Could not launch $url";
+              }
+            },
+            child: const Text("Comment je fonctionne ? 🧠")),
       ],
     ));
   }
