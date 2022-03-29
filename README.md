@@ -1,15 +1,29 @@
 # super-duper-guacamole
 
+> [Awa - Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
+
+> [Awa - University Slides](https://docs.google.com/presentation/d/1QThoIvIGAeG6SlSOOstbqLRikrF3WBQCePyzSukguPY/edit?usp=sharing) *(written in French for our university)*
+
 # Cloud Architecture
 
 > We chose a **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The goal is to verify the model works.
 
 ## Current Architecture - Centralised
 
-![awa-services](./diagram-cloud-architecture/awa_service.png)
+![awa-cloud](./diagram-cloud-architecture/awa_cloud.png)
 
 > This architecture is *centralised*
 
+# App states
+
+```mermaid
+stateDiagram-v2
+    HomePage --> MainPage: join
+    MainPage --> MainPage: chat
+    MainPage --> HomePage: quit
+```
+
+# Sequence Diagram
 In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
 
 ## Ideal Architecture - Distributed and Decentralised
@@ -133,10 +147,10 @@ sequenceDiagram
     participant f as fleet manager
     u ->> m: GET room
     m ->> m: GET room for user in memory
-    alt has no room
+    alt matchmaker has no room
         m ->> f: GET new room
         f ->> f: create new room
-        alt has room
+        alt fleet manager has room
             f ->> m: RETURN room
         else
             f ->> m: RETURN error
@@ -148,6 +162,8 @@ sequenceDiagram
 ```
 
 ## How does the matchmaker manage rooms?
+
+> The following executes on `GET room` from `user`.
 
 ```mermaid
 stateDiagram
@@ -164,7 +180,7 @@ stateDiagram
     n --> i2
     i2 --> v: room has space
     i2 --> n: room is full
-    an: add user to room
+    an: add user to valid room
     v --> an
 
     c: new room
@@ -177,11 +193,12 @@ stateDiagram
 
 ## How does the fleet manager manage rooms?
 
+> The following executes on `GET new room` from `matchmaker`.
+
 ```mermaid
 sequenceDiagram
     participant f as fleet manager
     participant dd as docker daemon
-    participant w as websocket server
     f ->> dd: GET containers
     loop containers
         f ->> dd: GET container image
@@ -190,7 +207,7 @@ sequenceDiagram
             alt is running
                 f ->> dd: GET container open ports
                 alt has open ports
-                    f ->> f: update available ports
+                    f ->> f: update list of available ports
                 end
             end
         end
@@ -198,7 +215,7 @@ sequenceDiagram
 
     f ->> f: GET available port
     alt is available port
-        f ->> w: RUN container on available port
+        f ->> dd: RUN websocket server container on available port
     end
 ```
 
@@ -281,3 +298,4 @@ SUM:                              3094          79945         146163        1223
 
 </p>
 </details>
+

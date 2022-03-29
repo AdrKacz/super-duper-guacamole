@@ -58,7 +58,7 @@ class Room {
 
   Future<void> unsubscribeTopic() async {
     await FirebaseMessaging.instance.unsubscribeFromTopic('room-$id');
-    print('Unsbscribed from Firebase topic <room-$id>');
+    print('Unsubscribed from Firebase topic <room-$id>');
   }
 
   void sendMessage(types.PartialText message) {
