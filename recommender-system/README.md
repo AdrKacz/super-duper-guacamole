@@ -197,13 +197,8 @@ ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ```
 
 ## References
-### Cloud:
 [^cloud0]: [Use of DynamoDB tables in the lambda function](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html)  
-[^cloud1]: [Calling an AWS Lambda function from another Lambda function](https://www.sqlshack.com/calling-an-aws-lambda-function-from-another-lambda-function/)
-
-### Container:
+[^cloud1]: [Calling an AWS Lambda function from another Lambda function](https://www.sqlshack.com/calling-an-aws-lambda-function-from-another-lambda-function/)  
 [^cont0]: [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)  
-[^cont1]: [Deploy Python Lambda functions with container images-2](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)
-
-### Model papers:
+[^cont1]: [Deploy Python Lambda functions with container images-2](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)  
 [^model0]: [Federated Collaborative Filtering for Privacy-Preserving Personalized Recommendation System](https://arxiv.org/abs/1901.09888)
