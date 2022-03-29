@@ -133,10 +133,10 @@ sequenceDiagram
     participant f as fleet manager
     u ->> m: GET room
     m ->> m: GET room for user in memory
-    alt has no room
+    alt matchmaker has no room
         m ->> f: GET new room
         f ->> f: create new room
-        alt has room
+        alt fleet manager has room
             f ->> m: RETURN room
         else
             f ->> m: RETURN error
