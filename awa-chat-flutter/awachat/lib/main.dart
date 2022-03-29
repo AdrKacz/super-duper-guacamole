@@ -101,7 +101,7 @@ Future<Room> fetchRoom() async {
 
   final body = jsonDecode(response.body);
   //TODO: use statusCode instead of error (200 vs 204)
-  if (body["error"] == "") {
+  if (body["error"] == null) {
     // TODO: Await in parrallel
     // Create Room
     Room room = Room.fromJson(body);
@@ -244,8 +244,13 @@ class _MyAppState extends State<MyApp> {
     final pushNotificationService = PushNotificationService(messaging);
     pushNotificationService.initialise();
     if (hasSignedAgreements) {
-      return const MaterialApp(
-        home: MyHomePage(),
+      return MaterialApp(
+        home: MyHomePage(unsignAgreements: () {
+          setState(() {
+            hasSignedAgreements = false;
+          });
+          boxUser.put('hasSignedAgreements', "true");
+        }),
       );
     } else {
       return MaterialApp(
@@ -297,6 +302,9 @@ class _MyAppPresentationState extends State<MyAppPresentation> {
                   textAlign: TextAlign.center),
               actions: [
                 TextButton(
+                    style: ElevatedButton.styleFrom(
+                      onPrimary: const Color(0xff6f61e8),
+                    ),
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
@@ -343,7 +351,8 @@ C'est moi qui te place en fonction de tes préférences.
               }),
             ]),
           ),
-          TabPageSelector(),
+          const TabPageSelector(
+              color: Color(0xfff5f5f7), selectedColor: Color(0xff6f61e8)),
         ],
       ),
     )));
@@ -398,7 +407,12 @@ Je m'engage à ne pas conserver tes données personnelles.
   🔐 Quand tu changes de conversation, tout est supprimé,
   🔐 Tu n'as pas de profil, tu peux changer d'identité à tout moment.
 """, textAlign: TextAlign.center),
-        ElevatedButton(onPressed: sign, child: const Text("J'ai compris 👍")),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ),
+            onPressed: sign,
+            child: const Text("J'ai compris 👍")),
         const Divider(
           height: 32,
           thickness: 1,
@@ -408,6 +422,9 @@ Tu te demandes comment je te trouve une conversation engagente et amusante sans 
 Viens voir comment je fonctionne et pose moi des questions 🌍
 """, textAlign: TextAlign.center),
         ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ),
             onPressed: () async {
               const String url =
                   "https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6";
@@ -446,7 +463,12 @@ De plus, si tu planifie un rendez-vous dans le monde réel avec les membres de t
 
 Tu t'engages à bien respecter cela ?
 """, textAlign: TextAlign.center),
-        ElevatedButton(onPressed: sign, child: const Text("Je m'engage 😎"))
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ),
+            onPressed: sign,
+            child: const Text("Je m'engage 😎"))
       ],
     )));
   }
@@ -457,7 +479,10 @@ Tu t'engages à bien respecter cela ?
 // ===== ===== =====
 // Home Page
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({Key? key, required this.unsignAgreements})
+      : super(key: key);
+
+  final VoidCallback? unsignAgreements;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -494,20 +519,28 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(backgroundColor: const Color(0xff1d1c21), actions: <Widget>[
-        PopupMenuButton<int>(onSelected: (int result) {
-          setState(() {
-            _messages.clear();
-            futureRoom = fetchRoom();
-          });
-        }, itemBuilder: (BuildContext context) {
-          return [
-            const PopupMenuItem<int>(
-                value: 0, child: Text("Je veux changer de groupe")),
-          ];
-        })
-      ]),
+      appBar: AppBar(
+          foregroundColor: Color(0xff6f61e8),
+          backgroundColor: Color(0xfff5f5f7),
+          actions: <Widget>[
+            PopupMenuButton<int>(onSelected: (int result) {
+              if (result == 0) {
+                setState(() {
+                  _messages.clear();
+                  futureRoom = fetchRoom();
+                });
+              } else if (result == 1) {
+                widget.unsignAgreements!();
+              }
+            }, itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<int>(
+                    value: 0, child: Text("Je veux changer de groupe")),
+                const PopupMenuItem<int>(
+                    value: 1, child: Text("Je veux revoir la présentation")),
+              ];
+            })
+          ]),
       body: SafeArea(
           bottom: false,
           child: FutureBuilder<Room>(
@@ -536,6 +569,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       }
                       return Chat(
+                        theme: const DefaultChatTheme(
+                            inputBackgroundColor: Color(0xfff5f5f7),
+                            inputTextColor: Color(0xff1f1c38),
+                            inputTextCursorColor: Color(0xff9e9cab)),
                         messages: _messages,
                         onSendPressed: roomSnapshot.data!.sendMessage,
                         user: user,
@@ -547,10 +584,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                        Text(roomSnapshot.error.toString()),
+                        const Text(
+                            "Je n'ai pas pu te trouver une conversation"),
                         ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              primary: const Color(0xff1d1c21),
+                              primary: const Color(0xff6f61e8),
                             ),
                             onPressed: () {
                               setState(() {
@@ -558,11 +596,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                 futureRoom = fetchRoom();
                               });
                             },
-                            child: const Text("Cherche une conversation"))
+                            child: const Text("Réessayer"))
                       ]));
                 }
               }
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                  child: CircularProgressIndicator(color: Color(0xff6f61e8)));
             },
           )),
     );
