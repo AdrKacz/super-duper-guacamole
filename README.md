@@ -1,15 +1,29 @@
 # super-duper-guacamole
 
+> [Awa - Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
+
+> [Awa - University Slides](https://docs.google.com/presentation/d/1QThoIvIGAeG6SlSOOstbqLRikrF3WBQCePyzSukguPY/edit?usp=sharing) *(written in French for our university)*
+
 # Cloud Architecture
 
 > We chose a **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The goal is to verify the model works.
 
 ## Current Architecture - Centralised
 
-![awa-services](./diagram-cloud-architecture/awa_service.png)
+![awa-cloud](./diagram-cloud-architecture/awa_cloud.png)
 
 > This architecture is *centralised*
 
+# App states
+
+```mermaid
+stateDiagram-v2
+    HomePage --> MainPage: join
+    MainPage --> MainPage: chat
+    MainPage --> HomePage: quit
+```
+
+# Sequence Diagram
 In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
 
 ## Ideal Architecture - Distributed and Decentralised
@@ -270,3 +284,4 @@ SUM:                               603           7553          13603          37
 
 </p>
 </details>
+
