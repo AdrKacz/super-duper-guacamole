@@ -2,15 +2,16 @@
 
 ## Introduction
 We want to:
-- Assign people to conversation groups. The challenge is to match them with people they will like while not matching them always with the same people.
-- Preserve the privacy of the users  
-To fulfill these objectives, we will implement an machine learning algorithm[^model0] working with local user data, and without transmitting it to a server.
+- assign people to conversation groups (the challenge is to match them with people they will like while not matching them always with the same people),
+- preserve the privacy of the users.
+
+We implement a federated algorithm[^model0] to reach our goals. The algorithm works with data without aggregating them on a server.
 
 # Local information available
 Locally each user has access to, at a given time:
-- Its ID
-- The IDs of the users he is talking to.
-- The messages that are exchanged in the curent conversations he is involved in.
+- its ID,
+- IDs of the users of its current conversations,
+- messages of its current conversations.
 
 # Structure of the Machine Learning Algorithm:
 # Actual-Online sequence diagrams
@@ -21,15 +22,15 @@ sequenceDiagram
       participant MM as Master Model
       participant OUM as Online User Model
       participant m as Mapping
-      User ->> MM: GET Recommendation for user u (HTTP API Gateway)
+      User ->> MM: GET recommendation for user u (HTTP API Gateway)
       Note right of User: API Gateway HTTP - userid in the path
       MM ->> m: GET mapping
       alt NO existing mapping
       m ->> MM: Return Error (No existing mapping)
-      Note right of MM: TO DO : Avoid the HTTP error by creating the mapping
+      Note right of MM: TODO: create a map for this user to avoid the HTTP "user not found" error
       end
 
-      alt Existing mapping
+      alt Existing Mapping
       m ->> MM: Return mapped userid
       MM ->> MM: Process & Check HTTP request
       MM ->> OUM: GET User gradient of Master Model and Recommendation
@@ -47,13 +48,13 @@ sequenceDiagram
       actor User as User
       participant R as Ratings
       participant m as Mapping
-      User ->> User: Has participated to a conversation
+      User ->> User: Has participated in a conversation
       User ->> R: GET update Ratings for userid
       Note right of User: API Gateway HTTP
-      R ->> m: GET mapping (Supposed to exist bcs required to enter a conversation)
+      R ->> m: GET Mapping (Supposed to exist because required to enter a conversation)
       alt NO existing mapping
       m ->> R: RETURN Error (No existing mapping)
-      Note right of R: Error could happen if *user id* change during a conversation
+      Note right of R: Error could happen if *user id* changes during a conversation
       R ->> User: Response : StatusCode: 400
       end
 
@@ -82,21 +83,22 @@ sequenceDiagram
 
 
 # AWS Setup:
-We use Python with NumPy in an AWS Lambda function. NumPy is not available in the Python AWS default environment. The only solution proposed in the AWS documentation that we succeded to implement was to create a dockerized environnement.
+We use Python with NumPy in an AWS Lambda function. NumPy is not available in the Python AWS default environment. The only solution proposed in the AWS documentation that we succeeded to implement was to create a dockerized environment.
 
 ## Container setup with Docker for Python[^cont0][^cont1]
-1. On your local machine, create a project directory for your new function (here *recommerder-system*).
-2. In your project directory, add a file named `app.py` containing your function code, within a handler function. Example:
+1. Create a project directory for your new function on your computer (here *recommender-system*).
+2. Open your project directory and add a file named `app.py`.
+3. Add your code to `app.py` (you need a handler function).
 ```
+# app.py - hello world example
 import numpy
 
 def handler(event, context):
     return np.zeros((10,10))
 ```
-
-3. In your project directory, add a file named `requirements.txt`. List each required library as a separate line in this file.
-4. Create a Dockerfile:  
-(Install dependencies under the `${LAMBDA_TASK_ROOT}` directory alongside the function handler to ensure that the Lambda runtime can locate them when the function is invoked.)
+4. In your project directory, add a file named `requirements.txt`. List each required library as a separate line in this file.
+5. Create a Dockerfile:  
+(Install dependencies under the `${LAMBDA_TASK_ROOT}` directory alongside the function handler to ensure that the Lambda runtime can locate them when you invoke your function.)
 ```
 FROM public.ecr.aws/lambda/python:3.9
 
@@ -113,7 +115,7 @@ RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 CMD [ "app.handler" ]
 ```
 
-5. Create an Amazon ECR repository using the AWS Console (easier). Copy the corresponding URI.
+5. Create an Amazon ECR repository using the AWS Console (*it is easier*). Copy the corresponding URI.
 
 6. Authenticate the Docker CLI to your Amazon ECR registry.  
 ```
@@ -129,15 +131,15 @@ docker build -t 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest
 docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest
 ```
 
-ATTENTION : To be in the same folder than the Dockerfile while building is required!
+> **You need to enter the folder where you put your Dockerfile to build**
 
 ## Create a Database with DynamoDB
 
 1. Create a table:
-    - Primary key partitioning type: `chain`
-    - Primary key partitioning name: `user_id`
-2. Possibly create elements within the table if needed
-3. Get the ARN (to connect to the Lambda function[^cloud0])
+    - Primary Key partitioning **type**: `chain`
+    - Primary Key partitioning **name**: `user_id`
+2. *[Optional]* Create elements within the table
+3. Copy your ARN to connect to your Lambda function[^cloud0]
 
 
 ## Setup a Lambda
@@ -145,10 +147,10 @@ ATTENTION : To be in the same folder than the Dockerfile while building is requi
 
 1. Container image (Use URI of the container)
 2. Create an HTTP API Gateway.
-3. Manage the IAM (Configuration--> Authorization) to allow the Lambda to access differents services (For instance a DynamoDB[^cloud0] with Get and Put Methods)
+3. Manage the IAM (Configuration--> Authorization) to allow the Lambda to access different services (*example: DynamoDB[^cloud0] GET and PUT methods*)
 
 ### To configure the HTTP API
-No special configuration for the API Gateway HTTP.  
+You only need the standard configuration for your API Gateway HTTP.
 
 Call : `api_endpoint?userid=çamarche&maman=kklm`  
 (ex: `.../hello-world?user_id=2&tomato=abcd&potato=1234`)  
@@ -188,7 +190,7 @@ output = responseFromChild['output_2']
 ```
 
 ### Define environment variable
-For instance, to not write Lambda ARNs in the code, you can define it as an envrionment variable:  
+For instance, to not write Lambda ARNs in the code, you can define it as an environment variable:  
 1. Define it with the AWS Console Interface: Lambda --> Configuration --> Environment variables
 2. Get it in the code with:
 ```
