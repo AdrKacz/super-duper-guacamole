@@ -454,12 +454,10 @@ class EULASlide extends StatelessWidget {
 Je ne peux respecter mes engagements que si tu restes respecteux et tolérant envers les autres.
 
 Tu dois t'engager à :
-  ✅ ne pas envoyer de messages insultants,
-  ✅ respecter chaque personnes, quelque soit vos divergences.
-
-De plus, si tu planifie un rendez-vous dans le monde réel avec les membres de ta conversations, tu dois t'engager à :
-  ✅ ne pas effectuer d'actions reprimendables par la loi avec ton groupe,
-  ✅ ne pas mentir sur les tenants de la rencontre dans le but de pieger un ou plusieurs membre.
+  ✅ ne pas envoyer de message insultant ou intimidant,
+  ✅ ne pas proposer de service sexuel tarifé,
+  ✅ respecter chaque personnes, quelque soit vos divergences,
+  ✅ ne pas organiser d'acte criminel.
 
 Tu t'engages à bien respecter cela ?
 """, textAlign: TextAlign.center),
