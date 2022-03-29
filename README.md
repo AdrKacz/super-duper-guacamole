@@ -166,7 +166,7 @@ stateDiagram
     n --> i2
     i2 --> v: room has space
     i2 --> n: room is full
-    an: add user to room
+    an: add user to valid room
     v --> an
 
     c: new room
