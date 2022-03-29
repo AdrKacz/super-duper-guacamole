@@ -1,58 +1,87 @@
-from typing import Optional
+"""
+Matchmacker matches user in room according to their preferences
+- / > Hello world
+- /room/{user_id} > get room for given user (NO PREFERENCES YET)
+"""
+# TODO: ROOMS keep growing indefinetely, need a way to clear the object from time to time
 
-from fastapi import FastAPI, Response
-from fastapi.responses import JSONResponse
-
+# from typing import Optional
+from fastapi import FastAPI
 import requests
+import os
+
+MAXIMUM_ROOM_SIZE = int(os.getenv('MAXIMUM_ROOM_SIZE'))
+IP_ADDRESS = os.getenv('IP_ADDRESS')
+HOST_ADDRESS = os.getenv('HOST_ADDRESS')
+print("ENVIRONMENT\n===== ===== =====")
+print("MAXIMUM_ROOM_SIZE:", MAXIMUM_ROOM_SIZE)
+print("IP_ADDRESS:", IP_ADDRESS)
+print("HOST_ADDRESS:", HOST_ADDRESS)
+print("===== ===== =====")
 
 app = FastAPI()
 
-MAXIMUM_ROOM_SIZE = 5
-IP_ADDRESS = "13.37.214.198"
+ROOMS = {}
 
-current_room_address : str = None
-current_room_port : int = None
-current_room_id : int = None
-current_room_size : int = MAXIMUM_ROOM_SIZE
+def response_from_room_id(user_id, room_id):
+    """JSON response formatted"""
+    return  {
+        "user_id": user_id,
+        "room_id": room_id,
+        "room_address": ROOMS[room_id]['address'],
+        "room_port": ROOMS[room_id]['port'],
+        }
 
 def create_new_room():
+    """Create a new room with the fleet manager"""
     print("Create new room")
-    # host.docker.internal works on macOS - not tested in Amazon Linux 2 instance
-    # See https://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach
-    # 172.17.0.1, work on Linux
-    # See https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal
-    # r = requests.get("http://172.17.0.1:8000/container")
-    r = requests.get("http://172.17.0.1:8000/container")
-    response = r.json()
-    port = response.get("port", 0)
+    raw = requests.get(f"http://{HOST_ADDRESS}:8000/container") # Host container address
+    response = raw.json()
     room_id = response.get("room_id", 0)
+    port = response.get("port", 0)
     error = ""
     if port:
-        # TODO: replace 127.0.0.1 by environment variable
         print("\tport:", port)
     else:
         error = response.get("error", "unknown error")
         print("\terror:", error)
-    return IP_ADDRESS, port, room_id, error
+    return room_id, IP_ADDRESS, port, error
 
 @app.get("/")
 def read_root():
+    """Hello World"""
     return {"Match": "Maker"}
 
-@app.get("/room/{user_id}", status_code=200)
-def read_room(user_id : str, response: Response):
-    global current_room_address, current_room_port, current_room_id, current_room_size
+@app.get("/room/{user_id}")
+def read_room(user_id : str):
+    """Get room for given user"""
     error = ""
-    if current_room_size >= MAXIMUM_ROOM_SIZE:
-        # Reset and new room
-        current_room_size = 0
-        current_room_address, current_room_port, current_room_id, error = create_new_room()
-        if error:
-            current_room_size = MAXIMUM_ROOM_SIZE # to force creation a next call
-            response.status_code = 200 # TODO: use status.NO_CONTENT
-            # Error on 204 ContentLength: https://github.com/tiangolo/fastapi/issues/717
-    current_room_size += 1
-    return {"user_id": user_id, "room_id": current_room_id, "room_address": current_room_address, "room_port": current_room_port, "error": error}
+    for room_id, room in ROOMS.items():
+        if len(room['users']) < MAXIMUM_ROOM_SIZE and user_id not in room['users']:
+            # Room pass criteria, return it
+            room['users'].append(user_id)
+            return response_from_room_id(user_id, room_id)
+
+    # No room left, create one
+    room_id, room_address, room_port, error = create_new_room()
+    if error:
+        return {"error": error}
+    # else
+    ROOMS[room_id] = {
+        "address": room_address,
+        "port": room_port,
+        "users": [user_id]
+    }
+    return response_from_room_id(user_id, room_id)
 
 
+@app.get("/rooms/")
+def read_rooms():
+    """Read all rooms"""
+    return ROOMS
 
+@app.get("/clear-all-rooms/")
+def read_rooms():
+    global ROOMS
+    """Clear all rooms"""
+    ROOMS = {}

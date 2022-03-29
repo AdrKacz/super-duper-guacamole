@@ -53,43 +53,49 @@ sequenceDiagram
     m ->> u : endpoint
 ```
 
-# How room are managed?
+# Rooms lifecycle
 
-## User - Start Awa
+## What happens when you change room?
 
 ```mermaid
 sequenceDiagram
-    participant oth as other room users
+    actor oth as other users
+    participant d as disk
     actor u as user
     participant m as matchmaker
     participant s as websocket server
     participant f as firebase
-    u ->> u: GET room on disk
-    alt has room
-        u ->> s: connect to websocket server
-        alt connection not accepted
-            u ->> f: unsubscribe to room_id topic
-            u ->> u: delete room
+    alt room
+        u ->> f: UNSUBSCRIBE from room
+    end
+    u ->> m: GET room
+    u ->> d: PUT room BOX - room
+    u ->> f: SUBSCRIBE to room
+    u -> s: CONNECT to room
+    loop room is alive
+        par
+            oth ->> s: SEND messages
+        and
+            u ->> s: SEND messages
         end
-    end
-    alt room is not defined
-        u ->> m: GET room
-        m ->> m: process [user ask for a room]
-        m ->> u: room_id, room_address, room_port
-        u ->> f: subscribe to room_id topic
-    end
-    u ->> s: connect to websocket server
-    loop while room alive
-        oth ->> s: send message
-        alt is app in foreground
-            s ->> u: broadcast message
-        else
-            f ->> u: notify user
+        par 
+            s ->> u: SEND messages
+            alt app in foreground
+                u ->> u: PROCESS incomming messages
+            end
+        and
+            s ->> f: SEND messages
+            f ->> u: SEND push notifications
+            alt app in background
+                u ->> u: PROCESS push notifications
+            end
         end
     end
 ```
 
-### GET room on disk
+# Disk management
+
+## On open
 
 ```mermaid
 sequenceDiagram
@@ -97,74 +103,119 @@ sequenceDiagram
     participant d as disk
     participant m as matchmaker
     participant w as websocket server
-    u -> d: GET box
-    note over u,d: <List<String>>
-    alt box has room
-        u ->> u: Load room messages
-    else
-        u -> m: GET room
-        
-    end
-    u -> w: connect to room
-```
-
-## User - Ask for a room
-
-```mermaid
-sequenceDiagram
-    actor user
-    participant MM as matchmaker
-    participant FM as fleet manager
-    user ->> MM: GET room (IP, port)
-    alt is current room full
-        MM ->> FM: create new room
-        FM ->> FM: process [update active ports]
-        alt is space for new room
-            FM ->> MM: new room port
-            MM ->> user: new room (IP, port)
-        else
-            FM ->> MM: error
-            MM ->> user: error
+    u -> d: CONNECT room BOX
+    u -> d: CONNECT messages LAZYBOX
+    alt room BOX has id
+        u ->> d: GET messages LAZYBOX - end
+        loop 0..end
+            u ->> d: GET messages LAZYBOX - i
         end
     else
-      MM ->> user: current room (IP, port)
+        u ->> m: GET room
+        u ->> d: PUT room BOX - room
+        
     end
+    u -> w: CONNECT room
 ```
 
-### Matchmaker memory logic
-
-> `current room` is a variable holding the endpoint for the current room returned by the **matchmaker**. Updating the `current room` is updating its value by a new value.
-
-> This is architecture doesn't handle recommendation from user. It queues user in room by order of arrival. **It will change in a future update.**
-
-```mermaid
-graph LR
-    room --> C{is full?}
-    C -.-> |yes|C_1{has space for new room?}
-    C -.-> |no|E_0[return current room]
-    C_1 -.-> |yes|E_1[create new room]
-    E_1 -.-> E_3[update current room]
-    C_1 -.-> |no|E_2[return error]
-    E_3 -.-> E_0
-```
-
-## Fleet manager - Update active ports
+## On send message
 
 ```mermaid
 sequenceDiagram
-    participant FM as fleet manager
-    participant D as docker API
-    loop container
-        D ->> FM: container image
-        alt is from server image
-            D ->> FM: container status
-            alt is container running
-                D ->> FM: container open ports
+    participant u as user
+    participant d as disk
+    participant m as matchmaker
+    participant w as websocket server
+    u -> w: CONNECT room
+    loop until deconnexion
+        par
+            u ->> w: SEND message
+        and
+            w ->> u: RECEIVE message
+            u ->> u: update local messages
+            u ->> d: ADD messages LAZYBOX - message
+        end
+    end
+```
+
+# How to get a new room?
+
+```mermaid
+sequenceDiagram
+    actor u as user
+    participant m as matchmaker
+    participant f as fleet manager
+    u ->> m: GET room
+    m ->> m: GET room for user in memory
+    alt matchmaker has no room
+        m ->> f: GET new room
+        f ->> f: create new room
+        alt fleet manager has room
+            f ->> m: RETURN room
+        else
+            f ->> m: RETURN error
+            m ->> u: RETURN error
+        end
+    end
+    m ->> m: update room in memory
+    m ->> u: RETURN room
+```
+
+## How does the matchmaker manage rooms?
+
+> The following executes on `GET room` from `user`.
+
+```mermaid
+stateDiagram
+%%{config: { "themeCSS": ".label foreignObject { overflow: visible; }" }%%
+    direction TB
+    state i1 <<choice>>
+    [*] --> i1
+    i1 --> n: has next room
+    i1 --> c: no more room
+    n: next room
+    v: valid room
+
+    state i2 <<choice>>
+    n --> i2
+    i2 --> v: room has space
+    i2 --> n: room is full
+    an: add user to valid room
+    v --> an
+
+    c: new room
+    ac: add new room with user
+    c --> ac
+
+    an --> [*]
+    ac --> [*]
+```
+
+## How does the fleet manager manage rooms?
+
+> The following executes on `GET new room` from `matchmaker`.
+
+```mermaid
+sequenceDiagram
+    participant f as fleet manager
+    participant dd as docker daemon
+    f ->> dd: GET containers
+    loop containers
+        f ->> dd: GET container image
+        alt is websocket server
+            f ->> dd: GET container status
+            alt is running
+                f ->> dd: GET container open ports
                 alt has open ports
-                    FM ->> FM: lock open ports
+                    f ->> f: update list of available ports
                 end
             end
         end
+    end
+
+    f ->> f: GET available port
+    alt is available port
+        f ->> dd: RUN websocket server container on available port
     end
 ```
 
@@ -190,8 +241,9 @@ Using **Godot** for a simple chat may *not be the best idea*. Indeed, **Godot** 
 
 **Flutter** is quicker to setup than **React Native** *(I mean, literally quicker, it doesn't burn my laptop)*. I've used (Flutter Chat UI)[https://pub.dev/packages/flutter_chat_ui] to get a first chat without coding. *The same framework was available with **React Native***
 
-# Codebase
 
+<details><summary>Codebase</summary>
+<p>
 ```sh
 # macOS: brew install cloc
 >> cloc --exclude-ext=md .
@@ -229,3 +281,7 @@ D                                    2              0              0            
 SUM:                               603           7553          13603          37309
 -----------------------------------------------------------------------------------
 ```
+
+</p>
+</details>
+

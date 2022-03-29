@@ -100,7 +100,8 @@ Future<Room> fetchRoom() async {
 
   final body = jsonDecode(response.body);
   //TODO: use statusCode instead of error (200 vs 204)
-  if (body["error"] == "") {
+  print("    Receive body: $body");
+  if (body["error"] == null) {
     // TODO: Await in parrallel
     // Create Room
     Room room = Room.fromJson(body);

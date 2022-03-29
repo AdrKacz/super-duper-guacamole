@@ -12,6 +12,11 @@ This **API** will be used by the **matchmaker** to create new room as player cam
 Variable | Expected value
 -- | --
 **LAMBDA_NOTIFICATION_ARN** | Lambda function to call for push notifications
+**HOME** | Home folder location **(already set)**
+**FROM_PORT** | Minimum port number to open
+**TO_PORT** | Maximum port number to open
+
+> `export XXX=YYY` in `.bashrc`/`.zshrc`.
 
 # Development
 
