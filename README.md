@@ -177,11 +177,12 @@ stateDiagram
 
 ## How does the fleet manager manage rooms?
 
+> The following executes on `GET new room` from `matchmaker`.
+
 ```mermaid
 sequenceDiagram
     participant f as fleet manager
     participant dd as docker daemon
-    participant w as websocket server
     f ->> dd: GET containers
     loop containers
         f ->> dd: GET container image
@@ -190,7 +191,7 @@ sequenceDiagram
             alt is running
                 f ->> dd: GET container open ports
                 alt has open ports
-                    f ->> f: update available ports
+                    f ->> f: update list of available ports
                 end
             end
         end
@@ -198,7 +199,7 @@ sequenceDiagram
 
     f ->> f: GET available port
     alt is available port
-        f ->> w: RUN container on available port
+        f ->> dd: RUN websocket server container on available port
     end
 ```
 
