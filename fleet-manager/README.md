@@ -16,6 +16,8 @@ Variable | Expected value
 **FROM_PORT** | Minimum port number to open
 **TO_PORT** | Maximum port number to open
 
+> `export XXX=YYY` in `.bashrc`/`.zshrc`.
+
 # Development
 
 ```sh

@@ -12,13 +12,14 @@ Variable | Expected value
 -- | --
 **MAXIMUM_ROOM_SIZE** | Maximum number of users in a room
 **IP_ADDRESS** | Public host IP address
+**HOST_ADDRESS** | Host address of the docker container
 
 # Development
 
 ```sh
 cd matchmaker
 docker build -t <your-image> .
-docker run -dp <your-port>:8080 <your-image>
+docker run -dp 8080:8080 -e MAXIMUM_ROOM_SIZE=$MAXIMUM_ROOM_SIZE -e IP_ADDRESS=$IP_ADDRESS -e HOST_ADDRESS=$HOST_ADDRESS <your-image> 
 # Go to http://localhost:<your-port>/docs to test your API
 ```
 

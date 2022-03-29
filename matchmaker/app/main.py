@@ -12,9 +12,11 @@ import os
 
 MAXIMUM_ROOM_SIZE = int(os.getenv('MAXIMUM_ROOM_SIZE'))
 IP_ADDRESS = os.getenv('IP_ADDRESS')
+HOST_ADDRESS = os.getenv('HOST_ADDRESS')
 print("ENVIRONMENT\n===== ===== =====")
 print("MAXIMUM_ROOM_SIZE:", MAXIMUM_ROOM_SIZE)
 print("IP_ADDRESS:", IP_ADDRESS)
+print("HOST_ADDRESS:", HOST_ADDRESS)
 print("===== ===== =====")
 
 app = FastAPI()
@@ -33,7 +35,7 @@ def response_from_room_id(user_id, room_id):
 def create_new_room():
     """Create a new room with the fleet manager"""
     print("Create new room")
-    raw = requests.get("http://172.17.0.1:8000/container") # Host container address
+    raw = requests.get(f"http://{HOST_ADDRESS}:8000/container") # Host container address
     response = raw.json()
     room_id = response.get("room_id", 0)
     port = response.get("port", 0)
