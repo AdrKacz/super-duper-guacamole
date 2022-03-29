@@ -205,6 +205,12 @@ sequenceDiagram
 # Screenshots
 
 <p float="left" align="middle">
+    <img src="./screenshots/screenshot_0745.PNG" width="32%">
+    <img src="./screenshots/screenshot_0746.PNG" width="32%">
+    <img src="./screenshots/screenshot_0747.PNG" width="32%">
+    <img src="./screenshots/screenshot_0748.PNG" width="32%">
+    <img src="./screenshots/screenshot_0749.PNG" width="32%">
+    <img src="./screenshots/screenshot_0750.PNG" width="32%">
     <img src="./screenshots/screenshot_0693.PNG" width="32%">
     <img src="./screenshots/screenshot_0694.PNG" width="32%">
     <img src="./screenshots/screenshot_0695.PNG" width="32%">
