@@ -425,7 +425,7 @@ class EULASlide extends StatelessWidget {
       shrinkWrap: true,
       children: [
         const Text("""
-Je ne respecterai mes engagements seulement si tu es respecteux et tolérant.
+Je ne peux respecter mes engagements que si tu restes respecteux et tolérant envers les autres.
 
 Tu dois t'engager à :
   ✅ ne pas envoyer de messages insultants,
