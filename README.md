@@ -222,13 +222,15 @@ sequenceDiagram
 # Screenshots
 
 <p float="left" align="middle">
-    <img src="./screenshots/screenshot_0693.PNG" width="32%">
-    <img src="./screenshots/screenshot_0694.PNG" width="32%">
-    <img src="./screenshots/screenshot_0695.PNG" width="32%">
-    <img src="./screenshots/screenshot_0696.PNG" width="32%">
-    <img src="./screenshots/screenshot_0697.PNG" width="32%">
-    <img src="./screenshots/screenshot_0703.PNG" width="32%">
-    <img src="./screenshots/screenshot_0704.PNG" width="32%">
+    <img src="./screenshots/screenshot_0745.PNG" width="32%">
+    <img src="./screenshots/screenshot_0746.PNG" width="32%">
+    <img src="./screenshots/screenshot_0747.PNG" width="32%">
+    <img src="./screenshots/screenshot_0748.PNG" width="32%">
+    <img src="./screenshots/screenshot_0749.PNG" width="32%">
+    <img src="./screenshots/screenshot_0750.PNG" width="32%">
+    <img src="./screenshots/screenshot_0751.PNG" width="32%">
+    <img src="./screenshots/screenshot_0752.PNG" width="32%">
+    <img src="./screenshots/screenshot_0753.PNG" width="32%">
 </p>
 
 ---
@@ -241,45 +243,57 @@ Using **Godot** for a simple chat may *not be the best idea*. Indeed, **Godot** 
 
 **Flutter** is quicker to setup than **React Native** *(I mean, literally quicker, it doesn't burn my laptop)*. I've used (Flutter Chat UI)[https://pub.dev/packages/flutter_chat_ui] to get a first chat without coding. *The same framework was available with **React Native***
 
-
 <details><summary>Codebase</summary>
 <p>
+
 ```sh
 # macOS: brew install cloc
 >> cloc --exclude-ext=md .
-     962 text files.
-     603 unique files.                                          
-     671 files ignored.
+    6070 text files.
+    3094 unique files.                                          
+    8876 files ignored.
 
-github.com/AlDanial/cloc v 1.92  T=0.73 s (827.3 files/s, 80211.0 lines/s)
+github.com/AlDanial/cloc v 1.92  T=14.74 s (209.9 files/s, 98342.9 lines/s)
 -----------------------------------------------------------------------------------
 Language                         files          blank        comment           code
 -----------------------------------------------------------------------------------
-Objective-C                        136           3437           3601          17614
-XML                                182            277             46           8544
-C/C++ Header                       230           2767           9304           5339
-C                                    6            439            344           2031
-Markdown                             1            315              0           1494
-JSON                                12              4              0            760
-Dart                                 5             53             63            324
+Assembly                             1              0              0         759768
+Python                            1314          56070          65594         245916
+C                                   11          13263          65387         116009
+JSON                               807              5              0          50858
+Objective-C                        137           3438           3601          17625
+XML                                445           1190            703          15063
+Cython                              47           2267           1020           8091
+C/C++ Header                       235           2798           9312           5440
+Markdown                             1            321              0           1517
+Dart                                 5            104             77            687
 C++                                  5             81             29            317
-Bourne Shell                         2             24             25            178
+HTML                                 2             12             28            265
+Properties                          17              0             13            251
+Bourne Shell                         5             30             33            227
 CMake                                4             34             30            167
+Godot Scene                          1             23              0            133
+GDScript                             2             37              5            129
 Bourne Again Shell                   1             19             20            121
+JavaScript                           5             16             10            106
+PowerShell                           1             48             89            104
 Gradle                               3             21              1            103
-HTML                                 1              9             15             80
+Java                                11             13             43            103
+Fish Shell                           2             26             26             76
 Windows Resource File                1             23             29             69
+reStructuredText                     3             15              0             69
 DOS Batch                            1             24              2             64
-YAML                                 2             19             81             31
-Java                                 1              3              5             26
-Properties                           5              0              2             18
+YAML                                 4             22             84             58
+Dockerfile                           4             18             11             37
+C Shell                              2             18             10             22
+Godot Resource                       2              5              0             17
 Swift                                1              1              0             12
+D                                   11              0              0             11
 Ruby                                 1              1              6             11
 Kotlin                               1              2              0              4
-D                                    2              0              0              2
+SQL                                  1              0              0              2
 -----------------------------------------------------------------------------------
-SUM:                               603           7553          13603          37309
------------------------------------------------------------------------------------
+SUM:                              3094          79945         146163        1223452
 ```
 
 </p>

@@ -13,8 +13,9 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:http/http.dart' as http;
 
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import 'package:url_launcher/url_launcher.dart';
 
 // ===== ===== =====
 // Endpoints
@@ -100,7 +101,6 @@ Future<Room> fetchRoom() async {
 
   final body = jsonDecode(response.body);
   //TODO: use statusCode instead of error (200 vs 204)
-  print("    Receive body: $body");
   if (body["error"] == null) {
     // TODO: Await in parrallel
     // Create Room
@@ -162,9 +162,10 @@ class PushNotificationService {
 
 // ===== ===== =====
 // Disk management
-types.User user = types.User(id: uuid.v4());
+late types.User user;
 late Box<String> boxRoom;
 late LazyBox<String> lazyBoxMessages;
+late Box<String> boxUser;
 
 types.Message messageFrom(List<String> data) {
   return types.TextMessage(
@@ -199,30 +200,289 @@ void main() async {
   await Hive.initFlutter();
   boxRoom = await Hive.openBox<String>('room');
   lazyBoxMessages = await Hive.openLazyBox<String>('messages');
+  boxUser = await Hive.openBox<String>('user');
+
+  // Set user
+  String? userId = boxUser.get('id');
+  if (userId == null) {
+    user = types.User(id: uuid.v4());
+    boxUser.put('id', user.id);
+  } else {
+    user = types.User(id: userId);
+  }
+  print("User ID is <${user.id}>.");
 
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   static FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // State
+  late bool hasSignedAgreements;
+
+  @override
+  void initState() {
+    super.initState();
+    hasSignedAgreements = false;
+    String? savedHasSignedAgreements = boxUser.get('hasSignedAgreements');
+    if (savedHasSignedAgreements != null &&
+        savedHasSignedAgreements == "true") {
+      hasSignedAgreements = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final pushNotificationService = PushNotificationService(messaging);
     pushNotificationService.initialise();
-    return const MaterialApp(
-      home: MyHomePage(),
-    );
+    if (hasSignedAgreements) {
+      return MaterialApp(
+        home: MyHomePage(unsignAgreements: () {
+          setState(() {
+            hasSignedAgreements = false;
+          });
+          boxUser.put('hasSignedAgreements', "true");
+        }),
+      );
+    } else {
+      return MaterialApp(
+        home: MyAppPresentation(signAgreements: () {
+          setState(() {
+            hasSignedAgreements = true;
+          });
+          boxUser.put('hasSignedAgreements', "true");
+        }),
+      );
+    }
   }
 }
 // ===== ===== =====
 
 // ===== ===== =====
+
+class MyAppPresentation extends StatefulWidget {
+  const MyAppPresentation({Key? key, required this.signAgreements})
+      : super(key: key);
+
+  final VoidCallback? signAgreements;
+
+  @override
+  _MyAppPresentationState createState() => _MyAppPresentationState();
+}
+
+class _MyAppPresentationState extends State<MyAppPresentation> {
+  // Agreements
+  bool hasSignedRGPD = false;
+  bool hasSignedEULA = false;
+
+  void checkAgreements(BuildContext context) {
+    if (hasSignedRGPD && hasSignedEULA) {
+      print("You're all good!");
+      widget.signAgreements!();
+    } else if (!hasSignedRGPD) {
+      print("You didn't sign RGPD");
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text(
+                "Je ne peux pas continuer sans toi 😖",
+                textAlign: TextAlign.center,
+              ),
+              content: const Text(
+                  "Clique sur \"J'ai compris 👍\" et \"Je m'engage 😎\"",
+                  textAlign: TextAlign.center),
+              actions: [
+                TextButton(
+                    style: ElevatedButton.styleFrom(
+                      onPrimary: const Color(0xff6f61e8),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text("J'ai compris"))
+              ],
+            );
+          });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SafeArea(
+            child: DefaultTabController(
+      length: 5,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Expanded(
+            child: TabBarView(children: <Widget>[
+              const Slide(text: """
+Je suis Awa.
+Je vais te présenter l'application.
+"""),
+              const Slide(
+                  text:
+                      "Chaque personne est placée dans une conversation avec quatres autres personnes."),
+              const Slide(text: """
+Tu ne t'occupes de rien !
+C'est moi qui te place en fonction de tes préférences.
+"""),
+              RGPDSlide(sign: () {
+                setState(() {
+                  hasSignedRGPD = true;
+                });
+                checkAgreements(context);
+              }),
+              EULASlide(sign: () {
+                setState(() {
+                  hasSignedEULA = true;
+                });
+                checkAgreements(context);
+              }),
+            ]),
+          ),
+          const TabPageSelector(
+              color: Color(0xfff5f5f7), selectedColor: Color(0xff6f61e8)),
+        ],
+      ),
+    )));
+  }
+}
+
+class SlideContainer extends StatelessWidget {
+  const SlideContainer({Key? key, required this.child}) : super(key: key);
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Center(
+        child: child,
+      ),
+    );
+  }
+}
+
+class Slide extends StatelessWidget {
+  const Slide({Key? key, required this.text}) : super(key: key);
+
+  final String text;
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class RGPDSlide extends StatelessWidget {
+  const RGPDSlide({Key? key, required this.sign}) : super(key: key);
+
+  final VoidCallback? sign;
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: ListView(
+      shrinkWrap: true,
+      children: [
+        const Text("""
+Je m'engage à ne pas conserver tes données personnelles.
+  🔐 Les messages s'enregistrent uniquement sur ton téléphone,
+  🔐 Quand tu changes de conversation, tout est supprimé,
+  🔐 Tu n'as pas de profil, tu peux changer d'identité à tout moment.
+""", textAlign: TextAlign.center),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ),
+            onPressed: sign,
+            child: const Text("J'ai compris 👍")),
+        const Divider(
+          height: 32,
+          thickness: 1,
+        ),
+        const Text("""
+Tu te demandes comment je te trouve une conversation engagente et amusante sans ne rien savoir sur toi ? 
+Viens voir comment je fonctionne et pose moi des questions 🌍
+""", textAlign: TextAlign.center),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ),
+            onPressed: () async {
+              const String url =
+                  "https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6";
+              if (!await launch(url)) {
+                throw "Could not launch $url";
+              }
+            },
+            child: const Text("Comment je fonctionne ? 🧠")),
+      ],
+    ));
+  }
+}
+
+class EULASlide extends StatelessWidget {
+  const EULASlide({Key? key, required this.sign}) : super(key: key);
+
+  final VoidCallback? sign;
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: Center(
+            child: ListView(
+      shrinkWrap: true,
+      children: [
+        const Text("""
+Je ne peux respecter mes engagements que si tu restes respecteux et tolérant envers les autres.
+
+Tu dois t'engager à :
+  ✅ ne pas envoyer de messages insultants,
+  ✅ respecter chaque personnes, quelque soit vos divergences.
+
+De plus, si tu planifie un rendez-vous dans le monde réel avec les membres de ta conversations, tu dois t'engager à :
+  ✅ ne pas effectuer d'actions reprimendables par la loi avec ton groupe,
+  ✅ ne pas mentir sur les tenants de la rencontre dans le but de pieger un ou plusieurs membre.
+
+Tu t'engages à bien respecter cela ?
+""", textAlign: TextAlign.center),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ),
+            onPressed: sign,
+            child: const Text("Je m'engage 😎"))
+      ],
+    )));
+  }
+}
+
+// ===== ===== =====
+
+// ===== ===== =====
 // Home Page
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key}) : super(key: key);
+  const MyHomePage({Key? key, required this.unsignAgreements})
+      : super(key: key);
+
+  final VoidCallback? unsignAgreements;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -259,20 +519,28 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(backgroundColor: const Color(0xff1d1c21), actions: <Widget>[
-        PopupMenuButton<int>(onSelected: (int result) {
-          setState(() {
-            _messages.clear();
-            futureRoom = fetchRoom();
-          });
-        }, itemBuilder: (BuildContext context) {
-          return [
-            const PopupMenuItem<int>(
-                value: 0, child: Text("Change de conversation")),
-          ];
-        })
-      ]),
+      appBar: AppBar(
+          foregroundColor: Color(0xff6f61e8),
+          backgroundColor: Color(0xfff5f5f7),
+          actions: <Widget>[
+            PopupMenuButton<int>(onSelected: (int result) {
+              if (result == 0) {
+                setState(() {
+                  _messages.clear();
+                  futureRoom = fetchRoom();
+                });
+              } else if (result == 1) {
+                widget.unsignAgreements!();
+              }
+            }, itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<int>(
+                    value: 0, child: Text("Je veux changer de groupe")),
+                const PopupMenuItem<int>(
+                    value: 1, child: Text("Je veux revoir la présentation")),
+              ];
+            })
+          ]),
       body: SafeArea(
           bottom: false,
           child: FutureBuilder<Room>(
@@ -301,6 +569,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         }
                       }
                       return Chat(
+                        theme: const DefaultChatTheme(
+                            inputBackgroundColor: Color(0xfff5f5f7),
+                            inputTextColor: Color(0xff1f1c38),
+                            inputTextCursorColor: Color(0xff9e9cab)),
                         messages: _messages,
                         onSendPressed: roomSnapshot.data!.sendMessage,
                         user: user,
@@ -312,10 +584,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                        Text(roomSnapshot.error.toString()),
+                        const Text(
+                            "Je n'ai pas pu te trouver une conversation"),
                         ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              primary: const Color(0xff1d1c21),
+                              primary: const Color(0xff6f61e8),
                             ),
                             onPressed: () {
                               setState(() {
@@ -323,11 +596,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                 futureRoom = fetchRoom();
                               });
                             },
-                            child: const Text("Cherche une conversation"))
+                            child: const Text("Réessayer"))
                       ]));
                 }
               }
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                  child: CircularProgressIndicator(color: Color(0xff6f61e8)));
             },
           )),
     );
