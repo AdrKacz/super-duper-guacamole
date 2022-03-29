@@ -28,12 +28,14 @@ class Room {
   final int id;
   final String ipAddress;
   final int port;
+  // final VoidCallback update;
   late WebSocketChannel channel;
 
   Room({
     required this.id,
     required this.ipAddress,
     required this.port,
+    // required this.update,
   });
 
   factory Room.fromJson(Map<String, dynamic> json) {
@@ -53,16 +55,16 @@ class Room {
 
   Future<void> subscribeTopic() async {
     await FirebaseMessaging.instance.subscribeToTopic('room-$id');
-    print('Subscribed to Firebase topic <room-$id>');
+    print('[Room] Subscribed to Firebase topic <room-$id>');
   }
 
   Future<void> unsubscribeTopic() async {
     await FirebaseMessaging.instance.unsubscribeFromTopic('room-$id');
-    print('Unsubscribed from Firebase topic <room-$id>');
+    print('[Room] Unsubscribed from Firebase topic <room-$id>');
   }
 
   void sendMessage(types.PartialText message) {
-    print("Send message to $ipAddress:$port");
+    print("[Room] Send message to $ipAddress:$port");
     channel.sink.add("${user.id}::${message.text}");
   }
 
@@ -76,7 +78,7 @@ class Room {
 }
 
 Future<Room> loadRoom() async {
-  print("Load room from disk");
+  print("[loadRoom] Load room from disk");
   // Wait to prevent errors
   await Future.delayed(const Duration(seconds: 1), () {});
   String? id = boxRoom.get('id');
@@ -95,7 +97,7 @@ Future<Room> loadRoom() async {
 }
 
 Future<Room> fetchRoom() async {
-  print("Fetch room to ${Uri.parse(matchmakerEndpoint + user.id)}");
+  print("[fetchRoom] Fetch room to ${Uri.parse(matchmakerEndpoint + user.id)}");
 
   final response = await http.get(Uri.parse(matchmakerEndpoint + user.id));
 
@@ -151,10 +153,11 @@ class PushNotificationService {
       sound: true,
     );
 
-    print('User granted permission: ${settings.authorizationStatus}');
+    print(
+        '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
 
     String? token = await messaging.getToken();
-    print("Firebase messaging token: <$token>");
+    print("[PushNotificationService] Firebase messaging token: <$token>");
   }
 }
 
@@ -210,7 +213,7 @@ void main() async {
   } else {
     user = types.User(id: userId);
   }
-  print("User ID is <${user.id}>.");
+  print("[main] User ID is <${user.id}>.");
 
   runApp(const MyApp());
 }
@@ -231,18 +234,19 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+
     hasSignedAgreements = false;
     String? savedHasSignedAgreements = boxUser.get('hasSignedAgreements');
     if (savedHasSignedAgreements != null &&
         savedHasSignedAgreements == "true") {
       hasSignedAgreements = true;
     }
+
+    PushNotificationService(messaging).initialise();
   }
 
   @override
   Widget build(BuildContext context) {
-    final pushNotificationService = PushNotificationService(messaging);
-    pushNotificationService.initialise();
     if (hasSignedAgreements) {
       return MaterialApp(
         home: MyHomePage(unsignAgreements: () {
@@ -285,10 +289,10 @@ class _MyAppPresentationState extends State<MyAppPresentation> {
 
   void checkAgreements(BuildContext context) {
     if (hasSignedRGPD && hasSignedEULA) {
-      print("You're all good!");
+      print("[MyAppPresentation] You're all good!");
       widget.signAgreements!();
     } else if (!hasSignedRGPD) {
-      print("You didn't sign RGPD");
+      print("[MyAppPresentation] You didn't sign RGPD");
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -492,10 +496,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Messages
   final List<types.Message> _messages = [];
+  String roomStatus = "Undefined";
 
   Future<void> localLoadMessages() async {
     List<types.Message> loadedMessages = await loadMessages();
-    print("Loaded messages: $loadedMessages");
+    print("[MyHomePage] Loaded messages: $loadedMessages");
     setState(() {
       _messages.addAll(loadedMessages);
     });
@@ -520,6 +525,7 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
           foregroundColor: Color(0xff6f61e8),
           backgroundColor: Color(0xfff5f5f7),
+          // title: Text("Status: $roomStatus"),
           actions: <Widget>[
             PopupMenuButton<int>(onSelected: (int result) {
               if (result == 0) {
@@ -544,7 +550,8 @@ class _MyHomePageState extends State<MyHomePage> {
           child: FutureBuilder<Room>(
             future: futureRoom,
             builder: (roomContext, roomSnapshot) {
-              print(roomSnapshot);
+              print("[MyHomePage] Room snapshot: $roomSnapshot");
+              roomStatus = roomSnapshot.connectionState.name;
               if (roomSnapshot.connectionState == ConnectionState.done) {
                 if (roomSnapshot.hasData) {
                   // Connect to room
@@ -552,11 +559,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   return StreamBuilder(
                     stream: roomSnapshot.data!.channel.stream,
                     builder: (context, snapshot) {
+                      print("[MyHomePage] Snapshot received: $snapshot");
                       if (snapshot.hasData) {
-                        print("Raw data received: ${snapshot.data}");
+                        print(
+                            "[MyHomePage]\tRaw data received: ${snapshot.data}");
                         String dataString = snapshot.data.toString();
                         List<String> data = dataString.split(RegExp(r"::"));
-                        print("\tData received: $data");
+                        print("[MyHomePage]\t\tData received: $data");
                         if (data.length == 2) {
                           // Add message
                           _messages.insert(0, messageFrom(data));
