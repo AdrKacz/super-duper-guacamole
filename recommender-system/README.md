@@ -1,7 +1,87 @@
 # Recommender system
 
+## Introduction
+We want to:
+-  Assign people **apparently randomly** to conversation groups, but still with people they will like.
+- Preserve the privacy of the users  
+To fulfill this second objective, we will implement an machine learning algorithm working with local user data, and without transmitting it online.
+
+# Local information available
+Locally each user has access to:
+- Its own ID
+- The IDs of the users he has talked with.
+- The messages that were exchanged in the different conversations he was involved in (for a limited amount of time).
+
+# Structure of the Machine Learning Algorithm:
+# Actual-Online sequence diagrams
+## To get a recommendation list
+```mermaid
+sequenceDiagram
+      actor User as User
+      participant MM as Master Model
+      participant Model2 as User Model
+      participant m as Mapping
+      User ->> MM: GET Recommendation for user u (HTTP API Gateway)
+      Note right of User: API Gateway HTTP - userid in the path
+      MM ->> m: GET mapping
+      alt NO existing mapping
+      m ->> MM: Return Error (No existing mapping)
+      Note right of MM: TO DO : Avoid the HTTP error by creating the mapping
+      end
+
+      alt Existing mapping
+      m ->> MM: Return mapped userid
+      MM ->> MM: Process & Check HTTP request
+      MM ->> Model2: GET User gradient of Master Model and Recommendation
+      Note right of MM: Call between lambdas on AWS
+      Model2 ->> Model2: Process and update User Model
+      Model2 ->> MM: Recommendation and gradient transmission
+      MM ->> User: Recommendation transmission
+      MM ->> MM: Master Model update
+      end
+```
+
+## To update the rating matrix
+```mermaid
+sequenceDiagram
+      actor User as User
+      participant R as Ratings
+      participant m as Mapping
+      User ->> User: Has participated to a conversation
+      User ->> R: UPDATE Ratings for userid
+      Note right of User: API Gateway HTTP
+      R ->> m: GET mapping (Supposed to exist bcs required to enter a conversation)
+      alt NO existing mapping
+      m ->> R: RETURN Error (No existing mapping)
+      Note right of R: Error could happen if *userid* change during a conversation
+      end
+
+      alt Existing mapping
+      m ->> R: RETURN mapped userid
+      R ->> R: PROCESS & CHECK HTTP request
+      R ->> R: Row userid UPDATE of R matrix
+      R ->> User: RETURN 200 'Update succeded'
+      end
+```
+# Future-Local sequence diagrams
+## Desired-Local and Privacy preserving sequence diagram
+```mermaid
+sequenceDiagram
+      actor User as User - Model
+      participant Model as Master Model
+      User ->> Model: GET Master Model
+      Note right of User: API Gateway HTTP
+      Model ->> User: Response: Master Model matrix
+      User ->> User: Reco., gradient computation, update User Model
+      User ->> Model: POST gradient Master Model matrix
+      Model ->> User: Response : StatusCode: 200
+      Model ->> Model: Master Model update
+```
+
+
+
 # AWS Setup:
-We want to use Python and the NumPy module in an AWS Lambda function. NumPy is not available in the Python AWS default envrionment. Hence, the only working solution found was to create a dockerized environnement.
+We use Python and the NumPy module in an AWS Lambda function. NumPy is not available in the Python AWS default environment. Hence, the only working solution found was to create a dockerized environnement.
 
 ## Container setup with Docker for Python
 1. On your local machine, create a project directory for your new function (here *recommerder-system*).
@@ -32,21 +112,17 @@ RUN  pip3 install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
 CMD [ "app.handler" ]
 ```
 
-5. Create an Amazon ECR repository. Use the AWS Console (easier). Copy the corresponding URI.
+5. Create an Amazon ECR repository using the AWS Console (easier). Copy the corresponding URI.
 
 6. Authenticate the Docker CLI to your Amazon ECR registry.  
 `aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.eu-west-3.amazonaws.com`
 
-6. Build your Docker image with  
+7. Build your Docker image with  
 `docker build -t 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest` 
-7. Push it with  
+8. Push it in the ECR with  
 `docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
 
-8. Tag your image to match your repository name, and deploy the image to Amazon ECR using the docker push command.  
-`docker tag  hello-world:latest 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`  
-`docker push 123456789012.dkr.ecr.us-east-1.amazonaws.com/hello-world:latest`
-
-ATTENTION : To be in the right folder of the Dockerfile while building is required!
+ATTENTION : To be in the same folder than the Dockerfile while building is required!
 
 ## Create a Database with DynamoDB
 
@@ -60,9 +136,9 @@ ATTENTION : To be in the right folder of the Dockerfile while building is requir
 ## Setup a Lambda
 ### Create a Lambda
 
-1. Conteneur image (Use URL of the conteneur)
+1. Conteneur image (Use URI of the conteneur)
 2. Create an HTTP API Gateway.
-3. Manage the IAM (Configuration--> Authorization) to allow the Lambda to access the DynamoDB (Get, Put Method for example)
+3. Manage the IAM (Configuration--> Authorization) to allow the Lambda to access differents services (Ex. a DynamoDB (Get, Put Methods for instance))
 
 ### To configure the HTTP API
 No special configuration for the API Gateway HTTP.  
@@ -100,11 +176,11 @@ response = client_lambda.invoke(
     InvocationType = 'RequestResponse',
     Payload = json.dumps(inputParams))
 response_from_child = json.load(response['Payload'])
-output = responseFromChild["output_2"]
+output = responseFromChild['output_2']
 ```
 
 ### Define environment variable
-For instance : *The second lambda ARN must not be in the code*:  
+For instance : *Lambda ARNs must not be in the code*:  
 To define it as an envrionment variable:
 1. Define it with the AWS Console Interface: Lambda --> Configuration --> Environment variables
 2. Get it in the code with:
@@ -113,45 +189,14 @@ import os
 ARN_LAMBDA_X = os.environ.get('ARN_LAMBDA_X')
 ```
 
-
-## Actual sequence diagram
-```mermaid
-sequenceDiagram
-      actor User as User
-      participant Model as Master Model
-      participant Model2 as User Model
-      User ->> Model: GET Recommendation for user u (HTTP API Gateway)
-      Note right of User: API Gateway HTTP - user_id in the path
-      Model ->> Model: Process & Check HTTP request
-      Model ->> Model2: GET User gradient of Master Model and Recommendation
-      Note right of Model: Call between lambdas on AWS
-      Model2 ->> Model2: Process and update User Model
-      Model2 ->> Model: Recommendation. and gradient transmission
-      Model ->> User: Recommendation transmission
-      Model ->> Model: Master Model update
-```
-
-## Desired sequence diagram
-```mermaid
-sequenceDiagram
-      actor User as User - Model
-      participant Model as Master Model
-      User ->> Model: GET Master Model
-      Note right of User: API Gateway HTTP
-      Model ->> User: Response: Master Model matrix
-      User ->> User: Reco., gradient computation, update User Model
-      User ->> Model: POST gradient Master Model matrix
-      Model ->> User: Response : StatusCode: 200
-      Model ->> Model: Master Model update
-```
 ## References
 #### Code :
 [0] : [Use of DynamoDB tables in the lambda function](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/dynamodb.html)  
 [1] : [Calling an AWS Lambda function from another Lambda function](https://www.sqlshack.com/calling-an-aws-lambda-function-from-another-lambda-function/)
 
 #### Container :
-[0] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)
+[0] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html#images-create-from-base)  
 [1] : [Deploy Python Lambda functions with container images](https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-base)
 
-### Models 
+### Models papers
 [0] : [Federated Collaborative Filtering for Privacy-Preserving Personalized Recommendation System](https://arxiv.org/abs/1901.09888)
