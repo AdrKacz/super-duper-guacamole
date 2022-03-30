@@ -4,7 +4,7 @@
 
 > [Awa - University Slides](https://docs.google.com/presentation/d/1QThoIvIGAeG6SlSOOstbqLRikrF3WBQCePyzSukguPY/edit?usp=sharing) *(written in French for our university)*
 
-> [Awa - Google Drive]()
+> Awa Drive on Google Drive (ask for permission)
 
 # Cloud Architecture
 
