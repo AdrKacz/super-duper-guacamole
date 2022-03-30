@@ -1,7 +1,9 @@
-import json
-import boto3
+"""This function creates a mapping between the user id (raw)
+and a mathematical id used for the model computation (matrix calculus)"""
 import os
+import json
 from urllib import parse
+import boto3
 from botocore.exceptions import ClientError
 
 # Get the service resource.
@@ -16,6 +18,9 @@ client_lambda = boto3.client("lambda")
 ARN_LAMBDA_MAPPING = os.environ.get("ARN_LAMBDA_MAPPING")
 assert ARN_LAMBDA_MAPPING is not None
 
+# Field names
+USER_ID_RAW = "user_id_raw"
+USER_ID = "user_id"
 
 def create_new_user(
     table, key_name, key, field_name, vector_value, field_name_2, value_2
@@ -47,8 +52,8 @@ def update_table(table, key_name, key_value, item_name, update_item):
             UpdateExpression="SET {} = :update_item".format(item_name),
             ExpressionAttributeValues={":update_item": update_item},
         )
-    except ClientError as e:
-        print(e.response["Error"]["Message"])
+    except ClientError as event:
+        print(event.response["Error"]["Message"])
     else:
         return response
 
@@ -56,52 +61,65 @@ def update_table(table, key_name, key_value, item_name, update_item):
 def get_method(table, key_name, key, field_name):
     try:
         response = table.get_item(Key={key_name: key})
-    except ClientError as e:
-        print(e.response["Error"]["Message"])
+    except ClientError as event:
+        print(event.response["Error"]["Message"])
     else:
         return response["Item"][field_name]
 
 
 def get_mapped(table, key_name, key, field_name):
+    """Get the mapped id of an input user id: Either
+    user_id_raw --> user_id
+    user_id --> user_id_raw
+
+    Parameters:
+        table: The AWS DynamoDB table
+        key_name: The name of the key field in the table. Ex: "user_id_raw"
+        key: The key, in a string format
+        field_name: The name of the item you want to get. Ex: "user_id"
+
+    Returns:
+        response : The mapped id
+    """
     return get_method(table, key_name, key, field_name)
 
 
-def handler(event, context):
+def handler(event, _context):
     print(
         "Event: ", event
-    )  #  api_gateway_endpoint?user_id=2_36&ids_nb_messages=(3,12),(4,32)
+    )  #  api_gateway_endpoint?user-id=2
     try:
         # Variables
         print(event["rawQueryString"])
-        url_parsed = parse.parse_qs(event["rawQueryString"])  # {'user_id':['2']}
-        user_id_raw = "".join(url_parsed["user_id"])
+        url_parsed = parse.parse_qs(event["rawQueryString"])  # {'user-id':['2']}
+        user_id_raw = "".join(url_parsed["user-id"])
     except:
         return {"statusCode": "400", "body": "Wrong data input type for R update"}
     # (De)Mapping Tables - Check if it is a new user
-    response = mapping_table.get_item(Key={"user_id_raw": user_id_raw})
+    response = mapping_table.get_item(Key={USER_ID_RAW: user_id_raw})
     if "Item" not in response:
         # User creation - Mapping Table
         max_mapped_plus = 1 + int(
-            get_mapped(mapping_table, "user_id_raw", "max", "user_id")
+            get_mapped(mapping_table, USER_ID_RAW, "max", USER_ID)
         )
         response = put_item_table(
             mapping_table,
-            "user_id_raw",
+            USER_ID_RAW,
             user_id_raw,
-            "user_id",
+            USER_ID,
             max_mapped_plus,
             verbose=False,
         )
         response = update_table(
-            mapping_table, "user_id_raw", "max", "user_id", max_mapped_plus
+            mapping_table, USER_ID_RAW, "max", USER_ID, max_mapped_plus
         )
 
         # User creation - De-Mapping Table
         response = put_item_table(
             demapping_table,
-            "user_id",
+            USER_ID,
             str(max_mapped_plus),
-            "user_id_raw",
+            USER_ID_RAW,
             user_id_raw,
             verbose=False,
         )
@@ -112,4 +130,4 @@ def handler(event, context):
     }
 
 
-##### TEST: api_gateway_endpoint?user_id=abcd
+##### TEST: api_gateway_endpoint?user-id=abcd

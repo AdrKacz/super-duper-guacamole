@@ -1,10 +1,12 @@
+"""This function provides a recommendation list to the user
+to create a conversation with appropriate people for him."""
+import os
 import json
+from urllib import parse
 import boto3
 import numpy as np
-import os
-from urllib import parse
 from botocore.exceptions import ClientError
-from helpers import *
+from helpers import put_item_vector_table, update_table_vector, get_item
 
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
@@ -31,8 +33,8 @@ VERBOSE = bool(os.environ.get("VERBOSE"))
 assert K_VAL is not None and ARN_LAMBDA_X is not None
 
 # Field names
-field_user_id_raw = "user_id_raw"
-field_user_id = "user_id"
+USER_ID_RAW = "user_id_raw"
+USER_ID = "user_id"
 
 
 def get_user_id(event, query_string, verbose=False):
@@ -42,19 +44,12 @@ def get_user_id(event, query_string, verbose=False):
     return "".join(url_parsed["user_id"])
 
 
-def create_new_y_user(table, key_name, key, k, item_name, verbose=False):
-    response = put_item_vector_table(
-        table, key_name, key, item_name, np.random.rand(k), verbose=verbose
-    )
-    return response
-
-
 def transform_json_vector_to_matrix(json_vector, data_axis):
     """Transform a vector saved in a list form in a json object
     to a double dimension np.ndarray (a matrix)"""
     vector = np.array(json.loads(json_vector))
     try:
-        assert data_axis == 0 or data_axis == 1
+        assert data_axis in (0, 1)
     except:
         print("Calling function with wrong axis attribute")
     else:
@@ -79,29 +74,26 @@ def get_y_model_vector(table, key_name, key, item_name, data_axis):
 def get_mapped(table, key_name, key, field_name):
     try:
         response = table.get_item(Key={key_name: key})
-    except ClientError as e:
-        print(e.response["Error"]["Message"])
+    except ClientError as event:
+        print(event.response["Error"]["Message"])
     else:
         return response["Item"][field_name]
 
 
-def handler(event, context):
+def handler(event, _context):
     print("Event: ", event)  #  api_gateway_endpoint?user_id=2
     try:
         user_id_raw = get_user_id(event, "rawQueryString", verbose=VERBOSE)
     except:
         return {"statusCode": "400", " body": "Wrong data types"}
     ### Mapped id:
-    user_id = str(
-        get_mapped(mapping_table, field_user_id_raw, user_id_raw, field_user_id)
-    )
+    user_id = str(get_mapped(mapping_table, USER_ID_RAW, user_id_raw, USER_ID))
     print(user_id)
-    response = table_model_y.get_item(Key={"user_id": user_id})
+    response = table_model_y.get_item(Key={USER_ID: user_id})
     ### User creation
     if "Item" not in response:
         try:
-            response = create_new_y_user(
-                table_model_y, "user_id", user_id, K_VAL, "vector", verbose=VERBOSE
+            response = put_item_vector_table(table_model_y, USER_ID, user_id, "vector", np.random.rand(K_VAL)
             )
             print(response)
             assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
@@ -112,7 +104,7 @@ def handler(event, context):
             }
 
     #### Reconstruct the Y matrix of the Master Model
-    max_mapped = int(get_mapped(mapping_table, field_user_id_raw, "max", "user_id"))
+    max_mapped = int(get_mapped(mapping_table, USER_ID_RAW, "max", USER_ID))
     y_matrix = np.zeros((max_mapped + 1, K_VAL))  # .T at the end of the for loop
     try:
         response = table_model_y.scan()
@@ -122,7 +114,7 @@ def handler(event, context):
         if VERBOSE:
             print(items)
         for item in items:
-            user_temp_id = int(item["user_id"])
+            user_temp_id = int(item[USER_ID])
             vector = np.array(json.loads(item["vector"]))
             y_matrix[user_temp_id, :] = vector
         y_matrix = y_matrix.T
@@ -137,7 +129,7 @@ def handler(event, context):
     # Define the input parameters that will be passed on to the model x function
     input_x = json.dumps(
         {
-            "user_id": user_id,
+            USER_ID: user_id,
             "y_matrix": y_matrix.tolist(),
             "K_VAL": K_VAL,
             "n_users": n_users,
@@ -176,17 +168,12 @@ def handler(event, context):
 
     ### Aggregation of the client's gradient
     # Add gradient to the gradient table:
-    response = gradient_y_table.get_item(Key={"user_id": user_id})
+    response = gradient_y_table.get_item(Key={USER_ID: user_id})
     print("Response Y gradient :", response)
     if "Item" not in response:
         try:
             response = put_item_vector_table(
-                gradient_y_table,
-                "user_id",
-                user_id,
-                "gradient_from_user",
-                f_u,
-                verbose=VERBOSE,
+                gradient_y_table, USER_ID, user_id, "gradient_from_user", f_u
             )
             assert str(
                 response["ResponseMetadata"]["HTTPStatusCode"]
@@ -199,7 +186,7 @@ def handler(event, context):
     else:
         try:
             response = update_table_vector(
-                gradient_y_table, "user_id", user_id, "gradient_from_user", f_u
+                gradient_y_table, USER_ID, user_id, "gradient_from_user", f_u
             )
             assert str(
                 response["ResponseMetadata"]["HTTPStatusCode"]
@@ -218,7 +205,7 @@ def handler(event, context):
         print(items)
         user_id_list = list()
         for item in items:
-            user_id_list.append(item["user_id"])
+            user_id_list.append(item[USER_ID])
     except:
         return {
             "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
@@ -227,9 +214,9 @@ def handler(event, context):
 
     if len(user_id_list) >= THRESHOLD_UPDATE * n_users:
         ### Stochastic Gradient descent:
-        Y = y_matrix.T  # (n_users, K_VAL)
+        y_mat_transposed = y_matrix.T  # (n_users, K_VAL)
 
-        gradient_y_matrix = np.zeros(Y.shape)
+        gradient_y_matrix = np.zeros(y_mat_transposed.shape)
         try:
             response = gradient_y_table.scan()
             items = response["Items"]
@@ -241,7 +228,7 @@ def handler(event, context):
                 n_users_t, k_val_t = temp_matrix.shape
                 assert k_val_t == K_VAL
                 if n_users_t < n_users:
-                    temp_matrix_right_shape = np.zeros(Y.shape)
+                    temp_matrix_right_shape = np.zeros(y_mat_transposed.shape)
                     temp_matrix_right_shape[:n_users_t, :] = temp_matrix
                 else:
                     temp_matrix_right_shape = temp_matrix
@@ -251,26 +238,29 @@ def handler(event, context):
             return {"statusCode": "400", "body": "Wrong f_u gradient shape"}
 
         ### Stochastic Gradient descent:
-        gradient_y_matrix = -2 * gradient_y_matrix + 2 * LAMBDA_REG * Y
-        Y = y_matrix.T  # (n_users, K_VAL)
-        m, v = 0.0, 0.0
+        gradient_y_matrix = -2 * gradient_y_matrix + 2 * LAMBDA_REG * y_mat_transposed
+        m_exp, v_exp = 0.0, 0.0
         for i in range(N_ITER_ADAM):
-            m = BETA_1 * m + (1 - BETA_1) * gradient_y_matrix
-            v = BETA_2 * v + (1 - BETA_2) * gradient_y_matrix**2
-            m_hat = m / (1 - BETA_1)
-            v_hat = v / (1 - BETA_2)
-            Y = Y - GAMMA * m_hat / (np.sqrt(v_hat) + EPSILON)  # (n_users, K_VAL)
-        print(Y)
+            m_exp = BETA_1 * m_exp + (1 - BETA_1) * gradient_y_matrix
+            v_exp = BETA_2 * v_exp + (1 - BETA_2) * gradient_y_matrix**2
+            m_hat = m_exp / (1 - BETA_1)
+            v_hat = v_exp / (1 - BETA_2)
+            y_mat_transposed = y_mat_transposed - GAMMA * m_hat / (
+                np.sqrt(v_hat) + EPSILON
+            )  # (n_users, K_VAL)
+        print(y_mat_transposed)
         ### Update the weights in the matrix
         for i in range(n_users):
-            update_table_vector(table_model_y, "user_id", str(i), "vector", Y[i, :])
+            update_table_vector(
+                table_model_y, USER_ID, str(i), "vector", y_mat_transposed[i, :]
+            )
 
     try:
         sort_index = np.argsort(inference_x.squeeze())
         sort_user_id_raw = list(
             map(
                 lambda user_id: get_mapped(
-                    demapping_table, "user_id", str(user_id), field_user_id_raw
+                    demapping_table, USER_ID, str(user_id), USER_ID_RAW
                 ),
                 sort_index,
             )

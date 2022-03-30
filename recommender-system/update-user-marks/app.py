@@ -1,11 +1,18 @@
+"""For a given user ID(u), compute and post rates for other user IDs.
+Currently, the rate is computed given the number of messages exchanged
+by u in a conversation with others users. This number of message is
+compared to the moving average of messages exchanged by u, to compute a rate.
+This rate will be the rate u give to the conversation, so to the other users.
+"""
+
+import os
 import json
+from urllib import parse
+from decimal import Decimal
 import boto3
 import numpy as np
-import os
-from urllib import parse
-from ast import literal_eval
 from botocore.exceptions import ClientError
-from decimal import Decimal
+
 
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
@@ -53,8 +60,8 @@ def update_table(table, key_name, key_value, item_name, update_item):
             UpdateExpression="SET {} = :update_item".format(item_name),
             ExpressionAttributeValues={":update_item": update_item},
         )
-    except ClientError as e:
-        print(e.response["Error"]["Message"])
+    except ClientError as event:
+        print(event.response["Error"]["Message"])
     else:
         return response
 
@@ -72,21 +79,11 @@ def update_table_vector(table, key_name, key_value, item_name, update_item):
     return response
 
 
-def post_R_user(table, user_id, prev_conv_id, prev_conv_users, prev_conv_nb_messages):
-    """Compute and post a mark for a set of (user_id, user_i_previous_conv_id).
-    This mark is saved in the user_id row of the R matrix.
-    The R matrix is the matrix containing all the implicit feedback
-    in the form of a mark.
-    """
-    ###### USE update_table_vector
-    return  ##### TO COMPLETE
-
-
 def get_method(table, key_name, key, field_name):
     try:
         response = table.get_item(Key={key_name: key})
-    except ClientError as e:
-        print(e.response["Error"]["Message"])
+    except ClientError as event:
+        print(event.response["Error"]["Message"])
     else:
         return response["Item"][field_name]
 
@@ -106,7 +103,7 @@ def get_mapped(table, key_name, key, field_name):
     return get_method(table, key_name, key, field_name)
 
 
-def handler(event, context):
+def handler(event, _context):
     print(
         "Event: ", event
     )  #  api_gateway_endpoint?user_id=2_36&ids_nb_messages=(abcd,12)_(bcde,32)
