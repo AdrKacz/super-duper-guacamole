@@ -16,15 +16,6 @@
 
 > This architecture is *centralised*
 
-# App states
-
-```mermaid
-stateDiagram-v2
-    HomePage --> MainPage: join
-    MainPage --> MainPage: chat
-    MainPage --> HomePage: quit
-```
-
 # Sequence Diagram
 In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
 
