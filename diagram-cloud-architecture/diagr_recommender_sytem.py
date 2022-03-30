@@ -1,9 +1,9 @@
-# diagram.py
+"""This function generates png images representing the current architecture
+of the recommender system."""
 from diagrams import Cluster, Diagram, Edge
 from diagrams.generic.device import Mobile
 from diagrams.aws.compute import LambdaFunction
-from diagrams.aws.network import Endpoint
-from diagrams.aws.mobile import APIGatewayEndpoint, APIGateway
+from diagrams.aws.mobile import APIGatewayEndpoint
 from diagrams.aws.compute import EC2ContainerRegistry
 from diagrams.aws.database import DynamodbTable
 
