@@ -53,11 +53,14 @@ samples, guidance on mobile development, and a full API reference.
 
 > [Flutter documentation - iOS deployment](https://docs.flutter.dev/deployment/ios)
 
-> **Update `ios/Runner.xcodeproj/project/pbxproj` to use build information from `pubspec.yaml` (see [StackOverflow - Update Version and Build number](https://stackoverflow.com/questions/61922857/how-to-force-flutter-to-update-my-version-and-build-number/67080868#67080868))
+> **Update `ios/Runner.xcodeproj/project/pbxproj` to use build information from `pubspec.yaml` (see [StackOverflow - Update Version and Build number](https://stackoverflow.com/questions/61922857/how-to-force-flutter-to-update-my-version-and-build-number/67080868#67080868))**
 
 ```
 flutter build ipa
 ```
+
+The output is at `build/ios/archive/Runner.xcarchive`
+
 
 Then open `.xcarchive` on `Finder` and click on `Validate`.
 
@@ -76,3 +79,4 @@ iPad Pro (2nd Gen) 12.9" Display | iPad Pro (12.9-inch) (2nd generation)
 flutter build appbundle
 ```
 
+The output is at `build/app/outputs/bundle/app-release.aab`
