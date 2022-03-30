@@ -13,8 +13,8 @@ zip -r fleet-manager.zip ./src
 scp -i $1 fleet-manager.zip ec2-user@$2:fleet-manager/
 rm fleet-manager.zip
 cd ..
-# Prepare docker
-docker login -u $3
+# Prepare docker (not needed, already logged in)
+# docker login -u $3
 # Matchmaker
 cd matchmaker
 docker build -t adrkacz/awa-match-maker:latest .

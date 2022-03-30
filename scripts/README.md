@@ -51,7 +51,7 @@ ssh -i <path-to-your-ssh-key> ec2-user@<instance-ip-address>
 ```sh
 docker pull adrkacz/awa-match-maker:latest
 docker pull adrkacz/awa-server:python
-docker run -dp 8080:8080 adrkacz/awa-match-maker:latest
+docker run -dp 8080:8080 -e MAXIMUM_ROOM_SIZE=$MAXIMUM_ROOM_SIZE -e IP_ADDRESS=$IP_ADDRESS -e HOST_ADDRESS=$HOST_ADDRESS adrkacz/awa-match-maker:latest 
 cd fleet-manager
 rm -rf src/ venv/
 unzip fleet-manager.zip
@@ -73,6 +73,6 @@ tmux
 
 ```
 source venv/bin/activate
-echo "Enter Ctrl+b d after uvicorn starts"
+echo -e "\033[0;35mEnter Ctrl+b d after uvicorn starts\033[0m"
 uvicorn src.main:app --host 0.0.0.0 --port 8000
 ```

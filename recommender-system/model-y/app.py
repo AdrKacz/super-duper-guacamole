@@ -59,7 +59,6 @@ def transform_json_vector_to_matrix(json_vector, data_axis):
             vector = vector[np.newaxis, :]
         return vector
 
-
 def get_y_model_vector(table, key_name, key, item_name, data_axis):
     """Return the user_id row of the X matrix latent factor
     X is the local-user part of the model.
@@ -69,7 +68,6 @@ def get_y_model_vector(table, key_name, key, item_name, data_axis):
         return transform_json_vector_to_matrix(x_u_json_vector, data_axis)
     except:
         print("Error in the x_u type got in the X model table")
-
 
 def get_mapped(table, key_name, key, field_name):
     try:
