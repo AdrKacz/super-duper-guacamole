@@ -1,7 +1,8 @@
 FROM public.ecr.aws/lambda/python:3.9
 
 # Copy function code
-COPY app.py ${LAMBDA_TASK_ROOT}
+COPY mapping/app.py ${LAMBDA_TASK_ROOT}/app.py
+COPY ../helpers.py ${LAMBDA_TASK_ROOT}/helpers.py
 
 # Install the function's dependencies using file requirements.txt
 # from your project folder.

@@ -35,13 +35,13 @@ assert K_VAL is not None and ARN_LAMBDA_X is not None
 # Field names
 USER_ID_RAW = "user_id_raw"
 USER_ID = "user_id"
-
+USER_INPUT_STRING = "userid"
 
 def get_user_id(event, query_string, verbose=False):
     if verbose:
-        print(event[query_string])  # 'user_id=2'
-    url_parsed = parse.parse_qs(event["rawQueryString"])  # {'user_id':['2']}
-    return "".join(url_parsed["user_id"])
+        print(event[query_string])  # USER_INPUT_STRING=2'
+    url_parsed = parse.parse_qs(event["rawQueryString"])  # {USER_INPUT_STRING:['2']}
+    return "".join(url_parsed[USER_INPUT_STRING])
 
 
 def transform_json_vector_to_matrix(json_vector, data_axis):
@@ -79,7 +79,7 @@ def get_mapped(table, key_name, key, field_name):
 
 
 def handler(event, _context):
-    print("Event: ", event)  #  api_gateway_endpoint?user_id=2
+    print("Event: ", event)  #  api_gateway_endpoint?userid=2
     try:
         user_id_raw = get_user_id(event, "rawQueryString", verbose=VERBOSE)
     except:
@@ -123,8 +123,8 @@ def handler(event, _context):
     except:
         return {"statusCode": "400", "body": "Wrong Y matrix shape"}
 
-    ### Interaction with the AWS lambda of the x-part of the model (users)
-    # Define the input parameters that will be passed on to the model x function
+    # Interaction with the AWS lambda of the User-X Part of the model
+    # Define the input parameters that will be passed on to the Lambda X function
     input_x = json.dumps(
         {
             USER_ID: user_id,
@@ -143,18 +143,19 @@ def handler(event, _context):
     print("Response : ", response)
     try:
         assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
-    except:
+    except AssertionError:
         return {"statusCode": "400", "body": "Error returned by the Lambda X"}
-    else:
-        x_response = response["Payload"].read()
-        x_json_1 = json.loads(x_response)
-        print("PayLoad :", x_response)
+    
+    x_response = response["Payload"].read()
+    x_json_1 = json.loads(x_response)
+    print("PayLoad :", x_response)
 
     try:
         x_json_2 = json.loads(x_json_1)
         print("PayLoad JSON:", x_json_2)
     except:
         return {"statusCode": x_json_1["statusCode"], "body": x_json_1["body"]}
+
 
     try:
         inference_x = np.array(x_json_2["inference_x"])
@@ -272,6 +273,4 @@ def handler(event, _context):
         "body": json.dumps(sort_user_id_raw),
     }
 
-
-###### TEST: api_gateway_endpoint?user_id=2
 ###### Connexion between 2 LAMBDAS : Need to json.dumps() the dictonnary you're sending, but no need to json.loads to get it in the other lambda
