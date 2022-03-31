@@ -95,7 +95,7 @@ async def register(websocket):
 
 
 async def server():
-    """Start websocke server"""
+    """Start websocket server"""
     print(f"Start server #{ROOM_ID} on port 8765")
     # TODO: add try, except asyncio.CancelledError:, finally to close the server properly
     async with websockets.serve(chat, "0.0.0.0", 8765):  # , ssl=ssl_context):
