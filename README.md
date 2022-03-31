@@ -4,6 +4,8 @@
 
 > [Awa - University Slides](https://docs.google.com/presentation/d/1QThoIvIGAeG6SlSOOstbqLRikrF3WBQCePyzSukguPY/edit?usp=sharing) *(written in French for our university)*
 
+> Awa Drive on Google Drive (ask for permission)
+
 # Cloud Architecture
 
 > We chose a **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The goal is to verify the model works.
@@ -13,15 +15,6 @@
 ![awa-cloud](./diagram-cloud-architecture/awa_cloud.png)
 
 > This architecture is *centralised*
-
-# App states
-
-```mermaid
-stateDiagram-v2
-    HomePage --> MainPage: join
-    MainPage --> MainPage: chat
-    MainPage --> HomePage: quit
-```
 
 # Sequence Diagram
 In a **centralised architecture**, the code that infers the correct set of users belongs to the **cloud**. Thus, it uses whatever languages.
@@ -222,17 +215,16 @@ sequenceDiagram
 # Screenshots
 
 <p float="left" align="middle">
-    <img src="./screenshots/screenshot_0745.PNG" width="32%">
-    <img src="./screenshots/screenshot_0746.PNG" width="32%">
-    <img src="./screenshots/screenshot_0747.PNG" width="32%">
-    <img src="./screenshots/screenshot_0748.PNG" width="32%">
-    <img src="./screenshots/screenshot_0749.PNG" width="32%">
-    <img src="./screenshots/screenshot_0750.PNG" width="32%">
-    <img src="./screenshots/screenshot_0751.PNG" width="32%">
-    <img src="./screenshots/screenshot_0752.PNG" width="32%">
-    <img src="./screenshots/screenshot_0753.PNG" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1CLdOB2IFAYc6WWDyuyJcgjr6g5-5aYX6" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1T5kJsDrn73ASKktgBfwhx8xv2u17rmZ0" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1epbjey5JAMWwELEGZ3DlYZQSfsEosHZc" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1K_kt9fFAarnRFH4zFRDExvhA1NWNPQx6" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1nRaASt4B1sGYB39JC7L9AXBCrgVh7dl3" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1VL-q1E8bPBiSkQh1WaW47WV4tT7Yf8Gm" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1fQtmq_YX_AbgsWI74Tybv7n6HJkCm_dj" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1Les5rA2Z55MP0DznlQ80C699gfRt2jT8" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=18894WZtlaHQpwziecVUel6GqHhXh4pj_" width="32%">
 </p>
-
 ---
 
 ### Note on Godot
