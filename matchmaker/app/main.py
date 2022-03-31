@@ -5,14 +5,13 @@ Matchmacker matches user in room according to their preferences
 """
 # TODO: ROOMS keep growing indefinetely, need a way to clear the object from time to time
 
-# from typing import Optional
-from fastapi import FastAPI
-import requests
 import os
+import requests
+from fastapi import FastAPI
 
-MAXIMUM_ROOM_SIZE = int(os.getenv('MAXIMUM_ROOM_SIZE'))
-IP_ADDRESS = os.getenv('IP_ADDRESS')
-HOST_ADDRESS = os.getenv('HOST_ADDRESS')
+MAXIMUM_ROOM_SIZE = int(os.getenv("MAXIMUM_ROOM_SIZE"))
+IP_ADDRESS = os.getenv("IP_ADDRESS")
+HOST_ADDRESS = os.getenv("HOST_ADDRESS")
 print("ENVIRONMENT\n===== ===== =====")
 print("MAXIMUM_ROOM_SIZE:", MAXIMUM_ROOM_SIZE)
 print("IP_ADDRESS:", IP_ADDRESS)
@@ -23,19 +22,23 @@ app = FastAPI()
 
 ROOMS = {}
 
+
 def response_from_room_id(user_id, room_id):
     """JSON response formatted"""
-    return  {
+    return {
         "user_id": user_id,
         "room_id": room_id,
-        "room_address": ROOMS[room_id]['address'],
-        "room_port": ROOMS[room_id]['port'],
-        }
+        "room_address": ROOMS[room_id]["address"],
+        "room_port": ROOMS[room_id]["port"],
+    }
+
 
 def create_new_room():
     """Create a new room with the fleet manager"""
     print("Create new room")
-    raw = requests.get(f"http://{HOST_ADDRESS}:8000/container") # Host container address
+    raw = requests.get(
+        f"http://{HOST_ADDRESS}:8000/container"
+    )  # Host container address
     response = raw.json()
     room_id = response.get("room_id", 0)
     port = response.get("port", 0)
@@ -47,19 +50,21 @@ def create_new_room():
         print("\terror:", error)
     return room_id, IP_ADDRESS, port, error
 
+
 @app.get("/")
 def read_root():
     """Hello World"""
     return {"Match": "Maker"}
 
+
 @app.get("/room/{user_id}")
-def read_room(user_id : str):
+def read_room(user_id: str):
     """Get room for given user"""
     error = ""
     for room_id, room in ROOMS.items():
-        if len(room['users']) < MAXIMUM_ROOM_SIZE and user_id not in room['users']:
+        if len(room["users"]) < MAXIMUM_ROOM_SIZE and user_id not in room["users"]:
             # Room pass criteria, return it
-            room['users'].append(user_id)
+            room["users"].append(user_id)
             return response_from_room_id(user_id, room_id)
 
     # No room left, create one
@@ -67,11 +72,7 @@ def read_room(user_id : str):
     if error:
         return {"error": error}
     # else
-    ROOMS[room_id] = {
-        "address": room_address,
-        "port": room_port,
-        "users": [user_id]
-    }
+    ROOMS[room_id] = {"address": room_address, "port": room_port, "users": [user_id]}
     return response_from_room_id(user_id, room_id)
 
 
@@ -80,8 +81,8 @@ def read_rooms():
     """Read all rooms"""
     return ROOMS
 
+
 @app.get("/clear-all-rooms/")
-def read_rooms():
-    global ROOMS
+def clear_all_rooms():
     """Clear all rooms"""
-    ROOMS = {}
+    ROOMS.clear()

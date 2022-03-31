@@ -12,10 +12,10 @@ import os
 from fastapi import FastAPI
 import docker
 
-LAMBDA_NOTIFICATION_ARN = os.getenv('LAMBDA_NOTIFICATION_ARN')
-HOME = os.getenv('HOME')
-FROM_PORT : int = int(os.getenv('FROM_PORT'))
-TO_PORT : int = int(os.getenv('TO_PORT'))
+LAMBDA_NOTIFICATION_ARN = os.getenv("LAMBDA_NOTIFICATION_ARN")
+HOME = os.getenv("HOME")
+FROM_PORT: int = int(os.getenv("FROM_PORT"))
+TO_PORT: int = int(os.getenv("TO_PORT"))
 print("ENVIRONMENT\n===== ===== =====")
 print("LAMBDA_NOTIFICATION_ARN:", LAMBDA_NOTIFICATION_ARN)
 print("HOME:", HOME)
@@ -34,7 +34,8 @@ CONTAINER_IMAGE = "adrkacz/awa-server:python"
 PORTS = [False] * (TO_PORT - FROM_PORT + 1)
 
 # room count - used for room id
-ROOM_CREATED : int = 0
+ROOM_CREATED: int = 0
+
 
 def update_active_ports():
     """Update list of active containers with their ports"""
@@ -60,6 +61,7 @@ def read_root():
     """Hello world"""
     return {"Fleet": "Manager"}
 
+
 @app.get("/container")
 def read_container():
     """Create a new container"""
@@ -70,7 +72,7 @@ def read_container():
     # Create container
     print("Create container")
     try:
-        local_index = PORTS.index(False) # Get the first unsused port
+        local_index = PORTS.index(False)  # Get the first unsused port
         print("Run container at port:", FROM_PORT + local_index)
         # TODO: catch error if port already allocated
         ROOM_CREATED += 1
@@ -82,13 +84,15 @@ def read_container():
             environment={
                 "MAX_PEERS": 5,
                 "ROOM_ID": ROOM_CREATED,
-                "LAMBDA_NOTIFICATION_ARN": LAMBDA_NOTIFICATION_ARN
-                },
-            volumes=[f"{HOME}/.aws:/root/.aws:ro"])
+                "LAMBDA_NOTIFICATION_ARN": LAMBDA_NOTIFICATION_ARN,
+            },
+            volumes=[f"{HOME}/.aws:/root/.aws:ro"],
+        )
         PORTS[local_index] = container.id
         return {"port": FROM_PORT + local_index, "room_id": ROOM_CREATED}
     except ValueError:
         return {"error": "no available space"}
+
 
 @app.get("/containers")
 def read_containers():
@@ -101,6 +105,7 @@ def read_containers():
         containers[container.id] = str(container.image)
     return containers
 
+
 @app.get("/clear-all-containers")
 def clear_all_containers():
     """Remove all containers"""
@@ -109,4 +114,3 @@ def clear_all_containers():
         tags = container.image.tags
         if CONTAINER_IMAGE in tags:
             container.remove(force=True)
-            
