@@ -3,7 +3,13 @@ to alleviate the complexity of the main code."""
 import numpy as np
 
 
-def compute_optimal_x_u(y_matrix: np.ndarray, c_u: np.ndarray, p_u_trans: np.ndarray, k_val: int, lambda_regulation: float) -> np.ndarray:
+def compute_optimal_x_u(
+    y_matrix: np.ndarray,
+    c_u: np.ndarray,
+    p_u_trans: np.ndarray,
+    k_val: int,
+    lambda_regulation: float,
+) -> np.ndarray:
     """Compute the update of the x_u vector
 
     Parameters:
@@ -26,7 +32,14 @@ def compute_optimal_x_u(y_matrix: np.ndarray, c_u: np.ndarray, p_u_trans: np.nda
     return optimal_x_u
 
 
-def compute_user_model_x(y_matrix: np.ndarray, x_u: np.ndarray, r_u: np.ndarray, k_val: int, alpha: float, lambda_regulation: float) -> np.ndarray:
+def compute_user_model_x(
+    y_matrix: np.ndarray,
+    x_u: np.ndarray,
+    r_u: np.ndarray,
+    k_val: int,
+    alpha: float,
+    lambda_regulation: float,
+) -> np.ndarray:
     """Compute the update of the x_u vector
 
     Parameters:

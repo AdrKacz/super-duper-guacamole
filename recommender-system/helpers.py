@@ -3,6 +3,7 @@ to alleviate the complexity of the main code."""
 import json
 from botocore.exceptions import ClientError
 
+
 def put_item_table(table, key_name: str, key: str, item_name: str, item: json):
     """Put an item in the input AWS DynamoDB table
 
