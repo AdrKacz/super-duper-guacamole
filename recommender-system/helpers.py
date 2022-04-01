@@ -4,7 +4,7 @@ import json
 from botocore.exceptions import ClientError
 
 
-def put_item_table(table, key_name, key, item_name, item):
+def put_item_table(table, key_name: str, key: str, item_name: str, item: json):
     """Put an item in the input AWS DynamoDB table
 
     Parameters:
@@ -21,7 +21,7 @@ def put_item_table(table, key_name, key, item_name, item):
     return response
 
 
-def put_item_vector_table(table, key_name, key, item_name, vector):
+def put_item_vector_table(table, key_name: str, key: str, item_name: str, vector):
     """Put a vector in the input AWS DynamoDB table
 
     Parameters:
@@ -43,7 +43,7 @@ def put_item_vector_table(table, key_name, key, item_name, vector):
     )
 
 
-def update_table(table, key_name, key_value, item_name, update_item):
+def update_table(table, key_name: str, key: str, item_name: str, update_item):
     """Update an item in the input AWS DynamoDB table
 
     Parameters:
@@ -58,7 +58,7 @@ def update_table(table, key_name, key_value, item_name, update_item):
     """
     try:
         response = table.update_item(
-            Key={key_name: key_value},
+            Key={key_name: key},
             UpdateExpression="SET {} = :update_item".format(item_name),
             ExpressionAttributeValues={":update_item": update_item},
         )
@@ -68,7 +68,7 @@ def update_table(table, key_name, key_value, item_name, update_item):
         return response
 
 
-def update_table_vector(table, key_name, key_value, item_name, update_vector):
+def update_table_vector(table, key_name: str, key: str, item_name: str, update_vector):
     """Update a vector-item in the input AWS DynamoDB table
 
     Parameters:
@@ -84,7 +84,7 @@ def update_table_vector(table, key_name, key_value, item_name, update_vector):
     response = update_table(
         table,
         key_name,
-        key_value,
+        key,
         item_name,
         json.dumps(
             update_vector.tolist(), separators=(",", ":"), sort_keys=True, indent=4
@@ -93,7 +93,7 @@ def update_table_vector(table, key_name, key_value, item_name, update_vector):
     return response
 
 
-def get_item(table, key_name, key, item_name):
+def get_item(table, key_name: str, key: str, item_name: str) -> str:
     """Get an item from the input AWS DynamoDB table
 
     Parameters:
@@ -106,7 +106,7 @@ def get_item(table, key_name, key, item_name):
         response : The corresponding item or None if not found
     """
     try:
-        response = table.get_item(Key={key_name: str(key)})
+        response = table.get_item(Key={key_name: key})
     except ClientError as event:
         print(event.response["Error"]["Message"])
     else:
@@ -114,4 +114,3 @@ def get_item(table, key_name, key, item_name):
             return response["Item"][item_name]
         # Else:
         print("Item not in response")
-

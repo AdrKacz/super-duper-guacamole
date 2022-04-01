@@ -7,6 +7,7 @@ import json
 import boto3
 import numpy as np
 from helpers import put_item_vector_table, update_table_vector, get_item
+from specific_helpers import compute_optimal_x_u
 
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
@@ -65,48 +66,79 @@ def get_rating_vector_user(table, key_name, key, item_name, data_axis):
 
 
 def handler(event, _context):
+    """Simulate the X-User part of the Federated Collaborative Filtering Model
+    Compute :
+    - Update of the X-User Model
+    - Partial gradient of Y
+
+    Parameters:
+        - user_id
+        - K_VAL
+        - n_users
+        - y_matrix
+    Returns:
+        A HTTP response with the result of the operation (success or not):
+        - "StatusCode"
+        - "body"
+        In case of sucess, the body contains in a json format:
+        - The partial gradient of y_matrix (the Master Model)
+        - The inference (the user preferences)
+    """
     print("Event: ", event)
+    # Variables
+    k_val = event.get("K_VAL")  # Int
+    n_users = event.get("n_users")  # Int
+    user_id = event.get("user_id")  # str
+    y_matrix_list = event.get("y_matrix")
+    if k_val is None or n_users is None or user_id is None or y_matrix_list is None:
+        return {
+            "statusCode": "400",
+            "body": "Wrong data transfert between Lambda Y and User Model X",
+        }
+
     try:
-        # Variables
-        k_val = event["K_VAL"]  # Int
-        n_users = event["n_users"]  # Int
-        user_id = event["user_id"]  # str
-        y_matrix = np.array(event["y_matrix"])
+        y_matrix = np.array(y_matrix_list)
         assert (
             isinstance(user_id, str)
             and isinstance(k_val, int)
             and isinstance(n_users, int)
             and y_matrix.shape == (k_val, n_users)
         )
-    except:
+    except SyntaxError:
+        return {
+            "statusCode": "400",
+            "body": "Wrong data format of y_matrix from Lambda Y Master Model",
+        }
+    except AssertionError:
         return {"statusCode": "400", "body": "Wrong data input type for Model X"}
+
     # Check if it is a new user:
     response = table_model_x.get_item(Key={"user_id": user_id})
-    print(response)
     ### User creation
     if "Item" not in response:
         # Vector initialisation
+        response = put_item_vector_table(
+            table_model_x, "user_id", user_id, "vector", np.random.rand(k_val)
+        )
         try:
-            response = put_item_vector_table(
-                table_model_x, "user_id", user_id, "vector", np.random.rand(k_val)
-            )
             assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
-        except:
+        except AssertionError:
             return {
                 "statusCode": "500",
                 "body": "Error adding the user to the model X database",
             }
+
+    x_u = get_x_u_model_vector(table_model_x, "user_id", user_id, "vector", data_axis=0)
+
     try:
-        x_u = get_x_u_model_vector(
-            table_model_x, "user_id", user_id, "vector", data_axis=0
-        )  # Vector in a matrix shape (k_val,1)
-        assert isinstance(x_u, np.ndarray)
-    except:
-        return {"statusCode": "500", "body": "AWS Server Error getting vector"}
-    try:
-        x_u.shape == (k_val, 1)
-    except:
-        return {"statusCode": "400", "body": "Wrong data x_u output"}
+        assert x_u.shape == (k_val, 1)
+    except AttributeError:
+        return {
+            "statusCode": "500",
+            "body": "Returned x_u element is not a np.darray vector",
+        }
+    except AssertionError:
+        return {"statusCode": "501", "body": "Erroneous vector shape of x_u"}
 
     ### Inference
     # 1st step : Check if the matrix computation is possible
@@ -115,76 +147,66 @@ def handler(event, _context):
 
     # Recommendation/Mark Matrix R:
     ## Get R_u to update the user model X & compute the gradient of master model Y
+    r_u = get_rating_vector_user(
+        table_implicit_feedbacks_R, "user_id", user_id, "R_u", data_axis=1
+    )
     try:
-        r_u = get_rating_vector_user(
-            table_implicit_feedbacks_R, "user_id", user_id, "R_u", data_axis=1
-        )
-        assert isinstance(r_u, np.ndarray)
+        assert r_u.shape == (1, n_users)
         r_u = r_u[:, :n_users]  # (1, n_users)
-    except:
+    except AttributeError:
         return {
-            "statusCode": "500",
-            "body": "Error getting implicit/explicti marks R_u of users user_id",
+            "statusCode": "501",
+            "body": "Returned r_u element is not a np.darray vector",
         }
+    except AssertionError:
+        return {"statusCode": "501", "body": "Erroneous vector shape of r_u"}
+
     # r_u.shape == (1, n_users). However, due to latence, potentially :
     # r_u.shape[0] > n_users from lambda y (new users subscription)
 
-    # compare mapping and R_u users
+    # TODO : compare mapping and R_u users
 
-    # In the original paper federated learning is based on : p_ui = r_ui != 0.0==> p_ui in [0,1]
-    # Here p_u = r_u, to keep the gradual information of the marks
-    p_u = r_u  # (1,n_users)
-    # c_ui = 1 + ALPHA*r_ui
-    c_u = 1 + ALPHA * r_u  # (1,n_users)
-    p_u_trans = p_u.T
+    # User Model :
+    # - Optimal x_u computation
+    # - Inference computation
+    # - Gradient computation
+    # Reminder:
+    # y_matrix.shape == (k_val, n_users), r_u.shape == (1, n_users), x_u.shape == (k_val, 1)
+    optimal_x_u, inference_x, f_u = compute_optimal_x_u(
+        y_matrix, x_u, r_u, k_val, ALPHA, LAMBDA_REG
+    )
 
     try:
-        print(y_matrix.shape, r_u.shape, c_u.shape)
-        assert (
-            y_matrix.shape == (k_val, n_users)
-            and r_u.shape == (1, n_users)
-            and c_u.shape == (1, n_users)
-            and p_u_trans.shape == (n_users, 1)
-        )
-        c_u_diag = np.diag(c_u.squeeze().tolist())
-        assert c_u_diag.shape == (n_users, n_users)
-        x_u_opt = np.dot(
-            np.linalg.inv(y_matrix @ c_u_diag @ y_matrix.T + LAMBDA_REG * np.identity(k_val)),
-            y_matrix @ c_u_diag @ p_u_trans,
-        )
-        print(x_u_opt.shape)
-        assert x_u_opt.shape == (k_val, 1)
-    except:
+        assert f_u.shape == (n_users, k_val)
+    except AttributeError:
         return {
-            "statusCode": "400",
-            "body": "Wrong data shapes for x_u_opt computation ",
+            "statusCode": "501",
+            "body": "Returned partiel gradient element f_u is not a np.darray vector",
         }
-    ### Update of the User-Model X
+    except AssertionError:
+        return {"statusCode": "501", "body": "Erroneous vector shape of f_u"}
 
     try:
-        response = update_table_vector(
-            table_model_x, "user_id", user_id, "vector", x_u_opt.squeeze()
-        )
-        print(response)
-        assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
-    except:
+        assert optimal_x_u.shape == (k_val, 1)
+    except AttributeError:
         return {
-            "statusCode": "500",
+            "statusCode": "501",
+            "body": "Returned optimal_x_u element is not a np.darray vector",
+        }
+    except AssertionError:
+        return {"statusCode": "501", "body": "Erroneous vector shape of optimal_x_u"}
+
+    # Update of the User-Model X in the AWS DynamoDB Table
+    response = update_table_vector(
+        table_model_x, "user_id", user_id, "vector", optimal_x_u.squeeze()
+    )
+    try:
+        assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
+    except AssertionError:
+        return {
+            "statusCode": "501",
             "body": "Error updating the model X - row user_id database",
         }
-
-    inference_x = np.dot(x_u_opt.T, y_matrix)  # (1,n_users)
-    print(inference_x)
-
-    ### Gradient computation
-    # Formally: y_i = y_i - gamma*dJ/dy_i
-    try:
-        print(c_u.shape, p_u_trans.shape, y_matrix.shape, x_u.shape)
-        f_u = (c_u.T * (p_u_trans - y_matrix.T @ x_u)) @ x_u.T  # (n_users,k_val)
-        print(f_u.shape)
-        assert f_u.shape == (n_users, k_val)
-    except:
-        return {"statusCode": "500", "body": "Error computing f_u"}
 
     return json.dumps(
         {"inference_x": inference_x.tolist(), "f_u": f_u.tolist()},
@@ -192,9 +214,3 @@ def handler(event, _context):
         sort_keys=True,
         indent=4,
     )
-
-
-##### TEST: Call Lambda Y
-# Y = np.zeros((50,50))
-# r_u = np.zeros((1,50))
-# x_u = np.ones((50,1))
