@@ -72,7 +72,7 @@ def handler(event, _context):
             "body": "Wrong spelling of 'userid' in the HTTP request",
         }
 
-    user_id_raw = "".join(url_parsed[USER_INPUT_STRING])
+    user_id_raw = "".join(user_id_raw_list_string)
     # Mapping & DeMapping Tables - Check if it is a new user
     response = mapping_table.get_item(Key={USER_ID_RAW: user_id_raw})
     if "Item" not in response:

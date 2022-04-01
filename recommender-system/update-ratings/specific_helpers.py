@@ -1,6 +1,7 @@
 """This function provides specific helpers functions
 to alleviate the complexity of the main code."""
 
+
 def exponential_average(new_value, prev_exponential_avg, refresh_time_constant):
     """Compute the exponential average of an item. Compared to the classic moving average
     you only have to save the last exponential average.

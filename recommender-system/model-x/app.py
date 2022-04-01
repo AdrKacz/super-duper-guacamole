@@ -8,6 +8,7 @@ import boto3
 import numpy as np
 from helpers import put_item_vector_table, update_table_vector, get_item
 from specific_helpers import compute_optimal_x_u
+
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
 # Access the desired table resource
@@ -90,8 +91,11 @@ def handler(event, _context):
     user_id = event.get("user_id")  # str
     y_matrix_list = event.get("y_matrix")
     if k_val is None or n_users is None or user_id is None or y_matrix_list is None:
-        return {"statusCode": "400", "body": "Wrong data transfert between Lambda Y and User Model X"}
-    
+        return {
+            "statusCode": "400",
+            "body": "Wrong data transfert between Lambda Y and User Model X",
+        }
+
     try:
         y_matrix = np.array(y_matrix_list)
         assert (
@@ -101,10 +105,13 @@ def handler(event, _context):
             and y_matrix.shape == (k_val, n_users)
         )
     except SyntaxError:
-        return {"statusCode": "400", "body": "Wrong data format of y_matrix from Lambda Y Master Model"}
+        return {
+            "statusCode": "400",
+            "body": "Wrong data format of y_matrix from Lambda Y Master Model",
+        }
     except AssertionError:
         return {"statusCode": "400", "body": "Wrong data input type for Model X"}
-    
+
     # Check if it is a new user:
     response = table_model_x.get_item(Key={"user_id": user_id})
     ### User creation
@@ -121,14 +128,15 @@ def handler(event, _context):
                 "body": "Error adding the user to the model X database",
             }
 
-    x_u = get_x_u_model_vector(
-        table_model_x, "user_id", user_id, "vector", data_axis=0
-    )
+    x_u = get_x_u_model_vector(table_model_x, "user_id", user_id, "vector", data_axis=0)
 
     try:
         assert x_u.shape == (k_val, 1)
     except AttributeError:
-        return {"statusCode": "500", "body": "Returned x_u element is not a np.darray vector"}
+        return {
+            "statusCode": "500",
+            "body": "Returned x_u element is not a np.darray vector",
+        }
     except AssertionError:
         return {"statusCode": "501", "body": "Erroneous vector shape of x_u"}
 
@@ -146,7 +154,10 @@ def handler(event, _context):
         assert r_u.shape == (1, n_users)
         r_u = r_u[:, :n_users]  # (1, n_users)
     except AttributeError:
-        return {"statusCode": "501", "body": "Returned r_u element is not a np.darray vector"}
+        return {
+            "statusCode": "501",
+            "body": "Returned r_u element is not a np.darray vector",
+        }
     except AssertionError:
         return {"statusCode": "501", "body": "Erroneous vector shape of r_u"}
 
@@ -155,32 +166,40 @@ def handler(event, _context):
 
     # TODO : compare mapping and R_u users
 
-    # User Model : 
+    # User Model :
     # - Optimal x_u computation
     # - Inference computation
     # - Gradient computation
     # Reminder:
     # y_matrix.shape == (k_val, n_users), r_u.shape == (1, n_users), x_u.shape == (k_val, 1)
-    optimal_x_u, inference_x, f_u = compute_optimal_x_u(y_matrix, x_u, r_u, k_val, ALPHA, LAMBDA_REG)
+    optimal_x_u, inference_x, f_u = compute_optimal_x_u(
+        y_matrix, x_u, r_u, k_val, ALPHA, LAMBDA_REG
+    )
 
     try:
         assert f_u.shape == (n_users, k_val)
     except AttributeError:
-        return {"statusCode": "501", "body": "Returned partiel gradient element f_u is not a np.darray vector"}
+        return {
+            "statusCode": "501",
+            "body": "Returned partiel gradient element f_u is not a np.darray vector",
+        }
     except AssertionError:
         return {"statusCode": "501", "body": "Erroneous vector shape of f_u"}
 
     try:
         assert optimal_x_u.shape == (k_val, 1)
     except AttributeError:
-        return {"statusCode": "501", "body": "Returned optimal_x_u element is not a np.darray vector"}
+        return {
+            "statusCode": "501",
+            "body": "Returned optimal_x_u element is not a np.darray vector",
+        }
     except AssertionError:
         return {"statusCode": "501", "body": "Erroneous vector shape of optimal_x_u"}
-    
+
     # Update of the User-Model X in the AWS DynamoDB Table
     response = update_table_vector(
         table_model_x, "user_id", user_id, "vector", optimal_x_u.squeeze()
-        )
+    )
     try:
         assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
     except AssertionError:

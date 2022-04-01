@@ -114,4 +114,3 @@ def get_item(table, key_name, key, item_name):
             return response["Item"][item_name]
         # Else:
         print("Item not in response")
-

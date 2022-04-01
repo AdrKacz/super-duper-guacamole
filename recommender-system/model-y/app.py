@@ -7,6 +7,11 @@ import boto3
 import numpy as np
 from botocore.exceptions import ClientError
 from helpers import put_item_vector_table, update_table_vector, get_item
+from specific_helpers import (
+    get_y_matrix_reconstructed,
+    get_gradient_y_matrix_reconstructed,
+    compute_stochastic_grad_descent,
+)
 
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
@@ -36,12 +41,7 @@ assert K_VAL is not None and ARN_LAMBDA_X is not None
 USER_ID_RAW = "user_id_raw"
 USER_ID = "user_id"
 USER_INPUT_STRING = "userid"
-
-def get_user_id(event, query_string, verbose=False):
-    if verbose:
-        print(event[query_string])  # USER_INPUT_STRING=2'
-    url_parsed = parse.parse_qs(event["rawQueryString"])  # {USER_INPUT_STRING:['2']}
-    return "".join(url_parsed[USER_INPUT_STRING])
+RAW_QUERY_STRING = "rawQueryString"
 
 
 def transform_json_vector_to_matrix(json_vector, data_axis):
@@ -59,6 +59,7 @@ def transform_json_vector_to_matrix(json_vector, data_axis):
             vector = vector[np.newaxis, :]
         return vector
 
+
 def get_y_model_vector(table, key_name, key, item_name, data_axis):
     """Return the user_id row of the X matrix latent factor
     X is the local-user part of the model.
@@ -68,6 +69,7 @@ def get_y_model_vector(table, key_name, key, item_name, data_axis):
         return transform_json_vector_to_matrix(x_u_json_vector, data_axis)
     except:
         print("Error in the x_u type got in the X model table")
+
 
 def get_mapped(table, key_name, key, field_name):
     try:
@@ -79,19 +81,35 @@ def get_mapped(table, key_name, key, field_name):
 
 
 def handler(event, _context):
-    print("Event: ", event)  #  api_gateway_endpoint?userid=2
-    try:
-        user_id_raw = get_user_id(event, "rawQueryString", verbose=VERBOSE)
-    except:
-        return {"statusCode": "400", " body": "Wrong data types"}
-    ### Mapped id:
+    print("Event: ", event)
+
+    # Get user_id_raw
+    raw_query_string = event.get(RAW_QUERY_STRING)
+    if raw_query_string is None:
+        return {
+            "statusCode": "400",
+            "body": "rawQueryString not in the URL parameters of the HTTP request",
+        }
+    url_parsed = parse.parse_qs(raw_query_string)
+    print(url_parsed)
+    user_id_raw_list_string = url_parsed.get(USER_INPUT_STRING)
+    if user_id_raw_list_string is None:
+        return {
+            "statusCode": "400",
+            "body": "Wrong spelling of 'userid' in the HTTP request",
+        }
+    user_id_raw = "".join(user_id_raw_list_string)
+
+    # Get Mapped id:
     user_id = str(get_mapped(mapping_table, USER_ID_RAW, user_id_raw, USER_ID))
     print(user_id)
     response = table_model_y.get_item(Key={USER_ID: user_id})
-    ### User creation
+
+    # Does user exists ? If not --> user creation
     if "Item" not in response:
         try:
-            response = put_item_vector_table(table_model_y, USER_ID, user_id, "vector", np.random.rand(K_VAL)
+            response = put_item_vector_table(
+                table_model_y, USER_ID, user_id, "vector", np.random.rand(K_VAL)
             )
             print(response)
             assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
@@ -101,29 +119,24 @@ def handler(event, _context):
                 "body": "Error adding the user to the model Y database",
             }
 
-    #### Reconstruct the Y matrix of the Master Model
+    # Get/Reconstruct the Y matrix of the Master Model
     max_mapped = int(get_mapped(mapping_table, USER_ID_RAW, "max", USER_ID))
-    y_matrix = np.zeros((max_mapped + 1, K_VAL))  # .T at the end of the for loop
+    n_users = max_mapped + 1
     try:
         response = table_model_y.scan()
-        if VERBOSE:
-            print(response)
         items = response["Items"]
-        if VERBOSE:
-            print(items)
-        for item in items:
-            user_temp_id = int(item[USER_ID])
-            vector = np.array(json.loads(item["vector"]))
-            y_matrix[user_temp_id, :] = vector
-        y_matrix = y_matrix.T
-        n_users = (
-            max_mapped + 1
-        )  # In the worst case, if R updated (new user) and Y is not updated yet, a row in Y will be full of zeros
-        assert y_matrix.shape == (K_VAL, n_users)
-    except:
-        return {"statusCode": "400", "body": "Wrong Y matrix shape"}
+    except ClientError as event:
+        print(event.response["Error"]["Message"])
+        return {
+            "statusCode": "400",
+            "body": "Error getting Y matrix elements with .scan()",
+        }
 
-    # Interaction with the AWS lambda of the User-X Part of the model
+    y_matrix = get_y_matrix_reconstructed(
+        items, max_mapped, K_VAL, USER_ID
+    )  # (K_VAL, n_users)
+
+    # Interaction with the AWS Lambda of the User-X Part of the model
     # Define the input parameters that will be passed on to the Lambda X function
     input_x = json.dumps(
         {
@@ -136,16 +149,17 @@ def handler(event, _context):
         sort_keys=True,
         indent=4,
     )
-
+    # Invocation of the Lambda of User-X Part of the model
     response = client_lambda.invoke(
         FunctionName=ARN_LAMBDA_X, InvocationType="RequestResponse", Payload=input_x
     )
     print("Response : ", response)
+
     try:
         assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
     except AssertionError:
         return {"statusCode": "400", "body": "Error returned by the Lambda X"}
-    
+
     x_response = response["Payload"].read()
     x_json_1 = json.loads(x_response)
     print("PayLoad :", x_response)
@@ -153,20 +167,46 @@ def handler(event, _context):
     try:
         x_json_2 = json.loads(x_json_1)
         print("PayLoad JSON:", x_json_2)
-    except:
+    except TypeError:
+        print("Error - Lambda X did not return a JSON embedded in a JSON")
         return {"statusCode": x_json_1["statusCode"], "body": x_json_1["body"]}
 
-
+    # Check of inference_x, set to the right type
     try:
         inference_x = np.array(x_json_2["inference_x"])
-        f_u = np.array(x_json_2["f_u"])
-        print(inference_x.shape, f_u.shape)
-        assert inference_x.shape == (1, n_users) and f_u.shape == (n_users, K_VAL)
+        assert inference_x.shape == (1, n_users)
+    except AttributeError:
+        return {
+            "statusCode": "500",
+            "body": "Returned inference_x element is not a np.darray vector",
+        }
+    except AssertionError:
+        return {"statusCode": "501", "body": "Erroneous vector shape of x_u"}
     except:
-        return {"statusCode": "400", "body": "Wrong inference format"}
+        return {
+            "statusCode": "400",
+            "body": "Error while passing inference_x to np.ndarray format",
+        }
 
-    ### Aggregation of the client's gradient
-    # Add gradient to the gradient table:
+    # Check of federated_gradient, set to the right type
+    try:
+        f_u = np.array(x_json_2["f_u"])
+        assert f_u.shape == (n_users, K_VAL)
+    except AttributeError:
+        return {
+            "statusCode": "500",
+            "body": "Returned inference_x element is not a np.darray vector",
+        }
+    except AssertionError:
+        return {"statusCode": "501", "body": "Erroneous vector shape of x_u"}
+    except:
+        return {
+            "statusCode": "400",
+            "body": "Error while passing f_u to np.ndarray format",
+        }
+
+    # Aggregation of the client's gradient
+    # Save federated partial gradient in the gradient table:
     response = gradient_y_table.get_item(Key={USER_ID: user_id})
     print("Response Y gradient :", response)
     if "Item" not in response:
@@ -174,10 +214,8 @@ def handler(event, _context):
             response = put_item_vector_table(
                 gradient_y_table, USER_ID, user_id, "gradient_from_user", f_u
             )
-            assert str(
-                response["ResponseMetadata"]["HTTPStatusCode"]
-            ) == "200" and f_u.shape == (n_users, K_VAL)
-        except:
+            assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
+        except AssertionError:
             return {
                 "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
                 "body": response["ResponseMetadata"],
@@ -187,16 +225,14 @@ def handler(event, _context):
             response = update_table_vector(
                 gradient_y_table, USER_ID, user_id, "gradient_from_user", f_u
             )
-            assert str(
-                response["ResponseMetadata"]["HTTPStatusCode"]
-            ) == "200" and f_u.shape == (n_users, K_VAL)
-        except:
+            assert str(response["ResponseMetadata"]["HTTPStatusCode"]) == "200"
+        except AssertionError:
             return {
                 "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
                 "body": response["ResponseMetadata"],
             }
 
-    ### Fonction d'aggrégation
+    # Check of the number of partial gradient the table contains
     print(f_u)
     try:
         response = gradient_y_table.scan()
@@ -211,44 +247,45 @@ def handler(event, _context):
             "body": "Error getting f_u elements",
         }
 
+    # If the number of partial gradient contained in the table exceeds a threshold,
+    # then we proceed to the Y matrix update through the Stochastic Gradient descent
     if len(user_id_list) >= THRESHOLD_UPDATE * n_users:
-        ### Stochastic Gradient descent:
+        # Gradient Y Matrix aggregation
         y_mat_transposed = y_matrix.T  # (n_users, K_VAL)
-
-        gradient_y_matrix = np.zeros(y_mat_transposed.shape)
         try:
             response = gradient_y_table.scan()
             items = response["Items"]
-            print(items)
-            for item in items:
-                print(item)
-                temp_matrix = np.array(json.loads(item["gradient_from_user"]))
-                print(temp_matrix.shape)
-                n_users_t, k_val_t = temp_matrix.shape
-                assert k_val_t == K_VAL
-                if n_users_t < n_users:
-                    temp_matrix_right_shape = np.zeros(y_mat_transposed.shape)
-                    temp_matrix_right_shape[:n_users_t, :] = temp_matrix
-                else:
-                    temp_matrix_right_shape = temp_matrix
-                gradient_y_matrix = gradient_y_matrix + temp_matrix
-            assert gradient_y_matrix.shape == (n_users, K_VAL)
         except:
-            return {"statusCode": "400", "body": "Wrong f_u gradient shape"}
+            return {"statusCode": "500", "body": "Wrong f_u gradient shape"}
+        print(items)
 
-        ### Stochastic Gradient descent:
-        gradient_y_matrix = -2 * gradient_y_matrix + 2 * LAMBDA_REG * y_mat_transposed
-        m_exp, v_exp = 0.0, 0.0
-        for i in range(N_ITER_ADAM):
-            m_exp = BETA_1 * m_exp + (1 - BETA_1) * gradient_y_matrix
-            v_exp = BETA_2 * v_exp + (1 - BETA_2) * gradient_y_matrix**2
-            m_hat = m_exp / (1 - BETA_1)
-            v_hat = v_exp / (1 - BETA_2)
-            y_mat_transposed = y_mat_transposed - GAMMA * m_hat / (
-                np.sqrt(v_hat) + EPSILON
-            )  # (n_users, K_VAL)
+        # Gradient Y Matrix aggregation function
+        gradient_y_matrix = get_gradient_y_matrix_reconstructed(
+            items, max_mapped, n_users, K_VAL, USER_ID
+        )
+
+        try:
+            assert gradient_y_matrix.shape == (n_users, K_VAL)
+        except AssertionError:
+            return {
+                "statusCode": "500",
+                "body": "Error while reconstructing gradient Y matrix",
+            }
+
+        # Stochastic Gradient descent
+        y_mat_transposed = compute_stochastic_grad_descent(
+            y_mat_transposed,
+            gradient_y_matrix,
+            LAMBDA_REG,
+            BETA_1,
+            BETA_2,
+            GAMMA,
+            EPSILON,
+            N_ITER_ADAM,
+        )
+
         print(y_mat_transposed)
-        ### Update the weights in the matrix
+        # Update the weights in the matrix
         for i in range(n_users):
             update_table_vector(
                 table_model_y, USER_ID, str(i), "vector", y_mat_transposed[i, :]
@@ -264,7 +301,6 @@ def handler(event, _context):
                 sort_index,
             )
         )
-
     except:
         return {"statusCode": "400", "body": "Error getting the ordered list"}
 
@@ -272,5 +308,6 @@ def handler(event, _context):
         "statusCode": response["ResponseMetadata"]["HTTPStatusCode"],
         "body": json.dumps(sort_user_id_raw),
     }
+
 
 ###### Connexion between 2 LAMBDAS : Need to json.dumps() the dictonnary you're sending, but no need to json.loads to get it in the other lambda

@@ -104,7 +104,7 @@ def handler(event, _context):
             "statusCode": "400",
             "body": "Wrong spelling of 'userid' in the HTTP request",
         }
-    user_id_nb_messages_raw = url_parsed[USER_INPUT_STRING][0].split("-")
+    user_id_nb_messages_raw = user_id_raw_list_string[0].split("-")
     try:
         user_id_raw, nb_messages = user_id_nb_messages_raw[0], int(
             user_id_nb_messages_raw[1]
@@ -151,7 +151,7 @@ def handler(event, _context):
     except ValueError:
         return {
             "statusCode": "400",
-            "body": "Wrong data input type (number of messages are not integers or mapped id is not an integer",
+            "body": "Wrong data input type (number of messages are not integers or mapped id is not an integer)",
         }
     except TypeError:
         return {"statusCode": "400", "body": "Error getting mapped ids with get_mapped"}
@@ -159,12 +159,16 @@ def handler(event, _context):
 
     #### Get Mapped id
     try:
-        user_id_int = get_mapped(mapping_table, USER_ID_RAW, user_id_raw, USER_ID)
-        assert isinstance(user_id_int, int)
-    except AssertionError:
+        user_id_int = int(get_mapped(mapping_table, USER_ID_RAW, user_id_raw, USER_ID))
+    except ValueError:
         return {
             "statusCode": "400",
-            "body": "Error getting mapped id",
+            "body": "Wrong data input type (mapped id is not an integer)",
+        }
+    except TypeError:
+        return {
+            "statusCode": "400",
+            "body": "Error getting mapped id with get_mapped",
         }
     user_id = str(user_id_int)
 
@@ -209,8 +213,12 @@ def handler(event, _context):
         print("Mark :", mark)
 
         # Compute the update of the rating vector
-        rating_vector = get_rating_vector_vector(table_implicit_feedbacks_R, USER_ID, user_id, "R_u")
-        rating_vector = compute_r_u_vector_updated(rating_vector, clean_dict_id_nb_message, mark)
+        rating_vector = get_rating_vector_vector(
+            table_implicit_feedbacks_R, USER_ID, user_id, "R_u"
+        )
+        rating_vector = compute_r_u_vector_updated(
+            rating_vector, clean_dict_id_nb_message, mark
+        )
 
         # Updates
         # Update exponential average
