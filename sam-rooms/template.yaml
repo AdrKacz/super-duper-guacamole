@@ -3,7 +3,12 @@ Transform: AWS::Serverless-2016-10-31
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Timeout: 3
+    Runtime: nodejs14.x
+    Handler: app.handler
+    Environment:
+      Variables:
+        USERS_TABLE_NAME: !Ref UsersTableName
+        GROUPS_TABLE_NAME: !Ref GroupsTableName
 
 Description: >
   sam-rooms
@@ -77,11 +82,55 @@ Resources:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterFunction.Arn}/invocations
 
+  SwitchGroupRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: switchgroup
+      AuthorizationType: NONE
+      OperationName: SwitchGroupRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref SwitchGroupIntegration
+  SwitchGroupIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Switch Group Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SwitchGroupFunction.Arn}/invocations
+
+  SendMessageRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: sendmessage
+      AuthorizationType: NONE
+      OperationName: SendMessageRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref SendMessageIntegration
+  SendMessageIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Send Message Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
+
   # Stage
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - RegisterRoute
+    - SwitchGroupRoute
+    - SendMessageRoute
     Properties:
       ApiId: !Ref SimpleChatWebSocket
   Stage:
@@ -97,11 +146,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: register/
-      Handler: app.handler
-      Runtime: nodejs14.x
-      Environment:
-        Variables:
-          USERS_TABLE_NAME: !Ref UsersTableName
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
@@ -119,6 +163,54 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref RegisterFunction
       Principal: apigateway.amazonaws.com
+
+  SwitchGroupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: switchgroup/
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTableName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  SwitchGroupPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SwitchGroupFunction
+      Principal: apigateway.amazonaws.com
+
+  SendMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sendmessage/
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  SendMessagePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SendMessageFunction
+      Principal: apigateway.amazonaws.com
         
 Outputs:
   UsersTableArn:
@@ -128,8 +220,14 @@ Outputs:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
   RegisterFunctionArn:
-    Description: "Register functin ARN"
+    Description: "Register function ARN"
     Value: !GetAtt RegisterFunction.Arn
+  SwitchGroupFunctionArn:
+    Description: "Switch Group function ARN"
+    Value: !GetAtt SwitchGroupFunction.Arn
+  SendMessageFunctionArn:
+    Description: "Send Message function ARN"
+    Value: !GetAtt SendMessageFunction.Arn
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
