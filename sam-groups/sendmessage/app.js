@@ -18,7 +18,7 @@ exports.handler = async (event) => {
     const userid = body.userid;
     
     // groupid
-    // TODO: throw an error if groupid is undefined
+    // TODO: get group from USERS_TABLE
     const groupid = body.groupid;
     
     // data
