@@ -1,0 +1,136 @@
+Transform: AWS::Serverless-2016-10-31
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Description: >
+  sam-rooms
+
+  Manage users and their conversation in groups
+
+Parameters:
+  UsersTableName:
+    Type: String
+    Default: 'users'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  GroupsTableName:
+    Type: String
+    Default: 'groups'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  StageName:
+    Type: String
+    Default: 'development'
+    Description: '(Required) The name of the stage of the API. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  
+Resources:
+  # Database
+  UsersTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Ref UsersTableName
+  GroupsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Ref GroupsTableName
+
+  # Web Socket
+  SimpleChatWebSocket:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: SimpleChatWebSocket
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  # Routes
+  RegisterRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: register
+      AuthorizationType: NONE
+      OperationName: RegisterRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref RegisterIntegration
+  RegisterIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Register Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterFunction.Arn}/invocations
+
+  # Stage
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+    - RegisterRoute
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: !Ref StageName
+      Description: !Sub '${StageName} Stage'
+      DeploymentId: !Ref Deployment
+      ApiId: !Ref SimpleChatWebSocket
+
+  # Functions
+  RegisterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: register/
+      Handler: app.handler
+      Runtime: nodejs14.x
+      Environment:
+        Variables:
+          USERS_TABLE_NAME: !Ref UsersTableName
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  RegisterPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref RegisterFunction
+      Principal: apigateway.amazonaws.com
+        
+Outputs:
+  UsersTableArn:
+    Description: "Users table ARN"
+    Value: !GetAtt UsersTable.Arn
+  GroupsTableArn:
+    Description: "Groups table ARN"
+    Value: !GetAtt GroupsTable.Arn
+  RegisterFunctionArn:
+    Description: "Register functin ARN"
+    Value: !GetAtt RegisterFunction.Arn
+  WebSocketURI:
+    Description: "The WSS Protocol URI to connect to"
+    Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
+
