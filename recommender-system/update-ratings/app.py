@@ -39,7 +39,7 @@ RAW_QUERY_STRING = "rawQueryString"
 def create_new_user(
     table, key_name, key, field_name, vector_value, field_name_2, value_2
 ):
-    """ "Create new user row within the R table, with all marks sets to 0."""
+    """ "Create new user row within the R table, with all ratings sets to 0."""
     table.put_item(
         Item={
             key_name: key,
@@ -209,15 +209,15 @@ def handler(event, _context):
         print("type exponential_avg", type(exponential_avg))
         exponential_avg = Decimal(exponential_avg)
         print("type nb_messages", type(nb_messages))
-        mark = Decimal(nb_messages / exponential_avg)
-        print("Mark :", mark)
+        rating = Decimal(nb_messages / exponential_avg)
+        print("Mark :", rating)
 
         # Compute the update of the rating vector
         rating_vector = get_rating_vector_vector(
             table_implicit_feedbacks_R, USER_ID, user_id, "R_u"
         )
         rating_vector = compute_r_u_vector_updated(
-            rating_vector, clean_dict_id_nb_message, mark
+            rating_vector, clean_dict_id_nb_message, rating
         )
 
         # Updates

@@ -2,7 +2,7 @@
 to alleviate the complexity of the main code."""
 
 
-def exponential_average(new_value, prev_exponential_avg, refresh_time_constant):
+def exponential_average(new_value: float, prev_exponential_avg: float, refresh_time_constant: float) -> float:
     """Compute the exponential average of an item. Compared to the classic moving average
     you only have to save the last exponential average.
 
@@ -21,7 +21,7 @@ def exponential_average(new_value, prev_exponential_avg, refresh_time_constant):
     return new_exponential_avg
 
 
-def compute_r_u_vector_updated(rating_vector, dict_id_nb_message, mark):
+def compute_r_u_vector_updated(rating_vector, dict_id_nb_message: dict, rating: float):
     """Compute the updated rating vector. Update it given the previous vector,
     the mark computed previously and the ids to which we affect the mark.
     // TO DO : Take into account in the mark the number of messages exchanged
@@ -37,5 +37,5 @@ def compute_r_u_vector_updated(rating_vector, dict_id_nb_message, mark):
         rating_vector : The updated rating vector of the user u.
     """
     for user_id_temp in dict_id_nb_message:
-        rating_vector[user_id_temp] = mark
+        rating_vector[user_id_temp] = rating
     return rating_vector

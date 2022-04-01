@@ -105,7 +105,7 @@ def handler(event, _context):
     print(user_id)
     response = table_model_y.get_item(Key={USER_ID: user_id})
 
-    # Does user exists ? If not --> user creation
+    # Does user exists ? If not --> Create user
     if "Item" not in response:
         try:
             response = put_item_vector_table(
@@ -136,7 +136,7 @@ def handler(event, _context):
         items, max_mapped, K_VAL, USER_ID
     )  # (K_VAL, n_users)
 
-    # Interaction with the AWS Lambda of the User-X Part of the model
+    # Interact with the AWS Lambda of the User-X Part of the model
     # Define the input parameters that will be passed on to the Lambda X function
     input_x = json.dumps(
         {
@@ -149,7 +149,7 @@ def handler(event, _context):
         sort_keys=True,
         indent=4,
     )
-    # Invocation of the Lambda of User-X Part of the model
+    # Invoke of the Lambda of User-X Part of the model
     response = client_lambda.invoke(
         FunctionName=ARN_LAMBDA_X, InvocationType="RequestResponse", Payload=input_x
     )
@@ -205,7 +205,7 @@ def handler(event, _context):
             "body": "Error while passing f_u to np.ndarray format",
         }
 
-    # Aggregation of the client's gradient
+    # Aggregate the client's gradient
     # Save federated partial gradient in the gradient table:
     response = gradient_y_table.get_item(Key={USER_ID: user_id})
     print("Response Y gradient :", response)
@@ -250,7 +250,7 @@ def handler(event, _context):
     # If the number of partial gradient contained in the table exceeds a threshold,
     # then we proceed to the Y matrix update through the Stochastic Gradient descent
     if len(user_id_list) >= THRESHOLD_UPDATE * n_users:
-        # Gradient Y Matrix aggregation
+        # Aggregate Gradient Y Matrix
         y_mat_transposed = y_matrix.T  # (n_users, K_VAL)
         try:
             response = gradient_y_table.scan()

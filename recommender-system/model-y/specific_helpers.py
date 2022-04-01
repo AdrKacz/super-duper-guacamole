@@ -2,7 +2,19 @@ import json
 import numpy as np
 
 
-def get_y_matrix_reconstructed(items, max_mapped, K_VAL, USER_ID):
+def get_y_matrix_reconstructed(items, max_mapped: int, K_VAL: int, USER_ID: str) -> np.ndarray:
+    """Build the Y matrix of the Master Model part, from items got through
+    a scan of the DynamoDB table that saves the Y rows.
+
+    Parameters:
+        items: The items that contains the rows of the matrix
+        max_mapped: The maximum number of rows, == Y.shape[0]
+        K_VAL: Hyperparameter of the model. Set by the developper
+        USER_ID: str, key_word to access the values in the items' elements
+
+    Returns:
+        y_matrix : The Y matrix
+    """
     y_matrix = np.zeros((max_mapped + 1, K_VAL))  # .T at the end of the for loop
     for item in items:
         user_temp_id = int(item[USER_ID])
@@ -12,7 +24,18 @@ def get_y_matrix_reconstructed(items, max_mapped, K_VAL, USER_ID):
     return y_matrix
 
 
-def get_gradient_y_matrix_reconstructed(items, max_mapped, n_users, K_VAL, USER_ID):
+def get_gradient_y_matrix_reconstructed(items, n_users: int, K_VAL: int) -> np.ndarray:
+    """Build the Gradient matrix of Y, the Master Model part, from items got through
+    a scan of the DynamoDB table that saves the partial gradient computed by the users.
+
+    Parameters:
+        items: The items that contains the rows of the gradient matrix of Y
+        n_users: The number of users
+        K_VAL: Hyperparameter of the model. Set by the developper
+
+    Returns:
+        gradient_y_matrix : The Gradient matrix of Y
+    """    
     gradient_y_matrix = np.zeros((n_users, K_VAL))
     for item in items:
         temp_matrix = np.array(json.loads(item["gradient_from_user"]))
@@ -27,16 +50,27 @@ def get_gradient_y_matrix_reconstructed(items, max_mapped, n_users, K_VAL, USER_
     return gradient_y_matrix
 
 
-def compute_stochastic_grad_descent(
-    y_mat_transposed,
-    gradient_y_matrix,
-    lambda_regularization,
-    beta_1,
-    beta_2,
-    gamma,
-    epsilon,
-    num_iteration_adam,
-):
+def compute_stochastic_grad_descent(y_mat_transposed: np.ndarray, gradient_y_matrix: np.ndarray,
+    lambda_regularization: float, beta_1: float, beta_2: float, gamma: float, epsilon: float,
+    num_iteration_adam: int) -> np.ndarray:
+    """Build the Gradient matrix of Y, the Master Model part, from items got through
+    a scan of the DynamoDB table that saves the partial gradient computed by the users.
+
+    Parameters:
+        y_mat_transposed: The items that contains the rows of the gradient matrix of Y
+        gradient_y_matrix: The number of users
+        lambda_regularization: Hyperparameter of the model. Set by the developper
+        beta_1: Hyperparameter to tune for an optimal training. Set to 0.4 in the source paper
+        beta_2: Hyperparameter to tune for an optimal training. Set to 0.99 in the source paper
+        gamma: Hyperparameter to tune for an optimal training. Set to 0.2 in the source paper
+        epsilon: Float to avoid a division by zero
+        num_iteration_adam: Number of iteration of the gradient descent with the
+        Adam optimizer function. Set to 20 in the source paper
+    
+    Returns:
+        y_mat_transposed_temp : The update of the Y matrix, after the gradient descent
+    """
+
     y_mat_transposed_temp = y_mat_transposed.copy()
     gradient_y_matrix_temp = gradient_y_matrix.copy()
 
@@ -52,4 +86,5 @@ def compute_stochastic_grad_descent(
         y_mat_transposed_temp = y_mat_transposed_temp - gamma * m_hat / (
             np.sqrt(v_hat) + epsilon
         )  # (n_users, K_VAL)
+
     return y_mat_transposed_temp

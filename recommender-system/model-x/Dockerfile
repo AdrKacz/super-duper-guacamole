@@ -3,7 +3,7 @@ FROM public.ecr.aws/lambda/python:3.9
 # Copy function code
 COPY model-x/app.py ${LAMBDA_TASK_ROOT}/app.py
 COPY model-x/specific_helpers.py ${LAMBDA_TASK_ROOT}/specific_helpers.py
-COPY ../helpers.py ${LAMBDA_TASK_ROOT}/helpers.py
+COPY helpers.py ${LAMBDA_TASK_ROOT}/helpers.py
 
 # Install the function's dependencies using file requirements.txt
 # from your project folder.
