@@ -66,7 +66,7 @@ exports.handler = async (event) => {
   const postCalls = connectionIds.map(async ({ id, connectionId }) => {
     try {
       console.log(`Try connection ${connectionId}`)
-      await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify({ data: data }) }).promise()
+      await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify({ action: 'sendmessage', data: data }) }).promise()
     } catch (e) {
       if (e.statusCode === 410) {
         console.log(`Found stale connection, deleting ${connectionId}`)

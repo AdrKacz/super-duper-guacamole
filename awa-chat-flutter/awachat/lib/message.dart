@@ -1,3 +1,4 @@
+import 'package:awachat/user.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'dart:math';
 import 'dart:convert';
@@ -8,19 +9,22 @@ String randomString() {
   return base64UrlEncode(values);
 }
 
-types.Message? messageFrom(String? text) {
+types.Message? messageDecode(String? text) {
   if (text == null) {
     return null;
   }
 
-  List<String> data = text.split(RegExp(r"::")) + [""];
+  List<String> data = text.split(RegExp(r"::"));
+  if (data.length != 2) {
+    return null;
+  }
 
   switch (data[0]) {
     case '0':
-      print("Message from SERVER: ${data[1]}");
+      print("Decode message from server: ${data[1]}");
       return null;
     case '':
-      print("Error in messageFrom, text: $text");
+      print("Error in messageDecode, text: $text");
       return null;
     default:
       // TODO: date sould be in the message
@@ -31,4 +35,8 @@ types.Message? messageFrom(String? text) {
         text: data[1],
       );
   }
+}
+
+String messageEncode(types.PartialText partialText) {
+  return "${User().user.id}::${partialText.text}";
 }
