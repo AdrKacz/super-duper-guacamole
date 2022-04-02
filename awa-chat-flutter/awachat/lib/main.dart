@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:awachat/WebSocketConnection.dart';
+import 'package:awachat/websocketconnection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -12,7 +12,6 @@ import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
 import 'package:awachat/pages/agreements/agreements.dart';
 
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 // ===== ===== =====
@@ -235,11 +234,11 @@ class _MainPageState extends State<MainPage> {
                   case "idle":
                     return const Center(
                         child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 223, 21, 169)));
+                            color: Color.fromARGB(255, 21, 220, 223)));
                   case "switch":
                     return const Center(
                         child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 38, 21, 223)));
+                            color: Color(0xff6f61e8)));
                   case "chat":
                     return Chat(
                       l10n: const ChatL10nFr(),
@@ -254,7 +253,7 @@ class _MainPageState extends State<MainPage> {
                   default:
                     return const Center(
                         child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 223, 132, 21)));
+                            color: Color.fromARGB(255, 223, 21, 31)));
                 }
               },
             )));
