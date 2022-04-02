@@ -6,13 +6,19 @@
 
 > Awa Drive on Google Drive (ask for permission)
 
+> [Awa - Post Man](https://awa-ma.postman.co)
+
+> [Awa - Cloudcraft](https://app.cloudcraft.co)
+
 # Cloud Architecture
 
 > We chose a **centralised architecture** to use state-of-the-art libraries in Machine Learning with **Python**. However, we keep the code as close as possible to a **decentralised** version, so we will be able to switch later on. The goal is to verify the model works.
 
-## Current Architecture - Centralised
+## Current Architecture - Centralised - Serverless
 
-![awa-cloud](./diagram-cloud-architecture/awa_cloud.png)
+<p float="left" align="middle">
+    <img src="cloud-architecture/diagrams/sam_groups.png" width="90%">
+</p>
 
 > This architecture is *centralised*
 
