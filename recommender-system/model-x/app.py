@@ -7,24 +7,25 @@ import json
 import boto3
 import numpy as np
 from helpers import put_item_vector_table, update_table_vector, get_item
-from specific_helpers import compute_optimal_x_u
+from specific_helpers import compute_user_model_x
 
-# Get the service resource.
-client_dynamodb = boto3.resource("dynamodb")
-# Access the desired table resource
-table_model_x = client_dynamodb.Table("awa-model-x-users-simul")
-table_implicit_feedbacks_R = client_dynamodb.Table("awa-implicit-feedback-R")
-
-ARN_LAMBDA_USERS_MARKS_R = os.environ.get("ARN_LAMBDA_R")
+# Environment variables
+RATINGS_TABLE_NAME = os.environ.get("RATINGS_TABLE_NAME")
+USER_MODEL_X_TABLE_NAME = os.environ.get("USER_MODEL_X_TABLE_NAME")
 ALPHA = float(os.environ.get("ALPHA"))
 LAMBDA_REG = float(os.environ.get("LAMBDA_REG"))
 VERBOSE = bool(os.environ.get("VERBOSE"))
+
 assert (
-    ARN_LAMBDA_USERS_MARKS_R is not None
-    and ALPHA is not None
+    ALPHA is not None
     and LAMBDA_REG is not None
 )
 
+# Get the service resource
+client_dynamodb = boto3.resource("dynamodb")
+# Access the desired table resource
+table_model_x = client_dynamodb.Table(USER_MODEL_X_TABLE_NAME)
+table_implicit_feedbacks_R = client_dynamodb.Table(RATINGS_TABLE_NAME)
 
 def transform_json_vector_to_matrix(json_vector, data_axis):
     """Transform a vector saved in a list form in a json object
@@ -151,8 +152,9 @@ def handler(event, _context):
         table_implicit_feedbacks_R, "user_id", user_id, "R_u", data_axis=1
     )
     try:
-        assert r_u.shape == (1, n_users)
+        # r_u.shape == (1, N_USERS)
         r_u = r_u[:, :n_users]  # (1, n_users)
+        
     except AttributeError:
         return {
             "statusCode": "501",
@@ -172,7 +174,7 @@ def handler(event, _context):
     # - Gradient computation
     # Reminder:
     # y_matrix.shape == (k_val, n_users), r_u.shape == (1, n_users), x_u.shape == (k_val, 1)
-    optimal_x_u, inference_x, f_u = compute_optimal_x_u(
+    optimal_x_u, inference_x, f_u = compute_user_model_x(
         y_matrix, x_u, r_u, k_val, ALPHA, LAMBDA_REG
     )
 

@@ -13,20 +13,20 @@ import numpy as np
 from helpers import update_table_vector, get_item, update_table
 from specific_helpers import exponential_average, compute_r_u_vector_updated
 
+# Environment variables
+MAPPING_TABLE_NAME = os.environ.get("MAPPING_TABLE_NAME")
+RATINGS_TABLE_NAME = os.environ.get("RATINGS_TABLE_NAME")
+N_USERS_MAX = int(os.environ.get("N_USERS"))
+TIME_REFRESH_CONSTANT = Decimal(os.environ.get("TIME_REFRESH_CONSTANT"))
+
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
 # Access the desired table resource
-table_implicit_feedbacks_R = client_dynamodb.Table("awa-implicit-feedback-R")
-mapping_table = client_dynamodb.Table("awa-mapping-table")
-demapping_table = client_dynamodb.Table("awa-demapping-table")
+table_implicit_feedbacks_R = client_dynamodb.Table(RATINGS_TABLE_NAME)
+mapping_table = client_dynamodb.Table(MAPPING_TABLE_NAME)
+
 # Define the client to interact with AWS Lambda
 client_lambda = boto3.client("lambda")
-
-# Environment variables
-N_USERS_MAX = int(os.environ.get("N_USERS"))
-ARN_LAMBDA_USERS_MARKS_R = os.environ.get("ARN_LAMBDA_R")
-TIME_REFRESH_CONSTANT = Decimal(os.environ.get("TIME_REFRESH_CONSTANT"))
-assert N_USERS_MAX is not None and ARN_LAMBDA_USERS_MARKS_R is not None
 
 # Field names
 USER_ID_RAW = "user_id_raw"

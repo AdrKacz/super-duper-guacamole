@@ -13,20 +13,14 @@ from specific_helpers import (
     compute_stochastic_grad_descent,
 )
 
-# Get the service resource.
-client_dynamodb = boto3.resource("dynamodb")
-# Access the desired table resource
-table_model_y = client_dynamodb.Table("awa-model-y")
-mapping_table = client_dynamodb.Table("awa-mapping-table")
-demapping_table = client_dynamodb.Table("awa-demapping-table")
-gradient_y_table = client_dynamodb.Table("awa-gradient_y_table")
-# Define the client to interact with AWS Lambda
-client_lambda = boto3.client("lambda")
-
 # Environment variables
-K_VAL = int(os.environ.get("K_VAL"))
-# n_users = int(os.environ.get('n_users'))
+MAPPING_TABLE_NAME = os.environ.get("MAPPING_TABLE_NAME")
+DEMAPPING_TABLE_NAME = os.environ.get("DEMAPPING_TABLE_NAME")
+MASTER_MODEL_Y_TABLE_NAME = os.environ.get("MASTER_MODEL_Y_TABLE_NAME")
+GRADIENT_Y_TABLE_NAME = os.environ.get("GRADIENT_Y_TABLE_NAME")
 ARN_LAMBDA_X = os.environ.get("ARN_LAMBDA_X")
+
+K_VAL = int(os.environ.get("K_VAL"))
 N_ITER_ADAM = int(os.environ.get("N_ITER_ADAM"))
 GAMMA = float(os.environ.get("GAMMA"))
 BETA_1 = float(os.environ.get("BETA_1"))
@@ -36,6 +30,17 @@ LAMBDA_REG = float(os.environ.get("LAMBDA_REG"))
 THRESHOLD_UPDATE = float(os.environ.get("THRESHOLD_UPDATE"))
 VERBOSE = bool(os.environ.get("VERBOSE"))
 assert K_VAL is not None and ARN_LAMBDA_X is not None
+
+# Get the service resource.
+client_dynamodb = boto3.resource("dynamodb")
+# Access the desired table resource
+table_model_y = client_dynamodb.Table(MASTER_MODEL_Y_TABLE_NAME)
+mapping_table = client_dynamodb.Table(MAPPING_TABLE_NAME)
+demapping_table = client_dynamodb.Table(DEMAPPING_TABLE_NAME)
+gradient_y_table = client_dynamodb.Table(GRADIENT_Y_TABLE_NAME)
+# Define the client to interact with AWS Lambda
+client_lambda = boto3.client("lambda")
+
 
 # Field names
 USER_ID_RAW = "user_id_raw"

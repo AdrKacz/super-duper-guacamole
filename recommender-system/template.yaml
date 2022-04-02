@@ -1,0 +1,276 @@
+Transform: AWS::Serverless-2016-10-31
+
+Description: >
+  sam-recommender-system
+  Manage the Federated Collaborative Filtering Model
+  Get the recommended list of users
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Runtime: python3.9
+    Handler: app.handler
+    Environment:
+      Variables:
+        MAPPING_TABLE_NAME: !Ref MappingTableName
+        DEMAPPING_TABLE_NAME: !Ref DeMappingTableName
+        RATINGS_TABLE_NAME: !Ref RatingsTableName
+        USER_MODEL_X_TABLE_NAME: !Ref UserModelXTableName
+        MASTER_MODEL_Y_TABLE_NAME: !Ref MasterModelYTableName
+        GRADIENT_Y_TABLE_NAME: !Ref GradientYTableName
+        N_USERS_MAX: 100
+        K_VAL: 25
+        N_USERS: 50
+        ALPHA: 10
+        LAMBDA_REG: 1.0
+        VERBOSE: 1
+        TIME_REFRESH_CONSTANT: 0.25
+        BETA_1: 0.4
+        BETA_2: 0.99
+        EPSILON: 0.00000001
+        GAMMA: 0.2
+        N_ITER_ADAM: 20
+        THRESHOLD_UPDATE: 0.5
+Parameters:
+  StageName:
+    Type: String
+    Default: Prod
+
+  MappingTableName:
+    Type: String
+    Default: 'mapping'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+
+  DeMappingTableName:
+    Type: String
+    Default: 'demapping'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+
+  RatingsTableName:
+    Type: String
+    Default: 'ratings'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'    
+
+  UserModelXTableName:
+    Type: String
+    Default: 'user_model'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+
+  MasterModelYTableName:
+    Type: String
+    Default: 'master_model'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.' 
+
+  GradientYTableName:
+    Type: String
+    Default: 'gradient_y'
+    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.' 
+
+Resources:
+  # Tables
+  MappingTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: user_id_raw
+        Type: String
+      TableName: !Ref MappingTableName
+  
+  DeMappingTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: user_id
+        Type: String
+      TableName: !Ref DeMappingTableName
+
+  RatingsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: user_id
+        Type: String
+      TableName: !Ref RatingsTableName
+ 
+  UserModelXTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey: 
+        Name: user_id
+        Type: String
+      TableName: !Ref UserModelXTableName
+ 
+  MasterModelYTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: user_id
+        Type: String
+      TableName: !Ref MasterModelYTableName
+ 
+  GradientYTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: user_id
+        Type: String
+      TableName: !Ref GradientYTableName            
+  
+  # Functions
+  MappingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: mapping/
+      Layers:
+        - !Ref HelpersLayer
+        - !Ref DependenciesLayer
+      Policies:
+      - AWSLambdaExecute      
+      - DynamoDBCrudPolicy:
+          TableName: !Ref MappingTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref DeMappingTableName   
+      Events:
+        ExplicitApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: /mapping
+
+  UpdateRatingsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: update-ratings/
+      Layers:
+        - !Ref HelpersLayer
+        - !Ref DependenciesLayer        
+      Policies:
+      - AWSLambdaExecute
+      - DynamoDBReadPolicy:
+          TableName: !Ref MappingTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref DeMappingTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref RatingsTableName
+      Events:
+        UpdateRatings:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: /update
+
+  MasterModelYFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: model-y/
+      Layers:
+        - !Ref HelpersLayer
+        - !Ref DependenciesLayer      
+      Environment:
+        Variables:
+          ARN_LAMBDA_X: !GetAtt UserModelXFunction.Arn
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref MasterModelYTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GradientYTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref MappingTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref DeMappingTableName
+      - LambdaInvokePolicy:
+          FunctionName: !Ref UserModelXFunction
+      Events:
+        ExplicitApi:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Method: GET
+            Path: /get
+
+  UserModelXFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: model-x/
+      Layers:
+        - !Ref HelpersLayer
+        - !Ref DependenciesLayer      
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UserModelXTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref RatingsTableName
+  
+  UserModelXInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UserModelXFunction
+      Principal: lambda.amazonaws.com
+      SourceArn: !GetAtt MasterModelYFunction.Arn
+
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref StageName
+
+  AccessLogs:
+    Type: AWS::Logs::LogGroup
+
+  HelpersLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: layer-helpers/
+      CompatibleRuntimes:
+        - python3.9
+      Description: Helpers functions common to all the Lambdas functions.
+
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: layer-dependencies
+      CompatibleRuntimes:
+        - python3.9
+      Description: Dependencies layer
+    Metadata:
+      BuildMethod: python3.9
+
+Outputs:
+  UsersTableArn:
+    Description: "Lambda X ARN"
+    Value: !GetAtt UserModelXFunction.Arn
+  HttpApiUrl:
+    Description: URL of your API endpoint
+    Value:
+      Fn::Sub: 'https://${HttpApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/${StageName}/'
+  HttpApiId:
+    Description: Api id of HttpApi
+    Value:
+      Ref: HttpApi
