@@ -6,7 +6,9 @@
 
 > Awa Drive on Google Drive (ask for permission)
 
-> [Awa Post Man](https://awa-ma.postman.co)
+> [Awa - Post Man](https://awa-ma.postman.co)
+
+> [Awa - Cloudcraft](https://app.cloudcraft.co)
 
 # Cloud Architecture
 

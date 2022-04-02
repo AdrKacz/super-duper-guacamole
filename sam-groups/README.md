@@ -1,5 +1,11 @@
 # SAM Groups
 
+> [Cloudcraft - Sam Groups](https://app.cloudcraft.co/view/4f51fc68-73b1-4104-8647-15a76a1ececb?key=2347defd-3641-4443-b165-ae211e00c279)
+
+<p float="left" align="middle">
+    <img src="../cloud-architecture/diagrams/sam_groups.png" width="90%">
+</p>
+
 ---
 
 # AWS SAM
