@@ -193,7 +193,7 @@ Resources:
     Properties:
       CodeUri: sendmessage/
       Policies:
-      - DynamoDBReadPolicy:
+      - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName

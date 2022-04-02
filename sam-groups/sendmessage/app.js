@@ -24,9 +24,9 @@ exports.handler = async (event) => {
     // data
     // TODO: throw an error if data is undefined
     const data = body.data;
-    
+
     // connectionId
-    const connectionId = event.requestContext.connectionId;
+    const userConnectionId = event.requestContext.connectionId;
     
     // get users
     let users;
@@ -60,7 +60,7 @@ exports.handler = async (event) => {
               AttributesToGet: ['id', 'connectionId'],
             },
         }}).promise();
-        connectionIds = groupusers.Responses[USERS_TABLE_NAME];
+        connectionIds = groupusers.Responses[USERS_TABLE_NAME].filter(({connectionId}) => connectionId != undefined);
     } catch (e) {
         throw e;
     }
@@ -70,22 +70,40 @@ exports.handler = async (event) => {
     const apigwManagementApi = new AWS.ApiGatewayManagementApi({
         endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
      });
-    
-    try {
-        console.log(`Try connection ${connectionId}`);
-        await apigwManagementApi.postToConnection({ConnectionId: connectionId, Data: JSON.stringify({data: data})}).promise();
-    } catch (e) {
-        if (e.statusCode === 410) {
-            console.log(`Found stale connection, deleting ${connectionId}`);
-        } else {
-            throw e;
+
+
+    const postCalls = connectionIds.map(async ({id, connectionId}) => {
+        try {
+            console.log(`Try connection ${connectionId}`);
+            await apigwManagementApi.postToConnection({ConnectionId: connectionId, Data: JSON.stringify({data: data})}).promise();
+        } catch (e) {
+            if (e.statusCode === 410) {
+                console.log(`Found stale connection, deleting ${connectionId}`);
+                await ddb.update({
+                    TableName: USERS_TABLE_NAME,
+                    Key: {id: id},
+                    AttributeUpdates: {
+                        connectionId: {
+                            Action: "DELETE",
+                        }
+                    }
+                }).promise();
+            } else {
+                throw e;
+            }
         }
+    });
+
+    try {
+        await Promise.all(postCalls);
+    } catch (e) {
+        return { statusCode: 500, body: e.stack };
     }
     
     // debug
     const response = {
         statusCode: 200,
-        body: JSON.stringify('Send message!'),
+        body: JSON.stringify(`Send message!\n${JSON.stringify({data: data})}`),
     };
     
     console.log(`Returns:\n${JSON.stringify(response)}`);
