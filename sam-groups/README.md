@@ -6,6 +6,14 @@
     <img src="../cloud-architecture/diagrams/sam_groups.png" width="90%">
 </p>
 
+*Stack used:* **sam-group**
+Parameter | Value
+-- | --
+*UsersTableName* | **users_development**
+*GroupsTableName* | **groups_development**
+*StageName* | **development**
+
+
 ---
 
 # AWS SAM

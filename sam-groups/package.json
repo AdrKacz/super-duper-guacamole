@@ -1,0 +1,14 @@
+{
+  "name": "sam-groups",
+  "version": "1.0.0",
+  "description": "Groups chat managed with AWS SAM",
+  "author": "AdrKacz",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^7.32.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.2.0"
+  }
+}
