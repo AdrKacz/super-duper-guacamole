@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:awachat/WebSocketConnection.dart';
+import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -110,6 +111,21 @@ class _MyAppState extends State<MyApp> {
 // ===== ===== =====
 
 // ===== ===== =====
+
+// Debug
+const Map<String, String> groupNames = {
+  "0": "Ichi",
+  "1": "Ni",
+  "2": "San",
+  "3": "Yon",
+  "4": "Go",
+  "5": "Roku",
+  "6": "Nana",
+  "7": "Hachi",
+  "8": "Kyu",
+  "9": "Dju",
+};
+
 // Main Page
 class MainPage extends StatefulWidget {
   const MainPage({Key? key, required this.unsignAgreements}) : super(key: key);
@@ -190,6 +206,7 @@ class _MainPageState extends State<MainPage> {
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),
             backgroundColor: const Color(0xfff5f5f7),
+            title: Text(groupNames[User().groupid] ?? ""),
             actions: <Widget>[
               PopupMenuButton<int>(onSelected: (int result) {
                 if (result == 0) {
@@ -225,6 +242,7 @@ class _MainPageState extends State<MainPage> {
                             color: Color.fromARGB(255, 38, 21, 223)));
                   case "chat":
                     return Chat(
+                      l10n: const ChatL10nFr(),
                       messages: _messages,
                       onSendPressed: _webSocketConnection.sendmessage,
                       user: User().user,

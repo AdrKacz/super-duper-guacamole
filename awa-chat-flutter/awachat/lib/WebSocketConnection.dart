@@ -28,6 +28,7 @@ class WebSocketConnection {
           .unsubscribeFromTopic('group-${User().groupid}');
       Memory().lazyBoxMessages.clear();
       Memory().put('user', 'lastmessage', '0');
+      User().groupid = "";
     }
     _channel.sink
         .add(jsonEncode({"action": "switchgroup", "userid": User().user.id}));
