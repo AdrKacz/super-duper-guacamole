@@ -158,13 +158,6 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _webSocketConnection.register();
-    if (User().groupid == "") {
-      _webSocketConnection.switchgroup();
-      status = "switching";
-    } else {
-      loadMessagesFromMemory();
-      status = "chat";
-    }
 
     _webSocketConnection.stream.listen((message) {
       print("Receives: $message");
@@ -172,6 +165,14 @@ class _MainPageState extends State<MainPage> {
       switch (data['action']) {
         case "register":
           print('\tRegister: ${data['status']}');
+          // Get group (register on load)
+          if (User().groupid == "") {
+            _webSocketConnection.switchgroup();
+            status = "switching";
+          } else {
+            loadMessagesFromMemory();
+            status = "chat";
+          }
           break;
         case "switchgroup":
           print('\tGroup: ${data['groupid']}');
@@ -235,7 +236,7 @@ class _MainPageState extends State<MainPage> {
                   case "idle":
                     return const Center(
                         child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 21, 220, 223)));
+                            color: Color(0xff6f61e8)));
                   case "switch":
                     return const Center(
                         child: CircularProgressIndicator(
