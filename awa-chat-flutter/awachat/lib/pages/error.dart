@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// NOTE: unused
 class ErrorPage extends StatelessWidget {
   const ErrorPage({Key? key, required this.onPressed}) : super(key: key);
 

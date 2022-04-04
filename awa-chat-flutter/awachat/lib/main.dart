@@ -1,14 +1,18 @@
+import 'dart:convert';
+
+import 'package:awachat/websocketconnection.dart';
+import 'package:awachat/flyer/l10n.dart';
+import 'package:awachat/message.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:awachat/room.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
-import 'package:awachat/pages/chat.dart';
-import 'package:awachat/pages/error.dart';
 import 'package:awachat/pages/agreements/agreements.dart';
+
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 // ===== ===== =====
 // Firebase Push Notification
@@ -106,6 +110,21 @@ class _MyAppState extends State<MyApp> {
 // ===== ===== =====
 
 // ===== ===== =====
+
+// Debug
+const Map<String, String> groupNames = {
+  "0": "Ichi",
+  "1": "Ni",
+  "2": "San",
+  "3": "Yon",
+  "4": "Go",
+  "5": "Roku",
+  "6": "Nana",
+  "7": "Hachi",
+  "8": "Kyu",
+  "9": "Dju",
+};
+
 // Main Page
 class MainPage extends StatefulWidget {
   const MainPage({Key? key, required this.unsignAgreements}) : super(key: key);
@@ -117,68 +136,133 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  // Channel
+  final WebSocketConnection _webSocketConnection = WebSocketConnection();
+
   // Messages
-  late Future<Room> room;
+  final List<types.Message> _messages = [];
+
+  // Status
+  String status = "idle";
+
+  Future<void> loadMessagesFromMemory() async {
+    final List<types.Message> m = await Memory().loadMessages();
+    setState(() {
+      _messages.addAll(m);
+    });
+  }
 
   // Init
   @override
   void initState() {
     super.initState();
-
-    String? roomId = Memory().get('room', 'id');
-    if (roomId != null) {
-      room = Room().load();
+    _webSocketConnection.register();
+    if (User().groupid == "") {
+      _webSocketConnection.switchgroup();
+      status = "switching";
     } else {
-      room = Room().fetch();
+      loadMessagesFromMemory();
+      status = "chat";
     }
+
+    _webSocketConnection.stream.listen((message) {
+      print("Receives: $message");
+      final data = jsonDecode(message);
+      switch (data['action']) {
+        case "register":
+          print('\tRegister: ${data['status']}');
+          break;
+        case "switchgroup":
+          print('\tGroup: ${data['groupid']}');
+          User().groupid = data['groupid'];
+          setState(() {
+            status = "chat";
+          });
+          break;
+        case "sendmessage":
+          print('\tData: ${data['data']}');
+          types.Message? message = messageDecode(data['data']);
+          if (message != null) {
+            setState(() {
+              _messages.insert(0, message);
+            });
+            Memory().addMessage(data['data']);
+          }
+          break;
+        default:
+          print("\tAction ${data['action']} not recognised.");
+          setState(() {
+            status = "";
+          });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    print("Status: $status");
     return Scaffold(
-      appBar: AppBar(
-          foregroundColor: const Color(0xff6f61e8),
-          backgroundColor: const Color(0xfff5f5f7),
-          actions: <Widget>[
-            PopupMenuButton<int>(onSelected: (int result) {
-              if (result == 0) {
-                setState(() {
-                  room = Room().fetch();
-                });
-              } else if (result == 1) {
-                widget.unsignAgreements!();
-              }
-            }, itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<int>(
-                    value: 0, child: Text("Je veux changer de groupe")),
-                const PopupMenuItem<int>(
-                    value: 1, child: Text("Je veux revoir la présentation")),
-              ];
-            })
-          ]),
-      body: SafeArea(
-          bottom: false,
-          child: FutureBuilder<Room>(
-              future: room,
-              builder: (BuildContext context, AsyncSnapshot<Room> snapshot) {
-                print("RECEIVE SNAPSHOT: $snapshot");
-                if (snapshot.connectionState == ConnectionState.done) {
-                  if (snapshot.hasData) {
-                    return ChatPage(
-                      stream: Room().channel!.stream,
-                    );
-                  } else if (snapshot.hasError) {
-                    return ErrorPage(onPressed: () {
-                      setState(() {
-                        room = Room().fetch();
-                      });
-                    });
-                  }
+        appBar: AppBar(
+            foregroundColor: const Color(0xff6f61e8),
+            backgroundColor: const Color(0xfff5f5f7),
+            title: Text(groupNames[User().groupid] ?? ""),
+            actions: <Widget>[
+              PopupMenuButton<int>(onSelected: (int result) {
+                if (result == 0) {
+                  _webSocketConnection.switchgroup();
+                  setState(() {
+                    _messages.clear();
+                    status = "switch";
+                  });
+                } else if (result == 1) {
+                  widget.unsignAgreements!();
                 }
-                return const Center(
-                    child: CircularProgressIndicator(color: Color(0xff6f61e8)));
-              })),
-    );
+              }, itemBuilder: (BuildContext context) {
+                return [
+                  const PopupMenuItem<int>(
+                      value: 0, child: Text("Je veux changer de groupe")),
+                  const PopupMenuItem<int>(
+                      value: 1, child: Text("Je veux revoir la présentation")),
+                ];
+              })
+            ]),
+        body: SafeArea(
+            bottom: false,
+            child: Builder(
+              builder: (BuildContext context) {
+                switch (status) {
+                  case "idle":
+                    return const Center(
+                        child: CircularProgressIndicator(
+                            color: Color.fromARGB(255, 21, 220, 223)));
+                  case "switch":
+                    return const Center(
+                        child: CircularProgressIndicator(
+                            color: Color(0xff6f61e8)));
+                  case "chat":
+                    return Chat(
+                      l10n: const ChatL10nFr(),
+                      messages: _messages,
+                      onSendPressed: _webSocketConnection.sendmessage,
+                      user: User().user,
+                      theme: const DefaultChatTheme(
+                          inputBackgroundColor: Color(0xfff5f5f7),
+                          inputTextColor: Color(0xff1f1c38),
+                          inputTextCursorColor: Color(0xff9e9cab)),
+                    );
+                  default:
+                    return const Center(
+                        child: CircularProgressIndicator(
+                            color: Color.fromARGB(255, 223, 21, 31)));
+                }
+              },
+            )));
+  }
+
+  @override
+  void dispose() {
+    print("Dispose");
+    _webSocketConnection.close();
+    super.dispose();
   }
 }

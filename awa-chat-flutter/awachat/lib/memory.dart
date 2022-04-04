@@ -4,7 +4,6 @@ import 'package:awachat/message.dart';
 
 class Memory {
   late final Box<String> boxUser;
-  late final Box<String> boxRoom;
   late final LazyBox<String> lazyBoxMessages;
 
   static final Memory _instance = Memory._internal();
@@ -17,7 +16,6 @@ class Memory {
 
   Future<void> init() async {
     await Hive.initFlutter();
-    boxRoom = await Hive.openBox<String>('room');
     lazyBoxMessages = await Hive.openLazyBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
   }
@@ -26,8 +24,6 @@ class Memory {
     switch (box) {
       case 'user':
         return boxUser.get(field);
-      case 'room':
-        return boxRoom.get(field);
       default:
         return null;
     }
@@ -38,9 +34,6 @@ class Memory {
       case 'user':
         boxUser.put(field, value);
         break;
-      case 'room':
-        boxRoom.put(field, value);
-        break;
     }
   }
 
@@ -50,15 +43,15 @@ class Memory {
     }
 
     lazyBoxMessages.add(text);
-    int end = int.parse(boxRoom.get("end") ?? "0");
-    boxRoom.put("end", (end + 1).toString());
+    final int lastmessage = int.parse(boxUser.get("lastmessage") ?? "0");
+    boxUser.put("lastmessage", (lastmessage + 1).toString());
   }
 
   Future<List<types.Message>> loadMessages() async {
     List<types.Message> messages = [];
 
-    for (int i = 0; i < int.parse(boxRoom.get('end') ?? '0'); i++) {
-      types.Message? message = messageFrom(await lazyBoxMessages.getAt(i));
+    for (int i = 0; i < int.parse(boxUser.get('lastmessage') ?? '0'); i++) {
+      types.Message? message = messageDecode(await lazyBoxMessages.getAt(i));
       if (message != null) {
         messages.insert(0, message);
       }
