@@ -18,17 +18,21 @@ class SlideContainer extends StatelessWidget {
 }
 
 class Slide extends StatelessWidget {
-  const Slide({Key? key, required this.text}) : super(key: key);
+  const Slide({Key? key, required this.text, required this.assetPath})
+      : super(key: key);
 
   final String text;
+  final String assetPath;
   @override
   Widget build(BuildContext context) {
     return SlideContainer(
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-      ),
-    );
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(assetPath),
+        Text(text, textAlign: TextAlign.center),
+      ],
+    ));
   }
 }
 
@@ -36,11 +40,13 @@ class SlideWithButton extends StatelessWidget {
   const SlideWithButton(
       {Key? key,
       required this.text,
+      required this.assetPath,
       required this.buttonText,
       required this.onPressed})
       : super(key: key);
 
   final String text;
+  final String assetPath;
   final String buttonText;
   final VoidCallback onPressed;
 
@@ -50,6 +56,7 @@ class SlideWithButton extends StatelessWidget {
         child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Image.asset(assetPath),
         Text(text, textAlign: TextAlign.center),
         ElevatedButton(
             onPressed: onPressed,

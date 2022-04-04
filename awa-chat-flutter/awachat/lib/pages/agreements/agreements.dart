@@ -40,18 +40,23 @@ class FirstPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final slides = <Widget>[
-      const Slide(text: """
+      const Slide(
+        text: """
 Je suis Awa.
 Je vais te présenter l'application.
-"""),
+""",
+        assetPath: 'assets/images/undraw_handcrafts_woman.png',
+      ),
       const Slide(
           text:
-              "Chaque personne est placée dans une conversation avec quatres autres personnes."),
+              "Chaque personne est placée dans une conversation avec quatres autres personnes.",
+          assetPath: 'assets/images/undraw_handcrafts_say_hello.png'),
       SlideWithButton(
         text: """
 Tu ne t'occupes de rien !
 C'est moi qui te place en fonction de tes préférences.
 """,
+        assetPath: 'assets/images/undraw_handcrafts_planet.png',
         buttonText: "J'ai tout compris 👍",
         onPressed: onPressed,
       )
