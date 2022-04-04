@@ -16,16 +16,14 @@ ALPHA = float(os.environ.get("ALPHA"))
 LAMBDA_REG = float(os.environ.get("LAMBDA_REG"))
 VERBOSE = bool(os.environ.get("VERBOSE"))
 
-assert (
-    ALPHA is not None
-    and LAMBDA_REG is not None
-)
+assert ALPHA is not None and LAMBDA_REG is not None
 
 # Get the service resource
 client_dynamodb = boto3.resource("dynamodb")
 # Access the desired table resource
 table_model_x = client_dynamodb.Table(USER_MODEL_X_TABLE_NAME)
 table_implicit_feedbacks_R = client_dynamodb.Table(RATINGS_TABLE_NAME)
+
 
 def transform_json_vector_to_matrix(json_vector, data_axis):
     """Transform a vector saved in a list form in a json object
@@ -154,7 +152,7 @@ def handler(event, _context):
     try:
         # r_u.shape == (1, N_USERS)
         r_u = r_u[:, :n_users]  # (1, n_users)
-        
+
     except AttributeError:
         return {
             "statusCode": "501",
@@ -166,7 +164,7 @@ def handler(event, _context):
     # r_u.shape == (1, n_users). However, due to latence, potentially :
     # r_u.shape[0] > n_users from lambda y (new users subscription)
 
-    # TODO : compare mapping and R_u users
+    # TODO: compare mapping and R_u users
 
     # User Model :
     # - Optimal x_u computation
