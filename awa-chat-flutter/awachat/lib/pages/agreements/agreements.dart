@@ -2,93 +2,101 @@ import 'package:flutter/material.dart';
 
 import 'package:awachat/pages/agreements/slide.dart';
 
-class AgreementPage extends StatefulWidget {
+class AgreementPage extends StatelessWidget {
   const AgreementPage({Key? key, required this.signAgreements})
       : super(key: key);
 
-  final VoidCallback? signAgreements;
+  final VoidCallback signAgreements;
 
   @override
-  _AgreementPageState createState() => _AgreementPageState();
+  Widget build(BuildContext context) {
+    return FirstPage(onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => SecondPage(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ThirdPage(onPressed: () {
+                                Navigator.popUntil(
+                                    context, ModalRoute.withName('/'));
+                                signAgreements();
+                              })),
+                    );
+                  },
+                )),
+      );
+    });
+  }
 }
 
-class _AgreementPageState extends State<AgreementPage> {
-  // Agreements
-  bool hasSignedRGPD = false;
-  bool hasSignedEULA = false;
+class FirstPage extends StatelessWidget {
+  const FirstPage({Key? key, required this.onPressed}) : super(key: key);
 
-  void checkAgreements(BuildContext context) {
-    if (hasSignedRGPD && hasSignedEULA) {
-      print("[MyAppPresentation] You're all good!");
-      widget.signAgreements!();
-    } else if (!hasSignedRGPD) {
-      print("[MyAppPresentation] You didn't sign RGPD");
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text(
-                "Je ne peux pas continuer sans toi 😖",
-                textAlign: TextAlign.center,
-              ),
-              content: const Text(
-                  "Clique sur \"J'ai compris 👍\" et \"Je m'engage 😎\"",
-                  textAlign: TextAlign.center),
-              actions: [
-                TextButton(
-                    style: ElevatedButton.styleFrom(
-                      onPrimary: const Color(0xff6f61e8),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text("J'ai compris"))
-              ],
-            );
-          });
-    }
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final slides = <Widget>[
+      const Slide(text: """
+Je suis Awa.
+Je vais te présenter l'application.
+"""),
+      const Slide(
+          text:
+              "Chaque personne est placée dans une conversation avec quatres autres personnes."),
+      SlideWithButton(
+        text: """
+Tu ne t'occupes de rien !
+C'est moi qui te place en fonction de tes préférences.
+""",
+        buttonText: "J'ai tout compris 👍",
+        onPressed: onPressed,
+      )
+    ];
+    return Scaffold(
+        body: SafeArea(
+            child: DefaultTabController(
+                length: slides.length,
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Expanded(child: TabBarView(children: slides)),
+                      const TabPageSelector(
+                          color: Color(0xfff5f5f7),
+                          selectedColor: Color(0xff6f61e8)),
+                    ]))));
   }
+}
+
+class SecondPage extends StatelessWidget {
+  const SecondPage({Key? key, required this.onPressed}) : super(key: key);
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         body: SafeArea(
-            child: DefaultTabController(
-      length: 5,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Expanded(
-            child: TabBarView(children: <Widget>[
-              const Slide(text: """
-Je suis Awa.
-Je vais te présenter l'application.
-"""),
-              const Slide(
-                  text:
-                      "Chaque personne est placée dans une conversation avec quatres autres personnes."),
-              const Slide(text: """
-Tu ne t'occupes de rien !
-C'est moi qui te place en fonction de tes préférences.
-"""),
-              RGPDSlide(sign: () {
-                setState(() {
-                  hasSignedRGPD = true;
-                });
-                checkAgreements(context);
-              }),
-              EULASlide(sign: () {
-                setState(() {
-                  hasSignedEULA = true;
-                });
-                checkAgreements(context);
-              }),
-            ]),
-          ),
-          const TabPageSelector(
-              color: Color(0xfff5f5f7), selectedColor: Color(0xff6f61e8)),
-        ],
-      ),
+            child: RGPDSlide(
+      onPressed: onPressed,
+    )));
+  }
+}
+
+class ThirdPage extends StatelessWidget {
+  const ThirdPage({Key? key, required this.onPressed}) : super(key: key);
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        body: SafeArea(
+            child: EULASlide(
+      onPressed: onPressed,
     )));
   }
 }

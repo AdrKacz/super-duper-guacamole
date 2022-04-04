@@ -98,6 +98,7 @@ class _MyAppState extends State<MyApp> {
     } else {
       return MaterialApp(
         home: AgreementPage(signAgreements: () {
+          print("Sign Agreements");
           setState(() {
             hasSignedAgreements = true;
           });
@@ -113,16 +114,16 @@ class _MyAppState extends State<MyApp> {
 
 // Debug
 const Map<String, String> groupNames = {
-  "0": "Ichi",
-  "1": "Ni",
-  "2": "San",
-  "3": "Yon",
-  "4": "Go",
-  "5": "Roku",
-  "6": "Nana",
-  "7": "Hachi",
-  "8": "Kyu",
-  "9": "Dju",
+  "0": "Zero",
+  "1": "Ichi",
+  "2": "Ni",
+  "3": "San",
+  "4": "Yon",
+  "5": "Go",
+  "6": "Roku",
+  "7": "Nana",
+  "8": "Hachi",
+  "9": "Kyu",
 };
 
 // Main Page

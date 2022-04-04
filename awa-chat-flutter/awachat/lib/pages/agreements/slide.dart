@@ -32,10 +32,40 @@ class Slide extends StatelessWidget {
   }
 }
 
-class RGPDSlide extends StatelessWidget {
-  const RGPDSlide({Key? key, required this.sign}) : super(key: key);
+class SlideWithButton extends StatelessWidget {
+  const SlideWithButton(
+      {Key? key,
+      required this.text,
+      required this.buttonText,
+      required this.onPressed})
+      : super(key: key);
 
-  final VoidCallback? sign;
+  final String text;
+  final String buttonText;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(text, textAlign: TextAlign.center),
+        ElevatedButton(
+            onPressed: onPressed,
+            child: Text(buttonText),
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ))
+      ],
+    ));
+  }
+}
+
+class RGPDSlide extends StatelessWidget {
+  const RGPDSlide({Key? key, required this.onPressed}) : super(key: key);
+
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +83,7 @@ Je m'engage à ne pas conserver tes données personnelles.
             style: ElevatedButton.styleFrom(
               primary: const Color(0xff6f61e8),
             ),
-            onPressed: sign,
+            onPressed: onPressed,
             child: const Text("J'ai compris 👍")),
         const Divider(
           height: 32,
@@ -81,9 +111,9 @@ Viens voir comment je fonctionne et pose moi des questions 🌍
 }
 
 class EULASlide extends StatelessWidget {
-  const EULASlide({Key? key, required this.sign}) : super(key: key);
+  const EULASlide({Key? key, required this.onPressed}) : super(key: key);
 
-  final VoidCallback? sign;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +137,7 @@ Tu t'engages à bien respecter cela ?
             style: ElevatedButton.styleFrom(
               primary: const Color(0xff6f61e8),
             ),
-            onPressed: sign,
+            onPressed: onPressed,
             child: const Text("Je m'engage 😎"))
       ],
     )));
