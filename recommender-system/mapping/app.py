@@ -44,8 +44,8 @@ def get_mapped(table, key_name, key, field_name):
 
 def handler(event, _context):
     """Create mapped ids for an input user id: Both
-    user_id_raw --> user_id, and
-    user_id --> user_id_raw
+    Mapping table: user_id_raw to user_id
+    DeMappingTable: user_id to user_id_raw
 
     Parameters to put in the URL:
         api_gateway_endpoint?USER_INPUT_STRING=abcd
