@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 // NOTE: unused
 class ErrorPage extends StatelessWidget {
-  const ErrorPage({Key? key, required this.onPressed}) : super(key: key);
-
-  final VoidCallback onPressed;
+  const ErrorPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,13 +10,8 @@ class ErrorPage extends StatelessWidget {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-          const Text("Je n'ai pas pu te trouver une conversation"),
-          ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                primary: const Color(0xff6f61e8),
-              ),
-              onPressed: onPressed,
-              child: const Text("Réessayer"))
+          Image.asset('assets/images/undraw_handcrafts_exclamation_mark.png'),
+          const Text("Oups ! Il y a quelque chose d'anormal."),
         ]));
   }
 }

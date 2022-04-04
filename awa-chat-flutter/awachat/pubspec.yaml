@@ -78,6 +78,7 @@ flutter:
     - assets/images/undraw_handcrafts_planet.png
     - assets/images/undraw_handcrafts_say_hello.png
     - assets/images/undraw_handcrafts_woman.png
+    - assets/images/undraw_handcrafts_exclamation_mark.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

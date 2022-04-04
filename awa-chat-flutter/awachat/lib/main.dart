@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:awachat/pages/error.dart';
 import 'package:awachat/websocketconnection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
@@ -253,9 +254,7 @@ class _MainPageState extends State<MainPage> {
                           inputTextCursorColor: Color(0xff9e9cab)),
                     );
                   default:
-                    return const Center(
-                        child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 223, 21, 31)));
+                    return const ErrorPage();
                 }
               },
             )));
