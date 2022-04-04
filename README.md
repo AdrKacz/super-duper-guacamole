@@ -31,59 +31,54 @@ In a **centralised architecture**, the code that infers the correct set of users
 
 In a **distributed architecture**, the code that infers the correct set of users belongs to the **user app**. Thus, it uses the client technologies.
 
-# How an user find a room?
+# How an user find a group?
 
 ```mermaid
 sequenceDiagram
     participant r as recommender system
     actor u as user
-    participant m as matchmaker
-    participant f as fleet manager
+    participant w as web socket
+
     u ->> r: who are the best users for me?
     r ->> u: Set of users
-    u ->> m: I want a room with these users
-    m ->> m: find best existing room
+    u ->> w: I want a group with these users
+    w ->> w: find best existing group
     alt room is not good enough
-      m -->> f : create new room
-      f -->> m : room endpoint
-      m -->> m : save room endpoint
+      w -->> w : create new group
     end
-    m ->> u: room endpoint
-    m ->> u : endpoint
+    w ->> u: groupid
 ```
 
-# Rooms lifecycle
+# Groups lifecycle
 
-## What happens when you change room?
+## What happens when you change group?
 
 ```mermaid
 sequenceDiagram
     actor oth as other users
     participant d as disk
     actor u as user
-    participant m as matchmaker
-    participant s as websocket server
+    participant w as web socket
     participant f as firebase
-    alt room
-        u ->> f: UNSUBSCRIBE from room
+    alt had a group
+        u ->> f: UNSUBSCRIBE from group notifications
     end
-    u ->> m: GET room
-    u ->> d: PUT room BOX - room
-    u ->> f: SUBSCRIBE to room
-    u -> s: CONNECT to room
-    loop room is alive
+    u ->> w: GET group
+    u ->> d: PUT groupid BOX - user
+    u ->> f: SUBSCRIBE to group notifications
+    loop while group is not empty
         par
-            oth ->> s: SEND messages
+            oth ->> w: SEND messages
         and
-            u ->> s: SEND messages
+            u ->> w: SEND messages
         end
         par 
-            s ->> u: SEND messages
+            w ->> u: SEND messages
             alt app in foreground
                 u ->> u: PROCESS incomming messages
             end
         and
-            s ->> f: SEND messages
+            w ->> f: SEND messages
             f ->> u: SEND push notifications
             alt app in background
                 u ->> u: PROCESS push notifications
@@ -100,21 +95,21 @@ sequenceDiagram
 sequenceDiagram
     participant u as user
     participant d as disk
-    participant m as matchmaker
-    participant w as websocket server
-    u -> d: CONNECT room BOX
+    participant w as web socket
+    u -> d: CONNECT user BOX
     u -> d: CONNECT messages LAZYBOX
-    alt room BOX has id
+
+    u -> w: CONNECT web socket
+    alt user BOX has groupid
         u ->> d: GET messages LAZYBOX - end
         loop 0..end
             u ->> d: GET messages LAZYBOX - i
         end
     else
-        u ->> m: GET room
-        u ->> d: PUT room BOX - room
+        u ->> w: GET group
+        u ->> d: PUT groupid BOX - user
         
     end
-    u -> w: CONNECT room
 ```
 
 ## On send message
@@ -123,9 +118,8 @@ sequenceDiagram
 sequenceDiagram
     participant u as user
     participant d as disk
-    participant m as matchmaker
-    participant w as websocket server
-    u -> w: CONNECT room
+    participant w as web socket
+    u -> w: CONNECT web socket
     loop until deconnexion
         par
             u ->> w: SEND message
@@ -134,87 +128,6 @@ sequenceDiagram
             u ->> u: update local messages
             u ->> d: ADD messages LAZYBOX - message
         end
-    end
-```
-
-# How to get a new room?
-
-```mermaid
-sequenceDiagram
-    actor u as user
-    participant m as matchmaker
-    participant f as fleet manager
-    u ->> m: GET room
-    m ->> m: GET room for user in memory
-    alt matchmaker has no room
-        m ->> f: GET new room
-        f ->> f: create new room
-        alt fleet manager has room
-            f ->> m: RETURN room
-        else
-            f ->> m: RETURN error
-            m ->> u: RETURN error
-        end
-    end
-    m ->> m: update room in memory
-    m ->> u: RETURN room
-```
-
-## How does the matchmaker manage rooms?
-
-> The following executes on `GET room` from `user`.
-
-```mermaid
-stateDiagram
-%%{config: { "themeCSS": ".label foreignObject { overflow: visible; }" }%%
-    direction TB
-    state i1 <<choice>>
-    [*] --> i1
-    i1 --> n: has next room
-    i1 --> c: no more room
-    n: next room
-    v: valid room
-
-    state i2 <<choice>>
-    n --> i2
-    i2 --> v: room has space
-    i2 --> n: room is full
-    an: add user to valid room
-    v --> an
-
-    c: new room
-    ac: add new room with user
-    c --> ac
-
-    an --> [*]
-    ac --> [*]
-```
-
-## How does the fleet manager manage rooms?
-
-> The following executes on `GET new room` from `matchmaker`.
-
-```mermaid
-sequenceDiagram
-    participant f as fleet manager
-    participant dd as docker daemon
-    f ->> dd: GET containers
-    loop containers
-        f ->> dd: GET container image
-        alt is websocket server
-            f ->> dd: GET container status
-            alt is running
-                f ->> dd: GET container open ports
-                alt has open ports
-                    f ->> f: update list of available ports
-                end
-            end
-        end
-    end
-
-    f ->> f: GET available port
-    alt is available port
-        f ->> dd: RUN websocket server container on available port
     end
 ```
 

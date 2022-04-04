@@ -1,0 +1,14 @@
+{
+  "name": "notification",
+  "version": "1.0.0",
+  "description": "Send notification to users",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AdrKacz",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^10.0.2"
+  }
+}

@@ -2,8 +2,10 @@
 
 const AWS = require('aws-sdk')
 
-const ddb = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_REGION })
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME } = process.env
+const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, NOTIFICATION_LAMBDA_ARN, AWS_REGION } = process.env
+
+const ddb = new AWS.DynamoDB.DocumentClient({ region: AWS_REGION })
+const lambda = new AWS.Lambda({ region: AWS_REGION })
 
 exports.handler = async (event) => {
   console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
@@ -90,6 +92,16 @@ exports.handler = async (event) => {
   } catch (e) {
     return { statusCode: 500, body: e.stack }
   }
+
+  // notification
+  lambda.invoke({
+    FunctionName: NOTIFICATION_LAMBDA_ARN,
+    InvocationType: 'RequestResponse',
+    Payload: JSON.stringify({ groupid: groupid })
+  }, (err, data) => {
+    if (err) console.log(err, err.stack) // an error occurred
+    else console.log(data)
+  })
 
   // debug
   const response = {

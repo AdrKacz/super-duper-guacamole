@@ -13,12 +13,6 @@ jobs:
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v2
-      - name: Install modules - Lambda Notification
-        working-directory: ./lambda-notification
-        run: yarn
-      - name: Run ESLint - Lambda Notification
-        working-directory: ./lambda-notification
-        run: yarn run eslint .
       - name: Install modules - Sam Groups
         working-directory: ./sam-groups
         run: yarn

@@ -192,7 +192,12 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: sendmessage/
+      Environment:
+        Variables:
+          NOTIFICATION_LAMBDA_ARN: !GetAtt NotificationFunction.Arn
       Policies:
+      - LambdaInvokePolicy:
+          FunctionName: !Ref NotificationFunction
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
       - DynamoDBReadPolicy:
@@ -211,6 +216,22 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SendMessageFunction
       Principal: apigateway.amazonaws.com
+    
+  # Notification
+  NotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: notification/
+      Environment:
+        Variables:
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+  NotificationPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref NotificationFunction
+      Principal: lambda.amazonaws.com
+      SourceArn: !GetAtt SendMessageFunction.Arn
         
 Outputs:
   UsersTableArn:
@@ -228,6 +249,9 @@ Outputs:
   SendMessageFunctionArn:
     Description: "Send Message function ARN"
     Value: !GetAtt SendMessageFunction.Arn
+  NotificationFunctionArn:
+    Description: "Notification function ARN"
+    Value: !GetAtt NotificationFunction.Arn
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
