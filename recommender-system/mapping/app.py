@@ -5,17 +5,17 @@ from urllib import parse
 import boto3
 from helpers import put_item_table, update_table, get_item
 
+# Environment variables
+MAPPING_TABLE_NAME = os.environ.get("MAPPING_TABLE_NAME")
+DEMAPPING_TABLE_NAME = os.environ.get("DEMAPPING_TABLE_NAME")
+
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
 # Access the desired table resource
-mapping_table = client_dynamodb.Table("awa-mapping-table")
-demapping_table = client_dynamodb.Table("awa-demapping-table")
+mapping_table = client_dynamodb.Table(MAPPING_TABLE_NAME)
+demapping_table = client_dynamodb.Table(DEMAPPING_TABLE_NAME)
 # Define the client to interact with AWS Lambda
 client_lambda = boto3.client("lambda")
-
-# Environment variables
-ARN_LAMBDA_MAPPING = os.environ.get("ARN_LAMBDA_MAPPING")
-assert ARN_LAMBDA_MAPPING is not None
 
 # Field names
 USER_ID_RAW = "user_id_raw"
@@ -44,8 +44,8 @@ def get_mapped(table, key_name, key, field_name):
 
 def handler(event, _context):
     """Create mapped ids for an input user id: Both
-    user_id_raw --> user_id, and
-    user_id --> user_id_raw
+    Mapping table: user_id_raw to user_id
+    DeMappingTable: user_id to user_id_raw
 
     Parameters to put in the URL:
         api_gateway_endpoint?USER_INPUT_STRING=abcd

@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam-recommender-system"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
+s3_prefix = "sam-recommender-system"
+region = "eu-west-3"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []
+disable_rollback = false
+parameter_overrides = "StageName=\"Prod\" MappingTableName=\"mapping\" DeMappingTableName=\"demapping\" RatingsTableName=\"ratings\" UserModelXTableName=\"user_model\" MasterModelYTableName=\"master_model\" GradientYTableName=\"gradient_y\""

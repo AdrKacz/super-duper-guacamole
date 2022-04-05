@@ -13,20 +13,20 @@ import numpy as np
 from helpers import update_table_vector, get_item, update_table
 from specific_helpers import exponential_average, compute_r_u_vector_updated
 
+# Environment variables
+MAPPING_TABLE_NAME = os.environ.get("MAPPING_TABLE_NAME")
+RATINGS_TABLE_NAME = os.environ.get("RATINGS_TABLE_NAME")
+N_USERS_MAX = int(os.environ.get("N_USERS"))
+TIME_REFRESH_CONSTANT = Decimal(os.environ.get("TIME_REFRESH_CONSTANT"))
+
 # Get the service resource.
 client_dynamodb = boto3.resource("dynamodb")
 # Access the desired table resource
-table_implicit_feedbacks_R = client_dynamodb.Table("awa-implicit-feedback-R")
-mapping_table = client_dynamodb.Table("awa-mapping-table")
-demapping_table = client_dynamodb.Table("awa-demapping-table")
+table_implicit_feedbacks_R = client_dynamodb.Table(RATINGS_TABLE_NAME)
+mapping_table = client_dynamodb.Table(MAPPING_TABLE_NAME)
+
 # Define the client to interact with AWS Lambda
 client_lambda = boto3.client("lambda")
-
-# Environment variables
-N_USERS_MAX = int(os.environ.get("N_USERS"))
-ARN_LAMBDA_USERS_MARKS_R = os.environ.get("ARN_LAMBDA_R")
-TIME_REFRESH_CONSTANT = Decimal(os.environ.get("TIME_REFRESH_CONSTANT"))
-assert N_USERS_MAX is not None and ARN_LAMBDA_USERS_MARKS_R is not None
 
 # Field names
 USER_ID_RAW = "user_id_raw"
@@ -67,18 +67,16 @@ def get_mapped(table, key_name, key, field_name):
 
 
 def handler(event, _context):
-    """For a given user ID(u), compute and post rates for other user IDs.
+    """Create or update ratings of ids for an input user id
+    For a given user ID(u), compute and post rates for other user IDs.
     Currently, the rate is computed given the number of messages exchanged
     by u in a conversation with others users. This number of message is
-    compared to the moving average of messages exchanged by u, to compute a rate.
-    This rate will be the rate u give to the conversation, so to the other users."""
-
-    """Create or update ratings ofids for an input user id: Both
-    user_id_raw --> user_id, and
-    user_id --> user_id_raw
-
+    compared to an exponential average of messages exchanged by u, to compute a rate.
+    This rate will be the rating u give to the conversation, so to the other users.
+    
     Parameters to put in the URL:
-        api_gateway_endpoint?USER_INPUT_STRING=2-36&USERS_MESSAGES_OTHERS_USERS=(abcd,12)-(bcde,32)
+        api_gateway_endpoint?USER_INPUT_STRING=username_1-nb_message_username_1&
+        USERS_MESSAGES_OTHERS_USERS=(username_2,nb_message_username_2)-(username_3,nb_message_username_3)
         Ex:
         api_gateway_endpoint?userid=2-36&ids-messages=(abcd,12)-(bcde,32)
 
