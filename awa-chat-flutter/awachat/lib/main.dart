@@ -1,12 +1,10 @@
 import 'dart:convert';
 
+import 'package:awachat/notificationhandler.dart';
 import 'package:awachat/pages/error.dart';
 import 'package:awachat/websocketconnection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/memory.dart';
@@ -16,41 +14,12 @@ import 'package:awachat/pages/agreements/agreements.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 // ===== ===== =====
-// Firebase Push Notification
-class PushNotificationService {
-  final FirebaseMessaging messaging;
-
-  PushNotificationService(this.messaging);
-
-  Future initialise() async {
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    print(
-        '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
-
-    String? token = await messaging.getToken();
-    print("[PushNotificationService] Firebase messaging token: <$token>");
-  }
-}
-// ===== ===== =====
-
-// ===== ===== =====
 // App initialisation
 late types.User user;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
+  await NotificationHandler().init();
   await Memory().init();
   await User().init();
 
@@ -65,8 +34,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  static FirebaseMessaging messaging = FirebaseMessaging.instance;
-
   // State
   late bool hasSignedAgreements;
 
@@ -81,8 +48,6 @@ class _MyAppState extends State<MyApp> {
         savedHasSignedAgreements == "true") {
       hasSignedAgreements = true;
     }
-
-    PushNotificationService(messaging).initialise();
   }
 
   @override

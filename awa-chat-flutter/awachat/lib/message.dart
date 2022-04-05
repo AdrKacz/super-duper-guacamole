@@ -9,34 +9,45 @@ String randomString() {
   return base64UrlEncode(values);
 }
 
-types.Message? messageDecode(String? text) {
-  if (text == null) {
+types.Message? messageDecode(String? encodedMessage) {
+  if (encodedMessage == null) {
     return null;
   }
 
-  List<String> data = text.split(RegExp(r"::"));
-  if (data.length != 2) {
+  final List<String> data = encodedMessage.split(RegExp(r"::"));
+
+  if (data.length != 4) {
     return null;
   }
+  final String author = data[0];
+  final String createdAt = data[1];
+  final String id = data[2];
+  final String text = data[3];
 
-  switch (data[0]) {
+  switch (author) {
     case '0':
-      print("Decode message from server: ${data[1]}");
-      return null;
-    case '':
-      print("Error in messageDecode, text: $text");
+      print("Decode text from main: $text");
       return null;
     default:
-      // TODO: date sould be in the message
-      return types.TextMessage(
-        author: types.User(id: data[0]),
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: randomString(),
-        text: data[1],
-      );
+      if (int.tryParse(data[1]) != null) {
+        return types.TextMessage(
+          author: types.User(id: author),
+          createdAt: int.parse(createdAt),
+          id: id,
+          text: text,
+        );
+      } else {
+        print("Date is not integer: $createdAt");
+        return null;
+      }
   }
 }
 
 String messageEncode(types.PartialText partialText) {
-  return "${User().user.id}::${partialText.text}";
+  final String author = User().user.id;
+  final int createdAt = DateTime.now().millisecondsSinceEpoch;
+  final String id = randomString();
+  final String text = partialText.text;
+
+  return "$author::$createdAt::$id::$text";
 }
