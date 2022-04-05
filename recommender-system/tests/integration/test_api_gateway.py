@@ -1,4 +1,4 @@
-"""Test file from the HelloWorld tutorial. Keep to have a test file model"""
+"""Test file from the HelloWorld tutorial. Kept to have a test file model"""
 
 # import os
 # from unittest import TestCase

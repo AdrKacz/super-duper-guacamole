@@ -67,18 +67,16 @@ def get_mapped(table, key_name, key, field_name):
 
 
 def handler(event, _context):
-    """For a given user ID(u), compute and post rates for other user IDs.
+    """Create or update ratings of ids for an input user id
+    For a given user ID(u), compute and post rates for other user IDs.
     Currently, the rate is computed given the number of messages exchanged
     by u in a conversation with others users. This number of message is
-    compared to the moving average of messages exchanged by u, to compute a rate.
-    This rate will be the rate u give to the conversation, so to the other users.
-
-    Create or update ratings ofids for an input user id: Both
-    user_id_raw --> user_id, and
-    user_id --> user_id_raw
-
+    compared to an exponential average of messages exchanged by u, to compute a rate.
+    This rate will be the rating u give to the conversation, so to the other users.
+    
     Parameters to put in the URL:
-        api_gateway_endpoint?USER_INPUT_STRING=2-36&USERS_MESSAGES_OTHERS_USERS=(abcd,12)-(bcde,32)
+        api_gateway_endpoint?USER_INPUT_STRING=username_1-nb_message_username_1&
+        USERS_MESSAGES_OTHERS_USERS=(username_2,nb_message_username_2)-(username_3,nb_message_username_3)
         Ex:
         api_gateway_endpoint?userid=2-36&ids-messages=(abcd,12)-(bcde,32)
 
