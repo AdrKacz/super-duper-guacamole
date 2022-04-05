@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:awachat/pages/error.dart';
 import 'package:awachat/websocketconnection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
@@ -98,6 +99,7 @@ class _MyAppState extends State<MyApp> {
     } else {
       return MaterialApp(
         home: AgreementPage(signAgreements: () {
+          print("Sign Agreements");
           setState(() {
             hasSignedAgreements = true;
           });
@@ -113,16 +115,16 @@ class _MyAppState extends State<MyApp> {
 
 // Debug
 const Map<String, String> groupNames = {
-  "0": "Ichi",
-  "1": "Ni",
-  "2": "San",
-  "3": "Yon",
-  "4": "Go",
-  "5": "Roku",
-  "6": "Nana",
-  "7": "Hachi",
-  "8": "Kyu",
-  "9": "Dju",
+  "0": "Zero",
+  "1": "Ichi",
+  "2": "Ni",
+  "3": "San",
+  "4": "Yon",
+  "5": "Go",
+  "6": "Roku",
+  "7": "Nana",
+  "8": "Hachi",
+  "9": "Kyu",
 };
 
 // Main Page
@@ -157,13 +159,6 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _webSocketConnection.register();
-    if (User().groupid == "") {
-      _webSocketConnection.switchgroup();
-      status = "switching";
-    } else {
-      loadMessagesFromMemory();
-      status = "chat";
-    }
 
     _webSocketConnection.stream.listen((message) {
       print("Receives: $message");
@@ -171,6 +166,14 @@ class _MainPageState extends State<MainPage> {
       switch (data['action']) {
         case "register":
           print('\tRegister: ${data['status']}');
+          // Get group (register on load)
+          if (User().groupid == "") {
+            _webSocketConnection.switchgroup();
+            status = "switching";
+          } else {
+            loadMessagesFromMemory();
+            status = "chat";
+          }
           break;
         case "switchgroup":
           print('\tGroup: ${data['groupid']}');
@@ -234,7 +237,7 @@ class _MainPageState extends State<MainPage> {
                   case "idle":
                     return const Center(
                         child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 21, 220, 223)));
+                            color: Color(0xff6f61e8)));
                   case "switch":
                     return const Center(
                         child: CircularProgressIndicator(
@@ -251,9 +254,7 @@ class _MainPageState extends State<MainPage> {
                           inputTextCursorColor: Color(0xff9e9cab)),
                     );
                   default:
-                    return const Center(
-                        child: CircularProgressIndicator(
-                            color: Color.fromARGB(255, 223, 21, 31)));
+                    return const ErrorPage();
                 }
               },
             )));

@@ -18,24 +18,61 @@ class SlideContainer extends StatelessWidget {
 }
 
 class Slide extends StatelessWidget {
-  const Slide({Key? key, required this.text}) : super(key: key);
+  const Slide({Key? key, required this.text, required this.assetPath})
+      : super(key: key);
 
   final String text;
+  final String assetPath;
   @override
   Widget build(BuildContext context) {
     return SlideContainer(
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-      ),
-    );
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(assetPath),
+        Text(text, textAlign: TextAlign.center),
+      ],
+    ));
+  }
+}
+
+class SlideWithButton extends StatelessWidget {
+  const SlideWithButton(
+      {Key? key,
+      required this.text,
+      required this.assetPath,
+      required this.buttonText,
+      required this.onPressed})
+      : super(key: key);
+
+  final String text;
+  final String assetPath;
+  final String buttonText;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(assetPath),
+        Text(text, textAlign: TextAlign.center),
+        ElevatedButton(
+            onPressed: onPressed,
+            child: Text(buttonText),
+            style: ElevatedButton.styleFrom(
+              primary: const Color(0xff6f61e8),
+            ))
+      ],
+    ));
   }
 }
 
 class RGPDSlide extends StatelessWidget {
-  const RGPDSlide({Key? key, required this.sign}) : super(key: key);
+  const RGPDSlide({Key? key, required this.onPressed}) : super(key: key);
 
-  final VoidCallback? sign;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +90,7 @@ Je m'engage à ne pas conserver tes données personnelles.
             style: ElevatedButton.styleFrom(
               primary: const Color(0xff6f61e8),
             ),
-            onPressed: sign,
+            onPressed: onPressed,
             child: const Text("J'ai compris 👍")),
         const Divider(
           height: 32,
@@ -81,9 +118,9 @@ Viens voir comment je fonctionne et pose moi des questions 🌍
 }
 
 class EULASlide extends StatelessWidget {
-  const EULASlide({Key? key, required this.sign}) : super(key: key);
+  const EULASlide({Key? key, required this.onPressed}) : super(key: key);
 
-  final VoidCallback? sign;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +144,7 @@ Tu t'engages à bien respecter cela ?
             style: ElevatedButton.styleFrom(
               primary: const Color(0xff6f61e8),
             ),
-            onPressed: sign,
+            onPressed: onPressed,
             child: const Text("Je m'engage 😎"))
       ],
     )));
