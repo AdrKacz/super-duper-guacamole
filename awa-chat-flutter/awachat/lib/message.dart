@@ -16,13 +16,13 @@ types.Message? messageDecode(String? encodedMessage) {
 
   final List<String> data = encodedMessage.split(RegExp(r"::"));
 
-  if (data.length != 4) {
+  if (data.length < 4) {
     return null;
   }
   final String author = data[0];
   final String createdAt = data[1];
   final String id = data[2];
-  final String text = data[3];
+  final String text = data.sublist(3).join('::');
 
   switch (author) {
     case '0':
