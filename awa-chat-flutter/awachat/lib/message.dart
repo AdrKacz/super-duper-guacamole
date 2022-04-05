@@ -9,7 +9,7 @@ String randomString() {
   return base64UrlEncode(values);
 }
 
-types.Message? messageDecode(String? encodedMessage) {
+types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
   if (encodedMessage == null) {
     return null;
   }
@@ -19,10 +19,13 @@ types.Message? messageDecode(String? encodedMessage) {
   if (data.length < 4) {
     return null;
   }
+
   final String author = data[0];
   final String createdAt = data[1];
   final String id = data[2];
   final String text = data.sublist(3).join('::');
+
+  status ??= types.Status.delivered;
 
   switch (author) {
     case '0':
@@ -31,6 +34,7 @@ types.Message? messageDecode(String? encodedMessage) {
     default:
       if (int.tryParse(data[1]) != null) {
         return types.TextMessage(
+          status: status,
           author: types.User(id: author),
           createdAt: int.parse(createdAt),
           id: id,

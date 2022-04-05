@@ -112,6 +112,38 @@ class _MainPageState extends State<MainPage> {
   // Status
   String status = "idle";
 
+  // Send message
+  void sendMessage(types.PartialText partialText) {
+    final String encodedMessage = messageEncode(partialText);
+    final types.Message? message =
+        messageDecode(encodedMessage, types.Status.sending);
+    if (message != null) {
+      setState(() {
+        insertMessage(message);
+      });
+      _webSocketConnection.sendmessage(encodedMessage);
+    }
+  }
+
+  // Insert message (sort by date - O(n))
+  // TODO: O(log(n))
+  void insertMessage(types.Message message) {
+    if (_messages.isEmpty) {
+      _messages.add(message);
+    } else {
+      for (int i = 0; i < _messages.length; i++) {
+        if (message.createdAt! >= _messages[i].createdAt!) {
+          if (message.id == _messages[i].id) {
+            _messages[i] = message;
+          } else {
+            _messages.insert(i, message);
+          }
+          break;
+        }
+      }
+    }
+  }
+
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> m = await Memory().loadMessages();
     setState(() {
@@ -152,7 +184,7 @@ class _MainPageState extends State<MainPage> {
           types.Message? message = messageDecode(data['data']);
           if (message != null) {
             setState(() {
-              _messages.insert(0, message);
+              insertMessage(message);
             });
             Memory().addMessage(data['data']);
           }
@@ -211,7 +243,7 @@ class _MainPageState extends State<MainPage> {
                     return Chat(
                       l10n: const ChatL10nFr(),
                       messages: _messages,
-                      onSendPressed: _webSocketConnection.sendmessage,
+                      onSendPressed: sendMessage,
                       user: User().user,
                       theme: const DefaultChatTheme(
                           inputBackgroundColor: Color(0xfff5f5f7),
