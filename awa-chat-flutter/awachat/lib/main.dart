@@ -1,12 +1,10 @@
 import 'dart:convert';
 
+import 'package:awachat/notificationhandler.dart';
 import 'package:awachat/pages/error.dart';
 import 'package:awachat/websocketconnection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/memory.dart';
@@ -16,41 +14,12 @@ import 'package:awachat/pages/agreements/agreements.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 // ===== ===== =====
-// Firebase Push Notification
-class PushNotificationService {
-  final FirebaseMessaging messaging;
-
-  PushNotificationService(this.messaging);
-
-  Future initialise() async {
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    print(
-        '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
-
-    String? token = await messaging.getToken();
-    print("[PushNotificationService] Firebase messaging token: <$token>");
-  }
-}
-// ===== ===== =====
-
-// ===== ===== =====
 // App initialisation
 late types.User user;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
+  await NotificationHandler().init();
   await Memory().init();
   await User().init();
 
@@ -65,8 +34,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  static FirebaseMessaging messaging = FirebaseMessaging.instance;
-
   // State
   late bool hasSignedAgreements;
 
@@ -81,8 +48,6 @@ class _MyAppState extends State<MyApp> {
         savedHasSignedAgreements == "true") {
       hasSignedAgreements = true;
     }
-
-    PushNotificationService(messaging).initialise();
   }
 
   @override
@@ -147,6 +112,38 @@ class _MainPageState extends State<MainPage> {
   // Status
   String status = "idle";
 
+  // Send message
+  void sendMessage(types.PartialText partialText) {
+    final String encodedMessage = messageEncode(partialText);
+    final types.Message? message =
+        messageDecode(encodedMessage, types.Status.sending);
+    if (message != null) {
+      setState(() {
+        insertMessage(message);
+      });
+      _webSocketConnection.sendmessage(encodedMessage);
+    }
+  }
+
+  // Insert message (sort by date - O(n))
+  // TODO: O(log(n))
+  void insertMessage(types.Message message) {
+    if (_messages.isEmpty) {
+      _messages.add(message);
+    } else {
+      for (int i = 0; i < _messages.length; i++) {
+        if (message.createdAt! >= _messages[i].createdAt!) {
+          if (message.id == _messages[i].id) {
+            _messages[i] = message;
+          } else {
+            _messages.insert(i, message);
+          }
+          break;
+        }
+      }
+    }
+  }
+
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> m = await Memory().loadMessages();
     setState(() {
@@ -187,7 +184,7 @@ class _MainPageState extends State<MainPage> {
           types.Message? message = messageDecode(data['data']);
           if (message != null) {
             setState(() {
-              _messages.insert(0, message);
+              insertMessage(message);
             });
             Memory().addMessage(data['data']);
           }
@@ -246,7 +243,7 @@ class _MainPageState extends State<MainPage> {
                     return Chat(
                       l10n: const ChatL10nFr(),
                       messages: _messages,
-                      onSendPressed: _webSocketConnection.sendmessage,
+                      onSendPressed: sendMessage,
                       user: User().user,
                       theme: const DefaultChatTheme(
                           inputBackgroundColor: Color(0xfff5f5f7),

@@ -34,12 +34,12 @@ class WebSocketConnection {
         .add(jsonEncode({"action": "switchgroup", "userid": User().user.id}));
   }
 
-  void sendmessage(types.PartialText message) {
+  void sendmessage(String encodedMessage) {
     _channel.sink.add(jsonEncode({
       "action": "sendmessage",
       "userid": User().user.id,
       "groupid": User().groupid,
-      "data": messageEncode(message),
+      "data": encodedMessage,
     }));
   }
 
