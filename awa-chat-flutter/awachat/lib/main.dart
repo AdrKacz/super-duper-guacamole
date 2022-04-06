@@ -1,17 +1,18 @@
 import 'dart:convert';
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 import 'package:awachat/notificationhandler.dart';
 import 'package:awachat/pages/error.dart';
 import 'package:awachat/websocketconnection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
 import 'package:awachat/pages/agreements/agreements.dart';
-
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 // ===== ===== =====
 // App initialisation
@@ -102,12 +103,15 @@ class MainPage extends StatefulWidget {
   _MainPageState createState() => _MainPageState();
 }
 
-class _MainPageState extends State<MainPage> {
+class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   // Channel
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
   // Messages
   final List<types.Message> _messages = [];
+
+  // App state (lifecycle)
+  AppLifecycleState? _notification;
 
   // Status
   String status = "idle";
@@ -130,6 +134,7 @@ class _MainPageState extends State<MainPage> {
   void insertMessage(types.Message message) {
     if (_messages.isEmpty) {
       _messages.add(message);
+      return;
     } else {
       for (int i = 0; i < _messages.length; i++) {
         if (message.createdAt! >= _messages[i].createdAt!) {
@@ -138,25 +143,24 @@ class _MainPageState extends State<MainPage> {
           } else {
             _messages.insert(i, message);
           }
-          break;
+          return;
         }
       }
     }
+    _messages.add(message);
   }
 
   Future<void> loadMessagesFromMemory() async {
-    final List<types.Message> m = await Memory().loadMessages();
-    setState(() {
-      _messages.addAll(m);
-    });
+    final List<types.Message> loadedMessages = await Memory().loadMessages();
+    for (final types.Message loadedMessage in loadedMessages) {
+      setState(() {
+        insertMessage(loadedMessage);
+      });
+    }
   }
 
-  // Init
-  @override
-  void initState() {
-    super.initState();
-    _webSocketConnection.register();
-
+  // Stream listen
+  void listenStream() {
     _webSocketConnection.stream.listen((message) {
       print("Receives: $message");
       final data = jsonDecode(message);
@@ -195,12 +199,33 @@ class _MainPageState extends State<MainPage> {
             status = "";
           });
       }
-    });
+    }, onDone: () {
+      setState(() {
+        status = "disconnected";
+      });
+    }, cancelOnError: true);
+  }
+
+  // Init
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance!.addObserver(this);
+
+    _webSocketConnection.register();
+    listenStream();
   }
 
   @override
   Widget build(BuildContext context) {
     print("Status: $status");
+    if (status == "disconnected" &&
+        (_notification == null || _notification == AppLifecycleState.resumed)) {
+      status = "reconnect";
+      _webSocketConnection.reconnect();
+      _webSocketConnection.register();
+      listenStream();
+    }
     return Scaffold(
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),
@@ -250,6 +275,30 @@ class _MainPageState extends State<MainPage> {
                           inputTextColor: Color(0xff1f1c38),
                           inputTextCursorColor: Color(0xff9e9cab)),
                     );
+                  case "disconnected":
+                    return Stack(
+                      children: [
+                        Chat(
+                          l10n: const ChatL10nFr(),
+                          messages: _messages,
+                          onSendPressed: sendMessage,
+                          user: User().user,
+                          theme: const DefaultChatTheme(
+                              inputBackgroundColor: Color(0xfff5f5f7),
+                              inputTextColor: Color(0xff1f1c38),
+                              inputTextCursorColor: Color(0xff9e9cab)),
+                        ),
+                        Positioned.fill(
+                            child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                child: Container(
+                                    color: Colors.black.withOpacity(0))))
+                      ],
+                    );
+                  case "reconnect":
+                    return const Center(
+                        child: CircularProgressIndicator(
+                            color: Color(0xff6f61e8)));
                   default:
                     return const ErrorPage();
                 }
@@ -258,9 +307,21 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print("Change state > $state");
+    setState(() {
+      _notification = state;
+    });
+
+    if (state != AppLifecycleState.resumed) {
+      _webSocketConnection.close();
+    }
+  }
+
+  @override
   void dispose() {
-    print("Dispose");
     _webSocketConnection.close();
+    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 }
