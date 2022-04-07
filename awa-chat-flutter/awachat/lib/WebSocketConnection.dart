@@ -43,6 +43,15 @@ class WebSocketConnection {
     }));
   }
 
+  void ban(String userid, String text) {
+    return;
+    _channel.sink.add(jsonEncode({
+      "action": "ban",
+      "userid": userid,
+      "text": text,
+    }));
+  }
+
   void reconnect() {
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }

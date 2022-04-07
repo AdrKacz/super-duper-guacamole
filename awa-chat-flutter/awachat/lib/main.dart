@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
@@ -13,6 +15,7 @@ import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
 import 'package:awachat/pages/agreements/agreements.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // ===== ===== =====
 // App initialisation
@@ -115,6 +118,22 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   // Status
   String status = "idle";
+
+  // Report message
+  void reportMessage(BuildContext context, types.Message message) async {
+    HapticFeedback.lightImpact();
+    switch (await actionOnMessage(context)) {
+      case "ban":
+        _webSocketConnection.ban(
+            message.author.id, message.toJson()["text"].toString());
+        break;
+      case "report":
+        await mailToReportMessage(_messages, message);
+        break;
+      default:
+        print("dismiss");
+    }
+  }
 
   // Send message
   void sendMessage(types.PartialText partialText) {
@@ -269,6 +288,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                       l10n: const ChatL10nFr(),
                       messages: _messages,
                       onSendPressed: sendMessage,
+                      onMessageLongPress: reportMessage,
                       user: User().user,
                       theme: const DefaultChatTheme(
                           inputBackgroundColor: Color(0xfff5f5f7),
