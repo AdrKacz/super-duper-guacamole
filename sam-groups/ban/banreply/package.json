@@ -1,7 +1,7 @@
 {
-  "name": "ban-deny",
+  "name": "banreply",
   "version": "1.0.0",
-  "description": "Deny a ban request",
+  "description": "Reply to a ban request",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

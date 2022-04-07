@@ -17,7 +17,7 @@ exports.handler = async (event) => {
   // userid
   // const userid = body.userid
 
-  // banuserid
+  // banneduserid
   const banneduserid = body.banneduserid
 
   // groupid
