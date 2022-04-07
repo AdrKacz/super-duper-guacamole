@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "helpers": "file:../../helpers"
+  }
+}

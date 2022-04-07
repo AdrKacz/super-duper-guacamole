@@ -2,6 +2,8 @@
 
 const AWS = require('aws-sdk')
 
+const { getConnectionId, sendToConnectionId, getUsers } = require('helpers')
+
 const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, NOTIFICATION_LAMBDA_ARN, AWS_REGION } = process.env
 
 const ddb = new AWS.DynamoDB.DocumentClient({ region: AWS_REGION })
@@ -27,71 +29,25 @@ exports.handler = async (event) => {
   // TODO: throw an error if data is undefined
   const data = body.data
 
-  // connectionId
-  // const userConnectionId = event.requestContext.connectionId
+  // users
+  const users = await getUsers(GROUPS_TABLE_NAME, groupid, ddb)
+  console.log(`\tUsers:\n${JSON.stringify(users)}`)
 
-  // get users
-  let users
-  console.log(`Try get users groups:id:${groupid}`)
-  const group = await ddb.get({
-    TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupid },
-    AttributesToGet: ['id', 'users']
-  }).promise()
-  console.log(`\tgroup:\n${JSON.stringify(group)}`)
-  // verify groupid exists
-  if (!group.Item) {
-    throw new Error(`Error: group ${groupid} not found.`)
-  } else {
-    users = group.Item.users.values
-  }
-
-  // TODO: verify userid is in group
   // connectionIds
-  console.log(`Try get users:connectionIds ids:${JSON.stringify(users)}`)
-  const groupusers = await ddb.batchGet({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: users.map(u => ({ id: u })),
-        AttributesToGet: ['id', 'connectionId']
-      }
-    }
-  }).promise()
-  const connectionIds = groupusers.Responses[USERS_TABLE_NAME].filter(({ connectionId }) => connectionId !== undefined)
+  // TODO: verify userid is in group
+  const connectionIds = await getConnectionId(USERS_TABLE_NAME, users, ddb)
   console.log(`\tConnection ids:\n${JSON.stringify(connectionIds)}`)
 
-  // broadcast
+  // broadcast data
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   })
 
   const postCalls = connectionIds.map(async ({ id, connectionId }) => {
-    try {
-      console.log(`Try connection ${connectionId}`)
-      await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify({ action: 'sendmessage', data: data }) }).promise()
-    } catch (e) {
-      if (e.statusCode === 410) {
-        console.log(`Found stale connection, deleting ${connectionId}`)
-        await ddb.update({
-          TableName: USERS_TABLE_NAME,
-          Key: { id: id },
-          AttributeUpdates: {
-            connectionId: {
-              Action: 'DELETE'
-            }
-          }
-        }).promise()
-      } else {
-        throw e
-      }
-    }
+    await sendToConnectionId(USERS_TABLE_NAME, id, connectionId, apigwManagementApi, ddb, { action: 'sendmessage', data: data })
   })
 
-  try {
-    await Promise.all(postCalls)
-  } catch (e) {
-    return { statusCode: 500, body: e.stack }
-  }
+  await Promise.all(postCalls)
 
   // notification
   lambda.invoke({

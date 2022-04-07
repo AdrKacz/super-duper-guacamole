@@ -1,5 +1,7 @@
 // Lambda use AWS SDK v2 by default
 
+const { sendToConnectionId } = require('helpers')
+
 const AWS = require('aws-sdk')
 
 const ddb = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_REGION })
@@ -36,16 +38,7 @@ exports.handler = async (event) => {
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   })
 
-  try {
-    console.log(`Try connection ${connectionId}`)
-    await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify({ action: 'register', status: 'success' }) }).promise()
-  } catch (e) {
-    if (e.statusCode === 410) {
-      console.log(`Found stale connection, deleting ${connectionId}`)
-    } else {
-      throw e
-    }
-  }
+  await sendToConnectionId(USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, { action: 'register', status: 'success' })
 
   // debug
   const response = {

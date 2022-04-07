@@ -1,9 +1,11 @@
 // Lambda use AWS SDK v2 by default
 
+const { sendToConnectionId } = require('helpers')
+
 const AWS = require('aws-sdk')
 
 const ddb = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_REGION })
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME } = process.env
+const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME } = process.env
 
 exports.handler = async (event) => {
   console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
@@ -28,6 +30,7 @@ exports.handler = async (event) => {
     AttributesToGet: ['id', 'group']
   }).promise()
   console.log(`\tUser:\n${JSON.stringify(user)}`)
+
   // verify userid exists
   if (!user.Item) {
     throw new Error(`Error: user ${userid} not found.`)
@@ -35,7 +38,8 @@ exports.handler = async (event) => {
     groupid = user.Item.group
   }
 
-  // remove old group
+  // remove and delete in parallel
+  // remove from old group
   if (groupid) {
     // update group
     console.log(`Try update group ${groupid} - DELETE groups:users:${userid}`)
@@ -50,6 +54,15 @@ exports.handler = async (event) => {
       }
     }).promise()
   }
+
+  // remove potential ban
+  console.log(`Try update user ${userid} - DELETE bannedusers:${userid}`)
+  await ddb.delete({
+    TableName: BANNED_USERS_TABLE_NAME,
+    Key: {
+      id: userid
+    }
+  }).promise()
 
   // new groupid
   groupid = Math.floor(Math.random() * 10).toString()
@@ -81,21 +94,12 @@ exports.handler = async (event) => {
     }
   }).promise()
 
-  // returns
+  // inform user of its new group
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   })
 
-  try {
-    console.log(`Try connection ${connectionId}`)
-    await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify({ action: 'switchgroup', groupid: groupid }) }).promise()
-  } catch (e) {
-    if (e.statusCode === 410) {
-      console.log(`Found stale connection, deleting ${connectionId}`)
-    } else {
-      throw e
-    }
-  }
+  await sendToConnectionId(USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, { action: 'switchgroup', groupid: groupid })
 
   // debug
   const response = {
