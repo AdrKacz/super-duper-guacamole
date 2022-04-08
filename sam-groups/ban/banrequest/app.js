@@ -4,7 +4,7 @@ const AWS = require('aws-sdk')
 
 const { getConnectionId, sendToConnectionId, getUsers } = require('helpers')
 
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, AWS_REGION } = process.env
+const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, CONFIRMATION_REQUIRED, AWS_REGION } = process.env
 
 const ddb = new AWS.DynamoDB.DocumentClient({ region: AWS_REGION })
 
@@ -44,11 +44,12 @@ exports.handler = async (event) => {
     return await sendToConnectionId(USERS_TABLE_NAME, id, connectionId, apigwManagementApi, ddb, { action: 'banrequest', messageid: messageid })
   })
 
+  // retreive voting userids
   const useridsStatus = await Promise.all(postCalls)
   const votingUserids = useridsStatus.filter(({ userid }) => userid !== undefined).map(({ userid }) => userid)
   console.log('Voting userids:', votingUserids)
 
-  // update banneduser
+  // update banneduser (votingUsers AND confirmationRequired)
   if (votingUserids.length > 0) {
     console.log(`Try update users:id:${banneduserid}`)
     await ddb.update({
@@ -58,6 +59,10 @@ exports.handler = async (event) => {
         votingUsers: {
           Action: 'ADD',
           Value: ddb.createSet(votingUserids)
+        },
+        confirmationRequired: {
+          Action: 'PUT',
+          Value: Math.min(CONFIRMATION_REQUIRED, votingUserids.length)
         }
       }
     }).promise()

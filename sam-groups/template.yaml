@@ -152,11 +152,32 @@ Resources:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref SimpleChatWebSocket
-      Description: Send Message Integration
+      Description: Ban Request Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanRequestFunction.Arn}/invocations
+
+  BanReplyRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: banreply
+      AuthorizationType: NONE
+      OperationName: BanReplyRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref BanReplyIntegration
+  BanReplyIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Ban Reply Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanReplyFunction.Arn}/invocations
 
   # Stage
   Deployment:
@@ -165,6 +186,8 @@ Resources:
     - RegisterRoute
     - SwitchGroupRoute
     - SendMessageRoute
+    - BanRequestRoute
+    - BanReplyRoute
     Properties:
       ApiId: !Ref SimpleChatWebSocket
   Stage:
@@ -226,7 +249,7 @@ Resources:
           - 'execute-api:ManageConnections'
           Resource:
           - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  SwitchGroupPermission:
+  SwitchGroupApigatewayPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
       - SimpleChatWebSocket
@@ -234,6 +257,13 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SwitchGroupFunction
       Principal: apigateway.amazonaws.com
+  SwitchGroupLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref SwitchGroupFunction
+      Principal: lambda.amazonaws.com
+      SourceArn: !GetAtt BanFunction.Arn
 
   SendMessageFunction:
     Type: AWS::Serverless::Function
@@ -293,6 +323,35 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref BanRequestFunction
       Principal: apigateway.amazonaws.com
+
+  BanReplyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ban/banreply/
+      Layers:
+        - !Ref HelperLayerVersion
+      Environment:
+        Variables:
+          BAN_LAMBDA_ARN: !GetAtt BanFunction.Arn
+      Policies:
+      - LambdaInvokePolicy:
+          FunctionName: !Ref BanFunction
+      - DynamoDBCrudPolicy:
+          TableName: !Ref BannedUsersTableName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  BanReplyPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BanReplyFunction
+      Principal: apigateway.amazonaws.com
     
   # Notification
   NotificationFunction:
@@ -309,6 +368,31 @@ Resources:
       FunctionName: !Ref NotificationFunction
       Principal: lambda.amazonaws.com
       SourceArn: !GetAtt SendMessageFunction.Arn
+
+  # Ban
+  BanFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ban/ban/
+      Environment:
+        Variables:
+          SWITCH_GROUP_LAMBDA_ARN: !GetAtt SwitchGroupFunction.Arn
+      Policies:
+      - LambdaInvokePolicy:
+          FunctionName: !Ref SwitchGroupFunction
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref BannedUsersTableName
+  BanPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BanFunction
+      Principal: lambda.amazonaws.com
+      SourceArn: !GetAtt BanReplyFunction.Arn
         
 Outputs:
   UsersTableArn:
@@ -333,10 +417,17 @@ Outputs:
   BanRequestFunctionArn:
     Description: "Ban Request function ARN"
     Value: !GetAtt BanRequestFunction.Arn
+  BanReplyFunctionArn:
+    Description: "Ban Reply function ARN"
+    Value: !GetAtt BanReplyFunction.Arn
 
   NotificationFunctionArn:
     Description: "Notification function ARN"
     Value: !GetAtt NotificationFunction.Arn
+  
+  BanFunctionArn:
+    Description: "Ban function ARN"
+    Value: !GetAtt BanFunction.Arn
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

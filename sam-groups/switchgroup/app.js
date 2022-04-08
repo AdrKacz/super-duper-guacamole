@@ -18,16 +18,18 @@ exports.handler = async (event) => {
   // TODO: throw an error if userid is undefined
   const userid = body.userid
 
-  // connectionId
-  const connectionId = event.requestContext.connectionId
+  // request connectionId
+  // TODO: verify connectionId belong to user
+  // const requestConnectionId = event.requestContext.connectionId
 
   // get old group
   let groupid
+  let connectionId
   console.log(`Try get user users:id:${userid}`)
   const user = await ddb.get({
     TableName: USERS_TABLE_NAME,
     Key: { id: userid },
-    AttributesToGet: ['id', 'group']
+    AttributesToGet: ['id', 'group', 'connectionId']
   }).promise()
   console.log(`\tUser:\n${JSON.stringify(user)}`)
 
@@ -36,7 +38,13 @@ exports.handler = async (event) => {
     throw new Error(`Error: user ${userid} not found.`)
   } else {
     groupid = user.Item.group
+    connectionId = user.Item.connectionId
   }
+
+  // NOTE: commented to note throw an error when invoked by ban lambda
+  // if (requestConnectionId !== connectionId) {
+  //   throw Error(`Request from connection ${requestConnectionId} for different connection ${connectionId}`)
+  // }
 
   // remove and delete in parallel
   // remove from old group
