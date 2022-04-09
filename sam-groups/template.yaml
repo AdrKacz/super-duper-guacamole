@@ -12,7 +12,7 @@ Globals:
         BANNED_USERS_TABLE_NAME: !Ref BannedUsersTableName
 
 Description: >
-  sam-rooms
+  sam-group
 
   Manage users and their conversation in groups
 
@@ -41,6 +41,11 @@ Parameters:
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  ConfirmationRequired:
+    Type: Number
+    Default: 2
+    Description: '(Required) The number of the users required to ban someone from a group. The effective number of confirmation required will be the minimum between this number and the number of users who have received the ban request.'
+    ConstraintDescription: 'Required. Must be an integer.'
   StageName:
     Type: String
     Default: 'development'
@@ -69,7 +74,7 @@ Resources:
   SimpleChatWebSocket:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: SimpleChatWebSocket
+      Name: !Sub 'SamGroup-SimpleChatWebSocket-${StageName}'
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
 
@@ -249,7 +254,7 @@ Resources:
           - 'execute-api:ManageConnections'
           Resource:
           - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  SwitchGroupApigatewayPermission:
+  SwitchGroupPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
       - SimpleChatWebSocket
@@ -257,13 +262,6 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SwitchGroupFunction
       Principal: apigateway.amazonaws.com
-  SwitchGroupLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SwitchGroupFunction
-      Principal: lambda.amazonaws.com
-      SourceArn: !GetAtt BanFunction.Arn
 
   SendMessageFunction:
     Type: AWS::Serverless::Function
@@ -302,6 +300,9 @@ Resources:
       CodeUri: ban/banrequest/
       Layers:
         - !Ref HelperLayerVersion
+      Environment:
+        Variables:
+          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
@@ -330,12 +331,11 @@ Resources:
       CodeUri: ban/banreply/
       Layers:
         - !Ref HelperLayerVersion
-      Environment:
-        Variables:
-          BAN_LAMBDA_ARN: !GetAtt BanFunction.Arn
       Policies:
-      - LambdaInvokePolicy:
-          FunctionName: !Ref BanFunction
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTableName
       - DynamoDBCrudPolicy:
           TableName: !Ref BannedUsersTableName
       - Statement:
@@ -369,31 +369,6 @@ Resources:
       Principal: lambda.amazonaws.com
       SourceArn: !GetAtt SendMessageFunction.Arn
 
-  # Ban
-  BanFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ban/ban/
-      Environment:
-        Variables:
-          SWITCH_GROUP_LAMBDA_ARN: !GetAtt SwitchGroupFunction.Arn
-      Policies:
-      - LambdaInvokePolicy:
-          FunctionName: !Ref SwitchGroupFunction
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-  BanPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BanFunction
-      Principal: lambda.amazonaws.com
-      SourceArn: !GetAtt BanReplyFunction.Arn
-        
 Outputs:
   UsersTableArn:
     Description: "Users table ARN"
@@ -424,10 +399,6 @@ Outputs:
   NotificationFunctionArn:
     Description: "Notification function ARN"
     Value: !GetAtt NotificationFunction.Arn
-  
-  BanFunctionArn:
-    Description: "Ban function ARN"
-    Value: !GetAtt BanFunction.Arn
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

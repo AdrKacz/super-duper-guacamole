@@ -2,11 +2,11 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "group-dev"
+stack_name = "sam-group-dev"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
-s3_prefix = "group-dev"
+s3_prefix = "sam-group-dev"
 region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "UsersTableName=\"users_dev\" GroupsTableName=\"groups_dev\" BannedUsersTableName=\"bannedusers_dev\" StageName=\"dev\""
+parameter_overrides = "UsersTableName=\"users_dev\" GroupsTableName=\"groups_dev\" BannedUsersTableName=\"bannedusers_dev\" ConfirmationRequired=\"1\" StageName=\"dev\""
 image_repositories = []

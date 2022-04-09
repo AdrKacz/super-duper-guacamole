@@ -52,7 +52,6 @@ exports.handler = async (event) => {
   // notification
   lambda.invoke({
     FunctionName: NOTIFICATION_LAMBDA_ARN,
-    InvocationType: 'RequestResponse',
     Payload: JSON.stringify({ groupid: groupid })
   }, (err, data) => {
     if (err) console.log(err, err.stack) // an error occurred

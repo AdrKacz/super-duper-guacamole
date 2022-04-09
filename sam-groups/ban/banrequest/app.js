@@ -4,7 +4,9 @@ const AWS = require('aws-sdk')
 
 const { getConnectionId, sendToConnectionId, getUsers } = require('helpers')
 
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, CONFIRMATION_REQUIRED, AWS_REGION } = process.env
+const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, CONFIRMATION_REQUIRED_STRING, AWS_REGION } = process.env
+
+const CONFIRMATION_REQUIRED = parseInt(CONFIRMATION_REQUIRED_STRING)
 
 const ddb = new AWS.DynamoDB.DocumentClient({ region: AWS_REGION })
 
