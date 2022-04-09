@@ -59,7 +59,7 @@ String messageEncode(types.PartialText partialText) {
   return "$author::$createdAt::$id::$text";
 }
 
-Future<String?> actionOnMessage(BuildContext context) async {
+Future<String?> reportActionOnMessage(BuildContext context) async {
   return await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -83,6 +83,36 @@ Future<String?> actionOnMessage(BuildContext context) async {
                 Navigator.pop(context, "nothing");
               },
               child: const Text("Rien"),
+            ),
+          ],
+        );
+      });
+}
+
+Future<String?> banActionOnMessage(
+    BuildContext context, types.Message message) async {
+  return await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+              'Souhaites-tu bannir du groupe la personne qui a écris ce message ?'),
+          content: SingleChildScrollView(
+            child: Text(message.toJson()['text'], textAlign: TextAlign.center),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Non'),
+              onPressed: () {
+                Navigator.pop(context, "denied");
+              },
+            ),
+            TextButton(
+              child: const Text('Oui'),
+              onPressed: () {
+                Navigator.pop(context, "confirmed");
+              },
             ),
           ],
         );

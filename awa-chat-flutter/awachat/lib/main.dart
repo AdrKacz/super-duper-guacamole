@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -15,7 +14,6 @@ import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
 import 'package:awachat/pages/agreements/agreements.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 // ===== ===== =====
 // App initialisation
@@ -119,13 +117,81 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   // Status
   String status = "idle";
 
+  // Acknowledge ban
+  void acknowledgeBan(
+      BuildContext context, String status, String banneduserid) {
+    String title = "";
+    switch (status) {
+      case 'confirmed':
+        if (banneduserid == User().user.id) {
+          title = "Tu viens de te faire banir du groupe";
+        } else {
+          title = 'La personne a été banie du groupe';
+        }
+        break;
+      case 'denied':
+        title = "La personne n'a pas été banie du groupe";
+        break;
+    }
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Ok'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
+  }
+
+  // Find message
+  types.Message? findMessage(String messageid) {
+    for (final types.Message message in _messages) {
+      if (message.id == messageid) {
+        return message;
+      }
+    }
+    return null;
+  }
+
+  // Ban request
+  void banRequest(BuildContext context, String messageid) async {
+    // find message
+    types.Message? message = findMessage(messageid);
+    if (message == null) {
+      print("Message $messageid wasn't found. Returns.");
+      return;
+    }
+
+    print("Found message $messageid:\n$message");
+
+    HapticFeedback.lightImpact();
+    switch (await banActionOnMessage(context, message)) {
+      case 'confirmed':
+        print('Ban confirmed');
+        _webSocketConnection.banreply(message.author.id, 'confirmed');
+        break;
+      case 'denied':
+        print('Ban denied');
+        _webSocketConnection.banreply(message.author.id, 'denied');
+        break;
+      default:
+        throw Exception('Ban action not in ["confirmed", "denied"]');
+    }
+  }
+
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.lightImpact();
-    switch (await actionOnMessage(context)) {
+    switch (await reportActionOnMessage(context)) {
       case "ban":
-        _webSocketConnection.ban(
-            message.author.id, message.toJson()["text"].toString());
+        _webSocketConnection.banrequest(message.author.id, message.id);
         break;
       case "report":
         await mailToReportMessage(_messages, message);
@@ -211,6 +277,18 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             });
             Memory().addMessage(data['data']);
           }
+          break;
+        case "banrequest":
+          print('\tBan request for: ${data['messageid']}');
+          banRequest(context, data['messageid']);
+          break;
+        case "banconfirmed":
+          print('\tBan confirmed for: ${data['banneduserid']}');
+          acknowledgeBan(context, 'confirmed', data['banneduserid']);
+          break;
+        case "bandenied":
+          print('\tBan denied for: ${data['banneduserid']}');
+          acknowledgeBan(context, 'denied', data['banneduserid']);
           break;
         default:
           print("\tAction ${data['action']} not recognised.");
