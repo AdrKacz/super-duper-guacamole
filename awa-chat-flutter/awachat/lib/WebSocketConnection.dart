@@ -23,13 +23,7 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    if (User().groupid != "") {
-      FirebaseMessaging.instance
-          .unsubscribeFromTopic('group-${User().groupid}');
-      Memory().lazyBoxMessages.clear();
-      Memory().put('user', 'lastmessage', '0');
-      User().groupid = "";
-    }
+    User().resetGroup();
     _channel.sink
         .add(jsonEncode({"action": "switchgroup", "userid": User().user.id}));
   }

@@ -265,6 +265,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           print('\tGroup: ${data['groupid']}');
           User().groupid = data['groupid'];
           setState(() {
+            _messages
+                .clear(); // clear here too if switchgroup without user asked to (ban)
             status = "chat";
           });
           break;
