@@ -97,7 +97,7 @@ Future<String?> banActionOnMessage(
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text(
-              'Souhaites-tu bannir du groupe la personne qui a écris ce message ?'),
+              'Souhaites-tu bannir du groupe la personne qui a écrit ce message ?'),
           content: SingleChildScrollView(
             child: Text(message.toJson()['text'], textAlign: TextAlign.center),
           ),
