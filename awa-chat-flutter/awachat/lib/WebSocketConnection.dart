@@ -8,7 +8,7 @@ import 'package:awachat/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://tzs5ejg45b.execute-api.eu-west-3.amazonaws.com/development";
+      "wss://hvxryd7s69.execute-api.eu-west-3.amazonaws.com/dev";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -23,13 +23,7 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    if (User().groupid != "") {
-      FirebaseMessaging.instance
-          .unsubscribeFromTopic('group-${User().groupid}');
-      Memory().lazyBoxMessages.clear();
-      Memory().put('user', 'lastmessage', '0');
-      User().groupid = "";
-    }
+    User().resetGroup();
     _channel.sink
         .add(jsonEncode({"action": "switchgroup", "userid": User().user.id}));
   }
@@ -40,6 +34,25 @@ class WebSocketConnection {
       "userid": User().user.id,
       "groupid": User().groupid,
       "data": encodedMessage,
+    }));
+  }
+
+  void banrequest(String userid, String messageid) {
+    _channel.sink.add(jsonEncode({
+      "action": "banrequest",
+      "banneduserid": userid,
+      "groupid": User().groupid,
+      "messageid": messageid,
+    }));
+  }
+
+  void banreply(String banneduserid, String status) {
+    _channel.sink.add(jsonEncode({
+      "action": "banreply",
+      "userid": User().user.id,
+      "banneduserid": banneduserid,
+      "groupid": User().groupid,
+      "status": status,
     }));
   }
 

@@ -1,9 +1,13 @@
 {
   "name": "sam-groups",
   "version": "1.0.0",
-  "description": "Groups chat managed with AWS SAM",
+  "description": "Groups chat managed with AWS SAM", 
   "author": "AdrKacz",
   "license": "MIT",
+  "scripts": {
+    "predeploy": "cd notification && npm install && cd ../ && cd dependencies/nodejs && npm install && cd ../../ && sam build",
+    "deploy": "sam deploy --guided"
+  },
   "devDependencies": {
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",

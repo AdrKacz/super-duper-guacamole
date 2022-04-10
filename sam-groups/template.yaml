@@ -9,9 +9,10 @@ Globals:
       Variables:
         USERS_TABLE_NAME: !Ref UsersTableName
         GROUPS_TABLE_NAME: !Ref GroupsTableName
+        BANNED_USERS_TABLE_NAME: !Ref BannedUsersTableName
 
 Description: >
-  sam-rooms
+  sam-group
 
   Manage users and their conversation in groups
 
@@ -32,6 +33,19 @@ Parameters:
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  BannedUsersTableName:
+    Type: String
+    Default: 'bannedusers'
+    Description: '(Required) The name of the new DynamoDB to store users under ban vote. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  ConfirmationRequired:
+    Type: Number
+    Default: 2
+    Description: '(Required) The number of the users required to ban someone from a group. The effective number of confirmation required will be the minimum between this number and the number of users who have received the ban request.'
+    ConstraintDescription: 'Required. Must be an integer.'
   StageName:
     Type: String
     Default: 'development'
@@ -51,12 +65,16 @@ Resources:
     Type: AWS::Serverless::SimpleTable
     Properties:
       TableName: !Ref GroupsTableName
+  BannedUsersTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Ref BannedUsersTableName
 
   # Web Socket
   SimpleChatWebSocket:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: SimpleChatWebSocket
+      Name: !Sub 'SamGroup-SimpleChatWebSocket-${StageName}'
       ProtocolType: WEBSOCKET
       RouteSelectionExpression: "$request.body.action"
 
@@ -124,6 +142,48 @@ Resources:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
 
+  BanRequestRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: banrequest
+      AuthorizationType: NONE
+      OperationName: BanRequestRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref BanRequestIntegration
+  BanRequestIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Ban Request Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanRequestFunction.Arn}/invocations
+
+  BanReplyRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: banreply
+      AuthorizationType: NONE
+      OperationName: BanReplyRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref BanReplyIntegration
+  BanReplyIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Ban Reply Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanReplyFunction.Arn}/invocations
+
   # Stage
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
@@ -131,6 +191,8 @@ Resources:
     - RegisterRoute
     - SwitchGroupRoute
     - SendMessageRoute
+    - BanRequestRoute
+    - BanReplyRoute
     Properties:
       ApiId: !Ref SimpleChatWebSocket
   Stage:
@@ -141,11 +203,20 @@ Resources:
       DeploymentId: !Ref Deployment
       ApiId: !Ref SimpleChatWebSocket
 
+  # Layers Functions
+  HelperLayerVersion:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: dependencies/
+      RetentionPolicy: Delete 
+
   # Functions
   RegisterFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: register/
+      Layers:
+        - !Ref HelperLayerVersion
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
@@ -168,11 +239,15 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: switchgroup/
+      Layers:
+        - !Ref HelperLayerVersion
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
       - DynamoDBCrudPolicy:
           TableName: !Ref GroupsTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref BannedUsersTableName
       - Statement:
         - Effect: Allow
           Action:
@@ -192,6 +267,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: sendmessage/
+      Layers:
+        - !Ref HelperLayerVersion
       Environment:
         Variables:
           NOTIFICATION_LAMBDA_ARN: !GetAtt NotificationFunction.Arn
@@ -216,6 +293,65 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SendMessageFunction
       Principal: apigateway.amazonaws.com
+
+  BanRequestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ban/banrequest/
+      Layers:
+        - !Ref HelperLayerVersion
+      Environment:
+        Variables:
+          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref BannedUsersTableName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  BanRequestPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BanRequestFunction
+      Principal: apigateway.amazonaws.com
+
+  BanReplyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ban/banreply/
+      Layers:
+        - !Ref HelperLayerVersion
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref BannedUsersTableName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  BanReplyPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BanReplyFunction
+      Principal: apigateway.amazonaws.com
     
   # Notification
   NotificationFunction:
@@ -232,7 +368,7 @@ Resources:
       FunctionName: !Ref NotificationFunction
       Principal: lambda.amazonaws.com
       SourceArn: !GetAtt SendMessageFunction.Arn
-        
+
 Outputs:
   UsersTableArn:
     Description: "Users table ARN"
@@ -240,6 +376,10 @@ Outputs:
   GroupsTableArn:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
+  BannedUsersTableArn:
+    Description: "Banned Users table ARN"
+    Value: !GetAtt BannedUsersTable.Arn
+
   RegisterFunctionArn:
     Description: "Register function ARN"
     Value: !GetAtt RegisterFunction.Arn
@@ -249,9 +389,17 @@ Outputs:
   SendMessageFunctionArn:
     Description: "Send Message function ARN"
     Value: !GetAtt SendMessageFunction.Arn
+  BanRequestFunctionArn:
+    Description: "Ban Request function ARN"
+    Value: !GetAtt BanRequestFunction.Arn
+  BanReplyFunctionArn:
+    Description: "Ban Reply function ARN"
+    Value: !GetAtt BanReplyFunction.Arn
+
   NotificationFunctionArn:
     Description: "Notification function ARN"
     Value: !GetAtt NotificationFunction.Arn
+
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]

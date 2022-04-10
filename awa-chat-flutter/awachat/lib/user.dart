@@ -11,9 +11,25 @@ class User {
 
   String get groupid => _groupid;
   set groupid(String id) {
-    FirebaseMessaging.instance.subscribeToTopic('group-$id');
-    Memory().put('user', 'groupid', id);
-    _groupid = id;
+    if (_groupid != "") {
+      resetGroup();
+    }
+
+    if (id != "") {
+      FirebaseMessaging.instance.subscribeToTopic('group-$id');
+      Memory().put('user', 'groupid', id);
+      _groupid = id;
+    }
+  }
+
+  void resetGroup() {
+    if (_groupid != "") {
+      FirebaseMessaging.instance
+          .unsubscribeFromTopic('group-${User().groupid}');
+      Memory().lazyBoxMessages.clear();
+      Memory().put('user', 'lastmessage', '0');
+      _groupid = "";
+    }
   }
 
   factory User() {

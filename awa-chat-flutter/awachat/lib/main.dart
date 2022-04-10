@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
@@ -116,6 +117,90 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   // Status
   String status = "idle";
 
+  // Acknowledge ban
+  void acknowledgeBan(
+      BuildContext context, String status, String banneduserid) {
+    String title = "";
+    switch (status) {
+      case 'confirmed':
+        if (banneduserid == User().user.id) {
+          title = "Tu viens de te faire banir du groupe";
+        } else {
+          title = 'La personne a été banie du groupe';
+        }
+        break;
+      case 'denied':
+        title = "La personne n'a pas été banie du groupe";
+        break;
+    }
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Ok'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        });
+  }
+
+  // Find message
+  types.Message? findMessage(String messageid) {
+    for (final types.Message message in _messages) {
+      if (message.id == messageid) {
+        return message;
+      }
+    }
+    return null;
+  }
+
+  // Ban request
+  void banRequest(BuildContext context, String messageid) async {
+    // find message
+    types.Message? message = findMessage(messageid);
+    if (message == null) {
+      print("Message $messageid wasn't found. Returns.");
+      return;
+    }
+
+    print("Found message $messageid:\n$message");
+
+    HapticFeedback.lightImpact();
+    switch (await banActionOnMessage(context, message)) {
+      case 'confirmed':
+        print('Ban confirmed');
+        _webSocketConnection.banreply(message.author.id, 'confirmed');
+        break;
+      case 'denied':
+        print('Ban denied');
+        _webSocketConnection.banreply(message.author.id, 'denied');
+        break;
+      default:
+        throw Exception('Ban action not in ["confirmed", "denied"]');
+    }
+  }
+
+  // Report message
+  void reportMessage(BuildContext context, types.Message message) async {
+    HapticFeedback.lightImpact();
+    switch (await reportActionOnMessage(context)) {
+      case "ban":
+        _webSocketConnection.banrequest(message.author.id, message.id);
+        break;
+      case "report":
+        await mailToReportMessage(_messages, message);
+        break;
+      default:
+        print("dismiss");
+    }
+  }
+
   // Send message
   void sendMessage(types.PartialText partialText) {
     final String encodedMessage = messageEncode(partialText);
@@ -180,6 +265,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           print('\tGroup: ${data['groupid']}');
           User().groupid = data['groupid'];
           setState(() {
+            _messages
+                .clear(); // clear here too if switchgroup without user asked to (ban)
             status = "chat";
           });
           break;
@@ -192,6 +279,18 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             });
             Memory().addMessage(data['data']);
           }
+          break;
+        case "banrequest":
+          print('\tBan request for: ${data['messageid']}');
+          banRequest(context, data['messageid']);
+          break;
+        case "banconfirmed":
+          print('\tBan confirmed for: ${data['banneduserid']}');
+          acknowledgeBan(context, 'confirmed', data['banneduserid']);
+          break;
+        case "bandenied":
+          print('\tBan denied for: ${data['banneduserid']}');
+          acknowledgeBan(context, 'denied', data['banneduserid']);
           break;
         default:
           print("\tAction ${data['action']} not recognised.");
@@ -218,7 +317,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print("Status: $status");
     if (status == "disconnected" &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
       status = "reconnect";
@@ -226,6 +324,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       _webSocketConnection.register();
       listenStream();
     }
+    print("Status: $status");
     return Scaffold(
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),
@@ -269,6 +368,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                       l10n: const ChatL10nFr(),
                       messages: _messages,
                       onSendPressed: sendMessage,
+                      onMessageLongPress: reportMessage,
                       user: User().user,
                       theme: const DefaultChatTheme(
                           inputBackgroundColor: Color(0xfff5f5f7),
