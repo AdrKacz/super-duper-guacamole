@@ -103,7 +103,15 @@ exports.switchGroup = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_T
   }).promise()
 
   // new groupid
-  groupid = Math.floor(Math.random() * 10).toString()
+  // (avoid being in the same group)
+  // (between 0 and 9)
+  // (random between 0 and 8 to avoid collision)
+  const randomgroup = Math.floor(Math.random() * 9).toString()
+  if (randomgroup === groupid) {
+    groupid = (parseInt(randomgroup) + 1).toString()
+  } else {
+    groupid = randomgroup
+  }
 
   // TODO: revert users and groups on error
   // update group
