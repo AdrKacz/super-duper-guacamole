@@ -32,17 +32,45 @@ exports.handler = async (event) => {
   const users = await getUsers(GROUPS_TABLE_NAME, groupid, ddb)
   console.log(`\tUsers:\n${JSON.stringify(users)}`)
 
+  // get banned user if any
+  const request = await ddb.get({
+    TableName: BANNED_USERS_TABLE_NAME,
+    Key: { id: banneduserid },
+    AttributesToGet: ['id', 'votingUsers', 'confirmedUsers']
+  }).promise()
+
+  let votingUsers = new Set()
+  let confirmedUsers = new Set()
+  if (request.Item) {
+    console.log(`User ${banneduserid} was already in a ban vote`)
+    votingUsers = new Set(request.Item.votingUsers?.values)
+    confirmedUsers = new Set(request.Item.confirmedUsers?.values)
+    console.log(`\tVoting Users:\n${JSON.stringify(votingUsers)}`)
+    console.log(`\tVoting Users:\n${JSON.stringify(confirmedUsers)}`)
+  }
+
   // connectionIds
   // TODO: verify userid and banuserid are in group
   const connectionIds = await getConnectionId(USERS_TABLE_NAME, users, ddb)
   console.log(`\tConnection ids:\n${JSON.stringify(connectionIds)}`)
 
-  // broadcast request to everyone but banneduserid
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   })
 
-  const postCalls = connectionIds.filter(({ id }) => id !== banneduserid).map(async ({ id, connectionId }) => {
+  // broadcast request to everyone
+  let remainingConnectionIds = connectionIds
+  // but banneduserid
+  remainingConnectionIds = remainingConnectionIds.filter(({ id }) => id !== banneduserid)
+  // (for multiple ban request for the same user)
+  // but users who have already confirmed
+  remainingConnectionIds = remainingConnectionIds.filter(({ id }) => !confirmedUsers.has(id))
+  // but users who are still voting
+  remainingConnectionIds = remainingConnectionIds.filter(({ id }) => !votingUsers.has(id))
+  // (don't remove users who have denied)
+
+  console.log(`\tRemaining connection ids:\n${JSON.stringify(connectionIds)}`)
+  const postCalls = remainingConnectionIds.map(async ({ id, connectionId }) => {
     return await sendToConnectionId(USERS_TABLE_NAME, id, connectionId, apigwManagementApi, ddb, { action: 'banrequest', messageid: messageid })
   })
 
@@ -64,12 +92,17 @@ exports.handler = async (event) => {
         },
         confirmationRequired: {
           Action: 'PUT',
-          Value: Math.min(CONFIRMATION_REQUIRED, votingUserids.length)
+          // reset for the last request (to count for leaving user)
+          // count for previous confirmations, if any (will be counted by the reply)
+          Value: Math.min(CONFIRMATION_REQUIRED, confirmedUsers.size + votingUserids.length)
         }
       }
     }).promise()
   } else {
-    console.log('No voting users ... this should not happen')
+    // This only happen if two consecutive request for the the same users
+    // without any interactions or changes on any users
+    // (all users are already either on the confirmed or in the voting sets)
+    console.log('No voting users.')
   }
 
   // debug

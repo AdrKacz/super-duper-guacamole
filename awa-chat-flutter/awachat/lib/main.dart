@@ -317,7 +317,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print("Status: $status");
     if (status == "disconnected" &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
       status = "reconnect";
@@ -325,6 +324,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       _webSocketConnection.register();
       listenStream();
     }
+    print("Status: $status");
     return Scaffold(
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),

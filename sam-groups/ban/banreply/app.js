@@ -64,9 +64,15 @@ exports.handler = async (event) => {
   }
 
   // verify userid can still vote
+  // (don't throw error, this situation can happen)
+  // (for example, if you receive a ban request but don't answer a quit the app)
+  // (while you are not here someone else ask again to ban the same user)
+  // (you are not part of the voting users this time because you weren't there)
+  // (but when you reopen the app, you can still vote with the old dialog)
+  // (your vote will simply not be taken into account, without error)
   if (!votingUsers.includes(userid)) {
-    console.log(`User ${userid} not in voting users:\n${JSON.stringify(votingUsers)}`)
-    throw Error('action not allowed')
+    console.log(`User ${userid} not in voting users:\n${JSON.stringify(votingUsers)}. Returns`)
+    return
   }
 
   // always remove userid from voting users
@@ -123,12 +129,13 @@ exports.handler = async (event) => {
     await ddb.update(params).promise()
   }
 
-  // BAN_LAMBDA will fire an error if status is not 'confirmed' or 'denied'
   if (banstatus !== undefined) {
+    // vote is finished
     const apigwManagementApi = new AWS.ApiGatewayManagementApi({
       endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
     })
 
+    // resolve the ban (depending on the status)
     const { connectionIds, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb)
 
     let usedConnectionIds = connectionIds
