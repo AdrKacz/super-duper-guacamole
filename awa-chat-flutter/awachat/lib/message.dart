@@ -1,3 +1,4 @@
+import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -77,6 +78,49 @@ Future<String?> reportActionOnMessage(BuildContext context) async {
                 Navigator.pop(context, "report");
               },
               child: const Text("Signaler le message"),
+            ),
+            SimpleDialogOption(
+              onPressed: () async {
+                String? hasSeenDeleteInformation =
+                    Memory().get('user', 'hasSeenDeleteInformation');
+                if (hasSeenDeleteInformation == null ||
+                    hasSeenDeleteInformation == "false") {
+                  switch (await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                            title: const Text("Attention"),
+                            content: const SingleChildScrollView(
+                              child: Text(
+                                  'Le message ne sera supprimé que chez toi. Les autres personnes du groupe pourront toujours le voir.'),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: const Text('Ne pas supprimer'),
+                                onPressed: () {
+                                  Navigator.pop(context, "nothing");
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('Ok'),
+                                onPressed: () {
+                                  Navigator.pop(context, "confirmed");
+                                },
+                              )
+                            ]);
+                      })) {
+                    case 'confirmed':
+                      Memory().put('user', 'hasSeenDeleteInformation', 'true');
+                      Navigator.pop(context, "delete");
+                      break;
+                    default:
+                      Navigator.pop(context, "nothing");
+                  }
+                } else {
+                  Navigator.pop(context, "delete");
+                }
+              },
+              child: const Text("Supprimer le message"),
             ),
             SimpleDialogOption(
               onPressed: () {

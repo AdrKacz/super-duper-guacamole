@@ -171,7 +171,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
     print("Found message $messageid:\n$message");
 
-    HapticFeedback.lightImpact();
+    HapticFeedback.mediumImpact();
     switch (await banActionOnMessage(context, message)) {
       case 'confirmed':
         print('Ban confirmed');
@@ -188,13 +188,21 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
-    HapticFeedback.lightImpact();
+    HapticFeedback.mediumImpact();
     switch (await reportActionOnMessage(context)) {
       case "ban":
         _webSocketConnection.banrequest(message.author.id, message.id);
         break;
       case "report":
         await mailToReportMessage(_messages, message);
+        break;
+      case 'delete':
+        // remove the message locally
+        setState(() {
+          _messages.remove(message);
+        });
+        // remove the message in memory
+        Memory().deleteMessage(message.id);
         break;
       default:
         print("dismiss");
@@ -216,7 +224,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   // Insert message (sort by date - O(n))
   // TODO: O(log(n))
-  void insertMessage(types.Message message) {
+  void insertMessage(types.Message message, [bool? useHaptic]) {
+    useHaptic ??= true;
+    if (useHaptic && message.status == types.Status.delivered) {
+      HapticFeedback.lightImpact();
+    }
+
     if (_messages.isEmpty) {
       _messages.add(message);
       return;
@@ -237,9 +250,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> loadedMessages = await Memory().loadMessages();
+    print('Loaded messages length: ${loadedMessages.length}');
+    setState(() {
+      _messages.clear();
+    });
     for (final types.Message loadedMessage in loadedMessages) {
       setState(() {
-        insertMessage(loadedMessage);
+        insertMessage(loadedMessage, false);
       });
     }
   }
@@ -255,10 +272,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // Get group (register on load)
           if (User().groupid == "") {
             _webSocketConnection.switchgroup();
-            status = "switching";
+            setState(() {
+              _messages.clear();
+              status = "switch";
+            });
           } else {
             loadMessagesFromMemory();
-            status = "chat";
+            setState(() {
+              status = "chat";
+            });
           }
           break;
         case "switchgroup":
@@ -277,7 +299,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             setState(() {
               insertMessage(message);
             });
-            Memory().addMessage(data['data']);
+            Memory().addMessage(message.id, data['data']);
           }
           break;
         case "banrequest":
@@ -365,6 +387,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                             color: Color(0xff6f61e8)));
                   case "chat":
                     return Chat(
+                      isTextMessageTextSelectable: false,
                       l10n: const ChatL10nFr(),
                       messages: _messages,
                       onSendPressed: sendMessage,
@@ -379,6 +402,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     return Stack(
                       children: [
                         Chat(
+                          isTextMessageTextSelectable: false,
                           l10n: const ChatL10nFr(),
                           messages: _messages,
                           onSendPressed: sendMessage,

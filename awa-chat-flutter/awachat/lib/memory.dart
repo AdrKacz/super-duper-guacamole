@@ -37,14 +37,31 @@ class Memory {
     }
   }
 
-  void addMessage(String? text) {
+  void addMessage(String? id, String? text) async {
     if (text == null) {
       return;
     }
 
-    lazyBoxMessages.add(text);
-    final int lastmessage = int.parse(boxUser.get("lastmessage") ?? "0");
-    boxUser.put("lastmessage", (lastmessage + 1).toString());
+    lazyBoxMessages.put(id, text);
+    // verify if message already exist (to no add to lasstmessage badly)
+    String? data = await lazyBoxMessages.get(id);
+    if (data == null) {
+      final int lastmessage = int.parse(boxUser.get("lastmessage") ?? "0");
+      boxUser.put("lastmessage", (lastmessage + 1).toString());
+    }
+  }
+
+  void deleteMessage(String? id) async {
+    if (id == null) {
+      return;
+    }
+    // verify message exist (to no reduce lastmessage badly)
+    String? data = await lazyBoxMessages.get(id);
+    if (data != null) {
+      lazyBoxMessages.delete(id);
+      final int lastmessage = int.parse(boxUser.get("lastmessage") ?? "0");
+      boxUser.put("lastmessage", (lastmessage - 1).toString());
+    }
   }
 
   Future<List<types.Message>> loadMessages() async {
