@@ -2,15 +2,15 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:awachat/pages/presentation.dart';
-import 'package:awachat/userdrawer.dart';
+import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
-import 'package:awachat/notificationhandler.dart';
+import 'package:awachat/notification_handler.dart';
 import 'package:awachat/pages/error.dart';
-import 'package:awachat/websocketconnection.dart';
+import 'package:awachat/web_socket_connection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
@@ -49,6 +49,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void setAppState(String newAppState) {
+    Memory().put('user', 'appState', newAppState);
     setState(() {
       state = newAppState;
     });
@@ -75,14 +76,6 @@ class _MyAppState extends State<MyApp> {
         }
       },
     ));
-  }
-
-  @override
-  void dispose() {
-    // save app state
-    Memory().put('user', 'appState', state);
-    print('Saved state $state');
-    super.dispose();
   }
 }
 // ===== ===== =====
