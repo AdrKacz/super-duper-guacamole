@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:awachat/pages/presentation.dart';
 import 'package:awachat/userdrawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,7 +15,7 @@ import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
-import 'package:awachat/pages/agreements/agreements.dart';
+import 'package:awachat/pages/agreements.dart';
 
 // ===== ===== =====
 // App initialisation
@@ -36,44 +37,52 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // State
-  late bool hasSignedAgreements;
+  // State {presentation, agreements, main}
+  late String state;
 
   @override
   void initState() {
     super.initState();
 
-    hasSignedAgreements = false;
-    String? savedHasSignedAgreements =
-        Memory().get('user', 'hasSignedAgreements');
-    if (savedHasSignedAgreements != null &&
-        savedHasSignedAgreements == "true") {
-      hasSignedAgreements = true;
-    }
+    // retreive app state
+    state = Memory().get('user', 'appState') ?? "presentation";
+  }
+
+  void setAppState(String newAppState) {
+    setState(() {
+      state = newAppState;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (hasSignedAgreements) {
-      return MaterialApp(
-        home: MainPage(unsignAgreements: () {
-          setState(() {
-            hasSignedAgreements = false;
-          });
-          Memory().put('user', 'hasSignedAgreements', "false");
-        }),
-      );
-    } else {
-      return MaterialApp(
-        home: AgreementPage(signAgreements: () {
-          print("Sign Agreements");
-          setState(() {
-            hasSignedAgreements = true;
-          });
-          Memory().put('user', 'hasSignedAgreements', "true");
-        }),
-      );
+    if (state == 'agreements' &&
+        Memory().get('user', 'hasSignedAgreements') == "true") {
+      state = 'main';
     }
+    return MaterialApp(home: Builder(
+      builder: (BuildContext context) {
+        switch (state) {
+          case 'presentation':
+            return PresentationPage(setAppState: setAppState);
+          case 'agreements':
+            return AgreementsPage(setAppState: setAppState);
+          case 'main':
+            return MainPage(setAppState: setAppState);
+          default:
+            print('Unknown state $state');
+            return const Placeholder();
+        }
+      },
+    ));
+  }
+
+  @override
+  void dispose() {
+    // save app state
+    Memory().put('user', 'appState', state);
+    print('Saved state $state');
+    super.dispose();
   }
 }
 // ===== ===== =====
@@ -96,9 +105,9 @@ const Map<String, String> groupNames = {
 
 // Main Page
 class MainPage extends StatefulWidget {
-  const MainPage({Key? key, required this.unsignAgreements}) : super(key: key);
+  const MainPage({Key? key, required this.setAppState}) : super(key: key);
 
-  final VoidCallback? unsignAgreements;
+  final Function setAppState;
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -114,8 +123,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   // App state (lifecycle)
   AppLifecycleState? _notification;
 
-  // Status
-  String status = "idle";
+  // State
+  String state = "idle";
 
   // Acknowledge ban
   void acknowledgeBan(
@@ -273,12 +282,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           if (User().groupid == "") {
             _webSocketConnection.switchgroup();
             setState(() {
-              status = "chat";
+              state = "chat";
             });
           } else {
             loadMessagesFromMemory();
             setState(() {
-              status = "chat";
+              state = "chat";
             });
           }
           break;
@@ -288,7 +297,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           setState(() {
             _messages
                 .clear(); // clear here too if switchgroup without user asked to (ban)
-            status = "chat";
+            state = "chat";
           });
           break;
         case "sendmessage":
@@ -316,13 +325,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         default:
           print("\tAction ${data['action']} not recognised.");
           setState(() {
-            status = "";
+            state = "";
           });
       }
     }, onDone: () {
       if (mounted) {
         setState(() {
-          status = "disconnected";
+          state = "disconnected";
         });
       }
     }, cancelOnError: true);
@@ -340,23 +349,23 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (status == "disconnected" &&
+    if (state == "disconnected" &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
-      status = "reconnect";
+      state = "reconnect";
       _webSocketConnection.reconnect();
       _webSocketConnection.register();
       listenStream();
     }
-    print("Status: $status");
+    print("State: $state");
     return Scaffold(
         drawer: UserDrawer(
           seeIntroduction: () {
-            widget.unsignAgreements!();
+            widget.setAppState('presentation');
           },
           resetAccount: () async {
             await Memory().clear();
             await User().init();
-            widget.unsignAgreements!();
+            widget.setAppState('presentation');
           },
         ),
         appBar: AppBar(
@@ -384,7 +393,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     _webSocketConnection.switchgroup();
                     setState(() {
                       _messages.clear();
-                      status = "switch";
+                      state = "switch";
                     });
                   },
                   icon: const Icon(Icons.door_front_door_outlined)),
@@ -393,7 +402,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             bottom: false,
             child: Builder(
               builder: (BuildContext context) {
-                switch (status) {
+                switch (state) {
                   case "idle":
                     return const Center(
                         child: CircularProgressIndicator(

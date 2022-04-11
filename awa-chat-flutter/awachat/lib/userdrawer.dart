@@ -45,7 +45,7 @@ class UserDrawer extends StatelessWidget {
                       title: const Text("Attention"),
                       content: const SingleChildScrollView(
                         child: Text(
-                            'Es-tu sûr que tu veux supprimer tout ce qui te concernes ? Tu ne pourras pas faire marche arrière.'),
+                            'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
                       ),
                       actions: [
                         TextButton(
