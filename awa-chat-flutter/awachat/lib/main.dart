@@ -273,7 +273,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           if (User().groupid == "") {
             _webSocketConnection.switchgroup();
             setState(() {
-              status = "chat";
+              _messages.clear();
+              status = "switch";
             });
           } else {
             loadMessagesFromMemory();
