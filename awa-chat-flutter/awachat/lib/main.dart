@@ -196,6 +196,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       case "report":
         await mailToReportMessage(_messages, message);
         break;
+      case 'delete':
+        // remove the message locally
+        setState(() {
+          _messages.remove(message);
+        });
+        // remove the message in memory
+        Memory().deleteMessage(message.id);
+        break;
       default:
         print("dismiss");
     }
@@ -242,6 +250,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> loadedMessages = await Memory().loadMessages();
+    print('Loaded messages length: ${loadedMessages.length}');
+    setState(() {
+      _messages.clear();
+    });
     for (final types.Message loadedMessage in loadedMessages) {
       setState(() {
         insertMessage(loadedMessage, false);
@@ -260,10 +272,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // Get group (register on load)
           if (User().groupid == "") {
             _webSocketConnection.switchgroup();
-            status = "switching";
+            setState(() {
+              status = "chat";
+            });
           } else {
             loadMessagesFromMemory();
-            status = "chat";
+            setState(() {
+              status = "chat";
+            });
           }
           break;
         case "switchgroup":
@@ -282,7 +298,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             setState(() {
               insertMessage(message);
             });
-            Memory().addMessage(data['data']);
+            Memory().addMessage(message.id, data['data']);
           }
           break;
         case "banrequest":
