@@ -171,7 +171,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
     print("Found message $messageid:\n$message");
 
-    HapticFeedback.lightImpact();
+    HapticFeedback.mediumImpact();
     switch (await banActionOnMessage(context, message)) {
       case 'confirmed':
         print('Ban confirmed');
@@ -188,7 +188,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
-    HapticFeedback.lightImpact();
+    HapticFeedback.mediumImpact();
     switch (await reportActionOnMessage(context)) {
       case "ban":
         _webSocketConnection.banrequest(message.author.id, message.id);
@@ -216,7 +216,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   // Insert message (sort by date - O(n))
   // TODO: O(log(n))
-  void insertMessage(types.Message message) {
+  void insertMessage(types.Message message, [bool? useHaptic]) {
+    useHaptic ??= true;
+    if (useHaptic && message.status == types.Status.delivered) {
+      HapticFeedback.lightImpact();
+    }
+
     if (_messages.isEmpty) {
       _messages.add(message);
       return;
@@ -239,7 +244,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final List<types.Message> loadedMessages = await Memory().loadMessages();
     for (final types.Message loadedMessage in loadedMessages) {
       setState(() {
-        insertMessage(loadedMessage);
+        insertMessage(loadedMessage, false);
       });
     }
   }
@@ -365,6 +370,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                             color: Color(0xff6f61e8)));
                   case "chat":
                     return Chat(
+                      isTextMessageTextSelectable: false,
                       l10n: const ChatL10nFr(),
                       messages: _messages,
                       onSendPressed: sendMessage,
@@ -379,6 +385,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     return Stack(
                       children: [
                         Chat(
+                          isTextMessageTextSelectable: false,
                           l10n: const ChatL10nFr(),
                           messages: _messages,
                           onSendPressed: sendMessage,
