@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:awachat/userdrawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -122,7 +123,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     String title = "";
     switch (status) {
       case 'confirmed':
-        if (banneduserid == User().user.id) {
+        if (banneduserid == User().id) {
           title = "Tu viens de te faire banir du groupe";
         } else {
           title = 'La personne a été banie du groupe';
@@ -319,9 +320,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           });
       }
     }, onDone: () {
-      setState(() {
-        status = "disconnected";
-      });
+      if (mounted) {
+        setState(() {
+          status = "disconnected";
+        });
+      }
     }, cancelOnError: true);
   }
 
@@ -346,33 +349,45 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
     print("Status: $status");
     return Scaffold(
+        drawer: UserDrawer(
+          seeIntroduction: () {
+            widget.unsignAgreements!();
+          },
+          resetAccount: () async {
+            await Memory().clear();
+            await User().init();
+            widget.unsignAgreements!();
+          },
+        ),
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),
             backgroundColor: const Color(0xfff5f5f7),
-            leading: CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0),
-                foregroundImage: NetworkImage(
-                    "https://avatars.dicebear.com/api/croodles-neutral/${User().user.id}.png")),
+            leading: Builder(
+              builder: (BuildContext context) {
+                return InkWell(
+                  onTap: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    foregroundImage: NetworkImage(
+                        "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
+                  ),
+                );
+              },
+            ),
             title: Text(groupNames[User().groupid] ?? ""),
             actions: <Widget>[
-              PopupMenuButton<int>(onSelected: (int result) {
-                if (result == 0) {
-                  _webSocketConnection.switchgroup();
-                  setState(() {
-                    _messages.clear();
-                    status = "switch";
-                  });
-                } else if (result == 1) {
-                  widget.unsignAgreements!();
-                }
-              }, itemBuilder: (BuildContext context) {
-                return [
-                  const PopupMenuItem<int>(
-                      value: 0, child: Text("Je veux changer de groupe")),
-                  const PopupMenuItem<int>(
-                      value: 1, child: Text("Je veux revoir la présentation")),
-                ];
-              })
+              IconButton(
+                  tooltip: "Changer de groupe",
+                  onPressed: () {
+                    _webSocketConnection.switchgroup();
+                    setState(() {
+                      _messages.clear();
+                      status = "switch";
+                    });
+                  },
+                  icon: const Icon(Icons.door_front_door_outlined)),
             ]),
         body: SafeArea(
             bottom: false,
@@ -396,7 +411,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                       messages: _messages,
                       onSendPressed: sendMessage,
                       onMessageLongPress: reportMessage,
-                      user: User().user,
+                      user: types.User(
+                          id: User().id,
+                          imageUrl:
+                              "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
                       theme: const DefaultChatTheme(
                           inputBackgroundColor: Color(0xfff5f5f7),
                           inputTextColor: Color(0xff1f1c38),
@@ -411,7 +429,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                           l10n: const ChatL10nFr(),
                           messages: _messages,
                           onSendPressed: sendMessage,
-                          user: User().user,
+                          user: types.User(
+                              id: User().id,
+                              imageUrl:
+                                  "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
                           theme: const DefaultChatTheme(
                               inputBackgroundColor: Color(0xfff5f5f7),
                               inputTextColor: Color(0xff1f1c38),

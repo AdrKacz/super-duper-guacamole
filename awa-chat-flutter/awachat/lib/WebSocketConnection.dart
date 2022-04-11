@@ -1,9 +1,7 @@
 import 'dart:convert';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
-import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
 
 class WebSocketConnection {
@@ -18,20 +16,19 @@ class WebSocketConnection {
   }
 
   void register() {
-    _channel.sink
-        .add(jsonEncode({"action": "register", "userid": User().user.id}));
+    _channel.sink.add(jsonEncode({"action": "register", "userid": User().id}));
   }
 
   void switchgroup() {
     User().resetGroup();
     _channel.sink
-        .add(jsonEncode({"action": "switchgroup", "userid": User().user.id}));
+        .add(jsonEncode({"action": "switchgroup", "userid": User().id}));
   }
 
   void sendmessage(String encodedMessage) {
     _channel.sink.add(jsonEncode({
       "action": "sendmessage",
-      "userid": User().user.id,
+      "userid": User().id,
       "groupid": User().groupid,
       "data": encodedMessage,
     }));
@@ -49,7 +46,7 @@ class WebSocketConnection {
   void banreply(String banneduserid, String status) {
     _channel.sink.add(jsonEncode({
       "action": "banreply",
-      "userid": User().user.id,
+      "userid": User().id,
       "banneduserid": banneduserid,
       "groupid": User().groupid,
       "status": status,

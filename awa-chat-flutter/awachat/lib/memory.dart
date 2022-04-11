@@ -37,6 +37,11 @@ class Memory {
     }
   }
 
+  Future<void> clear() async {
+    await boxUser.clear();
+    await lazyBoxMessages.clear();
+  }
+
   void addMessage(String? id, String? text) async {
     if (text == null) {
       return;
