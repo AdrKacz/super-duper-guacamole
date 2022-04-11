@@ -39,7 +39,10 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
       if (int.tryParse(data[1]) != null) {
         return types.TextMessage(
           status: status,
-          author: types.User(id: author),
+          author: types.User(
+              id: author,
+              imageUrl:
+                  "https://avatars.dicebear.com/api/croodles-neutral/$author.png"),
           createdAt: int.parse(createdAt),
           id: id,
           text: text,

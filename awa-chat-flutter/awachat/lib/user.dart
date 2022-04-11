@@ -41,11 +41,14 @@ class User {
   Future<void> init() async {
     String? userId = Memory().get('user', 'id');
     if (userId == null) {
-      user = types.User(id: const Uuid().v4());
-      Memory().put('user', 'id', user.id);
-    } else {
-      user = types.User(id: userId);
+      userId = const Uuid().v4();
+      Memory().put('user', 'id', userId);
     }
+
+    user = types.User(
+        id: userId,
+        imageUrl:
+            "https://avatars.dicebear.com/api/croodles-neutral/$userId.png");
     String? memoryGroupId = Memory().get('user', 'groupid');
     if (memoryGroupId != null) {
       _groupid = memoryGroupId;

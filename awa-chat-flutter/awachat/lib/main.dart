@@ -17,7 +17,6 @@ import 'package:awachat/pages/agreements/agreements.dart';
 
 // ===== ===== =====
 // App initialisation
-late types.User user;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -350,6 +349,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),
             backgroundColor: const Color(0xfff5f5f7),
+            leading: CircleAvatar(
+                backgroundColor: Colors.black.withOpacity(0),
+                foregroundImage: NetworkImage(
+                    "https://avatars.dicebear.com/api/croodles-neutral/${User().user.id}.png")),
             title: Text(groupNames[User().groupid] ?? ""),
             actions: <Widget>[
               PopupMenuButton<int>(onSelected: (int result) {
@@ -386,6 +389,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                             color: Color(0xff6f61e8)));
                   case "chat":
                     return Chat(
+                      showUserNames: true,
+                      showUserAvatars: true,
                       isTextMessageTextSelectable: false,
                       l10n: const ChatL10nFr(),
                       messages: _messages,
@@ -401,6 +406,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     return Stack(
                       children: [
                         Chat(
+                          showUserAvatars: true,
                           isTextMessageTextSelectable: false,
                           l10n: const ChatL10nFr(),
                           messages: _messages,
