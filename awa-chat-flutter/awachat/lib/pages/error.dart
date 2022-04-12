@@ -10,7 +10,7 @@ class ErrorPage extends StatelessWidget {
         child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-          Image.asset('assets/images/undraw_handcrafts_exclamation_mark.png'),
+          Image.asset('assets/images/undraw_warning_cyit.png'),
           const Text("Oups ! Il y a quelque chose d'anormal."),
         ]));
   }

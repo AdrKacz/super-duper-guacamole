@@ -11,7 +11,7 @@ class SlideContainer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Center(
-        child: child,
+        child: SingleChildScrollView(child: child),
       ),
     );
   }
@@ -30,7 +30,28 @@ class Slide extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Image.asset(assetPath),
+        const Divider(height: 48),
         Text(text, textAlign: TextAlign.center),
+      ],
+    ));
+  }
+}
+
+class CustomSlide extends StatelessWidget {
+  const CustomSlide({Key? key, required this.child, required this.assetPath})
+      : super(key: key);
+
+  final Widget child;
+  final String assetPath;
+  @override
+  Widget build(BuildContext context) {
+    return SlideContainer(
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset(assetPath),
+        const Divider(height: 48),
+        child,
       ],
     ));
   }
@@ -57,7 +78,9 @@ class SlideWithButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Image.asset(assetPath),
+        const Divider(height: 48),
         Text(text, textAlign: TextAlign.center),
+        const Divider(height: 48),
         ElevatedButton(
             onPressed: onPressed,
             child: Text(buttonText),
