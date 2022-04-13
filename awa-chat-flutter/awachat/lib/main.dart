@@ -276,7 +276,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             _webSocketConnection.switchgroup();
             setState(() {
               _messages.clear();
-              status = "switch";
+              state = "switch";
             });
           } else {
             loadMessagesFromMemory();
