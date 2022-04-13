@@ -65,9 +65,9 @@ class _MyAppState extends State<MyApp> {
       builder: (BuildContext context) {
         switch (state) {
           case 'presentation':
-            return PresentationPage(setAppState: setAppState);
+            return Presentation(setAppState: setAppState);
           case 'agreements':
-            return AgreementsPage(setAppState: setAppState);
+            return Agreements(setAppState: setAppState);
           case 'main':
             return MainPage(setAppState: setAppState);
           default:

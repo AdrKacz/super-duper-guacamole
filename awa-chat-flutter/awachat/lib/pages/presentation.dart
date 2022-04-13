@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:awachat/pages/slide.dart';
 
-class PresentationPage extends StatelessWidget {
-  const PresentationPage({Key? key, required this.setAppState})
-      : super(key: key);
+class Presentation extends StatelessWidget {
+  const Presentation({Key? key, required this.setAppState}) : super(key: key);
 
   final Function setAppState;
 
