@@ -50,7 +50,7 @@ Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne 
 Un verre en terrasse, une expo', une balade au soleil, il y a toujours de quoi faire.""",
           assetPath: 'assets/images/undraw_having_fun_re_vj4h.png'),
       SlideWithButton(
-          text: "Tu as hâte à faire des rencontres ?",
+          text: "Tu as hâte de faire des rencontres ?",
           assetPath: 'assets/images/undraw_joyride_re_968t.png',
           buttonText: "C'est parti !",
           onPressed: () {
