@@ -452,7 +452,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
                   default:
-                    return const ErrorPage();
+                    return ErrorPage(
+                      refresh: () {
+                        _webSocketConnection.close();
+                        _webSocketConnection.reconnect();
+                        _webSocketConnection.register();
+                        listenStream();
+                      },
+                    );
                 }
               },
             )));
