@@ -82,6 +82,7 @@ flutter:
     - assets/images/undraw_warning_cyit.png
     - assets/images/undraw_joyride_re_968t.png
     - assets/images/undraw_login_re_4vu2.png
+    - assets/images/undraw_void_-3-ggu.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

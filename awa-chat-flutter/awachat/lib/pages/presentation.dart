@@ -17,8 +17,15 @@ Je vais te présenter l'application.
         assetPath: 'assets/images/undraw_super_woman_dv-0-y.png',
       ),
       const Slide(
-          text: "Je vais te faire entrer dans un groupe de conversation.",
+          text: """Je vais te faire entrer dans un groupe de conversation.
+  
+Je t'alerterai quand les gens parleront sur la conversation.""",
           assetPath: 'assets/images/undraw_social_interaction_re_dyjh.png'),
+      const Slide(
+          text: """Je n'enregistre aucun de tes messages.
+          
+Si tu n'es pas là pour les recevoir, tu ne les verras pas.""",
+          assetPath: 'assets/images/undraw_void_-3-ggu.png'),
       const CustomSlide(
           child: Text.rich(
             TextSpan(
