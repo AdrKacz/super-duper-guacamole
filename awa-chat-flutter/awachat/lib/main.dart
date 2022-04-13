@@ -1,23 +1,24 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:awachat/pages/presentation.dart';
+import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
-import 'package:awachat/notificationhandler.dart';
+import 'package:awachat/notification_handler.dart';
 import 'package:awachat/pages/error.dart';
-import 'package:awachat/websocketconnection.dart';
+import 'package:awachat/web_socket_connection.dart';
 import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
-import 'package:awachat/pages/agreements/agreements.dart';
+import 'package:awachat/pages/agreements.dart';
 
 // ===== ===== =====
 // App initialisation
-late types.User user;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -36,44 +37,45 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // State
-  late bool hasSignedAgreements;
+  // State {presentation, agreements, main}
+  late String state;
 
   @override
   void initState() {
     super.initState();
 
-    hasSignedAgreements = false;
-    String? savedHasSignedAgreements =
-        Memory().get('user', 'hasSignedAgreements');
-    if (savedHasSignedAgreements != null &&
-        savedHasSignedAgreements == "true") {
-      hasSignedAgreements = true;
-    }
+    // retreive app state
+    state = Memory().get('user', 'appState') ?? "presentation";
+  }
+
+  void setAppState(String newAppState) {
+    Memory().put('user', 'appState', newAppState);
+    setState(() {
+      state = newAppState;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (hasSignedAgreements) {
-      return MaterialApp(
-        home: MainPage(unsignAgreements: () {
-          setState(() {
-            hasSignedAgreements = false;
-          });
-          Memory().put('user', 'hasSignedAgreements', "false");
-        }),
-      );
-    } else {
-      return MaterialApp(
-        home: AgreementPage(signAgreements: () {
-          print("Sign Agreements");
-          setState(() {
-            hasSignedAgreements = true;
-          });
-          Memory().put('user', 'hasSignedAgreements', "true");
-        }),
-      );
+    if (state == 'agreements' &&
+        Memory().get('user', 'hasSignedAgreements') == "true") {
+      state = 'main';
     }
+    return MaterialApp(home: Builder(
+      builder: (BuildContext context) {
+        switch (state) {
+          case 'presentation':
+            return Presentation(setAppState: setAppState);
+          case 'agreements':
+            return Agreements(setAppState: setAppState);
+          case 'main':
+            return MainPage(setAppState: setAppState);
+          default:
+            print('Unknown state $state');
+            return const Placeholder();
+        }
+      },
+    ));
   }
 }
 // ===== ===== =====
@@ -96,9 +98,9 @@ const Map<String, String> groupNames = {
 
 // Main Page
 class MainPage extends StatefulWidget {
-  const MainPage({Key? key, required this.unsignAgreements}) : super(key: key);
+  const MainPage({Key? key, required this.setAppState}) : super(key: key);
 
-  final VoidCallback? unsignAgreements;
+  final Function setAppState;
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -114,8 +116,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   // App state (lifecycle)
   AppLifecycleState? _notification;
 
-  // Status
-  String status = "idle";
+  // State
+  String state = "idle";
 
   // Acknowledge ban
   void acknowledgeBan(
@@ -123,7 +125,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     String title = "";
     switch (status) {
       case 'confirmed':
-        if (banneduserid == User().user.id) {
+        if (banneduserid == User().id) {
           title = "Tu viens de te faire banir du groupe";
         } else {
           title = 'La personne a été banie du groupe';
@@ -274,12 +276,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             _webSocketConnection.switchgroup();
             setState(() {
               _messages.clear();
-              status = "switch";
+              state = "switch";
             });
           } else {
             loadMessagesFromMemory();
             setState(() {
-              status = "chat";
+              state = "chat";
             });
           }
           break;
@@ -289,7 +291,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           setState(() {
             _messages
                 .clear(); // clear here too if switchgroup without user asked to (ban)
-            status = "chat";
+            state = "chat";
           });
           break;
         case "sendmessage":
@@ -317,13 +319,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         default:
           print("\tAction ${data['action']} not recognised.");
           setState(() {
-            status = "";
+            state = "";
           });
       }
     }, onDone: () {
-      setState(() {
-        status = "disconnected";
-      });
+      if (mounted) {
+        setState(() {
+          state = "disconnected";
+        });
+      }
     }, cancelOnError: true);
   }
 
@@ -339,44 +343,60 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (status == "disconnected" &&
+    if (state == "disconnected" &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
-      status = "reconnect";
+      state = "reconnect";
       _webSocketConnection.reconnect();
       _webSocketConnection.register();
       listenStream();
     }
-    print("Status: $status");
+    print("State: $state");
     return Scaffold(
+        drawer: UserDrawer(
+          seeIntroduction: () {
+            widget.setAppState('presentation');
+          },
+          resetAccount: () async {
+            await Memory().clear();
+            await User().init();
+            widget.setAppState('presentation');
+          },
+        ),
         appBar: AppBar(
             foregroundColor: const Color(0xff6f61e8),
             backgroundColor: const Color(0xfff5f5f7),
+            leading: Builder(
+              builder: (BuildContext context) {
+                return InkWell(
+                  onTap: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    foregroundImage: NetworkImage(
+                        "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
+                  ),
+                );
+              },
+            ),
             title: Text(groupNames[User().groupid] ?? ""),
             actions: <Widget>[
-              PopupMenuButton<int>(onSelected: (int result) {
-                if (result == 0) {
-                  _webSocketConnection.switchgroup();
-                  setState(() {
-                    _messages.clear();
-                    status = "switch";
-                  });
-                } else if (result == 1) {
-                  widget.unsignAgreements!();
-                }
-              }, itemBuilder: (BuildContext context) {
-                return [
-                  const PopupMenuItem<int>(
-                      value: 0, child: Text("Je veux changer de groupe")),
-                  const PopupMenuItem<int>(
-                      value: 1, child: Text("Je veux revoir la présentation")),
-                ];
-              })
+              IconButton(
+                  tooltip: "Changer de groupe",
+                  onPressed: () {
+                    _webSocketConnection.switchgroup();
+                    setState(() {
+                      _messages.clear();
+                      state = "switch";
+                    });
+                  },
+                  icon: const Icon(Icons.door_front_door_outlined)),
             ]),
         body: SafeArea(
             bottom: false,
             child: Builder(
               builder: (BuildContext context) {
-                switch (status) {
+                switch (state) {
                   case "idle":
                     return const Center(
                         child: CircularProgressIndicator(
@@ -387,12 +407,17 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                             color: Color(0xff6f61e8)));
                   case "chat":
                     return Chat(
+                      showUserNames: true,
+                      showUserAvatars: true,
                       isTextMessageTextSelectable: false,
                       l10n: const ChatL10nFr(),
                       messages: _messages,
                       onSendPressed: sendMessage,
                       onMessageLongPress: reportMessage,
-                      user: User().user,
+                      user: types.User(
+                          id: User().id,
+                          imageUrl:
+                              "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
                       theme: const DefaultChatTheme(
                           inputBackgroundColor: Color(0xfff5f5f7),
                           inputTextColor: Color(0xff1f1c38),
@@ -402,11 +427,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     return Stack(
                       children: [
                         Chat(
+                          showUserAvatars: true,
                           isTextMessageTextSelectable: false,
                           l10n: const ChatL10nFr(),
                           messages: _messages,
                           onSendPressed: sendMessage,
-                          user: User().user,
+                          user: types.User(
+                              id: User().id,
+                              imageUrl:
+                                  "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
                           theme: const DefaultChatTheme(
                               inputBackgroundColor: Color(0xfff5f5f7),
                               inputTextColor: Color(0xff1f1c38),
@@ -424,7 +453,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
                   default:
-                    return const ErrorPage();
+                    return ErrorPage(
+                      refresh: () {
+                        _webSocketConnection.close();
+                        _webSocketConnection.reconnect();
+                        _webSocketConnection.register();
+                        listenStream();
+                      },
+                    );
                 }
               },
             )));

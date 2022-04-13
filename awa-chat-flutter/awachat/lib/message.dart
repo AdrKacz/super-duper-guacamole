@@ -39,7 +39,10 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
       if (int.tryParse(data[1]) != null) {
         return types.TextMessage(
           status: status,
-          author: types.User(id: author),
+          author: types.User(
+              id: author,
+              imageUrl:
+                  "https://avatars.dicebear.com/api/croodles-neutral/$author.png"),
           createdAt: int.parse(createdAt),
           id: id,
           text: text,
@@ -52,7 +55,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
 }
 
 String messageEncode(types.PartialText partialText) {
-  final String author = User().user.id;
+  final String author = User().id;
   final int createdAt = DateTime.now().millisecondsSinceEpoch;
   final String id = randomString();
   final String text = partialText.text;
@@ -174,7 +177,7 @@ Future<void> mailToReportMessage(
             Ajoute tes remarques ici.
             --- --- ---
             
-            L'utilisateur ${User().user.id} signale le comportement de ${message.author.id}
+            L'utilisateur ${User().id} signale le comportement de ${message.author.id}
             Le message signalé est :
             --- --- ---
             ${message.toJson()}

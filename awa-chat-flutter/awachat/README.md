@@ -15,6 +15,18 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+## Add assets
+
+### From SVG
+
+```sh
+# at project root
+rsvg-convert -h 512 assets/undraw/image.svg > awa-chat-flutter/awachat/assets/images/image.png
+
+# or use script
+sh assets/convert.sh 512 image
+```
+
 ## Set up notications
 
 [**Add Firebase to your Flutter app**](https://firebase.google.com/docs/flutter/setup?platform=ios)
