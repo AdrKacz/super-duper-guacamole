@@ -17,7 +17,7 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
 
   // userid
-  // const userid = body.userid
+  const userid = body.userid
 
   // banneduserid
   const banneduserid = body.banneduserid
@@ -27,10 +27,6 @@ exports.handler = async (event) => {
 
   // messageid
   const messageid = body.messageid
-
-  // users
-  const users = await getUsers(GROUPS_TABLE_NAME, groupid, ddb)
-  console.log(`\tUsers:\n${JSON.stringify(users)}`)
 
   // get banned user if any
   const request = await ddb.get({
@@ -47,6 +43,19 @@ exports.handler = async (event) => {
     confirmedUsers = new Set(request.Item.confirmedUsers?.values)
     console.log(`\tVoting Users:\n${JSON.stringify(votingUsers)}`)
     console.log(`\tVoting Users:\n${JSON.stringify(confirmedUsers)}`)
+  }
+
+  // users
+  const users = await getUsers(GROUPS_TABLE_NAME, groupid, ddb)
+  console.log(`\tUsers:\n${JSON.stringify(users)}`)
+
+  // verify userid and banuserid are in group
+  if (!users.includes(userid) || !users.includes(banneduserid)) {
+    console.log(`\tUser ${userid} and Banned User ${banneduserid} are not both in group:\n${JSON.stringify(users)}`)
+    return {
+      statusCode: 200,
+      body: JSON.stringify('Ban request denied!')
+    }
   }
 
   // connectionIds

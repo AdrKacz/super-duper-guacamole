@@ -6,7 +6,7 @@ import 'package:awachat/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://hvxryd7s69.execute-api.eu-west-3.amazonaws.com/dev";
+      "wss://g10ttcw68f.execute-api.eu-west-3.amazonaws.com/dev";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -37,6 +37,7 @@ class WebSocketConnection {
   void banrequest(String userid, String messageid) {
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
+      "userid": User().id,
       "banneduserid": userid,
       "groupid": User().groupid,
       "messageid": messageid,
