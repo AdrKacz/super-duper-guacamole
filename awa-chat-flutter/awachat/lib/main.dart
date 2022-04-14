@@ -217,9 +217,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final types.Message? message =
         messageDecode(encodedMessage, types.Status.sending);
     if (message != null) {
-      setState(() {
-        insertMessage(message);
-      });
+      insertMessage(message);
       _webSocketConnection.sendmessage(encodedMessage);
     }
   }
@@ -233,21 +231,29 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
 
     if (_messages.isEmpty) {
-      _messages.add(message);
+      setState(() {
+        _messages.add(message);
+      });
       return;
     } else {
       for (int i = 0; i < _messages.length; i++) {
         if (message.createdAt! >= _messages[i].createdAt!) {
           if (message.id == _messages[i].id) {
-            _messages[i] = message;
+            setState(() {
+              _messages[i] = message;
+            });
           } else {
-            _messages.insert(i, message);
+            setState(() {
+              _messages.insert(i, message);
+            });
           }
           return;
         }
       }
     }
-    _messages.add(message);
+    setState(() {
+      _messages.add(message);
+    });
   }
 
   Future<void> loadMessagesFromMemory() async {
@@ -257,9 +263,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       _messages.clear();
     });
     for (final types.Message loadedMessage in loadedMessages) {
-      setState(() {
-        insertMessage(loadedMessage, false);
-      });
+      insertMessage(loadedMessage, false);
     }
   }
 
@@ -280,15 +284,19 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // past messages
           loadMessagesFromMemory();
 
-          // missed messages
-          final List unreadMessages = data['unread'];
-          for (final unreadMessage in unreadMessages) {
-            processMessage(jsonEncode(unreadMessage));
-          }
-
           // state
           setState(() {
             state = "chat";
+          });
+
+          // NOTE: why to I need to wait? Bigest mistery of the universe
+          // I need to ALREADY be in chat state to update _messages
+          // Don't really know why ... deserve investigation
+          Future.delayed(const Duration(milliseconds: 50), () {
+            // missed messages
+            for (final unreadMessage in data['unread']) {
+              processMessage(jsonEncode(unreadMessage));
+            }
           });
         }
         break;
@@ -305,9 +313,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         print('\tData: ${data['data']}');
         types.Message? message = messageDecode(data['data']);
         if (message != null) {
-          setState(() {
-            insertMessage(message);
-          });
+          insertMessage(message);
           Memory().addMessage(message.id, data['data']);
         }
         break;
