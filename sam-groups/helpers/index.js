@@ -186,6 +186,9 @@ exports.switchGroup = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_T
       group: {
         Action: 'PUT',
         Value: groupid
+      },
+      unreadData: {
+        Action: 'DELETE'
       }
     }
   }).promise()
