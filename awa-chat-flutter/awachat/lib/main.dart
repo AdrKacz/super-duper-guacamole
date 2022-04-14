@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -262,66 +263,77 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
   }
 
-  // Stream listen
-  void listenStream() {
-    _webSocketConnection.stream.listen((message) {
-      print("Receives: $message");
-      final data = jsonDecode(message);
-      switch (data['action']) {
-        case "register":
-          print('\tRegister: ${data['status']}');
-          // Get group (register on load)
-          if (User().groupid == "") {
-            _webSocketConnection.switchgroup();
-            setState(() {
-              _messages.clear();
-              state = "switch";
-            });
-          } else {
-            loadMessagesFromMemory();
-            setState(() {
-              state = "chat";
-            });
-          }
-          break;
-        case "switchgroup":
-          print('\tGroup: ${data['groupid']}');
-          User().groupid = data['groupid'];
+  void processMessage(message) {
+    print("Receives: $message");
+    final data = jsonDecode(message);
+    switch (data['action']) {
+      case "register":
+        print('\tRegister: ${data['status']}');
+        // Get group (register on load)
+        if (User().groupid == "") {
+          _webSocketConnection.switchgroup();
           setState(() {
-            _messages
-                .clear(); // clear here too if switchgroup without user asked to (ban)
+            _messages.clear();
+            state = "switch";
+          });
+        } else {
+          // past messages
+          loadMessagesFromMemory();
+
+          // missed messages
+          final List unreadMessages = data['unread'];
+          for (final unreadMessage in unreadMessages) {
+            processMessage(jsonEncode(unreadMessage));
+          }
+
+          // state
+          setState(() {
             state = "chat";
           });
-          break;
-        case "sendmessage":
-          print('\tData: ${data['data']}');
-          types.Message? message = messageDecode(data['data']);
-          if (message != null) {
-            setState(() {
-              insertMessage(message);
-            });
-            Memory().addMessage(message.id, data['data']);
-          }
-          break;
-        case "banrequest":
-          print('\tBan request for: ${data['messageid']}');
-          banRequest(context, data['messageid']);
-          break;
-        case "banconfirmed":
-          print('\tBan confirmed for: ${data['banneduserid']}');
-          acknowledgeBan(context, 'confirmed', data['banneduserid']);
-          break;
-        case "bandenied":
-          print('\tBan denied for: ${data['banneduserid']}');
-          acknowledgeBan(context, 'denied', data['banneduserid']);
-          break;
-        default:
-          print("\tAction ${data['action']} not recognised.");
+        }
+        break;
+      case "switchgroup":
+        print('\tGroup: ${data['groupid']}');
+        User().groupid = data['groupid'];
+        setState(() {
+          _messages
+              .clear(); // clear here too if switchgroup without user asked to (ban)
+          state = "chat";
+        });
+        break;
+      case "sendmessage":
+        print('\tData: ${data['data']}');
+        types.Message? message = messageDecode(data['data']);
+        if (message != null) {
           setState(() {
-            state = "";
+            insertMessage(message);
           });
-      }
-    }, onDone: () {
+          Memory().addMessage(message.id, data['data']);
+        }
+        break;
+      case "banrequest":
+        print('\tBan request for: ${data['messageid']}');
+        banRequest(context, data['messageid']);
+        break;
+      case "banconfirmed":
+        print('\tBan confirmed for: ${data['banneduserid']}');
+        acknowledgeBan(context, 'confirmed', data['banneduserid']);
+        break;
+      case "bandenied":
+        print('\tBan denied for: ${data['banneduserid']}');
+        acknowledgeBan(context, 'denied', data['banneduserid']);
+        break;
+      default:
+        print("\tAction ${data['action']} not recognised.");
+        setState(() {
+          state = "";
+        });
+    }
+  }
+
+  // Stream listen
+  void listenStream() {
+    _webSocketConnection.stream.listen(processMessage, onDone: () {
       if (mounted) {
         setState(() {
           state = "disconnected";

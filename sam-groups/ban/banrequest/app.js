@@ -2,7 +2,7 @@
 
 const AWS = require('aws-sdk')
 
-const { getConnectionId, sendToConnectionId, getUsers } = require('helpers')
+const { getConnectionIds, sendToConnectionId, getUsers } = require('helpers')
 
 const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, CONFIRMATION_REQUIRED_STRING, AWS_REGION } = process.env
 
@@ -60,7 +60,7 @@ exports.handler = async (event) => {
 
   // connectionIds
   // TODO: verify userid and banuserid are in group
-  const connectionIds = await getConnectionId(USERS_TABLE_NAME, users, ddb)
+  const connectionIds = await getConnectionIds(USERS_TABLE_NAME, users, ddb)
   console.log(`\tConnection ids:\n${JSON.stringify(connectionIds)}`)
 
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({

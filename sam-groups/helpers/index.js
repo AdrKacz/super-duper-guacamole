@@ -17,7 +17,7 @@ exports.getUsers = async (GROUPS_TABLE_NAME, groupid, ddb) => {
 }
 
 // connectionIds in a group
-exports.getConnectionId = async (USERS_TABLE_NAME, users, ddb) => {
+exports.getConnectionIds = async (USERS_TABLE_NAME, users, ddb) => {
   // connectionIds
   const groupusers = await ddb.batchGet({
     RequestItems: {
@@ -28,6 +28,56 @@ exports.getConnectionId = async (USERS_TABLE_NAME, users, ddb) => {
     }
   }).promise()
   return groupusers.Responses[USERS_TABLE_NAME].filter(({ connectionId }) => connectionId !== undefined)
+}
+
+exports.sendToUsers = async (USERS_TABLE_NAME, users, apigwManagementApi, ddb, Data) => {
+  console.log(`Send Data:\n${JSON.stringify(Data)}\nTo users:\n${JSON.stringify(users)}`)
+
+  const request = await ddb.batchGet({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: users.map(u => ({ id: u })),
+        AttributesToGet: ['id', 'connectionId']
+      }
+    }
+  }).promise()
+
+  console.log(`Request:\n${JSON.stringify(request)}`)
+
+  const usersConnectionIds = request.Responses[USERS_TABLE_NAME]
+
+  return usersConnectionIds.map(async ({ id, connectionId }) => {
+    try {
+      console.log(`<${id}> + ConnectionId <${connectionId}>`)
+      if (connectionId === undefined) {
+        const error = Error(`Connection Id of user <${id}> is not defined.`)
+        error.statusCode = 410 // to be handle
+        throw error
+      }
+      await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify(Data) }).promise()
+    } catch (e) {
+      console.log(`<${id}> ++ Did not succeed, error ${e.statusCode}:\n${JSON.stringify(e)}`)
+      if (e.statusCode === 410) {
+        console.log(`<${id}> +++ Found stale connection, deleting ${connectionId} and add Data to remaining message for user ${id}`)
+        // NOTE: could use BatchWrite instead
+        await ddb.update({
+          TableName: USERS_TABLE_NAME,
+          Key: { id: id },
+          AttributeUpdates: {
+            connectionId: {
+              Action: 'DELETE'
+            },
+            unreadData: {
+              Action: 'ADD',
+              Value: [Data]
+            }
+          }
+        }).promise()
+      } else {
+        throw e
+      }
+    }
+  })
 }
 
 // send a message to a connection over an api web socket and update connection if not found
@@ -168,7 +218,7 @@ exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAM
   const users = await exports.getUsers(GROUPS_TABLE_NAME, groupid, ddb)
 
   // connectionIds
-  const connectionIds = await exports.getConnectionId(USERS_TABLE_NAME, users, ddb)
+  const connectionIds = await exports.getConnectionIds(USERS_TABLE_NAME, users, ddb)
   console.log(`\tConnection ids:\n${JSON.stringify(connectionIds)}`)
 
   let Data
