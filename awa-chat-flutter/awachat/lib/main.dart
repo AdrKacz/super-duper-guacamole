@@ -1,17 +1,16 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:awachat/pages/custom_chat.dart';
 import 'package:awachat/pages/presentation.dart';
 import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 import 'package:awachat/notification_handler.dart';
 import 'package:awachat/pages/error.dart';
 import 'package:awachat/web_socket_connection.dart';
-import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
@@ -406,41 +405,17 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
                   case "chat":
-                    return Chat(
-                      showUserNames: true,
-                      showUserAvatars: true,
-                      isTextMessageTextSelectable: false,
-                      l10n: const ChatL10nFr(),
-                      messages: _messages,
-                      onSendPressed: sendMessage,
-                      onMessageLongPress: reportMessage,
-                      user: types.User(
-                          id: User().id,
-                          imageUrl:
-                              "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
-                      theme: const DefaultChatTheme(
-                          inputBackgroundColor: Color(0xfff5f5f7),
-                          inputTextColor: Color(0xff1f1c38),
-                          inputTextCursorColor: Color(0xff9e9cab)),
-                    );
+                    return CustomChat(
+                        messages: _messages,
+                        onSendPressed: sendMessage,
+                        onMessageLongPress: reportMessage);
                   case "disconnected":
                     return Stack(
                       children: [
-                        Chat(
-                          showUserAvatars: true,
-                          isTextMessageTextSelectable: false,
-                          l10n: const ChatL10nFr(),
-                          messages: _messages,
-                          onSendPressed: sendMessage,
-                          user: types.User(
-                              id: User().id,
-                              imageUrl:
-                                  "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
-                          theme: const DefaultChatTheme(
-                              inputBackgroundColor: Color(0xfff5f5f7),
-                              inputTextColor: Color(0xff1f1c38),
-                              inputTextCursorColor: Color(0xff9e9cab)),
-                        ),
+                        CustomChat(
+                            messages: _messages,
+                            onSendPressed: sendMessage,
+                            onMessageLongPress: reportMessage),
                         Positioned.fill(
                             child: BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),

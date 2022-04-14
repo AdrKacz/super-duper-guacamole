@@ -33,12 +33,12 @@ exports.getConnectionId = async (USERS_TABLE_NAME, users, ddb) => {
 // send a message to a connection over an api web socket and update connection if not found
 exports.sendToConnectionId = async (USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, Data) => {
   try {
-    console.log(`Try connection ${connectionId}`)
+    console.log(`Try to send to ${connectionId}:\n${JSON.stringify(Data)}`)
     await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify(Data) }).promise()
     return { userid: userid }
   } catch (e) {
     if (e.statusCode === 410) {
-      console.log(`Found stale connection, deleting ${connectionId}`)
+      console.log(`\tFound stale connection, deleting ${connectionId}`)
       await ddb.update({
         TableName: USERS_TABLE_NAME,
         Key: { id: userid },
