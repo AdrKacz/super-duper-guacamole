@@ -220,10 +220,6 @@ exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAM
   // get groups before the switch (groups will change)
   const users = await exports.getUsers(GROUPS_TABLE_NAME, groupid, ddb)
 
-  // connectionIds
-  const connectionIds = await exports.getConnectionIds(USERS_TABLE_NAME, users, ddb)
-  console.log(`\tConnection ids:\n${JSON.stringify(connectionIds)}`)
-
   let Data
   let banneduser
   switch (status) {
@@ -253,5 +249,5 @@ exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAM
       throw Error('status not allowed')
   }
 
-  return { connectionIds, banneduser, Data }
+  return { users, banneduser, Data }
 }

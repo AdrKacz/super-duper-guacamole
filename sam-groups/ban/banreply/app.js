@@ -2,7 +2,7 @@
 
 const AWS = require('aws-sdk')
 
-const { sendToConnectionId, ban } = require('helpers')
+const { sendToConnectionId, ban, sendToUsers } = require('helpers')
 
 const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, AWS_REGION } = process.env
 
@@ -130,24 +130,20 @@ exports.handler = async (event) => {
     })
 
     // resolve the ban (depending on the status)
-    const { connectionIds, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb)
+    const { users, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb)
 
-    let usedConnectionIds = connectionIds
+    let usedUsers = users
     if (banstatus === 'denied') {
       // don't inform user he/she was in a ban vote
-      usedConnectionIds = usedConnectionIds.filter(({ id }) => id !== banneduserid)
+      usedUsers = users.filter((id) => id !== banneduserid)
     }
 
-    const postCalls = usedConnectionIds.map(async ({ id, connectionId }) => {
-      await sendToConnectionId(USERS_TABLE_NAME, id, connectionId, apigwManagementApi, ddb, Data)
-    })
-
-    await Promise.all(postCalls)
+    await Promise.all(await sendToUsers(USERS_TABLE_NAME, usedUsers, apigwManagementApi, ddb, Data))
 
     if (banstatus === 'confirmed') {
       // inform banned user of his/her new group
       // NOTE: could create a custome signal switchgroupafterban
-      // (may be overengineering)
+      // (to inform the user where it has been moved to)
       await sendToConnectionId(USERS_TABLE_NAME, banneduser.userid, banneduser.connectionId, apigwManagementApi, ddb, { action: 'switchgroup', groupid: banneduser.groupid })
     }
   }
