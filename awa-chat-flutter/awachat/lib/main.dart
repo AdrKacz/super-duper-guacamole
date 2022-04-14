@@ -123,12 +123,38 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void acknowledgeBan(
       BuildContext context, String status, String banneduserid) {
     String title = "";
+    List<Widget> actions = [
+      TextButton(
+        child: const Text('Ok'),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      ),
+    ];
     switch (status) {
       case 'confirmed':
         if (banneduserid == User().id) {
           title = "Tu viens de te faire banir du groupe";
         } else {
           title = 'La personne a été banie du groupe';
+          actions.insert(
+              0,
+              TextButton(
+                child: const Text('Supprimer tous ses messages'),
+                onPressed: () {
+                  final List<types.Message> messagesToRemove = [];
+                  for (final types.Message e in _messages) {
+                    if (e.author.id == banneduserid) {
+                      messagesToRemove.add(e);
+                    }
+                  }
+                  for (final types.Message e in messagesToRemove) {
+                    deleteMessage(e);
+                  }
+
+                  Navigator.of(context).pop();
+                },
+              ));
         }
         break;
       case 'denied':
@@ -140,14 +166,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text(title),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Ok'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+            actions: actions,
           );
         });
   }
@@ -188,6 +207,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
   }
 
+  void deleteMessage(types.Message message) {
+    // remove the message locally
+    setState(() {
+      _messages.remove(message);
+    });
+    // remove the message in memory
+    Memory().deleteMessage(message.id);
+  }
+
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.mediumImpact();
@@ -199,12 +227,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         await mailToReportMessage(_messages, message);
         break;
       case 'delete':
-        // remove the message locally
-        setState(() {
-          _messages.remove(message);
-        });
-        // remove the message in memory
-        Memory().deleteMessage(message.id);
+        deleteMessage(message);
         break;
       default:
         print("dismiss");
