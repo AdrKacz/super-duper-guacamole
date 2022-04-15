@@ -2,8 +2,6 @@ import 'package:awachat/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:awachat/pages/slide.dart';
-
 class Agreements extends StatelessWidget {
   const Agreements({Key? key, required this.setAppState}) : super(key: key);
 
@@ -82,7 +80,6 @@ class _AgreementsPageState extends State<AgreementsPage> {
             future: text,
             builder: (BuildContext context, AsyncSnapshot snapshot) {
               if (snapshot.hasData) {
-                print(snapshot.data.body);
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

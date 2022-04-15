@@ -22,23 +22,34 @@ exports.handler = async (event) => {
 
   // update user
   console.log(`Try update users:id:${userid}`)
-  await ddb.update({
+  const request = await ddb.update({
+    ReturnValues: 'ALL_OLD',
     TableName: USERS_TABLE_NAME,
     Key: { id: userid },
     AttributeUpdates: {
       connectionId: {
         Action: 'PUT',
         Value: event.requestContext.connectionId
+      },
+      unreadData: {
+        Action: 'DELETE'
       }
     }
   }).promise()
+
+  console.log(`Get user:\n${JSON.stringify(request)}`)
+
+  const unreadData = []
+  if (request.Attributes !== undefined && request.Attributes.unreadData !== undefined) {
+    unreadData.push(...request.Attributes.unreadData)
+  }
 
   // return
   const apigwManagementApi = new AWS.ApiGatewayManagementApi({
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   })
 
-  await sendToConnectionId(USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, { action: 'register', status: 'success' })
+  await sendToConnectionId(USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, { action: 'register', status: 'success', unread: unreadData })
 
   // debug
   const response = {

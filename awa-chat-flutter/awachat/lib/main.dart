@@ -1,17 +1,17 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:awachat/pages/custom_chat.dart';
 import 'package:awachat/pages/presentation.dart';
 import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
 import 'package:awachat/notification_handler.dart';
 import 'package:awachat/pages/error.dart';
 import 'package:awachat/web_socket_connection.dart';
-import 'package:awachat/flyer/l10n.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/memory.dart';
 import 'package:awachat/user.dart';
@@ -123,12 +123,38 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void acknowledgeBan(
       BuildContext context, String status, String banneduserid) {
     String title = "";
+    List<Widget> actions = [
+      TextButton(
+        child: const Text('Ok'),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      ),
+    ];
     switch (status) {
       case 'confirmed':
         if (banneduserid == User().id) {
           title = "Tu viens de te faire banir du groupe";
         } else {
           title = 'La personne a été banie du groupe';
+          actions.insert(
+              0,
+              TextButton(
+                child: const Text('Supprimer tous ses messages'),
+                onPressed: () {
+                  final List<types.Message> messagesToRemove = [];
+                  for (final types.Message e in _messages) {
+                    if (e.author.id == banneduserid) {
+                      messagesToRemove.add(e);
+                    }
+                  }
+                  for (final types.Message e in messagesToRemove) {
+                    deleteMessage(e);
+                  }
+
+                  Navigator.of(context).pop();
+                },
+              ));
         }
         break;
       case 'denied':
@@ -140,14 +166,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text(title),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Ok'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
+            actions: actions,
           );
         });
   }
@@ -188,6 +207,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
   }
 
+  void deleteMessage(types.Message message) {
+    // remove the message locally
+    setState(() {
+      _messages.remove(message);
+    });
+    // remove the message in memory
+    Memory().deleteMessage(message.id);
+  }
+
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.mediumImpact();
@@ -199,12 +227,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         await mailToReportMessage(_messages, message);
         break;
       case 'delete':
-        // remove the message locally
-        setState(() {
-          _messages.remove(message);
-        });
-        // remove the message in memory
-        Memory().deleteMessage(message.id);
+        deleteMessage(message);
         break;
       default:
         print("dismiss");
@@ -217,9 +240,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final types.Message? message =
         messageDecode(encodedMessage, types.Status.sending);
     if (message != null) {
-      setState(() {
-        insertMessage(message);
-      });
+      insertMessage(message);
       _webSocketConnection.sendmessage(encodedMessage);
     }
   }
@@ -233,21 +254,29 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
 
     if (_messages.isEmpty) {
-      _messages.add(message);
+      setState(() {
+        _messages.add(message);
+      });
       return;
     } else {
       for (int i = 0; i < _messages.length; i++) {
         if (message.createdAt! >= _messages[i].createdAt!) {
           if (message.id == _messages[i].id) {
-            _messages[i] = message;
+            setState(() {
+              _messages[i] = message;
+            });
           } else {
-            _messages.insert(i, message);
+            setState(() {
+              _messages.insert(i, message);
+            });
           }
           return;
         }
       }
     }
-    _messages.add(message);
+    setState(() {
+      _messages.add(message);
+    });
   }
 
   Future<void> loadMessagesFromMemory() async {
@@ -257,72 +286,83 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       _messages.clear();
     });
     for (final types.Message loadedMessage in loadedMessages) {
-      setState(() {
-        insertMessage(loadedMessage, false);
-      });
+      insertMessage(loadedMessage, false);
+    }
+  }
+
+  void processMessage(message) {
+    print("Receives: $message");
+    final data = jsonDecode(message);
+    switch (data['action']) {
+      case "register":
+        print('\tRegister: ${data['status']}');
+        // Get group (register on load)
+        if (User().groupid == "") {
+          _webSocketConnection.switchgroup();
+          setState(() {
+            _messages.clear();
+            state = "switch";
+          });
+        } else {
+          // past messages
+          loadMessagesFromMemory();
+
+          // state
+          setState(() {
+            state = "chat";
+          });
+
+          // NOTE: why to I need to wait? Bigest mistery of the universe
+          // I need to ALREADY be in chat state to update _messages
+          // Don't really know why ... deserve investigation
+          Future.delayed(const Duration(milliseconds: 50), () {
+            // missed messages
+            for (final unreadMessage in data['unread']) {
+              processMessage(jsonEncode(unreadMessage));
+            }
+          });
+        }
+        break;
+      case "switchgroup":
+        print('\tGroup: ${data['groupid']}');
+        User().groupid = data['groupid'];
+        setState(() {
+          _messages
+              .clear(); // clear here too if switchgroup without user asked to (ban)
+          state = "chat";
+        });
+        break;
+      case "sendmessage":
+        print('\tData: ${data['data']}');
+        types.Message? message = messageDecode(data['data']);
+        if (message != null) {
+          insertMessage(message);
+          Memory().addMessage(message.id, data['data']);
+        }
+        break;
+      case "banrequest":
+        print('\tBan request for: ${data['messageid']}');
+        banRequest(context, data['messageid']);
+        break;
+      case "banconfirmed":
+        print('\tBan confirmed for: ${data['banneduserid']}');
+        acknowledgeBan(context, 'confirmed', data['banneduserid']);
+        break;
+      case "bandenied":
+        print('\tBan denied for: ${data['banneduserid']}');
+        acknowledgeBan(context, 'denied', data['banneduserid']);
+        break;
+      default:
+        print("\tAction ${data['action']} not recognised.");
+        setState(() {
+          state = "";
+        });
     }
   }
 
   // Stream listen
   void listenStream() {
-    _webSocketConnection.stream.listen((message) {
-      print("Receives: $message");
-      final data = jsonDecode(message);
-      switch (data['action']) {
-        case "register":
-          print('\tRegister: ${data['status']}');
-          // Get group (register on load)
-          if (User().groupid == "") {
-            _webSocketConnection.switchgroup();
-            setState(() {
-              _messages.clear();
-              state = "switch";
-            });
-          } else {
-            loadMessagesFromMemory();
-            setState(() {
-              state = "chat";
-            });
-          }
-          break;
-        case "switchgroup":
-          print('\tGroup: ${data['groupid']}');
-          User().groupid = data['groupid'];
-          setState(() {
-            _messages
-                .clear(); // clear here too if switchgroup without user asked to (ban)
-            state = "chat";
-          });
-          break;
-        case "sendmessage":
-          print('\tData: ${data['data']}');
-          types.Message? message = messageDecode(data['data']);
-          if (message != null) {
-            setState(() {
-              insertMessage(message);
-            });
-            Memory().addMessage(message.id, data['data']);
-          }
-          break;
-        case "banrequest":
-          print('\tBan request for: ${data['messageid']}');
-          banRequest(context, data['messageid']);
-          break;
-        case "banconfirmed":
-          print('\tBan confirmed for: ${data['banneduserid']}');
-          acknowledgeBan(context, 'confirmed', data['banneduserid']);
-          break;
-        case "bandenied":
-          print('\tBan denied for: ${data['banneduserid']}');
-          acknowledgeBan(context, 'denied', data['banneduserid']);
-          break;
-        default:
-          print("\tAction ${data['action']} not recognised.");
-          setState(() {
-            state = "";
-          });
-      }
-    }, onDone: () {
+    _webSocketConnection.stream.listen(processMessage, onDone: () {
       if (mounted) {
         setState(() {
           state = "disconnected";
@@ -406,41 +446,17 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
                   case "chat":
-                    return Chat(
-                      showUserNames: true,
-                      showUserAvatars: true,
-                      isTextMessageTextSelectable: false,
-                      l10n: const ChatL10nFr(),
-                      messages: _messages,
-                      onSendPressed: sendMessage,
-                      onMessageLongPress: reportMessage,
-                      user: types.User(
-                          id: User().id,
-                          imageUrl:
-                              "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
-                      theme: const DefaultChatTheme(
-                          inputBackgroundColor: Color(0xfff5f5f7),
-                          inputTextColor: Color(0xff1f1c38),
-                          inputTextCursorColor: Color(0xff9e9cab)),
-                    );
+                    return CustomChat(
+                        messages: _messages,
+                        onSendPressed: sendMessage,
+                        onMessageLongPress: reportMessage);
                   case "disconnected":
                     return Stack(
                       children: [
-                        Chat(
-                          showUserAvatars: true,
-                          isTextMessageTextSelectable: false,
-                          l10n: const ChatL10nFr(),
-                          messages: _messages,
-                          onSendPressed: sendMessage,
-                          user: types.User(
-                              id: User().id,
-                              imageUrl:
-                                  "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
-                          theme: const DefaultChatTheme(
-                              inputBackgroundColor: Color(0xfff5f5f7),
-                              inputTextColor: Color(0xff1f1c38),
-                              inputTextCursorColor: Color(0xff9e9cab)),
-                        ),
+                        CustomChat(
+                            messages: _messages,
+                            onSendPressed: sendMessage,
+                            onMessageLongPress: reportMessage),
                         Positioned.fill(
                             child: BackdropFilter(
                                 filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),

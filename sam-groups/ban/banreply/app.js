@@ -2,7 +2,7 @@
 
 const AWS = require('aws-sdk')
 
-const { sendToConnectionId, ban } = require('helpers')
+const { sendToConnectionId, ban, sendToUsers } = require('helpers')
 
 const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, AWS_REGION } = process.env
 
@@ -48,7 +48,10 @@ exports.handler = async (event) => {
   // (and thus even if the vote is closed)
   if (!request.Item) {
     console.log(`User ${banneduserid} is not in a ban vote. Returns`)
-    return
+    return {
+      statusCode: 200,
+      body: JSON.stringify('Ban reply denied!')
+    }
   }
 
   const votingUsers = request.Item.votingUsers?.values ?? []
@@ -117,17 +120,8 @@ exports.handler = async (event) => {
       throw Error('status not allowed')
   }
 
-  // don't update database if denied
-  // (or you could recreate the banneduser item you will delete with BAN_LAMBDA status='denied)
-  // NOTE: best to check number here
-  // (if 2 users send their reply at the same time
-  // (each of them will see a previous confirmation of 0)
-  // (so a current confirmation number of 1)
-  // (if the confirmation required is 2, it will not be reached)
-  if (banstatus === undefined || banstatus === 'confirmed') {
-    console.log(`Try update bannedused ${banneduserid} - UPDATES:\n${JSON.stringify(params.AttributeUpdates)}`)
-    await ddb.update(params).promise()
-  }
+  console.log(`Try update bannedused ${banneduserid} - UPDATES:\n${JSON.stringify(params.AttributeUpdates)}`)
+  await ddb.update(params).promise()
 
   if (banstatus !== undefined) {
     // vote is finished
@@ -136,24 +130,20 @@ exports.handler = async (event) => {
     })
 
     // resolve the ban (depending on the status)
-    const { connectionIds, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb)
+    const { users, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb)
 
-    let usedConnectionIds = connectionIds
+    let usedUsers = users
     if (banstatus === 'denied') {
       // don't inform user he/she was in a ban vote
-      usedConnectionIds = usedConnectionIds.filter(({ id }) => id !== banneduserid)
+      usedUsers = users.filter((id) => id !== banneduserid)
     }
 
-    const postCalls = usedConnectionIds.map(async ({ id, connectionId }) => {
-      await sendToConnectionId(USERS_TABLE_NAME, id, connectionId, apigwManagementApi, ddb, Data)
-    })
-
-    await Promise.all(postCalls)
+    await Promise.all(await sendToUsers(USERS_TABLE_NAME, usedUsers, apigwManagementApi, ddb, Data))
 
     if (banstatus === 'confirmed') {
       // inform banned user of his/her new group
       // NOTE: could create a custome signal switchgroupafterban
-      // (may be overengineering)
+      // (to inform the user where it has been moved to)
       await sendToConnectionId(USERS_TABLE_NAME, banneduser.userid, banneduser.connectionId, apigwManagementApi, ddb, { action: 'switchgroup', groupid: banneduser.groupid })
     }
   }
