@@ -5,7 +5,7 @@ Lors de ta première utilisation de l'application, et après chaque réinitialis
 AWA enregistre les données suivantes :
   - ton identifiant,
   - le groupe dans lequel tu es ACTUELLEMENT,
-  - les messages que tu n'as PAS ENCORE reçu,
+  - les messages que tu n'as PAS ENCORE reçu.
 
 AWA n'enregistre pas tes conversations.
 Lorsque tu supprimes l'application, AWA n'a plus aucun moyen de t'identifier.
