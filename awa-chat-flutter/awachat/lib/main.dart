@@ -397,6 +397,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             widget.setAppState('presentation');
           },
           resetAccount: () async {
+            User().resetGroup();
             await Memory().clear();
             await User().init();
             widget.setAppState('presentation');

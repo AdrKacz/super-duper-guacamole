@@ -46,6 +46,11 @@ Parameters:
     Default: 2
     Description: '(Required) The number of the users required to ban someone from a group. The effective number of confirmation required will be the minimum between this number and the number of users who have received the ban request.'
     ConstraintDescription: 'Required. Must be an integer.'
+  LogRetentionInDays:
+    Type: Number
+    Default: 1
+    Description: '(Required) The number of days logs are kept.'
+    ConstraintDescription: 'Required. Must be an integer.'
   StageName:
     Type: String
     Default: 'development'
@@ -234,6 +239,10 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref RegisterFunction
       Principal: apigateway.amazonaws.com
+  RegisterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${RegisterFunction}'
 
   SwitchGroupFunction:
     Type: AWS::Serverless::Function
@@ -262,6 +271,11 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SwitchGroupFunction
       Principal: apigateway.amazonaws.com
+  SwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
   SendMessageFunction:
     Type: AWS::Serverless::Function
@@ -293,6 +307,11 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref SendMessageFunction
       Principal: apigateway.amazonaws.com
+  SendMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
   BanRequestFunction:
     Type: AWS::Serverless::Function
@@ -324,6 +343,11 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref BanRequestFunction
       Principal: apigateway.amazonaws.com
+  BanRequestLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${BanRequestFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
   BanReplyFunction:
     Type: AWS::Serverless::Function
@@ -352,6 +376,11 @@ Resources:
       Action: lambda:InvokeFunction
       FunctionName: !Ref BanReplyFunction
       Principal: apigateway.amazonaws.com
+  BanReplyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${BanReplyFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
     
   # Notification
   NotificationFunction:
@@ -368,6 +397,11 @@ Resources:
       FunctionName: !Ref NotificationFunction
       Principal: lambda.amazonaws.com
       SourceArn: !GetAtt SendMessageFunction.Arn
+  NotificationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${NotificationFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
   UsersTableArn:

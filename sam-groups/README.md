@@ -9,9 +9,16 @@
 *Stack used:* **sam-group**
 Parameter | Value
 -- | --
-*UsersTableName* | **users_development**
-*GroupsTableName* | **groups_development**
+*UsersTableName* | **users**
+*GroupsTableName* | **groups**
 *StageName* | **development**
+*BannedUsersTableName* | **bannedusers**
+*ConfirmationRequired* | **2**
+*LogRetentionInDays* | **1**
+
+```
+yarn deploy --config-env dev
+```
 
 
 ---
