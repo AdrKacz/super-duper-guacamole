@@ -26,13 +26,15 @@ We decoupled our code to move it from our server to our client.
 
 # Codebase
 
-<details><summary>CLOC</summary>
+<details><summary>CLOC Command</summary>
 <p>
 
 ```sh
 # macOS: brew install cloc
 $ cloc --config=options.txt .
 ```
+</p>
+</details>
 
 Language|files|blank %|comment %|code
 :-------|-------:|-------:|-------:|-------:
@@ -42,6 +44,4 @@ YAML|7|9.69|12.22|753
 JavaScript|7|25.25|25.65|499
 Markdown|8|39.50|0.00|481
 **SUM:**|**48**|**18.85**|**16.71**|**3884**
-</p>
-</details>
 
