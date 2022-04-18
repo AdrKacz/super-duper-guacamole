@@ -26,7 +26,7 @@ We decoupled our code to move it from our server to our client.
 
 # Codebase
 
-<details><summary>CLOC Command</summary>
+<details><summary>CLOC command</summary>
 <p>
 
 ```sh
