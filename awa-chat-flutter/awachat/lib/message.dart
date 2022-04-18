@@ -77,7 +77,7 @@ Future<String?> reportActionOnMessage(BuildContext context) async {
                     popAction: 'ban',
                     info: const Text("""Tu vas lancer un vote.
 
-Toutes les personnes présentes, sauf la personnée ciblée, pourront accepter ou refuser ta proposition.
+Toutes les personnes présentes, sauf la personne ciblée, pourront accepter ou refuser ta proposition.
 
 Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans un autre groupe."""),
                     acceptString: "Ok",

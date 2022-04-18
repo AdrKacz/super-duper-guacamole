@@ -20,6 +20,9 @@ Parameter | Value
 yarn deploy --config-env dev
 ```
 
+### Note on log retention time
+
+To update log retention time you'll need to delete the stack. If you don't, **SAM** will try to re-create *Log Groups* and will fail because they already exist.
 
 ---
 
