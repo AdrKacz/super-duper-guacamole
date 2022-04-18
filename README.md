@@ -18,18 +18,10 @@ We decoupled our code to move it from our server to our client.
     <img src="./assets/terrastruct/groups.png" width="100%">
 </p>
 
-# Screenshots
+# Demo
 
 <p float="left" align="middle">
-    <img src="https://drive.google.com/uc?export=view&id=1CLdOB2IFAYc6WWDyuyJcgjr6g5-5aYX6" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1T5kJsDrn73ASKktgBfwhx8xv2u17rmZ0" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1epbjey5JAMWwELEGZ3DlYZQSfsEosHZc" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1K_kt9fFAarnRFH4zFRDExvhA1NWNPQx6" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1nRaASt4B1sGYB39JC7L9AXBCrgVh7dl3" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1VL-q1E8bPBiSkQh1WaW47WV4tT7Yf8Gm" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1fQtmq_YX_AbgsWI74Tybv7n6HJkCm_dj" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=1Les5rA2Z55MP0DznlQ80C699gfRt2jT8" width="32%">
-    <img src="https://drive.google.com/uc?export=view&id=18894WZtlaHQpwziecVUel6GqHhXh4pj_" width="32%">
+    <img src="https://drive.google.com/uc?export=view&id=1VFLjEKP4J3OqMbW6YLX6AvdBoXlxl6Fe" width="50%">
 </p>
 
 # Codebase
