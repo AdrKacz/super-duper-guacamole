@@ -3,6 +3,7 @@
 # Filters
 --exclude-dir=node_modules,.aws_sam,.dart_tool,build,android,ios,windows,.vscode
 --exclude-lang=TOML,SVG,Bourne Shell,HTML,JSON
+--exclude-ext=yml
 
 # Output
 --quiet
