@@ -6,7 +6,7 @@ import 'package:awachat/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://g10ttcw68f.execute-api.eu-west-3.amazonaws.com/dev";
+      "wss://bwrmehhjm1.execute-api.eu-west-3.amazonaws.com/prod";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;

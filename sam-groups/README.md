@@ -9,10 +9,20 @@
 *Stack used:* **sam-group**
 Parameter | Value
 -- | --
-*UsersTableName* | **users_development**
-*GroupsTableName* | **groups_development**
+*UsersTableName* | **users**
+*GroupsTableName* | **groups**
 *StageName* | **development**
+*BannedUsersTableName* | **bannedusers**
+*ConfirmationRequired* | **2**
+*LogRetentionInDays* | **1**
 
+```
+yarn deploy --config-env dev
+```
+
+### Note on log retention time
+
+To update log retention time you'll need to delete the stack. If you don't, **SAM** will try to re-create *Log Groups* and will fail because they already exist.
 
 ---
 
