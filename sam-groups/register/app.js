@@ -1,11 +1,16 @@
-// Lambda use AWS SDK v2 by default
+const {
+  getDynamoDBDocumentClient,
+  updateItem,
+  getApiGatewayManagementApiClient,
+  sendToUser
+} = require('helpers')
 
-const { sendToConnectionId } = require('helpers')
+const {
+  AWS_REGION,
+  USERS_TABLE_NAME
+} = process.env
 
-const AWS = require('aws-sdk')
-
-const ddb = new AWS.DynamoDB.DocumentClient({ region: process.env.AWS_REGION })
-const { USERS_TABLE_NAME } = process.env
+const dynamoDBDocumentClient = getDynamoDBDocumentClient(AWS_REGION)
 
 exports.handler = async (event) => {
   console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
@@ -21,42 +26,53 @@ exports.handler = async (event) => {
   const connectionId = event.requestContext.connectionId
 
   // update user
-  console.log(`Try update users:id:${userid}`)
-  const request = await ddb.update({
+  const commandInput = {
     ReturnValues: 'ALL_OLD',
     TableName: USERS_TABLE_NAME,
     Key: { id: userid },
-    AttributeUpdates: {
-      connectionId: {
-        Action: 'PUT',
-        Value: event.requestContext.connectionId
-      },
-      unreadData: {
-        Action: 'DELETE'
-      }
+    UpdateExpression: `
+    REMOVE #ur
+    SET #ci = :v
+    `,
+    ExpressionAttributeNames: {
+      '#ur': 'unreadData',
+      '#ci': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':v': event.requestContext.connectionId
     }
-  }).promise()
+  }
+  console.log(`Try update users:id:${userid} with command input:\n${JSON.stringify(commandInput)}`)
+  const response = await updateItem(
+    commandInput,
+    dynamoDBDocumentClient
+  )
 
-  console.log(`Get user:\n${JSON.stringify(request)}`)
+  console.log(`Get user:\n${JSON.stringify(response)}`)
 
   const unreadData = []
-  if (request.Attributes !== undefined && request.Attributes.unreadData !== undefined) {
-    unreadData.push(...request.Attributes.unreadData)
+  if (response.Attributes !== undefined && response.Attributes.unreadData !== undefined) {
+    unreadData.push(...response.Attributes.unreadData)
   }
 
   // return
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-    endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
-  })
+  const apiGatewayManagementApiClient = getApiGatewayManagementApiClient(
+    AWS_REGION,
+    {
+      protocol: 'https',
+      hostname: event.requestContext.domainName,
+      path: event.requestContext.stage
+    }
+  )
 
-  await sendToConnectionId(USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, { action: 'register', status: 'success', unread: unreadData })
+  await sendToUser(USERS_TABLE_NAME, userid, connectionId, apiGatewayManagementApiClient, dynamoDBDocumentClient, { action: 'register', status: 'success', unread: unreadData })
 
   // debug
-  const response = {
+  const lambdaResponse = {
     statusCode: 200,
     body: JSON.stringify('Registered!')
   }
 
-  console.log(`Returns:\n${JSON.stringify(response)}`)
-  return response
+  console.log(`Returns:\n${JSON.stringify(lambdaResponse)}`)
+  return lambdaResponse
 }

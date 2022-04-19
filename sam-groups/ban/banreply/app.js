@@ -1,12 +1,21 @@
-// Lambda use AWS SDK v2 by default
+const {
+  getDynamoDBDocumentClient,
+  getApiGatewayManagementApiClient,
+  getItem,
+  updateItem,
+  sendToUser,
+  sendToUsers,
+  ban
+} = require('helpers')
 
-const AWS = require('aws-sdk')
+const {
+  USERS_TABLE_NAME,
+  GROUPS_TABLE_NAME,
+  BANNED_USERS_TABLE_NAME,
+  AWS_REGION
+} = process.env
 
-const { sendToConnectionId, ban, sendToUsers } = require('helpers')
-
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, AWS_REGION } = process.env
-
-const ddb = new AWS.DynamoDB.DocumentClient({ region: AWS_REGION })
+const dynamoDBDocumentClient = getDynamoDBDocumentClient(AWS_REGION)
 
 exports.handler = async (event) => {
   console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
@@ -33,20 +42,27 @@ exports.handler = async (event) => {
   // TODO: verify userid and banneduserid are in group
   // get banned user
   console.log(`Try to GET ${BANNED_USERS_TABLE_NAME}:id:${banneduserid}`)
-  const request = await ddb.get({
+  const response = await getItem({
     TableName: BANNED_USERS_TABLE_NAME,
     Key: { id: banneduserid },
-    AttributesToGet: ['id', 'votingUsers', 'confirmedUsers', 'confirmationRequired']
-  }).promise()
+    ProjectionExpression: '#i, #vu, #cu, #cr',
+    ExpressionAttributeNames: {
+      '#i': 'id',
+      '#vu': 'votingUsers',
+      '#cu': 'confirmedUsers',
+      '#cr': 'confirmationRequired'
+    }
+  },
+  dynamoDBDocumentClient)
 
-  console.log(`Banned user ${banneduserid} request:\n${JSON.stringify(request)}`)
+  console.log(`Banned user ${banneduserid} response:\n${JSON.stringify(response)}`)
 
   // verify banned user exists
   // (don't throw error, this situation can happen)
   // (for example, if you need 2 users to confirm but you send the request to 4)
   // (once the first 2 have confirm, you could still receive confirm answer)
   // (and thus even if the vote is closed)
-  if (!request.Item) {
+  if (!response.Item) {
     console.log(`User ${banneduserid} is not in a ban vote. Returns`)
     return {
       statusCode: 200,
@@ -54,17 +70,17 @@ exports.handler = async (event) => {
     }
   }
 
-  const votingUsers = request.Item.votingUsers?.values ?? []
-  const confirmedUsers = request.Item.confirmedUsers?.values ?? []
-  const confirmationRequired = request.Item.confirmationRequired
+  if (response.Item.votingUsers === undefined || response.Item.confirmationRequired === undefined) {
+    throw Error('votingUsers, and confirmationRequired are not all two defined')
+  }
+
+  const votingUsers = Array.from(response.Item.votingUsers)
+  const confirmedUsers = Array.from(response.Item.confirmedUsers ?? [])
+  const confirmationRequired = response.Item.confirmationRequired
 
   console.log(`votingUsers:\n${JSON.stringify(votingUsers)}`)
   console.log(`confirmedUsers:\n${JSON.stringify(confirmedUsers)}`)
   console.log(`confirmationRequired: ${confirmationRequired}`)
-
-  if (votingUsers === undefined || confirmationRequired === undefined) {
-    throw Error('votingUsers, and confirmationRequired are not all two defined')
-  }
 
   // verify userid can still vote
   // (don't throw error, this situation can happen)
@@ -78,18 +94,6 @@ exports.handler = async (event) => {
     return
   }
 
-  // always remove userid from voting users
-  const params = {
-    TableName: BANNED_USERS_TABLE_NAME,
-    Key: { id: banneduserid },
-    AttributeUpdates: {
-      votingUsers: {
-        Action: 'DELETE',
-        Value: ddb.createSet([userid])
-      }
-    }
-  }
-
   // number of users that can still confirm: votingUsers.length
   // number of users that have already confirmed: confirmedUsers.length
   // (not counting the current user)
@@ -97,15 +101,11 @@ exports.handler = async (event) => {
   switch (status) {
     case 'confirmed':
       if (confirmedUsers.length + 1 >= confirmationRequired) {
-        console.log(`User ${banneduserid} is banned by the group (positive vote ratio ${confirmedUsers.length + 1} / ${votingUsers.length + confirmedUsers.length})`)
+        console.log(`User ${banneduserid} is banned by the group (positive vote ratio ${confirmedUsers.length + 1} / ${votingUsers.length + confirmedUsers.sizlengthe})`)
         // ban user
         banstatus = 'confirmed'
       }
 
-      params.AttributeUpdates.confirmedUsers = {
-        Action: 'ADD',
-        Value: ddb.createSet([userid])
-      }
       break
     case 'denied':
       if (confirmedUsers.length + votingUsers.length - 1 < confirmationRequired) {
@@ -120,17 +120,40 @@ exports.handler = async (event) => {
       throw Error('status not allowed')
   }
 
-  console.log(`Try update bannedused ${banneduserid} - UPDATES:\n${JSON.stringify(params.AttributeUpdates)}`)
-  await ddb.update(params).promise()
+  const commandInput = {
+    TableName: BANNED_USERS_TABLE_NAME,
+    Key: { id: banneduserid },
+    UpdateExpression: `
+    DELETE #vu :u
+    ADD #cu :u
+    `,
+    ExpressionAttributeNames: {
+      '#vu': 'votingUsers',
+      '#cu': 'confirmedUsers'
+    },
+    ExpressionAttributeValues: {
+      ':u': new Set([userid])
+    }
+  }
+  console.log(`Try update bannedused ${banneduserid} - Command input:\n${JSON.stringify(commandInput)}`)
+  await updateItem(
+    commandInput,
+    dynamoDBDocumentClient
+  )
 
   if (banstatus !== undefined) {
     // vote is finished
-    const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-      endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
-    })
+    const apiGatewayManagementApiClient = getApiGatewayManagementApiClient(
+      AWS_REGION,
+      {
+        protocol: 'https',
+        hostname: event.requestContext.domainName,
+        path: event.requestContext.stage
+      }
+    )
 
     // resolve the ban (depending on the status)
-    const { users, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb)
+    const { users, banneduser, Data } = await ban(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, dynamoDBDocumentClient)
 
     let usedUsers = users
     if (banstatus === 'denied') {
@@ -138,22 +161,22 @@ exports.handler = async (event) => {
       usedUsers = users.filter((id) => id !== banneduserid)
     }
 
-    await Promise.all(await sendToUsers(USERS_TABLE_NAME, usedUsers, apigwManagementApi, ddb, Data))
+    await Promise.all(await sendToUsers(USERS_TABLE_NAME, usedUsers, apiGatewayManagementApiClient, dynamoDBDocumentClient, Data))
 
     if (banstatus === 'confirmed') {
       // inform banned user of his/her new group
       // NOTE: could create a custome signal switchgroupafterban
       // (to inform the user where it has been moved to)
-      await sendToConnectionId(USERS_TABLE_NAME, banneduser.userid, banneduser.connectionId, apigwManagementApi, ddb, { action: 'switchgroup', groupid: banneduser.groupid })
+      await sendToUser(USERS_TABLE_NAME, banneduser.userid, banneduser.connectionId, apiGatewayManagementApiClient, dynamoDBDocumentClient, { action: 'switchgroup', groupid: banneduser.groupid })
     }
   }
 
   // debug
-  const response = {
+  const lambdaResponse = {
     statusCode: 200,
     body: JSON.stringify('Ban reply confirmed!')
   }
 
-  console.log(`Returns:\n${JSON.stringify(response)}`)
-  return response
+  console.log(`Returns:\n${JSON.stringify(lambdaResponse)}`)
+  return lambdaResponse
 }

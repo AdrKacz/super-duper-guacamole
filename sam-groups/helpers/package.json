@@ -7,5 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "AdrKacz",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.72.0",
+    "@aws-sdk/client-dynamodb": "^3.72.0",
+    "@aws-sdk/client-lambda": "^3.72.0",
+    "@aws-sdk/lib-dynamodb": "^3.72.0"
+  }
 }

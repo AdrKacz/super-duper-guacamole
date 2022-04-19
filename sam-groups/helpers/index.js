@@ -1,103 +1,196 @@
+// ===== ===== =====
+// AWS-SDK
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+
+const {
+  DynamoDBDocumentClient,
+  GetCommand, BatchGetCommand,
+  UpdateCommand,
+  DeleteCommand
+} = require('@aws-sdk/lib-dynamodb')
+
+const {
+  ApiGatewayManagementApiClient,
+  PostToConnectionCommand
+} = require('@aws-sdk/client-apigatewaymanagementapi')
+
+const {
+  LambdaClient,
+  InvokeCommand
+} = require('@aws-sdk/client-lambda')
+
+exports.getDynamoDBDocumentClient = (AWS_REGION) => {
+  const client = new DynamoDBClient({ region: AWS_REGION })
+  return DynamoDBDocumentClient.from(client)
+}
+
+exports.getApiGatewayManagementApiClient = (AWS_REGION, endpoint) => {
+  return new ApiGatewayManagementApiClient({
+    region: AWS_REGION,
+    endpoint: endpoint
+  })
+}
+
+exports.getLambdaClient = (AWS_REGION) => {
+  return new LambdaClient({ region: AWS_REGION })
+}
+
+// ===== ===== =====
+// HELPERS AWS
+exports.getItem = async (commandInput, dynamoDBDocumentClient) => {
+  const command = new GetCommand(commandInput)
+  return await dynamoDBDocumentClient.send(command)
+}
+
+exports.updateItem = async (commandInput, dynamoDBDocumentClient) => {
+  const command = new UpdateCommand(commandInput)
+  return await dynamoDBDocumentClient.send(command)
+}
+
+exports.invoke = async (commandInput, lambdaClient) => {
+  const command = new InvokeCommand(commandInput)
+  return await lambdaClient.send(command)
+}
+
+// ===== ===== =====
+// HELPERS FUNCTION
+
 // user in group
-exports.getUsers = async (GROUPS_TABLE_NAME, groupid, ddb) => {
+exports.getGroupUsers = async (GROUPS_TABLE_NAME, groupid, dynamoDBDocumentClient) => {
   let users
   console.log(`Try get users groups:id:${groupid}`)
-  const group = await ddb.get({
+  const command = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
     Key: { id: groupid },
-    AttributesToGet: ['id', 'users']
-  }).promise()
+    ProjectionExpression: '#i, #u',
+    ExpressionAttributeNames: {
+      '#i': 'id',
+      '#u': 'users'
+    }
+  })
+  const response = await dynamoDBDocumentClient.send(command)
+
+  console.log(`Receive response:\n${JSON.stringify(response)}\nBelow response.Item.users (without JSON.stringify)`)
+  console.log(response.Item.users)
   // verify groupid exists
-  if (!group.Item) {
+  if (!response.Item) {
     throw new Error(`Error: group ${groupid} not found.`)
   } else {
-    users = group.Item.users.values
+    users = Array.from(response.Item.users)
   }
   return users
 }
 
 // connectionIds in a group
-exports.getConnectionIds = async (USERS_TABLE_NAME, users, ddb) => {
+exports.getUsersConnectionIds = async (USERS_TABLE_NAME, users, dynamoDBDocumentClient) => {
   // connectionIds
-  const groupusers = await ddb.batchGet({
+  const command = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: users.map(u => ({ id: u })),
-        AttributesToGet: ['id', 'connectionId']
-      }
-    }
-  }).promise()
-  return groupusers.Responses[USERS_TABLE_NAME].filter(({ connectionId }) => connectionId !== undefined)
-}
-
-exports.sendToUsers = async (USERS_TABLE_NAME, users, apigwManagementApi, ddb, Data) => {
-  console.log(`Send Data:\n${JSON.stringify(Data)}\nTo users:\n${JSON.stringify(users)}`)
-
-  const request = await ddb.batchGet({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: users.map(u => ({ id: u })),
-        AttributesToGet: ['id', 'connectionId']
-      }
-    }
-  }).promise()
-
-  console.log(`Request:\n${JSON.stringify(request)}`)
-
-  const usersConnectionIds = request.Responses[USERS_TABLE_NAME]
-
-  return usersConnectionIds.map(async ({ id, connectionId }) => {
-    try {
-      console.log(`<${id}> + ConnectionId <${connectionId}>`)
-      if (connectionId === undefined) {
-        const error = Error(`Connection Id of user <${id}> is not defined.`)
-        error.statusCode = 410 // to be handle
-        throw error
-      }
-      await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify(Data) }).promise()
-    } catch (e) {
-      console.log(`<${id}> ++ Did not succeed, error ${e.statusCode}:\n${JSON.stringify(e)}`)
-      if (e.statusCode === 410) {
-        console.log(`<${id}> +++ Found stale connection, deleting ${connectionId} and add Data to remaining message for user ${id}`)
-        // NOTE: could use BatchWrite instead
-        await ddb.update({
-          TableName: USERS_TABLE_NAME,
-          Key: { id: id },
-          AttributeUpdates: {
-            connectionId: {
-              Action: 'DELETE'
-            },
-            unreadData: {
-              Action: 'ADD',
-              Value: [Data]
-            }
-          }
-        }).promise()
-      } else {
-        throw e
+        ProjectionExpression: '#i, #ci',
+        ExpressionAttributeNames: {
+          '#i': 'id',
+          '#ci': 'connectionId'
+        }
       }
     }
   })
+  const response = await dynamoDBDocumentClient.send(command)
+
+  return response.Responses[USERS_TABLE_NAME].filter(({ connectionId }) => connectionId !== undefined)
 }
 
-// send a message to a connection over an api web socket and update connection if not found
-exports.sendToConnectionId = async (USERS_TABLE_NAME, userid, connectionId, apigwManagementApi, ddb, Data) => {
+exports.sendToUsers = async (USERS_TABLE_NAME, users, apiGatewayManagementApiClient, dynamoDBDocumentClient, Data) => {
+  console.log(`Send Data:\n${JSON.stringify(Data)}\nTo users:\n${JSON.stringify(users)}`)
+
+  const command = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: users.map(u => ({ id: u })),
+        ProjectionExpression: '#i, #ci',
+        ExpressionAttributeNames: {
+          '#i': 'id',
+          '#ci': 'connectionId'
+        }
+      }
+    }
+  })
+  const response = await dynamoDBDocumentClient.send(command)
+
+  console.log(`Request:\n${JSON.stringify(response)}`)
+
+  const usersConnectionIds = response.Responses[USERS_TABLE_NAME]
+
+  // NOTE: could BatchWrite to all unconnected users
+  return usersConnectionIds.map(async ({ id, connectionId }) => {
+    exports.sendToUser(USERS_TABLE_NAME, id, connectionId, apiGatewayManagementApiClient, dynamoDBDocumentClient, Data)
+  })
+}
+
+// send a message to a connection over an api web socket, update connection and store if not found
+exports.sendToUser = async (USERS_TABLE_NAME, id, connectionId, apiGatewayManagementApiClient, dynamoDBDocumentClient, Data) => {
+  try {
+    console.log(`<${id}> + ConnectionId <${connectionId}>`)
+    if (connectionId === undefined) {
+      const error = Error(`ConnectionId of user <${id}> is not defined.`)
+      error.statusCode = 410 // will be handle
+      throw error
+    }
+    const command = new PostToConnectionCommand({
+      ConnectionId: connectionId,
+      Data: JSON.stringify(Data)
+    })
+    await apiGatewayManagementApiClient.send(command)
+  } catch (e) {
+    console.log(`<${id}> ++ Did not succeed, error ${e.statusCode}:\n${JSON.stringify(e)}`)
+    if (e.statusCode === 410) {
+      console.log(`<${id}> +++ Found stale connection, deleting ${connectionId} and add Data to remaining message for user ${id}`)
+      const command = new UpdateCommand({
+        TableName: USERS_TABLE_NAME,
+        Key: { id: id },
+        UpdateExpression: `
+        REMOVE #ci
+        SET #ud = list_append(#ud, :data)
+        `,
+        ExpressionAttributeNames: {
+          '#ci': 'connectionId'
+        },
+        ExpressionAttributeValues: {
+          ':data': [Data]
+        }
+      })
+      await dynamoDBDocumentClient.send(command)
+    } else {
+      throw e
+    }
+  }
+}
+
+// send a message to a connection over an api web socket and update connection if not found (do not store if not found)
+exports.sendToActiveUser = async (USERS_TABLE_NAME, userid, connectionId, apiGatewayManagementApiClient, dynamoDBDocumentClient, Data) => {
   try {
     console.log(`Try to send to ${connectionId}:\n${JSON.stringify(Data)}`)
-    await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: JSON.stringify(Data) }).promise()
+    const command = new PostToConnectionCommand({
+      ConnectionId: connectionId,
+      Data: JSON.stringify(Data)
+    })
+    await apiGatewayManagementApiClient.send(command)
     return { userid: userid }
   } catch (e) {
     if (e.statusCode === 410) {
       console.log(`\tFound stale connection, deleting ${connectionId}`)
-      await ddb.update({
+      const command = new UpdateCommand({
         TableName: USERS_TABLE_NAME,
         Key: { id: userid },
-        AttributeUpdates: {
-          connectionId: {
-            Action: 'DELETE'
-          }
+        UpdateExpression: `
+        REMOVE #ci
+        `,
+        ExpressionAttributeNames: {
+          '#ci': 'connectionId'
         }
-      }).promise()
+      })
+      await dynamoDBDocumentClient.send(command)
     } else {
       throw e
     }
@@ -106,51 +199,62 @@ exports.sendToConnectionId = async (USERS_TABLE_NAME, userid, connectionId, apig
 }
 
 // switchgroup
-exports.switchGroup = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, userid, ddb) => {
+exports.switchUserGroup = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, id, dynamoDBDocumentClient) => {
   // get old group
   let groupid
   let connectionId
-  console.log(`Try get user users:id:${userid}`)
-  const user = await ddb.get({
+  console.log(`Try get user users:id:${id}`)
+  const getCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: userid },
-    AttributesToGet: ['id', 'group', 'connectionId']
-  }).promise()
-  console.log(`\tUser:\n${JSON.stringify(user)}`)
+    Key: { id: id },
+    ProjectionExpression: '#i, #g, #ci',
+    ExpressionAttributeNames: {
+      '#i': 'id',
+      '#g': 'group',
+      '#ci': 'connectionId'
+    }
+  })
+  const response = await dynamoDBDocumentClient.send(getCommand)
+  console.log(`\tUser:\n${JSON.stringify(response)}`)
 
   // verify userid exists
-  if (!user.Item) {
-    throw new Error(`Error: user ${userid} not found.`)
+  if (!response.Item) {
+    throw new Error(`Error: user ${id} not found.`)
   } else {
-    groupid = user.Item.group
-    connectionId = user.Item.connectionId
+    groupid = response.Item.group
+    connectionId = response.Item.connectionId
   }
 
   // remove and delete in parallel
   // remove from old group
   if (groupid) {
     // update group
-    console.log(`Try update group ${groupid} - DELETE groups:users:${userid}`)
-    await ddb.update({
+    console.log(`Try update group ${groupid} - DELETE groups:users:${id}`)
+    const command = new UpdateCommand({
       TableName: GROUPS_TABLE_NAME,
       Key: { id: groupid },
-      AttributeUpdates: {
-        users: {
-          Action: 'DELETE',
-          Value: ddb.createSet([userid])
-        }
+      UpdateExpression: `
+      DELETE #u :i
+      `,
+      ExpressionAttributeNames: {
+        '#u': 'users'
+      },
+      ExpressionAttributeValues: {
+        ':i': new Set([id])
       }
-    }).promise()
+    })
+    await dynamoDBDocumentClient.send(command)
   }
 
   // remove potential ban
-  console.log(`Try update user ${userid} - DELETE bannedusers:${userid}`)
-  await ddb.delete({
+  console.log(`Try update user ${id} - DELETE bannedusers:${id}`)
+  const deleteCommand = new DeleteCommand({
     TableName: BANNED_USERS_TABLE_NAME,
     Key: {
-      id: userid
+      id: id
     }
-  }).promise()
+  })
+  await dynamoDBDocumentClient.send(deleteCommand)
 
   // new groupid
   // (avoid being in the same group)
@@ -165,39 +269,46 @@ exports.switchGroup = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_T
 
   // TODO: revert users and groups on error
   // update group
-  console.log(`Try update group ${groupid} - ADD groups:users:${userid}`)
-  await ddb.update({
+  console.log(`Try update group ${groupid} - ADD groups:users:${id}`)
+  const updateGroupCommand = new UpdateCommand({
     TableName: GROUPS_TABLE_NAME,
     Key: { id: groupid },
-    AttributeUpdates: {
-      users: {
-        Action: 'ADD',
-        Value: ddb.createSet([userid])
-      }
+    UpdateExpression: `
+    ADD #u :i
+    `,
+    ExpressionAttributeNames: {
+      '#u': 'users'
+    },
+    ExpressionAttributeValues: {
+      ':i': new Set([id])
     }
-  }).promise()
+  })
+  await dynamoDBDocumentClient.send(updateGroupCommand)
 
   // update user
-  console.log(`Try update user ${userid} - PUT users:group:${groupid}`)
-  await ddb.update({
+  console.log(`Try update user ${id} - PUT users:group:${groupid}`)
+  const updateUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: userid },
-    AttributeUpdates: {
-      group: {
-        Action: 'PUT',
-        Value: groupid
-      },
-      unreadData: {
-        Action: 'DELETE'
-      }
+    Key: { id: id },
+    UpdateExpression: `
+    REMOVE #ud
+    SET #g = :i
+    `,
+    ExpressionAttributeNames: {
+      '#ud': 'unreadData',
+      '#g': 'group'
+    },
+    ExpressionAttributeValues: {
+      ':i': groupid
     }
-  }).promise()
+  })
+  await dynamoDBDocumentClient.send(updateUserCommand)
 
-  return { userid: userid, groupid: groupid, connectionId: connectionId }
+  return { id: id, groupid: groupid, connectionId: connectionId }
 }
 
 // ban user
-exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, ddb) => {
+exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, groupid, status, dynamoDBDocumentClient) => {
   if (status !== 'confirmed' && status !== 'denied') {
     console.log(`Status (${status}) has to be "confirmed" or "denied".`)
     throw Error('status not allowed')
@@ -205,20 +316,24 @@ exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAM
 
   // TODO: verify banned is legitimate (already verified in banreply, but you're never too prudent)
   // NOTE: request result never used, just to verify banned user is still in a vote
-  const request = await ddb.get({
+  const command = new GetCommand({
     TableName: BANNED_USERS_TABLE_NAME,
     Key: { id: banneduserid },
-    AttributesToGet: ['id']
-  }).promise()
+    ProjectionExpression: '#i',
+    ExpressionAttributeNames: {
+      '#i': 'id'
+    }
+  })
+  const response = await dynamoDBDocumentClient.send(command)
 
   // verify banned user exists
-  if (!request.Item) {
+  if (!response.Item) {
     console.log(`User ${banneduserid} is not in a ban vote. Returns`)
     return
   }
 
   // get groups before the switch (groups will change)
-  const users = await exports.getUsers(GROUPS_TABLE_NAME, groupid, ddb)
+  const users = await exports.getGroupUsers(GROUPS_TABLE_NAME, groupid, dynamoDBDocumentClient)
 
   let Data
   let banneduser
@@ -226,7 +341,7 @@ exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAM
     case 'confirmed':
       // switch group and inform users in parallel
       // switchgroup
-      banneduser = await exports.switchGroup(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, ddb)
+      banneduser = await exports.switchUserGroup(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, banneduserid, dynamoDBDocumentClient)
 
       // inform users
       Data = { action: 'banconfirmed', banneduserid: banneduserid }
@@ -234,12 +349,14 @@ exports.ban = async (USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAM
     case 'denied':
       // remove ban user
       console.log(`Try update user ${banneduserid} - DELETE bannedusers:${banneduserid}`)
-      await ddb.delete({
+      // eslint-disable-next-line no-case-declarations
+      const command = new DeleteCommand({
         TableName: BANNED_USERS_TABLE_NAME,
         Key: {
           id: banneduserid
         }
-      }).promise()
+      })
+      await dynamoDBDocumentClient.send(command)
 
       // inform users
       Data = { action: 'bandenied', banneduserid: banneduserid }
