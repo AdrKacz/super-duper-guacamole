@@ -1,3 +1,7 @@
+// DEPENDENCIES
+// aws-sdk-ddb
+// aws-sdk-sns
+
 // TRIGGER
 // SNS
 

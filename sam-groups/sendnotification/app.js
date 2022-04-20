@@ -1,3 +1,6 @@
+// DEPENDENCIES
+// firebase-admin
+
 // TRIGGER
 // SNS
 
