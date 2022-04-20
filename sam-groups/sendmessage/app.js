@@ -1,7 +1,10 @@
+// TRIGGER
+// SNS
+
 // ===== ==== ====
 // EVENT
 // Send message
-// event.body
+// event.Records[0].Sns.Message
 // groups (?) : List<String> - List of groupid
 // users (?) : List<String> - List of userid
 // message: Map<String,String>
@@ -47,21 +50,21 @@ const apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
 exports.handler = async (event) => {
   console.log(`
 Receives:
-\tBody:
-${event.body}
-\tRequest Context:
-${JSON.stringify(event.requestContext)}
+\tRecords[0].Sns.Message:
+${event.Records[0].Sns.Message}
+\tRecords:
+${JSON.stringify(event.Records)}
 \tEnvironment:\n${JSON.stringify(process.env)}
 `)
 
-  const body = JSON.parse(event.body)
+  const body = JSON.parse(event.Records[0].Sns.Message)
 
   const groups = body.groups ?? []
   const users = body.users ?? []
   const message = body.message
 
   if (message === undefined) {
-    throw new Error('event.body.message must be defined')
+    throw new Error('message must be defined')
   }
 
   const concernedUsers = new Set(users)

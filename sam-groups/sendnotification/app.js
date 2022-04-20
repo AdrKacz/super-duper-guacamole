@@ -1,7 +1,10 @@
+// TRIGGER
+// SNS
+
 // ===== ==== ====
 // EVENT
 // Send push notification
-// event.body
+// event.Records[0].Sns.Message
 // topic : String - Name of the topic
 // notification: Map<String,String>
 //      title - Title of the notification
@@ -33,23 +36,23 @@ const messaging = getMessaging(app)
 exports.handler = async (event) => {
   console.log(`
 Receives:
-\tBody:
-${event.body}
-\tRequest Context:
-${JSON.stringify(event.requestContext)}
+\tRecords[0].Sns.Message:
+${event.Records[0].Sns.Message}
+\tRecords:
+${JSON.stringify(event.Records)}
 \tEnvironment:\n${JSON.stringify(process.env)}
 `)
 
-  const body = JSON.parse(event.body)
+  const body = JSON.parse(event.Records[0].Sns.Message)
 
   const topic = body.topic
   if (topic === undefined) {
-    throw new Error('event.body.topic must be defined')
+    throw new Error('topic must be defined')
   }
 
   const notification = body.notification
   if (notification === undefined || notification.title === undefined || notification.body === undefined) {
-    throw new Error('event.body.notification.title event.body.notification.body and  must be defined')
+    throw new Error('notification.title event.body.notification.body and  must be defined')
   }
 
   console.log(`Send:
