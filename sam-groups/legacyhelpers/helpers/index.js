@@ -14,11 +14,6 @@ const {
   PostToConnectionCommand
 } = require('@aws-sdk/client-apigatewaymanagementapi')
 
-const {
-  LambdaClient,
-  InvokeCommand
-} = require('@aws-sdk/client-lambda')
-
 exports.getDynamoDBDocumentClient = (AWS_REGION) => {
   const client = new DynamoDBClient({ region: AWS_REGION })
   return DynamoDBDocumentClient.from(client)
@@ -31,10 +26,6 @@ exports.getApiGatewayManagementApiClient = (AWS_REGION, endpoint) => {
   })
 }
 
-exports.getLambdaClient = (AWS_REGION) => {
-  return new LambdaClient({ region: AWS_REGION })
-}
-
 // ===== ===== =====
 // HELPERS AWS
 exports.getItem = async (commandInput, dynamoDBDocumentClient) => {
@@ -45,11 +36,6 @@ exports.getItem = async (commandInput, dynamoDBDocumentClient) => {
 exports.updateItem = async (commandInput, dynamoDBDocumentClient) => {
   const command = new UpdateCommand(commandInput)
   return await dynamoDBDocumentClient.send(command)
-}
-
-exports.invoke = async (commandInput, lambdaClient) => {
-  const command = new InvokeCommand(commandInput)
-  return await lambdaClient.send(command)
 }
 
 // ===== ===== =====
@@ -134,7 +120,7 @@ exports.sendToUser = async (USERS_TABLE_NAME, id, connectionId, apiGatewayManage
     console.log(`<${id}> + ConnectionId <${connectionId}>`)
     if (connectionId === undefined) {
       const error = Error(`ConnectionId of user <${id}> is not defined.`)
-      error.statusCode = 410 // will be handle
+      error.name = 'GoneException' // will be handle
       throw error
     }
     const command = new PostToConnectionCommand({
@@ -144,7 +130,7 @@ exports.sendToUser = async (USERS_TABLE_NAME, id, connectionId, apiGatewayManage
     await apiGatewayManagementApiClient.send(command)
   } catch (e) {
     console.log(`<${id}> ++ Did not succeed, error ${e.statusCode}:\n${JSON.stringify(e)}`)
-    if (e.statusCode === 410) {
+    if (e.name === 'GoneException') {
       console.log(`<${id}> +++ Found stale connection, deleting ${connectionId} and add Data to remaining message for user ${id}`)
       const command = new UpdateCommand({
         TableName: USERS_TABLE_NAME,
@@ -178,7 +164,7 @@ exports.sendToActiveUser = async (USERS_TABLE_NAME, userid, connectionId, apiGat
     await apiGatewayManagementApiClient.send(command)
     return { userid: userid }
   } catch (e) {
-    if (e.statusCode === 410) {
+    if (e.name === 'GoneException') {
       console.log(`\tFound stale connection, deleting ${connectionId}`)
       const command = new UpdateCommand({
         TableName: USERS_TABLE_NAME,

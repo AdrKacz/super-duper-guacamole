@@ -1,7 +1,7 @@
 {
-  "name": "sendmessage",
+  "name": "sendnotification",
   "version": "1.0.0",
-  "description": "Lambda Function to send message to Awa",
+  "description": "Lambda Function to send notification",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

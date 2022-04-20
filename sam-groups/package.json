@@ -5,7 +5,8 @@
   "author": "AdrKacz",
   "license": "MIT",
   "scripts": {
-    "predeploy": "cd notification && npm install && cd ../ && cd dependencies/nodejs && npm install && cd ../../ && sam build",
+    "lint": "eslint . --fix",
+    "predeploy": "sh ./predeploy.sh",
     "deploy": "sam deploy --guided"
   },
   "devDependencies": {

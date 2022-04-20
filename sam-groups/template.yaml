@@ -212,7 +212,13 @@ Resources:
   HelperLayerVersion:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: dependencies/
+      ContentUri: helpers/layer
+      RetentionPolicy: Delete 
+  
+  NotificationLayerVersion:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: notification/layer
       RetentionPolicy: Delete 
 
   # Functions
@@ -283,12 +289,11 @@ Resources:
       CodeUri: sendmessage/
       Layers:
         - !Ref HelperLayerVersion
+        - !Ref NotificationLayerVersion
       Environment:
         Variables:
-          NOTIFICATION_LAMBDA_ARN: !GetAtt NotificationFunction.Arn
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
-      - LambdaInvokePolicy:
-          FunctionName: !Ref NotificationFunction
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
       - DynamoDBReadPolicy:
@@ -382,27 +387,6 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${BanReplyFunction}'
       RetentionInDays: !Ref LogRetentionInDays
     
-  # Notification
-  NotificationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: notification/
-      Environment:
-        Variables:
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
-  NotificationPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref NotificationFunction
-      Principal: lambda.amazonaws.com
-      SourceArn: !GetAtt SendMessageFunction.Arn
-  NotificationLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${NotificationFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
 Outputs:
   UsersTableArn:
     Description: "Users table ARN"
@@ -429,10 +413,6 @@ Outputs:
   BanReplyFunctionArn:
     Description: "Ban Reply function ARN"
     Value: !GetAtt BanReplyFunction.Arn
-
-  NotificationFunctionArn:
-    Description: "Notification function ARN"
-    Value: !GetAtt NotificationFunction.Arn
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

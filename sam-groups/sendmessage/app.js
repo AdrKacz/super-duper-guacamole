@@ -1,73 +1,169 @@
-const {
-  getDynamoDBDocumentClient,
-  getApiGatewayManagementApiClient,
-  getLambdaClient,
-  invoke,
-  sendToUsers,
-  getGroupUsers
-} = require('helpers')
+// ===== ==== ====
+// EVENT
+// Send message
+// event.body
+// groups (?) : List<String> - List of groupid
+// users (?) : List<String> - List of userid
+// message: Map<String,String>
+//      action - Message action used to sort by Awa app
 
+// ===== ==== ====
+// IMPORTS
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+
+const {
+  DynamoDBDocumentClient,
+  BatchGetCommand,
+  UpdateCommand
+} = require('@aws-sdk/lib-dynamodb')
+
+const {
+  ApiGatewayManagementApiClient,
+  PostToConnectionCommand
+} = require('@aws-sdk/client-apigatewaymanagementapi')
+
+// ===== ==== ====
+// CONSTANTS
 const {
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
-  NOTIFICATION_LAMBDA_ARN,
+  WEB_SOCKET_ENDPOINT,
   AWS_REGION
 } = process.env
 
-const dynamoDBDocumentClient = getDynamoDBDocumentClient(AWS_REGION)
-const lambdaClient = getLambdaClient(AWS_REGION)
+const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
+const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
+const apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
+  region: AWS_REGION,
+  endpoint: WEB_SOCKET_ENDPOINT
+})
+
+// ===== ==== ====
+// HELPERS
+
+// ===== ==== ====
+// HANDLER
 exports.handler = async (event) => {
-  console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
+  console.log(`
+Receives:
+\tBody:
+${event.body}
+\tRequest Context:
+${JSON.stringify(event.requestContext)}
+\tEnvironment:\n${JSON.stringify(process.env)}
+`)
 
-  // body to object
   const body = JSON.parse(event.body)
 
-  // userid
-  // NOTE: use connectionIs as a second index to not have to send userid
-  // TODO: verify userid with connectionId
-  // TODO: throw an error if userid is undefined
-  // const userid = body.userid
+  const groups = body.groups ?? []
+  const users = body.users ?? []
+  const message = body.message
 
-  // groupid
-  // TODO: get group from USERS_TABLE
-  const groupid = body.groupid
-
-  // data
-  // TODO: throw an error if data is undefined
-  const data = body.data
-
-  // users
-  // TODO: verify userid is in group
-  const users = await getGroupUsers(GROUPS_TABLE_NAME, groupid, dynamoDBDocumentClient)
-  console.log(`\tUsers:\n${JSON.stringify(users)}`)
-
-  // broadcast data
-  const apiGatewayManagementApiClient = getApiGatewayManagementApiClient(
-    AWS_REGION,
-    {
-      protocol: 'https',
-      hostname: event.requestContext.domainName,
-      path: event.requestContext.stage
-    }
-  )
-
-  await Promise.all(await sendToUsers(USERS_TABLE_NAME, users, apiGatewayManagementApiClient, dynamoDBDocumentClient, { action: 'sendmessage', data: data }))
-
-  // notification
-  await invoke({
-    FunctionName: NOTIFICATION_LAMBDA_ARN,
-    Payload: JSON.stringify({ groupid: groupid })
-  },
-  lambdaClient
-  )
-
-  // debug
-  const lambdaResponse = {
-    statusCode: 200,
-    body: JSON.stringify(`Send message!\n${JSON.stringify({ data: data })}`)
+  if (message === undefined) {
+    throw new Error('event.body.message must be defined')
   }
 
-  console.log(`Returns:\n${JSON.stringify(lambdaResponse)}`)
-  return lambdaResponse
+  const concernedUsers = new Set(users)
+
+  // get user grom groups
+  if (groups.length > 0) {
+    // NOTE: cannot retrieve more than 100 items or 16Mb of data
+    const command = new BatchGetCommand({
+      RequestItems: {
+        [GROUPS_TABLE_NAME]: {
+          Keys: groups.map((groupid) => ({ id: groupid })),
+          ProjectionExpression: '#id, #users',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#users': 'users'
+          }
+        }
+      }
+    })
+    const response = await dynamoDBDocumentClient.send(command)
+    // TODO: handle response.UnprocessedKeys
+
+    // response.Responses[GROUPS_TABLE_NAME] : List<Map>
+    // 1.   [{ id1, [user1, user2] }, { id2, [user3, user4] }]
+    // 2.   [[user1, user2], [user3, user4]]
+    // 3.   [user1, user2, user3, user4]
+    for (const user of new Set(response.Responses[GROUPS_TABLE_NAME].flatMap(({ users }) => users))) {
+      concernedUsers.add(user)
+    }
+  }
+
+  // get connectionIds
+  console.log('ConcernedUsers:')
+  console.log(concernedUsers) // on its own line because JSON.stringify(Set<String>) outputs '{}'
+  const command = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: Array.from(concernedUsers).map((userid) => ({ id: userid })),
+        ProjectionExpression: '#id, #connectionId',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#connectionId': 'connectionId'
+        }
+      }
+    }
+  })
+  const response = await dynamoDBDocumentClient.send(command)
+
+  // send message
+  await Promise.allSettled(
+    response.Responses[USERS_TABLE_NAME].map(({ id, connectionId }) => (
+      new Promise((resolve, reject) => {
+        if (connectionId === undefined) {
+          console.log(`User <${id}> has no connectionId`)
+          return reject(new Error())
+        }
+
+        const command = new PostToConnectionCommand({
+          ConnectionId: connectionId,
+          Data: JSON.stringify(message)
+        })
+
+        apiGatewayManagementApiClient
+          .send(command)
+          .then((_data) => {
+            console.log(`Successfully sent message to <${connectionId}>`)
+            resolve()
+          })
+          .catch((error) => {
+            console.log(`Error sending message to <${connectionId}>`)
+            if (error.name === 'GoneException') {
+              console.log(`Stale connectionId <${connectionId}>`)
+            }
+            reject(new Error())
+          })
+      }).catch(async (_error) => {
+        // store message (unprocessed user)
+        const command = new UpdateCommand({
+          TableName: USERS_TABLE_NAME,
+          Key: { id: id },
+          UpdateExpression: `
+              SET #unreadData = list_append(#unreadData, :message)
+              REMOVE #connectionId
+              `,
+          ExpressionAttributeNames: {
+            '#unreadData': 'unreadData',
+            '#connectionId': 'connectionId'
+          },
+          ExpressionAttributeValues: {
+            ':message': [message]
+          }
+        })
+
+        await dynamoDBDocumentClient.send(command)
+          .then((_data) => {
+            console.log(`Update unprocessed user <${id}>`)
+          })
+          .catch((error) => {
+            console.log(`Error updating unprocessed user <${id}>:
+${JSON.stringify(error)}`)
+          })
+      })
+    ))
+  )
 }
