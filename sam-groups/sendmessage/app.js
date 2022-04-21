@@ -38,22 +38,11 @@ const {
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
-// NOTE: may need to parse WEB_SOCKET_ENDPOINT
-//  {
-//    protocol: 'https',
-//    hostname: event.requestContext.domainName,
-//    path: event.requestContext.stage
-//  }
 const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT)
-console.log({
-  protocol: webSocketEndpointUrl.protocol,
-  hostname: webSocketEndpointUrl.hostname,
-  path: webSocketEndpointUrl.pathname
-})
 const apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
   region: AWS_REGION,
   endpoint: {
-    protocol: 'https',
+    protocol: 'https', // webSocketEndpointUrl.protocol = 'wss' doesn't work
     hostname: webSocketEndpointUrl.hostname,
     path: webSocketEndpointUrl.pathname
   }
