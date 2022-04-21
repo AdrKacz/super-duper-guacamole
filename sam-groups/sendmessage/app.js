@@ -14,20 +14,17 @@
 // message: Map<String,String>
 //      action - Message action used to sort by Awa app
 
+// NOTE:
+// could take connectionIds as input to not retrieve it twice
+// need to be linked with userids in case some are undefined or stales
+
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 
-const {
-  DynamoDBDocumentClient,
-  BatchGetCommand,
-  UpdateCommand
-} = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
-const {
-  ApiGatewayManagementApiClient,
-  PostToConnectionCommand
-} = require('@aws-sdk/client-apigatewaymanagementapi')
+const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi')
 
 // ===== ==== ====
 // CONSTANTS
@@ -41,9 +38,25 @@ const {
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
+// NOTE: may need to parse WEB_SOCKET_ENDPOINT
+//  {
+//    protocol: 'https',
+//    hostname: event.requestContext.domainName,
+//    path: event.requestContext.stage
+//  }
+const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT)
+console.log({
+  protocol: webSocketEndpointUrl.protocol,
+  hostname: webSocketEndpointUrl.hostname,
+  path: webSocketEndpointUrl.pathname
+})
 const apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
   region: AWS_REGION,
-  endpoint: WEB_SOCKET_ENDPOINT
+  endpoint: {
+    protocol: 'https',
+    hostname: webSocketEndpointUrl.hostname,
+    path: webSocketEndpointUrl.pathname
+  }
 })
 
 // ===== ==== ====
@@ -101,7 +114,7 @@ ${JSON.stringify(event.Records)}
   }
 
   // get connectionIds
-  console.log('ConcernedUsers:')
+  console.log('ConcernedUsers (below):')
   console.log(concernedUsers) // on its own line because JSON.stringify(Set<String>) outputs '{}'
   const command = new BatchGetCommand({
     RequestItems: {
@@ -131,6 +144,7 @@ ${JSON.stringify(event.Records)}
           Data: JSON.stringify(message)
         })
 
+        console.log(`Send message to <${id}> with connectionId <${connectionId}>`)
         apiGatewayManagementApiClient
           .send(command)
           .then((_data) => {
@@ -138,7 +152,8 @@ ${JSON.stringify(event.Records)}
             resolve()
           })
           .catch((error) => {
-            console.log(`Error sending message to <${connectionId}>`)
+            console.log(`Error sending message to <${connectionId}>
+${JSON.stringify(error)}`)
             if (error.name === 'GoneException') {
               console.log(`Stale connectionId <${connectionId}>`)
             }
@@ -150,7 +165,7 @@ ${JSON.stringify(event.Records)}
           TableName: USERS_TABLE_NAME,
           Key: { id: id },
           UpdateExpression: `
-              SET #unreadData = list_append(#unreadData, :message)
+              SET #unreadData = list_append(if_not_exists(#unreadData, :emptyList), :message)
               REMOVE #connectionId
               `,
           ExpressionAttributeNames: {
@@ -158,7 +173,8 @@ ${JSON.stringify(event.Records)}
             '#connectionId': 'connectionId'
           },
           ExpressionAttributeValues: {
-            ':message': [message]
+            ':message': [message],
+            ':emptyList': []
           }
         })
 

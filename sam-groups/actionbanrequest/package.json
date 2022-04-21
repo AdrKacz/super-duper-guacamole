@@ -1,5 +1,5 @@
 {
-  "name": "banrequest",
+  "name": "actionbanrequest",
   "version": "1.0.0",
   "description": "Request to ban an user",
   "main": "app.js",

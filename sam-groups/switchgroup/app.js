@@ -18,15 +18,9 @@
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 
-const {
-  DynamoDBDocumentClient,
-  UpdateCommand
-} = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
-const {
-  SNSClient,
-  PublishCommand
-} = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
 // ===== ==== ====
 // CONSTANTS

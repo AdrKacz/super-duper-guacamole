@@ -103,101 +103,101 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionRegisterFunction.Arn}/invocations
 
-  SwitchGroupRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: switchgroup
-      AuthorizationType: NONE
-      OperationName: SwitchGroupRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref SwitchGroupIntegration
-  SwitchGroupIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Switch Group Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SwitchGroupFunction.Arn}/invocations
+  # SwitchGroupRoute:
+  #   Type: AWS::ApiGatewayV2::Route
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     RouteKey: switchgroup
+  #     AuthorizationType: NONE
+  #     OperationName: SwitchGroupRoute
+  #     Target: !Join
+  #       - '/'
+  #       - - 'integrations'
+  #         - !Ref SwitchGroupIntegration
+  # SwitchGroupIntegration:
+  #   Type: AWS::ApiGatewayV2::Integration
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     Description: Switch Group Integration
+  #     IntegrationType: AWS_PROXY
+  #     IntegrationUri:
+  #       Fn::Sub:
+  #         arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SwitchGroupFunction.Arn}/invocations
 
-  SendMessageRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: sendmessage
-      AuthorizationType: NONE
-      OperationName: SendMessageRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref SendMessageIntegration
-  SendMessageIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Send Message Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
+  # SendMessageRoute:
+  #   Type: AWS::ApiGatewayV2::Route
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     RouteKey: sendmessage
+  #     AuthorizationType: NONE
+  #     OperationName: SendMessageRoute
+  #     Target: !Join
+  #       - '/'
+  #       - - 'integrations'
+  #         - !Ref SendMessageIntegration
+  # SendMessageIntegration:
+  #   Type: AWS::ApiGatewayV2::Integration
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     Description: Send Message Integration
+  #     IntegrationType: AWS_PROXY
+  #     IntegrationUri:
+  #       Fn::Sub:
+  #         arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
 
-  BanRequestRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: banrequest
-      AuthorizationType: NONE
-      OperationName: BanRequestRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref BanRequestIntegration
-  BanRequestIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Ban Request Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanRequestFunction.Arn}/invocations
+  # BanRequestRoute:
+  #   Type: AWS::ApiGatewayV2::Route
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     RouteKey: banrequest
+  #     AuthorizationType: NONE
+  #     OperationName: BanRequestRoute
+  #     Target: !Join
+  #       - '/'
+  #       - - 'integrations'
+  #         - !Ref BanRequestIntegration
+  # BanRequestIntegration:
+  #   Type: AWS::ApiGatewayV2::Integration
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     Description: Ban Request Integration
+  #     IntegrationType: AWS_PROXY
+  #     IntegrationUri:
+  #       Fn::Sub:
+  #         arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanRequestFunction.Arn}/invocations
 
-  BanReplyRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: banreply
-      AuthorizationType: NONE
-      OperationName: BanReplyRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref BanReplyIntegration
-  BanReplyIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Ban Reply Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanReplyFunction.Arn}/invocations
+  # BanReplyRoute:
+  #   Type: AWS::ApiGatewayV2::Route
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     RouteKey: banreply
+  #     AuthorizationType: NONE
+  #     OperationName: BanReplyRoute
+  #     Target: !Join
+  #       - '/'
+  #       - - 'integrations'
+  #         - !Ref BanReplyIntegration
+  # BanReplyIntegration:
+  #   Type: AWS::ApiGatewayV2::Integration
+  #   Properties:
+  #     ApiId: !Ref SimpleChatWebSocket
+  #     Description: Ban Reply Integration
+  #     IntegrationType: AWS_PROXY
+  #     IntegrationUri:
+  #       Fn::Sub:
+  #         arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanReplyFunction.Arn}/invocations
 
-  # Stage
+  # Deployment
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - RegisterRoute
-    - SwitchGroupRoute
-    - SendMessageRoute
-    - BanRequestRoute
-    - BanReplyRoute
+    # - SwitchGroupRoute
+    # - SendMessageRoute
+    # - BanRequestRoute
+    # - BanReplyRoute
     Properties:
       ApiId: !Ref SimpleChatWebSocket
   Stage:
@@ -209,90 +209,47 @@ Resources:
       ApiId: !Ref SimpleChatWebSocket
 
   # Layers Functions
-  HelperLayerVersion:
+  AWSSDKApiLayerVersion:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: helpers/layer
+      ContentUri: .dependencies/aws-sdk-api
       RetentionPolicy: Delete 
   
-  NotificationLayerVersion:
+  AWSSDKDdbLayerVersion:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: notification/layer
+      ContentUri: .dependencies/aws-sdk-ddb
       RetentionPolicy: Delete 
 
-  # Functions
-  RegisterFunction:
-    Type: AWS::Serverless::Function
+  AWSSDKSnsLayerVersion:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: register/
-      Layers:
-        - !Ref HelperLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  RegisterPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref RegisterFunction
-      Principal: apigateway.amazonaws.com
-  RegisterLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${RegisterFunction}'
+      ContentUri: .dependencies/aws-sdk-sns
+      RetentionPolicy: Delete 
 
-  SwitchGroupFunction:
-    Type: AWS::Serverless::Function
+  FirebaseAdminLayerVersion:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: switchgroup/
-      Layers:
-        - !Ref HelperLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  SwitchGroupPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SwitchGroupFunction
-      Principal: apigateway.amazonaws.com
-  SwitchGroupLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
+      ContentUri: .dependencies/firebase-admin
+      RetentionPolicy: Delete 
 
+  # ===== ===== =====
+  # Simple Notification Systems
+  SendMessageSNSTopic:
+    Type: AWS::SNS::Topic
+
+  # ===== ===== =====
+  # Backend Functions
   SendMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: sendmessage/
       Layers:
-        - !Ref HelperLayerVersion
-        - !Ref NotificationLayerVersion
+        - !Ref AWSSDKApiLayerVersion
+        - !Ref AWSSDKDdbLayerVersion
       Environment:
         Variables:
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
@@ -304,88 +261,179 @@ Resources:
           - 'execute-api:ManageConnections'
           Resource:
           - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  SendMessagePermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SendMessageFunction
-      Principal: apigateway.amazonaws.com
-  SendMessageLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SendMessageSNSTopic
 
-  BanRequestFunction:
+  # ===== ===== =====
+  # Action Functions
+  ActionRegisterFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ban/banrequest/
+      CodeUri: actionregister/
       Layers:
-        - !Ref HelperLayerVersion
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
-          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  BanRequestPermission:
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+  ActionRegisterPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
       - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BanRequestFunction
+      FunctionName: !Ref ActionRegisterFunction
       Principal: apigateway.amazonaws.com
-  BanRequestLogGroup:
+  ActionRegisterLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${BanRequestFunction}'
+      LogGroupName: !Sub '/aws/lambda/${ActionRegisterFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  BanReplyFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ban/banreply/
-      Layers:
-        - !Ref HelperLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  BanReplyPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref BanReplyFunction
-      Principal: apigateway.amazonaws.com
-  BanReplyLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${BanReplyFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
+  # SwitchGroupFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: switchgroup/
+  #     Layers:
+  #       - !Ref HelperLayerVersion
+  #     Policies:
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref UsersTableName
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref GroupsTableName
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref BannedUsersTableName
+  #     - Statement:
+  #       - Effect: Allow
+  #         Action:
+  #         - 'execute-api:ManageConnections'
+  #         Resource:
+  #         - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  # SwitchGroupPermission:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - SimpleChatWebSocket
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref SwitchGroupFunction
+  #     Principal: apigateway.amazonaws.com
+  # SwitchGroupLogGroup:
+  #   Type: AWS::Logs::LogGroup
+  #   Properties:
+  #     LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
+  #     RetentionInDays: !Ref LogRetentionInDays
+
+  # SendMessageFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: sendmessage/
+  #     Layers:
+  #       - !Ref HelperLayerVersion
+  #       - !Ref NotificationLayerVersion
+  #     Environment:
+  #       Variables:
+  #         FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+  #     Policies:
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref UsersTableName
+  #     - DynamoDBReadPolicy:
+  #         TableName: !Ref GroupsTableName
+  #     - Statement:
+  #       - Effect: Allow
+  #         Action:
+  #         - 'execute-api:ManageConnections'
+  #         Resource:
+  #         - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  # SendMessagePermission:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - SimpleChatWebSocket
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref SendMessageFunction
+  #     Principal: apigateway.amazonaws.com
+  # SendMessageLogGroup:
+  #   Type: AWS::Logs::LogGroup
+  #   Properties:
+  #     LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
+  #     RetentionInDays: !Ref LogRetentionInDays
+
+  # BanRequestFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: ban/banrequest/
+  #     Layers:
+  #       - !Ref HelperLayerVersion
+  #     Environment:
+  #       Variables:
+  #         CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
+  #     Policies:
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref UsersTableName
+  #     - DynamoDBReadPolicy:
+  #         TableName: !Ref GroupsTableName
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref BannedUsersTableName
+  #     - Statement:
+  #       - Effect: Allow
+  #         Action:
+  #         - 'execute-api:ManageConnections'
+  #         Resource:
+  #         - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  # BanRequestPermission:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - SimpleChatWebSocket
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref BanRequestFunction
+  #     Principal: apigateway.amazonaws.com
+  # BanRequestLogGroup:
+  #   Type: AWS::Logs::LogGroup
+  #   Properties:
+  #     LogGroupName: !Sub '/aws/lambda/${BanRequestFunction}'
+  #     RetentionInDays: !Ref LogRetentionInDays
+
+  # BanReplyFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: ban/banreply/
+  #     Layers:
+  #       - !Ref HelperLayerVersion
+  #     Policies:
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref UsersTableName
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref GroupsTableName
+  #     - DynamoDBCrudPolicy:
+  #         TableName: !Ref BannedUsersTableName
+  #     - Statement:
+  #       - Effect: Allow
+  #         Action:
+  #         - 'execute-api:ManageConnections'
+  #         Resource:
+  #         - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+  # BanReplyPermission:
+  #   Type: AWS::Lambda::Permission
+  #   DependsOn:
+  #     - SimpleChatWebSocket
+  #   Properties:
+  #     Action: lambda:InvokeFunction
+  #     FunctionName: !Ref BanReplyFunction
+  #     Principal: apigateway.amazonaws.com
+  # BanReplyLogGroup:
+  #   Type: AWS::Logs::LogGroup
+  #   Properties:
+  #     LogGroupName: !Sub '/aws/lambda/${BanReplyFunction}'
+  #     RetentionInDays: !Ref LogRetentionInDays
     
 Outputs:
   UsersTableArn:
@@ -398,23 +446,23 @@ Outputs:
     Description: "Banned Users table ARN"
     Value: !GetAtt BannedUsersTable.Arn
 
-  RegisterFunctionArn:
+  ActionRegisterFunctionArn:
     Description: "Register function ARN"
-    Value: !GetAtt RegisterFunction.Arn
-  SwitchGroupFunctionArn:
-    Description: "Switch Group function ARN"
-    Value: !GetAtt SwitchGroupFunction.Arn
-  SendMessageFunctionArn:
-    Description: "Send Message function ARN"
-    Value: !GetAtt SendMessageFunction.Arn
-  BanRequestFunctionArn:
-    Description: "Ban Request function ARN"
-    Value: !GetAtt BanRequestFunction.Arn
-  BanReplyFunctionArn:
-    Description: "Ban Reply function ARN"
-    Value: !GetAtt BanReplyFunction.Arn
+    Value: !GetAtt ActionRegisterFunction.Arn
+  # SwitchGroupFunctionArn:
+  #   Description: "Switch Group function ARN"
+  #   Value: !GetAtt SwitchGroupFunction.Arn
+  # SendMessageFunctionArn:
+  #   Description: "Send Message function ARN"
+  #   Value: !GetAtt SendMessageFunction.Arn
+  # BanRequestFunctionArn:
+  #   Description: "Ban Request function ARN"
+  #   Value: !GetAtt BanRequestFunction.Arn
+  # BanReplyFunctionArn:
+  #   Description: "Ban Reply function ARN"
+  #   Value: !GetAtt BanReplyFunction.Arn
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
-    Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
+    Value: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
 
