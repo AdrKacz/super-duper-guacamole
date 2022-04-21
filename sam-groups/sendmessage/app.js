@@ -94,10 +94,10 @@ ${JSON.stringify(event.Records)}
     // TODO: handle response.UnprocessedKeys
 
     // response.Responses[GROUPS_TABLE_NAME] : List<Map>
-    // 1.   [{ id1, [user1, user2] }, { id2, [user3, user4] }]
+    // 1.   [{ id1, {user1, user2} }, { id2, {user3, user4} }]
     // 2.   [[user1, user2], [user3, user4]]
     // 3.   [user1, user2, user3, user4]
-    for (const user of new Set(response.Responses[GROUPS_TABLE_NAME].flatMap(({ users }) => users))) {
+    for (const user of new Set(response.Responses[GROUPS_TABLE_NAME].flatMap(({ users }) => Array.from(users)))) {
       concernedUsers.add(user)
     }
   }

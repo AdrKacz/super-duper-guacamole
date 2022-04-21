@@ -105,47 +105,47 @@ Resources:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionRegisterFunction.Arn}/invocations
 
-  # SwitchGroupRoute:
-  #   Type: AWS::ApiGatewayV2::Route
-  #   Properties:
-  #     ApiId: !Ref SimpleChatWebSocket
-  #     RouteKey: switchgroup
-  #     AuthorizationType: NONE
-  #     OperationName: SwitchGroupRoute
-  #     Target: !Join
-  #       - '/'
-  #       - - 'integrations'
-  #         - !Ref SwitchGroupIntegration
-  # SwitchGroupIntegration:
-  #   Type: AWS::ApiGatewayV2::Integration
-  #   Properties:
-  #     ApiId: !Ref SimpleChatWebSocket
-  #     Description: Switch Group Integration
-  #     IntegrationType: AWS_PROXY
-  #     IntegrationUri:
-  #       Fn::Sub:
-  #         arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SwitchGroupFunction.Arn}/invocations
+  SwitchGroupRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: switchgroup
+      AuthorizationType: NONE
+      OperationName: SwitchGroupRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref SwitchGroupIntegration
+  SwitchGroupIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Switch Group Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionSwitchGroupFunction.Arn}/invocations
 
-  # SendMessageRoute:
-  #   Type: AWS::ApiGatewayV2::Route
-  #   Properties:
-  #     ApiId: !Ref SimpleChatWebSocket
-  #     RouteKey: sendmessage
-  #     AuthorizationType: NONE
-  #     OperationName: SendMessageRoute
-  #     Target: !Join
-  #       - '/'
-  #       - - 'integrations'
-  #         - !Ref SendMessageIntegration
-  # SendMessageIntegration:
-  #   Type: AWS::ApiGatewayV2::Integration
-  #   Properties:
-  #     ApiId: !Ref SimpleChatWebSocket
-  #     Description: Send Message Integration
-  #     IntegrationType: AWS_PROXY
-  #     IntegrationUri:
-  #       Fn::Sub:
-  #         arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
+  TextMessageRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: textmessage
+      AuthorizationType: NONE
+      OperationName: TextMessageRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref TextMessageIntegration
+  TextMessageIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Send Text Message Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionTextMessageFunction.Arn}/invocations
 
   # BanRequestRoute:
   #   Type: AWS::ApiGatewayV2::Route
@@ -194,8 +194,8 @@ Resources:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - RegisterRoute
-    # - SwitchGroupRoute
-    # - SendMessageRoute
+    - SwitchGroupRoute
+    - TextMessageRoute
     # - BanRequestRoute
     # - BanReplyRoute
     Properties:
@@ -237,6 +237,9 @@ Resources:
   # Simple Notification Systems
   SendMessageSNSTopic:
     Type: AWS::SNS::Topic
+  
+  SwitchGroupSNSTopic:
+    Type: AWS::SNS::Topic
 
   # ===== ===== =====
   # Backend Functions
@@ -266,6 +269,39 @@ Resources:
           Type: SNS
           Properties:
             Topic: !Ref SendMessageSNSTopic
+  SendMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  SwitchGroupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: switchgroup/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SwitchGroupSNSTopic
+  SwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
   # ===== ===== =====
   # Action Functions
@@ -296,6 +332,64 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ActionRegisterFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ActionSwitchGroupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actionswitchgroup/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
+  ActionSwitchGroupPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionSwitchGroupFunction
+      Principal: apigateway.amazonaws.com
+  ActionSwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionSwitchGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ActionTextMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actiontextmessage/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+  ActionTextMessagePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionTextMessageFunction
+      Principal: apigateway.amazonaws.com
+  ActionTextMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionTextMessageFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   # SwitchGroupFunction:

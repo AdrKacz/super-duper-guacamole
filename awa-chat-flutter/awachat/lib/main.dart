@@ -241,7 +241,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         messageDecode(encodedMessage, types.Status.sending);
     if (message != null) {
       insertMessage(message);
-      _webSocketConnection.sendmessage(encodedMessage);
+      _webSocketConnection.textmessage(encodedMessage);
     }
   }
 
@@ -295,7 +295,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final data = jsonDecode(message);
     switch (data['action']) {
       case "register":
-        print('\tRegister: ${data['status']}');
+        print('\tRegister');
         // Get group (register on load)
         if (User().groupid == "") {
           _webSocketConnection.switchgroup();
@@ -332,12 +332,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           state = "chat";
         });
         break;
-      case "sendmessage":
-        print('\tData: ${data['data']}');
-        types.Message? message = messageDecode(data['data']);
+      case "textmessage":
+        print('\tMessage: ${data['message']}');
+        types.Message? message = messageDecode(data['message']);
         if (message != null) {
           insertMessage(message);
-          Memory().addMessage(message.id, data['data']);
+          Memory().addMessage(message.id, data['message']);
         }
         break;
       case "banrequest":

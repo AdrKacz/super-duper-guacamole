@@ -7,7 +7,7 @@
 
 // ===== ==== ====
 // EVENT
-// Send message
+// Register connectionId
 // event.body
 // id : String - userid
 
@@ -54,7 +54,7 @@ exports.handler = async (event) => {
 
   // update user and retrieve old unreadData (if any)
   const updateCommand = new UpdateCommand({
-    ReturnValues: 'ALL_OLD',
+    ReturnValues: 'UPDATED_OLD',
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
     UpdateExpression: `
@@ -69,7 +69,7 @@ exports.handler = async (event) => {
       ':connectionId': event.requestContext.connectionId
     }
   })
-  const response = dynamoDBDocumentClient.send(updateCommand)
+  const response = await dynamoDBDocumentClient.send(updateCommand)
   console.log(`Update user <${id}> with (old) values:
 ${JSON.stringify(response)}`)
 

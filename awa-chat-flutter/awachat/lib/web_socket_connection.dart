@@ -16,30 +16,27 @@ class WebSocketConnection {
   }
 
   void register() {
-    _channel.sink.add(jsonEncode({"action": "register", "userid": User().id}));
+    _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
   }
 
   void switchgroup() {
     User().resetGroup();
-    _channel.sink
-        .add(jsonEncode({"action": "switchgroup", "userid": User().id}));
+    _channel.sink.add(jsonEncode({"action": "switchgroup", "id": User().id}));
   }
 
-  void sendmessage(String encodedMessage) {
+  void textmessage(String encodedMessage) {
     _channel.sink.add(jsonEncode({
-      "action": "sendmessage",
-      "userid": User().id,
-      "groupid": User().groupid,
-      "data": encodedMessage,
+      "action": "textmessage",
+      "id": User().id,
+      "message": encodedMessage,
     }));
   }
 
   void banrequest(String userid, String messageid) {
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
-      "userid": User().id,
-      "banneduserid": userid,
-      "groupid": User().groupid,
+      "id": User().id,
+      "bannedid": userid,
       "messageid": messageid,
     }));
   }
@@ -47,9 +44,8 @@ class WebSocketConnection {
   void banreply(String banneduserid, String status) {
     _channel.sink.add(jsonEncode({
       "action": "banreply",
-      "userid": User().id,
-      "banneduserid": banneduserid,
-      "groupid": User().groupid,
+      "id": User().id,
+      "bannedid": banneduserid,
       "status": status,
     }));
   }

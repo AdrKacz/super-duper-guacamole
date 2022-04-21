@@ -17,7 +17,6 @@
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-
 const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
@@ -66,20 +65,6 @@ ${JSON.stringify(event.Records)}
 
   // update user
   const commands = [
-    // update old group
-    new UpdateCommand({
-      TableName: GROUPS_TABLE_NAME,
-      Key: { id: user.groupid },
-      UpdateExpression: `
-      DELETE #users :id
-      `,
-      ExpressionAttributeNames: {
-        '#users': 'users'
-      },
-      ExpressionAttributeValues: {
-        ':id': new Set([user.id])
-      }
-    }),
     // update new group
     new UpdateCommand({
       TableName: GROUPS_TABLE_NAME,
@@ -112,19 +97,33 @@ ${JSON.stringify(event.Records)}
     })
   ]
 
+  if (user.groupid !== undefined) {
+    // update old group if any
+    commands.push(
+      new UpdateCommand({
+        TableName: GROUPS_TABLE_NAME,
+        Key: { id: user.groupid },
+        UpdateExpression: `
+      DELETE #users :id
+      `,
+        ExpressionAttributeNames: {
+          '#users': 'users'
+        },
+        ExpressionAttributeValues: {
+          ':id': new Set([user.id])
+        }
+      }))
+  }
+
   // TODO: revert if errors
   await Promise.allSettled(commands.map((command) => (
     new Promise((resolve, _reject) => {
       dynamoDBDocumentClient.send(command)
-        .then((_data) => {
-          console.log(`Successfully sent command:
-${JSON.parse(command)}`)
-        })
         .catch((error) => {
-          console.log(`Error with command:
-${JSON.parse(command)}
-Error:
-${JSON.parse(error)}`)
+          console.log(`Error:
+${JSON.stringify(error)}
+With command input:
+${JSON.stringify(command.input)}`)
         })
         .finally(() => {
           resolve() // resolve anyway
