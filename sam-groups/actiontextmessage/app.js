@@ -24,6 +24,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 const {
   USERS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
+  SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
 } = process.env
 
@@ -76,19 +77,46 @@ ${JSON.stringify(response)}`)
     throw new Error(`user <${id}> has connectionId <${response.Item.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
   }
 
-  // send message
-  const publishCommand = new PublishCommand({
-    TopicArn: SEND_MESSAGE_TOPIC_ARN,
-    Message: JSON.stringify({
-      groups: [response.Item.group],
-      message: {
-        action: 'textmessage',
-        message: message
-      }
+  // publish to sns topics
+  const publishCommands = [
+    // send message
+    new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        groups: [response.Item.group],
+        message: {
+          action: 'textmessage',
+          message: message
+        }
+      })
+    }),
+    // send notification
+    new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        topic: `group-${response.Item.group}`,
+        notification: {
+          title: 'Les gens parlent 🎉',
+          body: 'Tu es trop loin pour entendre ...'
+        }
+      })
     })
-  })
+  ]
 
-  await snsClient.send(publishCommand)
+  await Promise.allSettled(publishCommands.map((publishCommand) => (
+    new Promise((resolve, _reject) => {
+      snsClient.send(publishCommand)
+        .catch((error) => {
+          console.log(`Error:
+${JSON.stringify(error)}
+With command input:
+${JSON.stringify(publishCommand.input)}`)
+        })
+        .finally(() => {
+          resolve() // resolve anyway
+        })
+    })
+  )))
 
   return {
     statusCode: 200

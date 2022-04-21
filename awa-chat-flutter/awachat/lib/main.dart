@@ -317,7 +317,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // Don't really know why ... deserve investigation
           Future.delayed(const Duration(milliseconds: 50), () {
             // missed messages
-            for (final unreadMessage in data['unread']) {
+            for (final unreadMessage in data['unreadData']) {
               processMessage(jsonEncode(unreadMessage));
             }
           });

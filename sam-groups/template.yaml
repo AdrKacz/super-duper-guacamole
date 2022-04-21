@@ -241,6 +241,9 @@ Resources:
   SwitchGroupSNSTopic:
     Type: AWS::SNS::Topic
 
+  SendNotificationSNSTopic:
+    Type: AWS::SNS::Topic
+
   # ===== ===== =====
   # Backend Functions
   SendMessageFunction:
@@ -301,6 +304,26 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  SendNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sendnotification/
+      Layers:
+        - !Ref FirebaseAdminLayerVersion
+      Environment:
+        Variables:
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SendNotificationSNSTopic
+  SendNotificationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   # ===== ===== =====
@@ -373,11 +396,14 @@ Resources:
       Environment:
         Variables:
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTableName
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
   ActionTextMessagePermission:
     Type: AWS::Lambda::Permission
     DependsOn:
