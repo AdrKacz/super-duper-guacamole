@@ -85,11 +85,14 @@ ${JSON.stringify(event.Records)}
       Key: { id: user.id },
       UpdateExpression: `
       SET #group = :id
-      REMOVE #unreadData
+      REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
       `,
       ExpressionAttributeNames: {
         '#group': 'group',
-        '#unreadData': 'unreadData'
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
       },
       ExpressionAttributeValues: {
         ':id': groupid

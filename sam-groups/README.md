@@ -12,7 +12,6 @@ Parameter | Value
 *UsersTableName* | **users**
 *GroupsTableName* | **groups**
 *StageName* | **development**
-*BannedUsersTableName* | **bannedusers**
 *ConfirmationRequired* | **2**
 *LogRetentionInDays* | **1**
 

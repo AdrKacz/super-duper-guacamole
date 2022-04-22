@@ -9,7 +9,7 @@
 // EVENT
 // Switch group
 // event.body
-// id : String - userid
+// id : String - user id
 // message : String
 
 // ===== ==== ====
@@ -40,14 +40,14 @@ const snsClient = new SNSClient({ region: AWS_REGION })
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
-  \tBody:\n${event.body}
-  \tRequest Context:\n${JSON.stringify(event.requestContext)}
-  \tEnvironment:\n${JSON.stringify(process.env)}
-  `)
+\tBody:\n${event.body}
+\tRequest Context:\n${JSON.stringify(event.requestContext)}
+\tEnvironment:\n${JSON.stringify(process.env)}
+`)
 
   const body = JSON.parse(event.body)
 
-  // userid
+  // user id
   const id = body.id
   const message = body.message
   if (id === undefined || message === undefined) {

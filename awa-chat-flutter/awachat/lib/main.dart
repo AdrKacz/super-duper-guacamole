@@ -134,9 +134,9 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     switch (status) {
       case 'confirmed':
         if (banneduserid == User().id) {
-          title = "Tu viens de te faire banir du groupe";
+          title = "Tu t'es fait banir de ton groupe";
         } else {
-          title = 'La personne a été banie du groupe';
+          title = 'La personne est banie de ton groupe';
           actions.insert(
               0,
               TextButton(
@@ -158,8 +158,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
         break;
       case 'denied':
-        title = "La personne n'a pas été banie du groupe";
+        if (banneduserid == User().id) {
+          return; // no need to alert the user
+        } else {
+          title = "La personne n'est pas banie de ton groupe";
+        }
         break;
+      default:
+        return;
     }
     showDialog(
         context: context,
@@ -344,13 +350,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         print('\tBan request for: ${data['messageid']}');
         banRequest(context, data['messageid']);
         break;
-      case "banconfirmed":
-        print('\tBan confirmed for: ${data['banneduserid']}');
-        acknowledgeBan(context, 'confirmed', data['banneduserid']);
-        break;
-      case "bandenied":
-        print('\tBan denied for: ${data['banneduserid']}');
-        acknowledgeBan(context, 'denied', data['banneduserid']);
+      case "banreply":
+        print(
+            '\tBan reply for: ${data['bannedid']} with status ${data['status']}');
+        acknowledgeBan(context, data['status'], data['bannedid']);
         break;
       default:
         print("\tAction ${data['action']} not recognised.");
