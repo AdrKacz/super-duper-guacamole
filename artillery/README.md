@@ -1,24 +1,21 @@
 # Load test with [Artillery](https://www.artillery.io)
 
 
+### Message on Web Socket error
+
 ```
-vusers.completed: .............................................................. 30
-vusers.created: ................................................................ 30
-vusers.created_by_name.Text Message: ........................................... 30
-vusers.failed: ................................................................. 0
-vusers.session_length:
-  min: ......................................................................... 7679.7
-  max: ......................................................................... 17804
-  median: ...................................................................... 11734.2
-  p95: ......................................................................... 16159.7
-  p99: ......................................................................... 16159.7
-websocket.messages_sent: ....................................................... 960
-websocket.send_rate: ........................................................... 35/sec
+{
+  message: 'Internal server error',
+  connectionId: 'Q_wQhekaCGYAd6Q=',
+  requestId: 'Q_wQhGqSiGYFzTQ='
+}
 ```
 
 ## Run
 
 ```
+yarn artillery scenarios-dev.yaml -e dev --output=results-dev.json
+yarn artillery scenarios-prod.yaml -e prod --output=results-prod.json
 yarn artillery
 yarn artillery-debug
 ```
@@ -27,7 +24,7 @@ yarn artillery-debug
 
 ```
 yarn artillery --output ./results.json
-yarn report results.json
+yarn report results.json --output=results.html
 open results.json.html
 ```
 

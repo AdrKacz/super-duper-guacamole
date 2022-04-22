@@ -1,7 +1,13 @@
 config:
-  target: "wss://q6gjgdgowf.execute-api.eu-west-3.amazonaws.com/dev"
-  processor: "./index.js"
+  processor: "./index-dev.js"
   phases:
     - duration: 10
       arrivalCount: 30
       name: Text Message
+  environments:
+    dev:
+      target: "wss://q6gjgdgowf.execute-api.eu-west-3.amazonaws.com/dev"
+      processor: "./index-dev.js" 
+    prod:
+      target: "wss://bwrmehhjm1.execute-api.eu-west-3.amazonaws.com/prod"
+      processor: "./index-prod.js"

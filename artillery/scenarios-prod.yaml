@@ -1,0 +1,25 @@
+scenarios:
+  - name: Text Message - 102 Messages
+    engine: ws
+    flow:
+      - function: "createUniqueId"
+      - send:
+          payload:
+            action: "register"
+            userid: "{{ uniqueId }}"
+          capture:
+            handler: "registerHandler"
+      - send:
+          payload:
+            action: "switchgroup"
+            userid: "{{ uniqueId }}"
+          capture:
+            handler: "switchgroupHandler"
+      - loop:
+        - function: "createData"
+        - log: "User \x1b[34m{{ uniqueId }}\x1b[0m send to group \x1b[34m{{ groupId }}\x1b[0m message\n\x1b[1m{{ data.data }}\x1b[0m"
+        - send:
+            payload: "{{ data }}"
+            capture:
+              handler: "textmessageHandler"
+        count: 100
