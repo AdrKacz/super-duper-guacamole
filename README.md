@@ -15,7 +15,7 @@ We decoupled our code to move it from our server to our client.
 ## Current Architecture - Centralised - Serverless
 
 <p float="left" align="middle">
-    <img src="./assets/terrastruct/groups.png" width="100%">
+    <img src="./assets/terrastruct/groups.gif" width="100%">
 </p>
 
 # Demo
