@@ -1,0 +1,14 @@
+config:
+  target: "wss://mbj9ud7puj.execute-api.eu-west-3.amazonaws.com/dev"
+  processor: "./index.js"
+  phases:
+    - duration: 1
+      arrivalRate: 1
+      name: Warm Up
+    # - duration: 10
+    #   arrivalRate: 1
+    #   rampTo: 10
+    #   name: Ramp Up
+    # - duration: 10
+    #   arrivalRate: 10
+    #   name: Load

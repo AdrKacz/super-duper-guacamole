@@ -1,0 +1,18 @@
+scenarios:
+  - name: Text Message
+    engine: ws
+    flow:
+      - function: "createUniqueId"
+      - send:
+          action: "register"
+          id: "{{ uniqueId }}"
+      - loop:
+          - send:
+              action: "switchgroup"
+              id: "{{ uniqueId }}"
+          - loop:
+              - function: "createData"
+              - send: "{{ data }}"
+              - think: 1
+            count: 2
+        count: 1
