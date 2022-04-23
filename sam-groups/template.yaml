@@ -476,6 +476,8 @@ Resources:
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:

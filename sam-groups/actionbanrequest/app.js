@@ -10,13 +10,14 @@
 // Switch group
 // event.body
 // id : String - user id
+// groupid : String - user group id
 // bannedid : String - banned user id
 // messageid : String - message id being banned for (to be removed)
 
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -62,63 +63,77 @@ const snsClient = new SNSClient({ region: AWS_REGION })
 exports.handler = async (event) => {
   console.log(`Receives:
 \tBody:\n${event.body}
-\tRequest Context:\n${JSON.stringify(event.requestContext)}
-\tEnvironment:\n${JSON.stringify(process.env)}
+\tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
   const body = JSON.parse(event.body)
 
   const id = body.id
+  const groupid = body.groupid
   const bannedid = body.bannedid
   const messageid = body.messageid
 
-  if (id === undefined || bannedid === undefined || messageid === undefined) {
-    throw new Error('id, bannedid, and messageid must be defined')
+  if (id === undefined || groupid === undefined || bannedid === undefined || messageid === undefined) {
+    throw new Error('id, groupid, bannedid, and messageid must be defined')
   }
 
-  // get users
-  const userPromise = dynamoDBDocumentClient.send(new GetCommand({
-    TableName: USERS_TABLE_NAME,
-    Key: { id: id },
-    ProjectionExpression: '#id, #group, #connectionId',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#group': 'group',
-      '#connectionId': 'connectionId'
+  if (id === bannedid) {
+    // cannot ban yourself
+    console.log(`user <${id}> banned itself`)
+    return {
+      statusCode: 403
     }
-  })).then((data) => (data.Item))
+  }
 
-  const banneduserPromise = dynamoDBDocumentClient.send(new GetCommand({
-    TableName: USERS_TABLE_NAME,
-    Key: { id: bannedid },
-    ProjectionExpression: '#id, #group, #connectionId, #banVotingUsers, #banConfirmedUsers',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#group': 'group',
-      '#connectionId': 'connectionId',
-      '#banVotingUsers': 'banVotingUsers',
-      '#banConfirmedUsers': 'banConfirmedUsers'
+  const batchGetUsersCommand = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: [{ id: id }, { id: bannedid }],
+        ProjectionExpression: '#id, #group, #connectionId, #banVotingUsers, #banConfirmedUsers',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#group': 'group',
+          '#connectionId': 'connectionId',
+          '#banVotingUsers': 'banVotingUsers',
+          '#banConfirmedUsers': 'banConfirmedUsers'
+        }
+      },
+      [GROUPS_TABLE_NAME]: {
+        Keys: [{ id: groupid }],
+        ProjectionExpression: '#users',
+        ExpressionAttributeNames: {
+          '#users': 'users'
+        }
+      }
     }
-  })).then((data) => (data.Item))
+  })
 
-  const [user, banneduser] = await Promise.all([userPromise, banneduserPromise])
+  const [users, [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
+  let user, bannedUser
+  if (users[0].id === id) {
+    user = users[0]
+    bannedUser = users[1]
+  } else {
+    user = users[1]
+    bannedUser = users[0]
+  }
+  console.log('user:', user)
+  console.log('bannedUser:', bannedUser)
+  console.log('bannedUser.banVotingUsers:', bannedUser.banVotingUsers)
+  console.log('bannedUser.banConfirmedUsers:', bannedUser.banConfirmedUsers)
+  console.log('group:', group)
 
   // verify both user and their group (must be the same)
-  console.log(`Response for user <${id}>:
-${JSON.stringify(user)}`)
   if (user === undefined || user.connectionId === undefined || user.group === undefined) {
     throw new Error(`user <${id}> is not defined or has no connectionId or had no group`)
   }
 
-  if (user.connectionId !== event.requestContext.connectionId) {
-    throw new Error(`user <${id}> has connectionId <${user.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
-  }
+  // need to verify identify instead
+  // if (user.connectionId !== event.requestContext.connectionId) {
+  //   throw new Error(`user <${id}> has connectionId <${user.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
+  // }
 
-  console.log(`Response for banned user <${bannedid}> (banVotingUsers then banConfirmedUsers below):
-${JSON.stringify(banneduser)}`)
-  console.log(banneduser.banVotingUsers)
-  console.log(banneduser.banConfirmedUsers)
-  if (banneduser === undefined || banneduser.group !== user.group) {
+  if (bannedUser === undefined || bannedUser.group !== user.group) {
     // NOTE: it can happens if banned user is banned but not everyone has voted yet (app not updated)
     // Don't throw an error
     // TODO: warn user banned user is not in group anymore
@@ -128,20 +143,10 @@ ${JSON.stringify(banneduser)}`)
     }
   }
 
-  const banVotingUsers = banneduser.banVotingUsers ?? new Set()
-  const banConfirmedUsers = banneduser.banConfirmedUsers ?? new Set()
+  const banVotingUsers = bannedUser.banVotingUsers ?? new Set()
+  const banConfirmedUsers = bannedUser.banConfirmedUsers ?? new Set()
 
-  // get users in group to set confirmationRequired
-  const groupusers = await dynamoDBDocumentClient.send(new GetCommand({
-    TableName: GROUPS_TABLE_NAME,
-    Key: { id: user.group },
-    ProjectionExpression: '#users',
-    ExpressionAttributeNames: {
-      '#users': 'users'
-    }
-  })).then((data) => (data.Item.users))
-
-  const banNewVotingUsers = new Set(groupusers)
+  const banNewVotingUsers = new Set(group.users)
   banNewVotingUsers.delete(bannedid) // banned user is not part of the vote
 
   // NOTE: delete user who have voted and who are voting
@@ -154,7 +159,7 @@ ${JSON.stringify(banneduser)}`)
     banNewVotingUsers.delete(banConfirmedUser)
   }
 
-  const confirmationRequired = Math.min(CONFIRMATION_REQUIRED, groupusers.size - 1)
+  const confirmationRequired = Math.min(CONFIRMATION_REQUIRED, group.users.size - 1)
 
   // update banned user
   // await to send message only after ddb has been updated
@@ -168,7 +173,8 @@ ${JSON.stringify(banneduser)}`)
     dynamicExpressionAttributeNames['#banVotingUsers'] = 'banVotingUsers'
     dynamicExpressionAttributeValues[':banNewVotingUsers'] = banNewVotingUsers
   }
-  await dynamoDBDocumentClient.send(new UpdateCommand({
+
+  const updateBannedUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: bannedid },
     UpdateExpression: `
@@ -177,50 +183,51 @@ ${JSON.stringify(banneduser)}`)
     `,
     ExpressionAttributeNames: dynamicExpressionAttributeNames,
     ExpressionAttributeValues: dynamicExpressionAttributeValues
-  }))
+  })
 
-  // publish to sns topics (only if new users)
+  const promises = [dynamoDBDocumentClient.send(updateBannedUserCommand)]
+
   if (banNewVotingUsers.size > 0) {
-    const publishCommands = [
-      // send message
-      new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: Array.from(banNewVotingUsers),
-          message: {
-            action: 'banrequest',
-            messageid: messageid
-          }
-        })
-      }),
-      // send notification
-      new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          topic: `group-${banneduser.group}`,
-          notification: {
-            title: "Quelqu'un a mal agi ❌",
-            body: 'Viens donner ton avis !'
-          }
-        })
+    const publishSendNotificationCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        topic: `group-${bannedUser.group}`,
+        notification: {
+          title: "Quelqu'un a mal agi ❌",
+          body: 'Viens donner ton avis !'
+        }
       })
-    ]
+    })
+    promises.push(snsClient.send(publishSendNotificationCommand))
 
-    await Promise.allSettled(publishCommands.map((publishCommand) => (
-      new Promise((resolve, _reject) => {
-        snsClient.send(publishCommand)
-          .catch((error) => {
-            console.log(`Error:
-  ${JSON.stringify(error)}
-  With command input:
-  ${JSON.stringify(publishCommand.input)}`)
-          })
-          .finally(() => {
-            resolve() // resolve anyway
-          })
+    const batchGetBanNewVotingUsersCommand = new BatchGetCommand({
+      RequestItems: {
+        [USERS_TABLE_NAME]: {
+          Keys: Array.from(banNewVotingUsers).map((id) => ({ id: id })),
+          ProjectionExpression: '#id, #connectionId',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#connectionId': 'connectionId'
+          }
+        }
+      }
+    })
+    const users = await dynamoDBDocumentClient.send(batchGetBanNewVotingUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+
+    const publishSendMessageCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: users,
+        message: {
+          action: 'banrequest',
+          messageid: messageid
+        }
       })
-    )))
+    })
+    promises.push(snsClient.send(publishSendMessageCommand))
   }
+
+  await Promise.allSettled(promises)
 
   return {
     statusCode: 200

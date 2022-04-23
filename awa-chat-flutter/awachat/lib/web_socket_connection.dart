@@ -38,6 +38,7 @@ class WebSocketConnection {
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
       "id": User().id,
+      "groupid": User().groupid,
       "bannedid": userid,
       "messageid": messageid,
     }));
@@ -47,6 +48,7 @@ class WebSocketConnection {
     _channel.sink.add(jsonEncode({
       "action": "banreply",
       "id": User().id,
+      "groupid": User().groupid,
       "bannedid": banneduserid,
       "status": status,
     }));
