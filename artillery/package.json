@@ -7,8 +7,8 @@
   "license": "MIT",
   "scripts": {
     "lint": "eslint . --fix",
-    "artillery": "$(npm bin)/artillery run --config config.yaml",
-    "artillery-debug": "DEBUG=ws $(npm bin)/artillery run --config config.yaml",
+    "start": "$(npm bin)/artillery run --config config.yaml",
+    "startdebug": "DEBUG=ws $(npm bin)/artillery run --config config.yaml",
     "report": "$(npm bin)/artillery report",
     "dino": "$(npm bin)/artillery dino -m \"Awa Artillery\" -r"
   },
