@@ -13,8 +13,12 @@ function registerHandler (event, userContext, error, done) {
   }
   // console.log('\x1b[1mRegister handler\x1b[0m')
   // console.log(data)
+
   if (data.action === 'register') {
+    userContext.vars.groupId = userContext.vars.groupId ?? ''
     done()
+  } else if (data.message === 'Internal server error') {
+    error(new Error('Internal server error'))
   }
 }
 
@@ -27,9 +31,12 @@ function switchgroupHandler (event, userContext, error, done) {
   }
   // console.log('\x1b[1mSwitch Group handler\x1b[0m')
   // console.log(data)
+
   if (data.action === 'switchgroup') {
     userContext.vars.groupId = data.groupid
     done()
+  } else if (data.message === 'Internal server error') {
+    error(new Error('Internal server error'))
   }
 }
 
@@ -45,6 +52,8 @@ function textmessageHandler (event, userContext, error, done) {
   // wait for your message to come back
   if (data.action === 'textmessage' && data.message === userContext.vars.data.message) {
     done()
+  } else if (data.message === 'Internal server error') {
+    error(new Error('Internal server error'))
   }
 }
 
@@ -63,7 +72,7 @@ function createData (userContext, _events, done) {
 
   userContext.vars.data = {
     action: 'textmessage',
-    groupid: userContext.vars.groupid,
+    groupid: userContext.vars.groupId,
     id: author,
     message: `${author}::${createdAt}::${id}::${text}`
   }

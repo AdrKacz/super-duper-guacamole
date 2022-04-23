@@ -1,5 +1,5 @@
 scenarios:
-  - name: Text Message - 102 Messages
+  - name: Text Message - 1002 Messages
     engine: ws
     flow:
       - function: "createUniqueId"
@@ -12,14 +12,15 @@ scenarios:
       - send:
           payload:
             action: "switchgroup"
+            groupid: "{{ groupId }}"
             id: "{{ uniqueId }}"
           capture:
             handler: "switchgroupHandler"
       - loop:
         - function: "createData"
-        - log: "User \x1b[34m{{ uniqueId }}\x1b[0m send to group \x1b[34m{{ groupId }}\x1b[0m message\n\x1b[1m{{ data.message }}\x1b[0m"
+        # - log: "User \x1b[34m{{ uniqueId }}\x1b[0m send to group \x1b[34m{{ groupId }}\x1b[0m message\n\x1b[1m{{ data.message }}\x1b[0m"
         - send:
             payload: "{{ data }}"
             capture:
               handler: "textmessageHandler"
-        count: 100
+        count: 1000

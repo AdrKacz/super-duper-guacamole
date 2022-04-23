@@ -14,16 +14,15 @@
 ## Run
 
 ```
-yarn artillery scenarios-dev.yaml -e dev --output=results-dev.json
-yarn artillery scenarios-prod.yaml -e prod --output=results-prod.json
-yarn artillery
-yarn artillery-debug
+yarn start scenarios-dev.yaml -e dev --output=results-dev.json
+yarn start scenarios-prod.yaml -e prod --output=results-prod.json
+yarn start
+yarn startdebug
 ```
 
 ## Report
 
 ```
-yarn artillery --output ./results.json
 yarn report results.json --output=results.html
 open results.json.html
 ```

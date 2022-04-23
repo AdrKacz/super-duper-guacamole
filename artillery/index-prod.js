@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid')
 
 const randomSentence = require('random-sentence')
 
-function registerHandler (event, userContext, error, done) {
+function registerHandler (event, _userContext, error, done) {
   let data
   try {
     data = JSON.parse(event.data)
@@ -15,6 +15,8 @@ function registerHandler (event, userContext, error, done) {
   // console.log(data)
   if (data.action === 'register') {
     done()
+  } else if (data.message === 'Internal server error') {
+    error(new Error('Internal server error'))
   }
 }
 
@@ -30,6 +32,8 @@ function switchgroupHandler (event, userContext, error, done) {
   if (data.action === 'switchgroup') {
     userContext.vars.groupId = data.groupid
     done()
+  } else if (data.message === 'Internal server error') {
+    error(new Error('Internal server error'))
   }
 }
 
@@ -45,6 +49,8 @@ function textmessageHandler (event, userContext, error, done) {
   // wait for your message to come back
   if (data.action === 'sendmessage' && data.message === userContext.vars.data.message) {
     done()
+  } else if (data.message === 'Internal server error') {
+    error(new Error('Internal server error'))
   }
 }
 
