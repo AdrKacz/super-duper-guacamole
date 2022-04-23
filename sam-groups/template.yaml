@@ -231,6 +231,9 @@ Resources:
   SendNotificationSNSTopic:
     Type: AWS::SNS::Topic
 
+  StoreUnreadDataSNSTopic:
+    Type: AWS::SNS::Topic
+
   # ===== ===== =====
   # Backend Functions
   SendMessageFunction:
@@ -239,15 +242,14 @@ Resources:
       CodeUri: sendmessage/
       Layers:
         - !Ref AWSSDKApiLayerVersion
-        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
           WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          STORE_UNREAD_DATA_TOPIC_ARN: !Ref StoreUnreadDataSNSTopic
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt StoreUnreadDataSNSTopic.TopicName
       - Statement:
         - Effect: Allow
           Action:
@@ -313,6 +315,26 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  StoreUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: storeunreaddata/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref StoreUnreadDataSNSTopic
+  SwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
   # ===== ===== =====
   # Action Functions
   ActionRegisterFunction:
@@ -349,14 +371,11 @@ Resources:
     Properties:
       CodeUri: actionswitchgroup/
       Layers:
-        - !Ref AWSSDKDdbLayerVersion
         - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
           SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
       Policies:
-      - DynamoDBReadPolicy:
-          TableName: !Ref UsersTableName
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
   ActionSwitchGroupPermission:
@@ -387,6 +406,8 @@ Resources:
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:

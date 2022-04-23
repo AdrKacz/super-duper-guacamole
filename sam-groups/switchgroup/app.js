@@ -9,10 +9,9 @@
 // EVENT
 // Switch group
 // event.Records[0].Sns.Message
-// user : Map<String,String>
-//    id
-//    groupid (?)
-//    connectionId (?)
+// id : String - user id
+// groupid : String? - user group id
+// connectionId : String? - user connection id
 
 // ===== ==== ====
 // IMPORTS
@@ -45,106 +44,88 @@ exports.handler = async (event) => {
 Receives:
 \tRecords[0].Sns.Message:
 ${event.Records[0].Sns.Message}
-\tRecords:
-${JSON.stringify(event.Records)}
-\tEnvironment:\n${JSON.stringify(process.env)}
 `)
 
   const body = JSON.parse(event.Records[0].Sns.Message)
 
-  const user = body.user
-  if (user === undefined || user.id === undefined) {
-    throw new Error('user.id must be defined')
+  const id = body.id
+  const groupid = body.groupid
+  // const connectionId = body.connectionId
+
+  if (id === undefined) {
+    throw new Error('id must be defined')
   }
 
   // find a new group
-  let groupid = Math.floor(Math.random() * 9).toString()
-  if (user.groupid && user.groupid === groupid) {
-    groupid = (parseInt(groupid) + 1).toString()
+  let newgroupid = Math.floor(Math.random() * 9).toString()
+  if (newgroupid === groupid) {
+    newgroupid = (parseInt(newgroupid) + 1).toString()
   }
 
-  // update user
-  const commands = [
-    // update new group
-    new UpdateCommand({
+  const updateUserCommand = new UpdateCommand({
+    ReturnValues: 'ALL_OLD',
+    TableName: USERS_TABLE_NAME,
+    Key: { id: id },
+    UpdateExpression: `
+    SET #group = :groupid
+    REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+    `,
+    ExpressionAttributeNames: {
+      '#group': 'group',
+      '#unreadData': 'unreadData',
+      '#banConfirmedUsers': 'banConfirmedUsers',
+      '#banVotingUsers': 'banVotingUsers',
+      '#confirmationRequired': 'confirmationRequired'
+    },
+    ExpressionAttributeValues: {
+      ':groupid': newgroupid
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes))
+
+  const updateNewGroupCommand = new UpdateCommand({
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: newgroupid },
+    UpdateExpression: 'ADD #users :id',
+    ExpressionAttributeNames: {
+      '#users': 'users'
+    },
+    ExpressionAttributeValues: {
+      ':id': new Set([id])
+    }
+  })
+
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id, connectionId: user.connectionId }],
+      message: {
+        action: 'switchgroup',
+        groupid: newgroupid
+      }
+    })
+  })
+
+  const promises = [
+    dynamoDBDocumentClient.send(updateUserCommand),
+    dynamoDBDocumentClient.send(updateNewGroupCommand),
+    snsClient.send(publishSendMessageCommand)
+  ]
+
+  if (user.group !== undefined) {
+    const updateOldGroupCommand = new UpdateCommand({
       TableName: GROUPS_TABLE_NAME,
-      Key: { id: groupid },
-      UpdateExpression: `
-      ADD #users :id
-      `,
+      Key: { id: user.group },
+      UpdateExpression: 'DELETE #users :id',
       ExpressionAttributeNames: {
         '#users': 'users'
       },
       ExpressionAttributeValues: {
-        ':id': new Set([user.id])
-      }
-    }),
-    // update user
-    new UpdateCommand({
-      TableName: USERS_TABLE_NAME,
-      Key: { id: user.id },
-      UpdateExpression: `
-      SET #group = :id
-      REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
-      `,
-      ExpressionAttributeNames: {
-        '#group': 'group',
-        '#unreadData': 'unreadData',
-        '#banConfirmedUsers': 'banConfirmedUsers',
-        '#banVotingUsers': 'banVotingUsers',
-        '#confirmationRequired': 'confirmationRequired'
-      },
-      ExpressionAttributeValues: {
-        ':id': groupid
+        ':id': new Set([id])
       }
     })
-  ]
-
-  if (user.groupid !== undefined) {
-    // update old group if any
-    commands.push(
-      new UpdateCommand({
-        TableName: GROUPS_TABLE_NAME,
-        Key: { id: user.groupid },
-        UpdateExpression: `
-      DELETE #users :id
-      `,
-        ExpressionAttributeNames: {
-          '#users': 'users'
-        },
-        ExpressionAttributeValues: {
-          ':id': new Set([user.id])
-        }
-      }))
+    promises.push(dynamoDBDocumentClient.send(updateOldGroupCommand))
   }
 
-  // TODO: revert if errors
-  await Promise.allSettled(commands.map((command) => (
-    new Promise((resolve, _reject) => {
-      dynamoDBDocumentClient.send(command)
-        .catch((error) => {
-          console.log(`Error:
-${JSON.stringify(error)}
-With command input:
-${JSON.stringify(command.input)}`)
-        })
-        .finally(() => {
-          resolve() // resolve anyway
-        })
-    })
-  )))
-
-  // send message
-  // NOTE: could be done in parallel of DDB updates
-  const command = new PublishCommand({
-    TopicArn: SEND_MESSAGE_TOPIC_ARN,
-    Message: JSON.stringify({
-      users: [user.id],
-      message: {
-        action: 'switchgroup',
-        groupid: groupid
-      }
-    })
-  })
-  await snsClient.send(command)
+  await Promise.allSettled(promises)
 }

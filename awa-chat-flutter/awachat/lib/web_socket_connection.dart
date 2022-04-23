@@ -6,7 +6,7 @@ import 'package:awachat/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://mbj9ud7puj.execute-api.eu-west-3.amazonaws.com/dev";
+      "wss://q6gjgdgowf.execute-api.eu-west-3.amazonaws.com/dev";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -21,13 +21,15 @@ class WebSocketConnection {
 
   void switchgroup() {
     User().resetGroup();
-    _channel.sink.add(jsonEncode({"action": "switchgroup", "id": User().id}));
+    _channel.sink.add(jsonEncode(
+        {"action": "switchgroup", "groupid": User().groupid, "id": User().id}));
   }
 
   void textmessage(String encodedMessage) {
     _channel.sink.add(jsonEncode({
       "action": "textmessage",
       "id": User().id,
+      "groupid": User().groupid,
       "message": encodedMessage,
     }));
   }

@@ -14,7 +14,6 @@
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-
 const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
@@ -40,8 +39,7 @@ const snsClient = new SNSClient({ region: AWS_REGION })
 exports.handler = async (event) => {
   console.log(`Receives:
 \tBody:\n${event.body}
-\tRequest Context:\n${JSON.stringify(event.requestContext)}
-\tEnvironment:\n${JSON.stringify(process.env)}
+\tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
   const body = JSON.parse(event.body)
@@ -69,13 +67,11 @@ exports.handler = async (event) => {
       ':connectionId': event.requestContext.connectionId
     }
   })
-  const response = await dynamoDBDocumentClient.send(updateCommand)
-  console.log(`Update user <${id}> with (old) values:
-${JSON.stringify(response)}`)
+  const user = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
   const unreadData = []
-  if (response.Attributes !== undefined && response.Attributes.unreadData !== undefined) {
-    unreadData.push(...response.Attributes.unreadData)
+  if (user !== undefined && user.unreadData !== undefined) {
+    unreadData.push(...user.unreadData)
   }
 
   // send message
@@ -83,7 +79,7 @@ ${JSON.stringify(response)}`)
   const publishCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: [id],
+      users: [{ id, connectionId: event.requestContext.connectionId }],
       message: {
         action: 'register',
         unreadData: unreadData
