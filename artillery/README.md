@@ -1,5 +1,6 @@
 # Load test with [Artillery](https://www.artillery.io)
 
+>We use [raw.githack](https://raw.githack.com) to serve our HTML reports.
 
 ### Message on Web Socket error
 
