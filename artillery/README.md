@@ -55,7 +55,7 @@ Artillery doesn't provide a way to wait for a given message from a *WebSocket*.
 However, in a real world solution, we will receive message that we are not wainting for.
 For example, we can wait for our *text message* to be sent while receiving *text messages* from others.
 
-Modify the following in **artillery/node_modules/artillery/core/lib/engine_ws.js** source code to update the behaviour.
+Modify the following in `artillery/node_modules/artillery/core/lib/engine_ws.js` source code to update the behaviour.
 
 ```js
 function getMessageHandler(processor, context, params, ee, callback) {
