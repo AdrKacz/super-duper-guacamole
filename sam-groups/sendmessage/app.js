@@ -1,61 +1,111 @@
-// Lambda use AWS SDK v2 by default
+// DEPENDENCIES
+// aws-sdk-api
+// aws-sdk-sns
 
-const AWS = require('aws-sdk')
+// TRIGGER
+// SNS
 
-const { sendToUsers, getUsers } = require('helpers')
+// ===== ==== ====
+// EVENT
+// Send message
+// event.Records[0].Sns.Message
+// users : List<Object> -
+//      id - user id
+//      connectionId - user connection id
+// message: Map<String,String>
+//      action : String - action performed
 
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, NOTIFICATION_LAMBDA_ARN, AWS_REGION } = process.env
+// NOTE:
+// could take connectionIds as input to not retrieve it twice
+// need to be linked with userids in case some are undefined or stales
 
-const ddb = new AWS.DynamoDB.DocumentClient({ region: AWS_REGION })
-const lambda = new AWS.Lambda({ region: AWS_REGION })
+// ===== ==== ====
+// IMPORTS
+const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi')
 
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+
+// ===== ==== ====
+// CONSTANTS
+const {
+  WEB_SOCKET_ENDPOINT,
+  STORE_UNREAD_DATA_TOPIC_ARN,
+  AWS_REGION
+} = process.env
+
+const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT)
+const apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
+  region: AWS_REGION,
+  endpoint: {
+    protocol: 'https', // webSocketEndpointUrl.protocol = 'wss' doesn't work
+    hostname: webSocketEndpointUrl.hostname,
+    path: webSocketEndpointUrl.pathname
+  }
+})
+
+const snsClient = new SNSClient({ region: AWS_REGION })
+
+// ===== ==== ====
+// HELPERS
+
+// ===== ==== ====
+// HANDLER
 exports.handler = async (event) => {
-  console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
+  console.log(`
+Receives:
+\tRecords[0].Sns.Message:
+${event.Records[0].Sns.Message}
+`)
 
-  // body to object
-  const body = JSON.parse(event.body)
+  const body = JSON.parse(event.Records[0].Sns.Message)
 
-  // userid
-  // NOTE: use connectionIs as a second index to not have to send userid
-  // TODO: verify userid with connectionId
-  // TODO: throw an error if userid is undefined
-  // const userid = body.userid
+  const users = body.users
+  const message = body.message
 
-  // groupid
-  // TODO: get group from USERS_TABLE
-  const groupid = body.groupid
-
-  // data
-  // TODO: throw an error if data is undefined
-  const data = body.data
-
-  // users
-  // TODO: verify userid is in group
-  const users = await getUsers(GROUPS_TABLE_NAME, groupid, ddb)
-  console.log(`\tUsers:\n${JSON.stringify(users)}`)
-
-  // broadcast data
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-    endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
-  })
-
-  await Promise.all(await sendToUsers(USERS_TABLE_NAME, users, apigwManagementApi, ddb, { action: 'sendmessage', data: data }))
-
-  // notification
-  lambda.invoke({
-    FunctionName: NOTIFICATION_LAMBDA_ARN,
-    Payload: JSON.stringify({ groupid: groupid })
-  }, (err, data) => {
-    if (err) console.log(err, err.stack) // an error occurred
-    else console.log(data)
-  })
-
-  // debug
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify(`Send message!\n${JSON.stringify({ data: data })}`)
+  if (users === undefined || message === undefined) {
+    throw new Error('users and message must be defined')
   }
 
-  console.log(`Returns:\n${JSON.stringify(response)}`)
-  return response
+  // send message
+  const stringifiedMessage = JSON.stringify(message)
+  const rejectedUsers = []
+  await Promise.allSettled(users.map(({ id, connectionId }) => (
+    new Promise((resolve, reject) => {
+      if (connectionId === undefined) {
+        console.log(`User <${id}> has no connectionId`)
+        rejectedUsers.push({ id, connectionId })
+        return resolve()
+      }
+
+      const postToConnectionCommand = new PostToConnectionCommand({
+        ConnectionId: connectionId,
+        Data: stringifiedMessage
+      })
+
+      console.log(`Send message to <${id}> - <${connectionId}>`)
+      apiGatewayManagementApiClient
+        .send(postToConnectionCommand)
+        .then((_data) => {
+          resolve()
+        })
+        .catch((err) => {
+          console.log(`Error sending message to <${id}> - <${connectionId}>
+${JSON.stringify(err)}`)
+          rejectedUsers.push({ id, connectionId })
+          return resolve()
+        })
+    })
+  )))
+
+  if (rejectedUsers.length > 0) {
+    const publishCommand = new PublishCommand({
+      TopicArn: STORE_UNREAD_DATA_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: rejectedUsers,
+        message: message
+      })
+    })
+
+    await snsClient.send(publishCommand)
+  }
 }

@@ -6,7 +6,7 @@ import 'package:awachat/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://bwrmehhjm1.execute-api.eu-west-3.amazonaws.com/prod";
+      "wss://q6gjgdgowf.execute-api.eu-west-3.amazonaws.com/dev";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -16,30 +16,30 @@ class WebSocketConnection {
   }
 
   void register() {
-    _channel.sink.add(jsonEncode({"action": "register", "userid": User().id}));
+    _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
   }
 
   void switchgroup() {
     User().resetGroup();
-    _channel.sink
-        .add(jsonEncode({"action": "switchgroup", "userid": User().id}));
+    _channel.sink.add(jsonEncode(
+        {"action": "switchgroup", "groupid": User().groupid, "id": User().id}));
   }
 
-  void sendmessage(String encodedMessage) {
+  void textmessage(String encodedMessage) {
     _channel.sink.add(jsonEncode({
-      "action": "sendmessage",
-      "userid": User().id,
+      "action": "textmessage",
+      "id": User().id,
       "groupid": User().groupid,
-      "data": encodedMessage,
+      "message": encodedMessage,
     }));
   }
 
   void banrequest(String userid, String messageid) {
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
-      "userid": User().id,
-      "banneduserid": userid,
+      "id": User().id,
       "groupid": User().groupid,
+      "bannedid": userid,
       "messageid": messageid,
     }));
   }
@@ -47,9 +47,9 @@ class WebSocketConnection {
   void banreply(String banneduserid, String status) {
     _channel.sink.add(jsonEncode({
       "action": "banreply",
-      "userid": User().id,
-      "banneduserid": banneduserid,
+      "id": User().id,
       "groupid": User().groupid,
+      "bannedid": banneduserid,
       "status": status,
     }));
   }

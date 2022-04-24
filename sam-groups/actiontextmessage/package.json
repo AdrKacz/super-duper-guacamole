@@ -1,7 +1,7 @@
 {
-  "name": "sendmessage",
+  "name": "actiontextmessage",
   "version": "1.0.0",
-  "description": "Lambda Function to send message to Awa",
+  "description": "Receive text message from Awa",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

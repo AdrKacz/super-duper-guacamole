@@ -15,7 +15,7 @@ We decoupled our code to move it from our server to our client.
 ## Current Architecture - Centralised - Serverless
 
 <p float="left" align="middle">
-    <img src="./assets/terrastruct/groups.png" width="100%">
+    <img src="./assets/terrastruct/groups.gif" width="100%">
 </p>
 
 # Demo
@@ -38,10 +38,10 @@ $ cloc --config=options.txt .
 
 Language|files|blank %|comment %|code
 :-------|-------:|-------:|-------:|-------:
-Dart|16|11.93|5.97|1341
+Dart|16|11.90|5.95|1344
+JavaScript|11|22.73|27.78|871
+YAML|7|9.25|11.56|822
 Python|10|22.59|43.09|810
-YAML|4|9.74|12.75|698
-JavaScript|7|25.25|25.65|499
-Markdown|8|38.89|0.00|468
-**SUM:**|**45**|**18.84**|**16.93**|**3816**
+Markdown|9|34.42|0.00|796
+**SUM:**|**53**|**19.19**|**16.50**|**4643**
 

@@ -1,7 +1,7 @@
 {
-  "name": "sendmessage",
+  "name": "storeunreaddata",
   "version": "1.0.0",
-  "description": "Lambda Function to send message to Awa",
+  "description": "Store unread data in users",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

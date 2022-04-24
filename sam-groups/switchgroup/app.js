@@ -1,39 +1,131 @@
-// Lambda use AWS SDK v2 by default
+// DEPENDENCIES
+// aws-sdk-ddb
+// aws-sdk-sns
 
-const AWS = require('aws-sdk')
+// TRIGGER
+// SNS
 
-const { sendToConnectionId, switchGroup } = require('helpers')
+// ===== ==== ====
+// EVENT
+// Switch group
+// event.Records[0].Sns.Message
+// id : String - user id
+// groupid : String? - user group id
+// connectionId : String? - user connection id
 
-const { USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, AWS_REGION } = process.env
+// ===== ==== ====
+// IMPORTS
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
-const ddb = new AWS.DynamoDB.DocumentClient({ AWS_REGION })
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
+// ===== ==== ====
+// CONSTANTS
+const {
+  USERS_TABLE_NAME,
+  GROUPS_TABLE_NAME,
+  SEND_MESSAGE_TOPIC_ARN,
+  AWS_REGION
+} = process.env
+
+const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
+const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
+
+const snsClient = new SNSClient({ region: AWS_REGION })
+
+// ===== ==== ====
+// HELPERS
+
+// ===== ==== ====
+// HANDLER
 exports.handler = async (event) => {
-  console.log(`Receives:\n\tBody:\n${event.body}\n\tRequest Context:\n${JSON.stringify(event.requestContext)}\n\tEnvironment:\n${JSON.stringify(process.env)}`)
+  console.log(`
+Receives:
+\tRecords[0].Sns.Message:
+${event.Records[0].Sns.Message}
+`)
 
-  // body to object
-  const body = JSON.parse(event.body)
+  const body = JSON.parse(event.Records[0].Sns.Message)
 
-  // userid
-  // NOTE: use connectionIs as a second index to not have to send userid
-  // TODO: verify user.connectionId and connectionId are the same
-  const userid = body.userid
+  const id = body.id
+  const groupid = body.groupid
+  // const connectionId = body.connectionId
 
-  const user = await switchGroup(USERS_TABLE_NAME, GROUPS_TABLE_NAME, BANNED_USERS_TABLE_NAME, userid, ddb)
-
-  // inform user of its new group
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
-    endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
-  })
-
-  await sendToConnectionId(USERS_TABLE_NAME, userid, user.connectionId, apigwManagementApi, ddb, { action: 'switchgroup', groupid: user.groupid })
-
-  // debug
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify('Switch group!')
+  if (id === undefined) {
+    throw new Error('id must be defined')
   }
 
-  console.log(`Returns:\n${JSON.stringify(response)}`)
-  return response
+  // find a new group
+  let newgroupid = Math.floor(Math.random() * 9).toString()
+  if (newgroupid === groupid) {
+    newgroupid = (parseInt(newgroupid) + 1).toString()
+  }
+
+  const updateUserCommand = new UpdateCommand({
+    ReturnValues: 'ALL_OLD',
+    TableName: USERS_TABLE_NAME,
+    Key: { id: id },
+    UpdateExpression: `
+    SET #group = :groupid
+    REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+    `,
+    ExpressionAttributeNames: {
+      '#group': 'group',
+      '#unreadData': 'unreadData',
+      '#banConfirmedUsers': 'banConfirmedUsers',
+      '#banVotingUsers': 'banVotingUsers',
+      '#confirmationRequired': 'confirmationRequired'
+    },
+    ExpressionAttributeValues: {
+      ':groupid': newgroupid
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes))
+
+  const updateNewGroupCommand = new UpdateCommand({
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: newgroupid },
+    UpdateExpression: 'ADD #users :id',
+    ExpressionAttributeNames: {
+      '#users': 'users'
+    },
+    ExpressionAttributeValues: {
+      ':id': new Set([id])
+    }
+  })
+
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id, connectionId: user.connectionId }],
+      message: {
+        action: 'switchgroup',
+        groupid: newgroupid
+      }
+    })
+  })
+
+  const promises = [
+    dynamoDBDocumentClient.send(updateUserCommand),
+    dynamoDBDocumentClient.send(updateNewGroupCommand),
+    snsClient.send(publishSendMessageCommand)
+  ]
+
+  if (user.group !== undefined) {
+    const updateOldGroupCommand = new UpdateCommand({
+      TableName: GROUPS_TABLE_NAME,
+      Key: { id: user.group },
+      UpdateExpression: 'DELETE #users :id',
+      ExpressionAttributeNames: {
+        '#users': 'users'
+      },
+      ExpressionAttributeValues: {
+        ':id': new Set([id])
+      }
+    })
+    promises.push(dynamoDBDocumentClient.send(updateOldGroupCommand))
+  }
+
+  await Promise.allSettled(promises)
 }

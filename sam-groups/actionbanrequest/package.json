@@ -1,7 +1,7 @@
 {
-  "name": "sendmessage",
+  "name": "actionbanrequest",
   "version": "1.0.0",
-  "description": "Lambda Function to send message to Awa",
+  "description": "Request to ban an user",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

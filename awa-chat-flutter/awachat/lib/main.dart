@@ -134,9 +134,9 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     switch (status) {
       case 'confirmed':
         if (banneduserid == User().id) {
-          title = "Tu viens de te faire banir du groupe";
+          title = "Tu t'es fait banir de ton groupe";
         } else {
-          title = 'La personne a été banie du groupe';
+          title = 'La personne est banie de ton groupe';
           actions.insert(
               0,
               TextButton(
@@ -158,8 +158,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
         break;
       case 'denied':
-        title = "La personne n'a pas été banie du groupe";
+        if (banneduserid == User().id) {
+          return; // no need to alert the user
+        } else {
+          title = "La personne n'est pas banie de ton groupe";
+        }
         break;
+      default:
+        return;
     }
     showDialog(
         context: context,
@@ -241,7 +247,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         messageDecode(encodedMessage, types.Status.sending);
     if (message != null) {
       insertMessage(message);
-      _webSocketConnection.sendmessage(encodedMessage);
+      _webSocketConnection.textmessage(encodedMessage);
     }
   }
 
@@ -295,7 +301,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final data = jsonDecode(message);
     switch (data['action']) {
       case "register":
-        print('\tRegister: ${data['status']}');
+        print('\tRegister');
         // Get group (register on load)
         if (User().groupid == "") {
           _webSocketConnection.switchgroup();
@@ -317,7 +323,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // Don't really know why ... deserve investigation
           Future.delayed(const Duration(milliseconds: 50), () {
             // missed messages
-            for (final unreadMessage in data['unread']) {
+            for (final unreadMessage in data['unreadData']) {
               processMessage(jsonEncode(unreadMessage));
             }
           });
@@ -332,25 +338,22 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           state = "chat";
         });
         break;
-      case "sendmessage":
-        print('\tData: ${data['data']}');
-        types.Message? message = messageDecode(data['data']);
+      case "textmessage":
+        print('\tMessage: ${data['message']}');
+        types.Message? message = messageDecode(data['message']);
         if (message != null) {
           insertMessage(message);
-          Memory().addMessage(message.id, data['data']);
+          Memory().addMessage(message.id, data['message']);
         }
         break;
       case "banrequest":
         print('\tBan request for: ${data['messageid']}');
         banRequest(context, data['messageid']);
         break;
-      case "banconfirmed":
-        print('\tBan confirmed for: ${data['banneduserid']}');
-        acknowledgeBan(context, 'confirmed', data['banneduserid']);
-        break;
-      case "bandenied":
-        print('\tBan denied for: ${data['banneduserid']}');
-        acknowledgeBan(context, 'denied', data['banneduserid']);
+      case "banreply":
+        print(
+            '\tBan reply for: ${data['bannedid']} with status ${data['status']}');
+        acknowledgeBan(context, data['status'], data['bannedid']);
         break;
       default:
         print("\tAction ${data['action']} not recognised.");

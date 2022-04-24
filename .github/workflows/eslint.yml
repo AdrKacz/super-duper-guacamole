@@ -19,3 +19,9 @@ jobs:
       - name: Run ESLint - Sam Group
         working-directory: ./sam-groups
         run: yarn run eslint .
+      - name: Install modules - Artillery
+        working-directory: ./artillery
+        run: yarn
+      - name: Run ESLint - Artillery
+        working-directory: ./artillery
+        run: yarn run eslint .

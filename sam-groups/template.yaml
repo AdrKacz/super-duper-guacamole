@@ -9,7 +9,6 @@ Globals:
       Variables:
         USERS_TABLE_NAME: !Ref UsersTableName
         GROUPS_TABLE_NAME: !Ref GroupsTableName
-        BANNED_USERS_TABLE_NAME: !Ref BannedUsersTableName
 
 Description: >
   sam-group
@@ -29,14 +28,6 @@ Parameters:
     Type: String
     Default: 'groups'
     Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
-    MinLength: 3
-    MaxLength: 50
-    AllowedPattern: ^[A-Za-z_]+$
-    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
-  BannedUsersTableName:
-    Type: String
-    Default: 'bannedusers'
-    Description: '(Required) The name of the new DynamoDB to store users under ban vote. Minimum 3 characters.'
     MinLength: 3
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
@@ -70,10 +61,6 @@ Resources:
     Type: AWS::Serverless::SimpleTable
     Properties:
       TableName: !Ref GroupsTableName
-  BannedUsersTable:
-    Type: AWS::Serverless::SimpleTable
-    Properties:
-      TableName: !Ref BannedUsersTableName
 
   # Web Socket
   SimpleChatWebSocket:
@@ -103,7 +90,7 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RegisterFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionRegisterFunction.Arn}/invocations
 
   SwitchGroupRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -124,28 +111,28 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SwitchGroupFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionSwitchGroupFunction.Arn}/invocations
 
-  SendMessageRoute:
+  TextMessageRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
       ApiId: !Ref SimpleChatWebSocket
-      RouteKey: sendmessage
+      RouteKey: textmessage
       AuthorizationType: NONE
-      OperationName: SendMessageRoute
+      OperationName: TextMessageRoute
       Target: !Join
         - '/'
         - - 'integrations'
-          - !Ref SendMessageIntegration
-  SendMessageIntegration:
+          - !Ref TextMessageIntegration
+  TextMessageIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
       ApiId: !Ref SimpleChatWebSocket
-      Description: Send Message Integration
+      Description: Send Text Message Integration
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SendMessageFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionTextMessageFunction.Arn}/invocations
 
   BanRequestRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -166,7 +153,7 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanRequestFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionBanRequestFunction.Arn}/invocations
 
   BanReplyRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -187,15 +174,15 @@ Resources:
       IntegrationType: AWS_PROXY
       IntegrationUri:
         Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${BanReplyFunction.Arn}/invocations
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionBanReplyFunction.Arn}/invocations
 
-  # Stage
+  # Deployment
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - RegisterRoute
     - SwitchGroupRoute
-    - SendMessageRoute
+    - TextMessageRoute
     - BanRequestRoute
     - BanReplyRoute
     Properties:
@@ -209,200 +196,308 @@ Resources:
       ApiId: !Ref SimpleChatWebSocket
 
   # Layers Functions
-  HelperLayerVersion:
+  AWSSDKApiLayerVersion:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      ContentUri: dependencies/
+      ContentUri: .dependencies/aws-sdk-api
+      RetentionPolicy: Delete 
+  
+  AWSSDKDdbLayerVersion:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: .dependencies/aws-sdk-ddb
       RetentionPolicy: Delete 
 
-  # Functions
-  RegisterFunction:
-    Type: AWS::Serverless::Function
+  AWSSDKSnsLayerVersion:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: register/
-      Layers:
-        - !Ref HelperLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  RegisterPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref RegisterFunction
-      Principal: apigateway.amazonaws.com
-  RegisterLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${RegisterFunction}'
+      ContentUri: .dependencies/aws-sdk-sns
+      RetentionPolicy: Delete 
 
-  SwitchGroupFunction:
-    Type: AWS::Serverless::Function
+  FirebaseAdminLayerVersion:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: switchgroup/
-      Layers:
-        - !Ref HelperLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  SwitchGroupPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SwitchGroupFunction
-      Principal: apigateway.amazonaws.com
-  SwitchGroupLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
+      ContentUri: .dependencies/firebase-admin
+      RetentionPolicy: Delete 
 
+  # ===== ===== =====
+  # Simple Notification Systems
+  SendMessageSNSTopic:
+    Type: AWS::SNS::Topic
+  
+  SwitchGroupSNSTopic:
+    Type: AWS::SNS::Topic
+
+  SendNotificationSNSTopic:
+    Type: AWS::SNS::Topic
+
+  StoreUnreadDataSNSTopic:
+    Type: AWS::SNS::Topic
+
+  # ===== ===== =====
+  # Backend Functions
   SendMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: sendmessage/
       Layers:
-        - !Ref HelperLayerVersion
+        - !Ref AWSSDKApiLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
-          NOTIFICATION_LAMBDA_ARN: !GetAtt NotificationFunction.Arn
+          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          STORE_UNREAD_DATA_TOPIC_ARN: !Ref StoreUnreadDataSNSTopic
       Policies:
-      - LambdaInvokePolicy:
-          FunctionName: !Ref NotificationFunction
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt StoreUnreadDataSNSTopic.TopicName
       - Statement:
         - Effect: Allow
           Action:
           - 'execute-api:ManageConnections'
           Resource:
           - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  SendMessagePermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref SendMessageFunction
-      Principal: apigateway.amazonaws.com
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SendMessageSNSTopic
   SendMessageLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  BanRequestFunction:
+  SwitchGroupFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ban/banrequest/
+      CodeUri: switchgroup/
       Layers:
-        - !Ref HelperLayerVersion
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
-          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SwitchGroupSNSTopic
+  SwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  SendNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: sendnotification/
+      Layers:
+        - !Ref FirebaseAdminLayerVersion
+      Environment:
+        Variables:
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SendNotificationSNSTopic
+  SendNotificationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  StoreUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: storeunreaddata/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref StoreUnreadDataSNSTopic
+  SwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # ===== ===== =====
+  # Action Functions
+  ActionRegisterFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actionregister/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+  ActionRegisterPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionRegisterFunction
+      Principal: apigateway.amazonaws.com
+  ActionRegisterLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionRegisterFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ActionSwitchGroupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actionswitchgroup/
+      Layers:
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
+      Policies:
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
+  ActionSwitchGroupPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionSwitchGroupFunction
+      Principal: apigateway.amazonaws.com
+  ActionSwitchGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionSwitchGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ActionTextMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actiontextmessage/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTableName
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+  ActionTextMessagePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionTextMessageFunction
+      Principal: apigateway.amazonaws.com
+  ActionTextMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionTextMessageFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ActionBanRequestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actionbanrequest/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired 
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  BanRequestPermission:
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+  ActionBanRequestPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
       - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BanRequestFunction
+      FunctionName: !Ref ActionBanRequestFunction
       Principal: apigateway.amazonaws.com
-  BanRequestLogGroup:
+  ActionBanRequestLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${BanRequestFunction}'
+      LogGroupName: !Sub '/aws/lambda/${ActionBanRequestFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  BanReplyFunction:
+  ActionBanReplyFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ban/banreply/
+      CodeUri: actionbanreply/
       Layers:
-        - !Ref HelperLayerVersion
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTableName
-      - DynamoDBCrudPolicy:
+      - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName
-      - DynamoDBCrudPolicy:
-          TableName: !Ref BannedUsersTableName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-  BanReplyPermission:
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
+  ActionBanReplyPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
       - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref BanReplyFunction
+      FunctionName: !Ref ActionBanReplyFunction
       Principal: apigateway.amazonaws.com
-  BanReplyLogGroup:
+  ActionBanReplyLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${BanReplyFunction}'
+      LogGroupName: !Sub '/aws/lambda/${ActionBanReplyFunction}'
       RetentionInDays: !Ref LogRetentionInDays
     
-  # Notification
-  NotificationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: notification/
-      Environment:
-        Variables:
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
-  NotificationPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref NotificationFunction
-      Principal: lambda.amazonaws.com
-      SourceArn: !GetAtt SendMessageFunction.Arn
-  NotificationLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${NotificationFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
 Outputs:
   UsersTableArn:
     Description: "Users table ARN"
@@ -410,31 +505,8 @@ Outputs:
   GroupsTableArn:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
-  BannedUsersTableArn:
-    Description: "Banned Users table ARN"
-    Value: !GetAtt BannedUsersTable.Arn
-
-  RegisterFunctionArn:
-    Description: "Register function ARN"
-    Value: !GetAtt RegisterFunction.Arn
-  SwitchGroupFunctionArn:
-    Description: "Switch Group function ARN"
-    Value: !GetAtt SwitchGroupFunction.Arn
-  SendMessageFunctionArn:
-    Description: "Send Message function ARN"
-    Value: !GetAtt SendMessageFunction.Arn
-  BanRequestFunctionArn:
-    Description: "Ban Request function ARN"
-    Value: !GetAtt BanRequestFunction.Arn
-  BanReplyFunctionArn:
-    Description: "Ban Reply function ARN"
-    Value: !GetAtt BanReplyFunction.Arn
-
-  NotificationFunctionArn:
-    Description: "Notification function ARN"
-    Value: !GetAtt NotificationFunction.Arn
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
-    Value: !Join [ '', [ 'wss://', !Ref SimpleChatWebSocket, '.execute-api.',!Ref 'AWS::Region','.amazonaws.com/',!Ref 'Stage'] ]
+    Value: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
 
