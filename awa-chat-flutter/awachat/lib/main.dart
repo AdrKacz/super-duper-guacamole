@@ -428,13 +428,21 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               IconButton(
                   tooltip: "Changer de groupe",
                   onPressed: () {
+                    if (state != "chat") {
+                      return;
+                    }
                     _webSocketConnection.switchgroup();
                     setState(() {
                       _messages.clear();
                       state = "switch";
                     });
                   },
-                  icon: const Icon(Icons.door_front_door_outlined)),
+                  icon: Icon(
+                    Icons.door_front_door_outlined,
+                    color: state == "chat"
+                        ? const Color(0xff6f61e8)
+                        : const Color(0xff9e9cab),
+                  )),
             ]),
         body: SafeArea(
             bottom: false,
