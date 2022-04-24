@@ -83,7 +83,7 @@ WSEngine.prototype.step = function (requestSpec, ee) {
 
 ```
 
-<details><summary><b>artillery/node_modules/artillery/core/lib/engine_ws.js</b></summary>
+<details><summary><code>artillery/node_modules/artillery/core/lib/engine_ws.js</code></summary>
 <p>
 
 ```js
