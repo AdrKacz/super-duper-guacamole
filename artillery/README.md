@@ -2,17 +2,26 @@
 
 >We use [raw.githack](https://raw.githack.com) to serve our HTML reports.
 
-### Message on Web Socket error
+# Reports
+
+- [Development version](https://raw.githack.com/AdrKacz/super-duper-guacamole/update-aws-sdk/artillery/results/html/results-dev.html)
+- [Legacy version](https://raw.githack.com/AdrKacz/super-duper-guacamole/update-aws-sdk/artillery/results/html/results-prod.html)
+
+>We use [raw.githack](https://raw.githack.com) to serve our HTML reports.
+
+### *[Info]* Message on Web Socket Error
 
 ```
 {
   message: 'Internal server error',
-  connectionId: 'Q_wQhekaCGYAd6Q=',
-  requestId: 'Q_wQhGqSiGYFzTQ='
+  connectionId: 'XXX',
+  requestId: 'XXX'
 }
 ```
 
-## Run
+# How to use Artillery
+
+## Run a load test
 
 ```
 yarn start scenarios-dev.yaml -e dev --output=results-dev.json
@@ -21,7 +30,7 @@ yarn start
 yarn startdebug
 ```
 
-## Report
+## Create a report
 
 ```
 yarn report results.json --output=results.html
@@ -32,7 +41,7 @@ open results.json.html
 rm results.json.html results.json
 ```
 
-## Dino
+## Draw a dino
 
 ```
 yarn dino
