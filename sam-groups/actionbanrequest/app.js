@@ -31,7 +31,6 @@ const {
   SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
 } = process.env
-
 const CONFIRMATION_REQUIRED = parseInt(CONFIRMATION_REQUIRED_STRING)
 
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
