@@ -8,10 +8,13 @@
 // EVENT
 // Send push notification
 // event.Records[0].Sns.Message
-// topic : String - Name of the topic
-// notification: Map<String,String>
-//      title - Title of the notification
-//      body -  Body of the notification
+// WARNING - topic and user cannot be both undefined
+// topic : String? - topic to send notification
+// users : List<Object>? - list of users to send notification
+//      firebaseToken : String - token to send notifications to
+// notification: Map<Object>
+//      title : String - Title of the notification
+//      body : String -  Body of the notification
 
 // ===== ==== ====
 // IMPORTS
@@ -41,32 +44,43 @@ exports.handler = async (event) => {
 Receives:
 \tRecords[0].Sns.Message:
 ${event.Records[0].Sns.Message}
-\tRecords:
-${JSON.stringify(event.Records)}
-\tEnvironment:\n${JSON.stringify(process.env)}
 `)
 
   const body = JSON.parse(event.Records[0].Sns.Message)
 
   const topic = body.topic
-  if (topic === undefined) {
-    throw new Error('topic must be defined')
+  const users = body.users
+  if (topic === undefined && users === undefined) {
+    throw new Error('topic and users cannot be both undefined')
   }
 
   const notification = body.notification
   if (notification === undefined || notification.title === undefined || notification.body === undefined) {
-    throw new Error('notification.title event.body.notification.body and  must be defined')
+    throw new Error('notification.title notification.body must both be defined')
   }
 
-  console.log(`Send:
-${JSON.stringify({ notification, topic })}`)
+  const promises = []
+  if (topic !== undefined) {
+    const message = { notification, topic }
+    console.log(`Send:\n${JSON.stringify(message)}`)
 
-  await messaging.send({ notification, topic })
-    .then((response) => {
-    // Response is a message ID string.
-      console.log('Successfully sent message:', response)
-    })
-    .catch((error) => {
-      console.log('Error sending message:', error)
-    })
+    promises.push(messaging.send(message))
+  }
+
+  if (users !== undefined && users.length > 0) {
+    const tokens = []
+    for (const user of users) {
+      if (user.firebaseToken !== undefined) {
+        tokens.push(user.firebaseToken)
+      }
+    }
+    if (tokens.length > 0) {
+      const message = { notification, tokens: tokens }
+      console.log(`Send:\n${JSON.stringify(message)}`)
+
+      promises.push(messaging.sendMulticast(message))
+    }
+  }
+
+  await Promise.allSettled(promises)
 }

@@ -70,7 +70,7 @@ ${event.Records[0].Sns.Message}
   const stringifiedMessage = JSON.stringify(message)
   const rejectedUsers = []
   await Promise.allSettled(users.map(({ id, connectionId }) => (
-    new Promise((resolve, reject) => {
+    new Promise((resolve, _reject) => {
       if (connectionId === undefined) {
         console.log(`User <${id}> has no connectionId`)
         rejectedUsers.push({ id, connectionId })

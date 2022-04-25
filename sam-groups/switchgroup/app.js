@@ -45,7 +45,7 @@ const {
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
-  // SEND_NOTIFICATION_TOPIC_ARN,
+  SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
 } = process.env
 const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING)
@@ -80,11 +80,12 @@ ${event.Records[0].Sns.Message}
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
-    ProjectionExpression: '#id, #group, #connectionId',
+    ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
     ExpressionAttributeNames: {
       '#id': 'id',
       '#group': 'group',
-      '#connectionId': 'connectionId'
+      '#connectionId': 'connectionId',
+      '#firebaseToken': 'firebaseToken'
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
@@ -153,7 +154,7 @@ ${event.Records[0].Sns.Message}
   // update new group
   if (newGroup.users.size >= MINIMUM_GROUP_SIZE) {
     // alert user(s)
-    const users = [{ id, connectionId: user.connectionId }]
+    const users = [{ id, connectionId: user.connectionId, firebaseToken: user.firebaseToken }]
     if (newGroup.users.size === MINIMUM_GROUP_SIZE && MINIMUM_GROUP_SIZE > 1) {
       // happens only once when group becomes active for the first time
       newGroup.users.delete(id) // remove id, already fetched
@@ -161,10 +162,11 @@ ${event.Records[0].Sns.Message}
         RequestItems: {
           [USERS_TABLE_NAME]: {
             Keys: Array.from(newGroup.users).map((id) => ({ id: id })),
-            ProjectionExpression: '#id, #connectionId',
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
-              '#connectionId': 'connectionId'
+              '#connectionId': 'connectionId',
+              '#firebaseToken': 'firebaseToken'
             }
           }
         }
@@ -187,8 +189,19 @@ ${event.Records[0].Sns.Message}
         }
       })
     })
-
     promises.push(snsClient.send(publishSendMessageCommand))
+
+    const publishSendNotificationCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: users,
+        notification: {
+          title: 'Viens te présenter 🥳',
+          body: 'Je viens de te trouver un groupe !'
+        }
+      })
+    })
+    promises.push(snsClient.send(publishSendNotificationCommand))
   }
   if (newGroup.users.size >= MAXIMUM_GROUP_SIZE) {
     newGroup.isWaiting = 0 // false

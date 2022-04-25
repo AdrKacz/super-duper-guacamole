@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:ui';
 
@@ -253,8 +252,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   // Insert message (sort by date - O(n))
   // TODO: O(log(n))
-  void insertMessage(types.Message message, [bool? useHaptic]) {
-    useHaptic ??= true;
+  void insertMessage(types.Message message,
+      {bool useHaptic = true, bool useSetState = true}) {
     if (useHaptic && message.status == types.Status.delivered) {
       HapticFeedback.lightImpact();
     }
@@ -268,104 +267,110 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       for (int i = 0; i < _messages.length; i++) {
         if (message.createdAt! >= _messages[i].createdAt!) {
           if (message.id == _messages[i].id) {
-            setState(() {
+            if (useSetState) {
+              setState(() {
+                _messages[i] = message;
+              });
+            } else {
               _messages[i] = message;
-            });
+            }
           } else {
-            setState(() {
+            if (useSetState) {
+              setState(() {
+                _messages.insert(i, message);
+              });
+            } else {
               _messages.insert(i, message);
-            });
+            }
           }
           return;
         }
       }
     }
-    setState(() {
+    if (useSetState) {
+      setState(() {
+        _messages.add(message);
+      });
+    } else {
       _messages.add(message);
-    });
+    }
   }
 
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> loadedMessages = await Memory().loadMessages();
     print('Loaded messages length: ${loadedMessages.length}');
-    setState(() {
-      _messages.clear();
-    });
+    _messages.clear();
     for (final types.Message loadedMessage in loadedMessages) {
-      insertMessage(loadedMessage, false);
+      insertMessage(loadedMessage, useHaptic: false, useSetState: false);
     }
   }
 
-  void processMessage(message) {
-    print("Receives: $message");
+  bool processMessage(message) {
+    bool needUpdate = true;
     final data = jsonDecode(message);
     switch (data['action']) {
       case "register":
         print('\tRegister');
+        // process unread messages
+        for (final unreadMessage in data['unreadData']) {
+          needUpdate = processMessage(jsonEncode(unreadMessage));
+        }
+
         // Get group (register on load)
         if (User().groupid == "") {
           _webSocketConnection.switchgroup();
-          setState(() {
-            _messages.clear();
-            state = "switch";
-          });
+          _messages.clear();
+          state = "switch";
         } else {
           // past messages
           loadMessagesFromMemory();
-
-          // state
-          setState(() {
-            state = "chat";
-          });
-
-          // NOTE: why to I need to wait? Bigest mistery of the universe
-          // I need to ALREADY be in chat state to update _messages
-          // Don't really know why ... deserve investigation
-          Future.delayed(const Duration(milliseconds: 50), () {
-            // missed messages
-            for (final unreadMessage in data['unreadData']) {
-              processMessage(jsonEncode(unreadMessage));
-            }
-          });
+          state = "chat";
         }
         break;
       case "switchgroup":
         print('\tGroup: ${data['groupid']}');
         User().groupid = data['groupid'];
-        setState(() {
-          _messages
-              .clear(); // clear here too if switchgroup without user asked to (ban)
-          state = "chat";
-        });
+        _messages
+            .clear(); // clear here too if switchgroup without user asked to (ban)
+        state = "chat";
         break;
       case "textmessage":
         print('\tMessage: ${data['message']}');
         types.Message? message = messageDecode(data['message']);
         if (message != null) {
-          insertMessage(message);
+          insertMessage(message, useSetState: false);
           Memory().addMessage(message.id, data['message']);
         }
         break;
       case "banrequest":
         print('\tBan request for: ${data['messageid']}');
         banRequest(context, data['messageid']);
+        needUpdate = false;
         break;
       case "banreply":
         print(
             '\tBan reply for: ${data['bannedid']} with status ${data['status']}');
         acknowledgeBan(context, data['status'], data['bannedid']);
+        needUpdate = false;
         break;
       default:
         print("\tAction ${data['action']} not recognised.");
-        setState(() {
-          state = "";
-        });
+        state = "";
+    }
+    return needUpdate;
+  }
+
+  void listenMessage(message) {
+    print("Message: $message");
+    bool needUpdate = processMessage(message);
+    if (needUpdate) {
+      setState(() {});
     }
   }
 
   // Stream listen
   void listenStream() {
-    _webSocketConnection.stream.listen(processMessage, onDone: () {
+    _webSocketConnection.stream.listen(listenMessage, onDone: () {
       if (mounted) {
         setState(() {
           state = "disconnected";
