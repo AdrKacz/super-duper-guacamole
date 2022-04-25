@@ -24,7 +24,7 @@ void main() async {
 
   await Memory().init();
   await User().init();
-  NotificationHandler().init();
+  await NotificationHandler().init();
 
   runApp(const MyApp());
 }

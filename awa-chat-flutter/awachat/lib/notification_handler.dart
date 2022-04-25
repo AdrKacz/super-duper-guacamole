@@ -18,21 +18,23 @@ class NotificationHandler {
 
   NotificationHandler._internal();
 
-  void init() {
-    // no need to block main thread here
-    Firebase.initializeApp(
+  Future<void> init() async {
+    await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    ).then((FirebaseApp app) {
-      return FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-    }).then((NotificationSettings settings) {
+    );
+
+    // don't use await to not block main thread
+    FirebaseMessaging.instance
+        .requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    )
+        .then((NotificationSettings settings) {
       print(
           '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
 
