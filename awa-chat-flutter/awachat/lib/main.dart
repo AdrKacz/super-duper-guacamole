@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:awachat/pages/custom_chat.dart';
 import 'package:awachat/pages/presentation.dart';
+import 'package:awachat/pages/switch_group.dart';
 import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -333,7 +334,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           print('\tLeave group: ${data['groupid']}');
           User().groupid = data['groupid'];
           _messages.clear();
-          state = "switch";
+          state = "switchwaiting";
         } else {
           // don't do anything
           needUpdate = false;
@@ -478,6 +479,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     return const Center(
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
+                  case "switchwaiting":
+                    return const SwitchGroupPage();
                   case "chat":
                     return CustomChat(
                         messages: _messages,
