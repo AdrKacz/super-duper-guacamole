@@ -351,6 +351,24 @@ Resources:
       RetentionInDays: !Ref LogRetentionInDays
 
   # ===== ===== =====
+  # API Functions
+  PutFirebaseToken:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: put-firebase-token/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTableName
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /firebase-token
+            Method: PUT
+
+  # ===== ===== =====
   # Action Functions
   ActionRegisterFunction:
     Type: AWS::Serverless::Function
@@ -517,9 +535,14 @@ Outputs:
   UsersTableArn:
     Description: "Users table ARN"
     Value: !GetAtt UsersTable.Arn
+
   GroupsTableArn:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
+
+  HttpURI:
+    Description: "The HTTPS API URI to connect to"
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${ServerlessHttpApiApiGatewayDefaultStage}/firebase-token/"
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

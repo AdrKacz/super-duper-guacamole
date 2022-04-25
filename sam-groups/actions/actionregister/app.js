@@ -44,7 +44,6 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body)
 
-  // userid
   const id = body.id
   if (id === undefined) {
     throw new Error('id must be defined')
