@@ -187,26 +187,15 @@ exports.handler = async (event) => {
   const promises = [dynamoDBDocumentClient.send(updateBannedUserCommand)]
 
   if (banNewVotingUsers.size > 0) {
-    const publishSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        topic: `group-${bannedUser.group}`,
-        notification: {
-          title: "Quelqu'un a mal agi ❌",
-          body: 'Viens donner ton avis !'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendNotificationCommand))
-
     const batchGetBanNewVotingUsersCommand = new BatchGetCommand({
       RequestItems: {
         [USERS_TABLE_NAME]: {
           Keys: Array.from(banNewVotingUsers).map((id) => ({ id: id })),
-          ProjectionExpression: '#id, #connectionId',
+          ProjectionExpression: '#id, #connectionId, #firebaseToken',
           ExpressionAttributeNames: {
             '#id': 'id',
-            '#connectionId': 'connectionId'
+            '#connectionId': 'connectionId',
+            '#firebaseToken': 'firebaseToken'
           }
         }
       }
@@ -224,6 +213,18 @@ exports.handler = async (event) => {
       })
     })
     promises.push(snsClient.send(publishSendMessageCommand))
+
+    const publishSendNotificationCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: users,
+        notification: {
+          title: "Quelqu'un a mal agi ❌",
+          body: 'Viens donner ton avis !'
+        }
+      })
+    })
+    promises.push(snsClient.send(publishSendNotificationCommand))
   }
 
   await Promise.allSettled(promises)

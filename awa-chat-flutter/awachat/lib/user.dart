@@ -50,5 +50,6 @@ class User {
     } else {
       _groupid = "";
     }
+    print('Init user with id $id');
   }
 }

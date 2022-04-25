@@ -64,11 +64,12 @@ exports.handler = async (event) => {
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: [{ id: id }, { id: bannedid }],
-        ProjectionExpression: '#id, #group, #connectionId, #banVotingUsers, #confirmationRequired',
+        ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
         ExpressionAttributeNames: {
           '#id': 'id',
           '#group': 'group',
           '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken',
           '#banVotingUsers': 'banVotingUsers',
           '#confirmationRequired': 'confirmationRequired'
         }
@@ -177,20 +178,23 @@ exports.handler = async (event) => {
       }
     })
 
-    const publishSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        topic: `group-${bannedUser.group}`,
-        notification: {
-          title: 'Le vote est terminé 🗳',
-          body: 'Viens voir le résultat !'
+    const promises = [dynamoDBDocumentClient.send(updateBannedUserCommand)]
+
+    const batchOtherUsersCommand = new BatchGetCommand({
+      RequestItems: {
+        [USERS_TABLE_NAME]: {
+          // user and banned user already requested
+          Keys: Array.from(group.users).filter((userid) => (userid !== bannedid && userid !== id)).map((id) => ({ id: id })),
+          ProjectionExpression: '#id, #connectionId, #firebaseToken',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#connectionId': 'connectionId',
+            '#firebaseToken': 'firebaseToken'
+          }
         }
-      })
+      }
     })
-    const promises = [
-      dynamoDBDocumentClient.send(updateBannedUserCommand),
-      snsClient.send(publishSendNotificationCommand)
-    ]
+    const otherUsers = await dynamoDBDocumentClient.send(batchOtherUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 
     if (voteConfirmed) {
       const publishSwitchGroupCommand = new PublishCommand({
@@ -202,34 +206,57 @@ exports.handler = async (event) => {
       })
 
       promises.push(snsClient.send(publishSwitchGroupCommand))
+
+      const publishSendMessageCommand = new PublishCommand({
+        TopicArn: SEND_MESSAGE_TOPIC_ARN,
+        Message: JSON.stringify({
+          users: otherUsers.concat([user, bannedUser]),
+          message: {
+            action: 'banreply',
+            bannedid: bannedid,
+            status: 'confirmed'
+          }
+        })
+      })
+      promises.push(snsClient.send(publishSendMessageCommand))
+
+      const publishSendNotificationDeniedBanUserCommand = new PublishCommand({
+        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+        Message: JSON.stringify({
+          users: [bannedUser],
+          notification: {
+            title: 'Tu as mal agi ❌',
+            body: "Ton groupe t'a exclu"
+          }
+        })
+      })
+      promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
+    } else {
+      const publishSendMessageCommand = new PublishCommand({
+        TopicArn: SEND_MESSAGE_TOPIC_ARN,
+        Message: JSON.stringify({
+          users: otherUsers.concat([user]),
+          message: {
+            action: 'banreply',
+            bannedid: bannedid,
+            status: 'denied'
+          }
+        })
+      })
+      promises.push(snsClient.send(publishSendMessageCommand))
     }
 
-    const batchGetBanNewVotingUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          Keys: Array.from(group.users).map((id) => ({ id: id })),
-          ProjectionExpression: '#id, #connectionId',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId'
-          }
-        }
-      }
-    })
-    const users = await dynamoDBDocumentClient.send(batchGetBanNewVotingUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    const publishSendNotificationCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
-        message: {
-          action: 'banreply',
-          bannedid: bannedid,
-          status: voteConfirmed ? 'confirmed' : 'denied'
+        users: otherUsers.concat([user]),
+        notification: {
+          title: 'Le vote est terminé 🗳',
+          body: 'Viens voir le résultat !'
         }
       })
     })
-    promises.push(snsClient.send(publishSendMessageCommand))
+    promises.push(snsClient.send(publishSendNotificationCommand))
 
     await Promise.allSettled(promises)
   }

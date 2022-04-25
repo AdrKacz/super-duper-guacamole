@@ -1,8 +1,15 @@
+import 'dart:convert';
+
+import 'package:awachat/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:http/http.dart' as http;
 
 class NotificationHandler {
+  static const String _httpEndpoint =
+      "https://a4z7cyqjz2.execute-api.eu-west-3.amazonaws.com/firebase-token";
+
   static final NotificationHandler _instance = NotificationHandler._internal();
 
   factory NotificationHandler() {
@@ -16,8 +23,9 @@ class NotificationHandler {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    NotificationSettings settings =
-        await FirebaseMessaging.instance.requestPermission(
+    // don't use await to not block main thread
+    FirebaseMessaging.instance
+        .requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -25,21 +33,20 @@ class NotificationHandler {
       criticalAlert: false,
       provisional: false,
       sound: true,
-    );
+    )
+        .then((NotificationSettings settings) {
+      print(
+          '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
 
-    print(
-        '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
-
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("[PushNotificationService] Firebase messaging token: <$token>");
-
-    // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    //   print('Got a message whilst in the foreground!');
-    //   print('Message data: ${message.data}');
-
-    //   if (message.notification != null) {
-    //     print('Message also contained a notification: ${message.notification}');
-    //   }
-    // });
+      return FirebaseMessaging.instance.getToken();
+    }).then((String? token) {
+      print("[PushNotificationService] Firebase messaging token: <$token>");
+      print('[PushNotificationService] Put token to $_httpEndpoint');
+      return http.put(Uri.parse(_httpEndpoint),
+          body: jsonEncode({'id': User().id, 'token': token}));
+    }).then((http.Response response) {
+      print(
+          '[PushNotificationService] Response status: ${response.statusCode}');
+    });
   }
 }
