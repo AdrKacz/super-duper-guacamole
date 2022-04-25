@@ -324,10 +324,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
         break;
       case "leavegroup":
-        if (data['groupid'] == User().groupid) {
+        // empty string is stored as undefined serverside
+        // (causing a difference where there is not)
+        final String newGroupId = data['groupid'] ?? "";
+        if (newGroupId == User().groupid) {
           // only leave if the group to leave is the group we are in
-          print('\tLeave group: ${data['groupid']}');
-          User().groupid = data['groupid'];
+          print('\tLeave group: $newGroupId');
+          User().groupid = newGroupId;
           _messages.clear();
           state = "switchwaiting";
         } else {
@@ -336,10 +339,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
         break;
       case "joingroup":
-        if (data['groupid'] != User().groupid) {
+        final String newGroupId = data['groupid'] ?? "";
+        if (newGroupId != User().groupid) {
           // only join if the group to join is not the group we are in
-          print('\tJoin group: ${data['groupid']}');
-          User().groupid = data['groupid'];
+          print('\tJoin group: $newGroupId');
+          User().groupid = newGroupId;
           _messages.clear(); // in case we receive join before leave
           state = "chat";
         } else {
