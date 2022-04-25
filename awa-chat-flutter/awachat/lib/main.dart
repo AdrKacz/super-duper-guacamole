@@ -327,12 +327,29 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           state = "chat";
         }
         break;
-      case "switchgroup":
-        print('\tGroup: ${data['groupid']}');
-        User().groupid = data['groupid'];
-        _messages
-            .clear(); // clear here too if switchgroup without user asked to (ban)
-        state = "chat";
+      case "leavegroup":
+        if (data['groupid'] == User().groupid) {
+          // only leave if the group to leave is the group we are in
+          print('\tLeave group: ${data['groupid']}');
+          User().groupid = data['groupid'];
+          _messages.clear();
+          state = "switch";
+        } else {
+          // don't do anything
+          needUpdate = false;
+        }
+        break;
+      case "joingroup":
+        if (data['groupid'] != User().groupid) {
+          // only join if the group to join is not the group we are in
+          print('\tJoin group: ${data['groupid']}');
+          User().groupid = data['groupid'];
+          _messages.clear(); // in case we receive join before leave
+          state = "chat";
+        } else {
+          // don't do anything
+          needUpdate = false;
+        }
         break;
       case "textmessage":
         print('\tMessage: ${data['message']}');
@@ -405,7 +422,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             widget.setAppState('presentation');
           },
           resetAccount: () async {
-            User().resetGroup();
+            User().groupid = "";
             await Memory().clear();
             await User().init();
             widget.setAppState('presentation');
@@ -438,7 +455,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     }
                     _webSocketConnection.switchgroup();
                     setState(() {
-                      _messages.clear();
                       state = "switch";
                     });
                   },

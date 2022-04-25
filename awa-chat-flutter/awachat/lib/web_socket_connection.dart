@@ -20,7 +20,6 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    User().resetGroup();
     _channel.sink.add(jsonEncode(
         {"action": "switchgroup", "groupid": User().groupid, "id": User().id}));
   }
