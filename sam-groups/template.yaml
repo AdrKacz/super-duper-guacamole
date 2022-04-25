@@ -542,7 +542,7 @@ Outputs:
 
   HttpURI:
     Description: "The HTTPS API URI to connect to"
-    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${ServerlessHttpApiApiGatewayDefaultStage}/firebase-token/"
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/firebase-token'
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

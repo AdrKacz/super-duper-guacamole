@@ -22,9 +22,9 @@ import 'package:awachat/pages/agreements.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await NotificationHandler().init();
   await Memory().init();
   await User().init();
+  NotificationHandler().init();
 
   runApp(const MyApp());
 }
