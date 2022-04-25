@@ -239,10 +239,9 @@ ${event.Records[0].Sns.Message}
       if (oldGroup.users.size < MINIMUM_GROUP_SIZE) {
         // NOTE: if an user leave a group it hasn't entered yet it will close it forever
         // for exemple, user A join group ABC, group.users = { A }, group.isWaiting = 1
-        // user B join group ABD, group.users = { A, B }, group.isWaiting = 1
+        // user B join group ABC, group.users = { A, B }, group.isWaiting = 1
         // user A switches group, group.users = { B } group.size < MINIMUM_GROUP_SIZE(3), group.isWaiting = 0
         // group ABC will be closed before ever being opened
-        // TODO: cannot switch while waiting (cannot double-click on switch button)
         oldGroup.isWaiting = 0 // false
       }
       if (oldGroup.users.size > 0) {
