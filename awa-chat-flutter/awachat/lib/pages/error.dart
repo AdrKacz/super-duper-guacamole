@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// NOTE: unused
 class ErrorPage extends StatelessWidget {
   const ErrorPage({Key? key, required this.refresh}) : super(key: key);
 
@@ -17,7 +16,8 @@ class ErrorPage extends StatelessWidget {
             children: <Widget>[
               Image.asset('assets/images/undraw_warning_cyit.png'),
               const Divider(height: 48),
-              const Text("Oups ! Il y a quelque chose d'anormal."),
+              const Text("Oups ! Il y a quelque chose d'anormal.",
+                  textAlign: TextAlign.center),
               const SizedBox(
                 height: 24,
               ),

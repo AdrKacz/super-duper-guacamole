@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:awachat/pages/custom_chat.dart';
 import 'package:awachat/pages/presentation.dart';
+import 'package:awachat/pages/switch_group.dart';
 import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -81,20 +82,6 @@ class _MyAppState extends State<MyApp> {
 
 // ===== ===== =====
 
-// Debug
-const Map<String, String> groupNames = {
-  "0": "Zero",
-  "1": "Ichi",
-  "2": "Ni",
-  "3": "San",
-  "4": "Yon",
-  "5": "Go",
-  "6": "Roku",
-  "7": "Nana",
-  "8": "Hachi",
-  "9": "Kyu",
-};
-
 // Main Page
 class MainPage extends StatefulWidget {
   const MainPage({Key? key, required this.setAppState}) : super(key: key);
@@ -116,7 +103,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   AppLifecycleState? _notification;
 
   // State
-  String state = "idle";
+  late String _state;
+  String get state => _state;
+  set state(String newState) {
+    Memory().put('user', 'appChatState', newState);
+    _state = newState;
+  }
+
+  String connectionState = "disconnected";
 
   // Acknowledge ban
   void acknowledgeBan(
@@ -310,29 +304,52 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final data = jsonDecode(message);
     switch (data['action']) {
       case "register":
-        print('\tRegister');
+        print('\tRegister with state: $state');
+        // connection made
+        connectionState = 'connected';
         // process unread messages
         for (final unreadMessage in data['unreadData']) {
-          needUpdate = processMessage(jsonEncode(unreadMessage));
+          processMessage(jsonEncode(unreadMessage));
+          // needUpdate cannot be false because connectionState changed
         }
 
         // Get group (register on load)
-        if (User().groupid == "") {
+        if (User().groupid == "" && state == "idle") {
           _webSocketConnection.switchgroup();
           _messages.clear();
           state = "switch";
-        } else {
+        } else if (state == "chat") {
           // past messages
           loadMessagesFromMemory();
-          state = "chat";
         }
         break;
-      case "switchgroup":
-        print('\tGroup: ${data['groupid']}');
-        User().groupid = data['groupid'];
-        _messages
-            .clear(); // clear here too if switchgroup without user asked to (ban)
-        state = "chat";
+      case "leavegroup":
+        // empty string is stored as undefined serverside
+        // (causing a difference where there is not)
+        final String newGroupId = data['groupid'] ?? "";
+        if (newGroupId == User().groupid) {
+          // only leave if the group to leave is the group we are in
+          print('\tLeave group: $newGroupId');
+          User().groupid = newGroupId;
+          _messages.clear();
+          state = "switchwaiting";
+        } else {
+          // don't do anything
+          needUpdate = false;
+        }
+        break;
+      case "joingroup":
+        final String newGroupId = data['groupid'] ?? "";
+        if (newGroupId != User().groupid) {
+          // only join if the group to join is not the group we are in
+          print('\tJoin group: $newGroupId');
+          User().groupid = newGroupId;
+          _messages.clear(); // in case we receive join before leave
+          state = "chat";
+        } else {
+          // don't do anything
+          needUpdate = false;
+        }
         break;
       case "textmessage":
         print('\tMessage: ${data['message']}');
@@ -373,7 +390,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     _webSocketConnection.stream.listen(listenMessage, onDone: () {
       if (mounted) {
         setState(() {
-          state = "disconnected";
+          connectionState = "disconnected";
         });
       }
     }, cancelOnError: true);
@@ -385,27 +402,29 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
 
+    _state = Memory().get('user', 'appChatState') ?? "idle";
+
     _webSocketConnection.register();
     listenStream();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (state == "disconnected" &&
+    if (connectionState == "disconnected" &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
-      state = "reconnect";
+      connectionState = "reconnect";
       _webSocketConnection.reconnect();
       _webSocketConnection.register();
       listenStream();
     }
-    print("State: $state");
+    print("State: $state - Connection State: $connectionState");
     return Scaffold(
         drawer: UserDrawer(
           seeIntroduction: () {
             widget.setAppState('presentation');
           },
           resetAccount: () async {
-            User().resetGroup();
+            User().groupid = "";
             await Memory().clear();
             await User().init();
             widget.setAppState('presentation');
@@ -428,7 +447,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                 );
               },
             ),
-            title: Text(groupNames[User().groupid] ?? ""),
+            title: const Text(""),
             actions: <Widget>[
               IconButton(
                   tooltip: "Changer de groupe",
@@ -438,7 +457,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     }
                     _webSocketConnection.switchgroup();
                     setState(() {
-                      _messages.clear();
                       state = "switch";
                     });
                   },
@@ -453,60 +471,97 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             bottom: false,
             child: Builder(
               builder: (BuildContext context) {
+                late Widget child;
                 switch (state) {
                   case "idle":
-                    return const Center(
+                    child = const Center(
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
+                    break;
                   case "switch":
-                    return const Center(
+                    child = const Center(
                         child: CircularProgressIndicator(
                             color: Color(0xff6f61e8)));
+                    break;
+                  case "switchwaiting":
+                    child = const SwitchGroupPage();
+                    break;
                   case "chat":
-                    return CustomChat(
+                    child = CustomChat(
                         messages: _messages,
                         onSendPressed: sendMessage,
                         onMessageLongPress: reportMessage);
+                    break;
+                  default:
+                    // TODO: error should re-ask server for current group if any
+                    // NOTE: here it tries to infer the correct state of the app
+                    child = ErrorPage(
+                      refresh: () {
+                        _webSocketConnection.close();
+                        _webSocketConnection.reconnect();
+                        _webSocketConnection.register();
+                        if (User().groupid != "") {
+                          setState(() {
+                            state = "chat";
+                          });
+                        } else {
+                          setState(() {
+                            state = "idle";
+                          });
+                        }
+
+                        listenStream();
+                      },
+                    );
+                }
+                switch (connectionState) {
                   case "disconnected":
                     return Stack(
                       children: [
-                        CustomChat(
-                            messages: _messages,
-                            onSendPressed: sendMessage,
-                            onMessageLongPress: reportMessage),
+                        child,
                         Positioned.fill(
                             child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                                filter:
+                                    ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                                 child: Container(
                                     color: Colors.black.withOpacity(0))))
                       ],
                     );
                   case "reconnect":
-                    return const Center(
-                        child: CircularProgressIndicator(
-                            color: Color(0xff6f61e8)));
-                  default:
-                    return ErrorPage(
-                      refresh: () {
-                        _webSocketConnection.close();
-                        _webSocketConnection.reconnect();
-                        _webSocketConnection.register();
-                        listenStream();
-                      },
+                    // TODO: create an action to retry if an error occurs or the network is not reachable
+                    return Stack(
+                      children: [
+                        child,
+                        Positioned.fill(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            child: Container(
+                              color: Colors.black.withOpacity(0),
+                            ),
+                          ),
+                        ),
+                        const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xff6f61e8),
+                          ),
+                        ),
+                      ],
                     );
+                  default:
+                    return child;
                 }
               },
             )));
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    print("Change state > $state");
+  void didChangeAppLifecycleState(AppLifecycleState appLifecycleState) {
+    print("App Lifecycle State > $appLifecycleState");
     setState(() {
-      _notification = state;
+      _notification = appLifecycleState;
     });
 
-    if (state != AppLifecycleState.resumed) {
+    if (appLifecycleState != AppLifecycleState.resumed) {
       _webSocketConnection.close();
     }
   }

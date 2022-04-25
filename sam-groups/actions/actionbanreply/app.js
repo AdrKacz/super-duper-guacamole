@@ -180,21 +180,35 @@ exports.handler = async (event) => {
 
     const promises = [dynamoDBDocumentClient.send(updateBannedUserCommand)]
 
-    const batchOtherUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          // user and banned user already requested
-          Keys: Array.from(group.users).filter((userid) => (userid !== bannedid && userid !== id)).map((id) => ({ id: id })),
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
+    const otherUserIds = []
+    for (const groupUserId of group.users) {
+      if (groupUserId !== id && groupUserId !== bannedid) {
+        otherUserIds.push({ id: groupUserId })
+      }
+    }
+    const otherUsers = []
+    if (otherUserIds.length > 0) {
+      // do not fetch if nothing to fetch
+      const batchOtherUsersCommand = new BatchGetCommand({
+        RequestItems: {
+          [USERS_TABLE_NAME]: {
+            // user and banned user already requested
+            Keys: Array.from(group.users).filter((userid) => (userid !== bannedid && userid !== id)).map((id) => ({ id: id })),
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
+            ExpressionAttributeNames: {
+              '#id': 'id',
+              '#connectionId': 'connectionId',
+              '#firebaseToken': 'firebaseToken'
+            }
           }
         }
-      }
-    })
-    const otherUsers = await dynamoDBDocumentClient.send(batchOtherUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+      })
+      await dynamoDBDocumentClient.send(batchOtherUsersCommand).then((response) => {
+        for (const otherUser of response.Responses[USERS_TABLE_NAME]) {
+          otherUsers.push(otherUser)
+        }
+      })
+    }
 
     if (voteConfirmed) {
       const publishSwitchGroupCommand = new PublishCommand({

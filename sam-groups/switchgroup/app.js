@@ -151,10 +151,24 @@ ${event.Records[0].Sns.Message}
   })
   const promises = [dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes))]
 
+  // send message to user to notify it has leaved the group
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id, connectionId: user.connectionId, firebaseToken: user.firebaseToken }],
+      message: {
+        action: 'leavegroup',
+        groupid: user.group
+      }
+    })
+  })
+  promises.push(snsClient.send(publishSendMessageCommand))
+
   // update new group
   if (newGroup.users.size >= MINIMUM_GROUP_SIZE) {
     // alert user(s)
-    const users = [{ id, connectionId: user.connectionId, firebaseToken: user.firebaseToken }]
+    // early users are user not notified of the group yet
+    const earlyUsers = [{ id, connectionId: user.connectionId, firebaseToken: user.firebaseToken }]
     if (newGroup.users.size === MINIMUM_GROUP_SIZE && MINIMUM_GROUP_SIZE > 1) {
       // happens only once when group becomes active for the first time
       newGroup.users.delete(id) // remove id, already fetched
@@ -175,16 +189,18 @@ ${event.Records[0].Sns.Message}
 
       const otherUsers = await dynamoDBDocumentClient.send(batchGetOtherUsers).then((response) => (response.Responses[USERS_TABLE_NAME]))
       for (const otherUser of otherUsers) {
-        users.push(otherUser)
+        earlyUsers.push(otherUser)
       }
     }
-    console.log(`Alert early group users <${newGroup.id}>:`, users)
+
+    // TODO always send it to everyone in group with a users parameters in message
+    console.log(`Alert early group users <${newGroup.id}>:`, earlyUsers)
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
+        users: earlyUsers,
         message: {
-          action: 'switchgroup',
+          action: 'joingroup',
           groupid: newGroup.id
         }
       })
@@ -194,7 +210,7 @@ ${event.Records[0].Sns.Message}
     const publishSendNotificationCommand = new PublishCommand({
       TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
+        users: earlyUsers,
         notification: {
           title: 'Viens te présenter 🥳',
           body: 'Je viens de te trouver un groupe !'
