@@ -1,5 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:awachat/memory.dart';
+import 'package:awachat/objects/memory.dart';
 import 'package:uuid/uuid.dart';
 
 class User {

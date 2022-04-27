@@ -1,21 +1,22 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:awachat/pages/custom_chat.dart';
-import 'package:awachat/pages/presentation.dart';
-import 'package:awachat/pages/switch_group.dart';
 import 'package:awachat/user_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
-import 'package:awachat/notification_handler.dart';
-import 'package:awachat/pages/error.dart';
-import 'package:awachat/web_socket_connection.dart';
+import 'package:awachat/objects/notification_handler.dart';
+import 'package:awachat/objects/web_socket_connection.dart';
 import 'package:awachat/message.dart';
-import 'package:awachat/memory.dart';
-import 'package:awachat/user.dart';
-import 'package:awachat/pages/agreements.dart';
+import 'package:awachat/objects/memory.dart';
+import 'package:awachat/objects/user.dart';
+
+import 'package:awachat/widgets/error.dart';
+import 'package:awachat/widgets/custom_chat.dart';
+import 'package:awachat/widgets/presentation.dart';
+import 'package:awachat/widgets/switch_group.dart';
+import 'package:awachat/widgets/agreements.dart';
 
 // ===== ===== =====
 // App initialisation
@@ -110,7 +111,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     _state = newState;
   }
 
-  String connectionState = "disconnected";
+  String connectionState = "connected";
 
   // Acknowledge ban
   void acknowledgeBan(

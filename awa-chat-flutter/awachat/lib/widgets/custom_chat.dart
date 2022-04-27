@@ -1,5 +1,5 @@
 import 'package:awachat/flyer/l10n.dart';
-import 'package:awachat/user.dart';
+import 'package:awachat/objects/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';

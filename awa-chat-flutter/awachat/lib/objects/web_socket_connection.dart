@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'package:awachat/user.dart';
+import 'package:awachat/objects/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =

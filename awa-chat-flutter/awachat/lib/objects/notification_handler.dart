@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:awachat/user.dart';
+import 'package:awachat/objects/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import '../firebase_options.dart';
 import 'package:http/http.dart' as http;
 
 class NotificationHandler {

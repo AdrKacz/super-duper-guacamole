@@ -1,4 +1,4 @@
-import 'package:awachat/user.dart';
+import 'package:awachat/objects/user.dart';
 import 'package:flutter/material.dart';
 
 class UserDrawer extends StatelessWidget {
