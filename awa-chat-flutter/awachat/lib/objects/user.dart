@@ -1,29 +1,36 @@
+import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/objects/memory.dart';
-import 'package:uuid/uuid.dart';
 
 class User {
   static final User _instance = User._internal();
 
   late String id;
-  String _groupid = "";
 
-  String get groupid => _groupid;
-  set groupid(String id) {
+  // to be moved in a Group class
+  String _groupId = "";
+  List<String> otherGroupUsers = [
+    const Uuid().v4(),
+    const Uuid().v4(),
+    const Uuid().v4(),
+  ];
+
+  String get groupId => _groupId;
+  set groupId(String id) {
     // reset
-    if (_groupid != "") {
+    if (_groupId != "") {
       FirebaseMessaging.instance
-          .unsubscribeFromTopic('group-${User().groupid}');
+          .unsubscribeFromTopic('group-${User().groupId}');
       Memory().lazyBoxMessages.clear();
       Memory().put('user', 'lastmessage', '0');
-      _groupid = "";
+      _groupId = "";
     }
 
     // set
     if (id != "") {
       FirebaseMessaging.instance.subscribeToTopic('group-$id');
       Memory().put('user', 'groupid', id);
-      _groupid = id;
+      _groupId = id;
     }
   }
 
@@ -42,9 +49,9 @@ class User {
     id = userId;
     String? memoryGroupId = Memory().get('user', 'groupid');
     if (memoryGroupId != null) {
-      _groupid = memoryGroupId;
+      _groupId = memoryGroupId;
     } else {
-      _groupid = "";
+      _groupId = "";
     }
     print('Init user with id $id');
   }

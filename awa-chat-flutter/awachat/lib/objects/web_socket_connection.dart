@@ -21,14 +21,14 @@ class WebSocketConnection {
 
   void switchgroup() {
     _channel.sink.add(jsonEncode(
-        {"action": "switchgroup", "groupid": User().groupid, "id": User().id}));
+        {"action": "switchgroup", "groupid": User().groupId, "id": User().id}));
   }
 
   void textmessage(String encodedMessage) {
     _channel.sink.add(jsonEncode({
       "action": "textmessage",
       "id": User().id,
-      "groupid": User().groupid,
+      "groupid": User().groupId,
       "message": encodedMessage,
     }));
   }
@@ -37,7 +37,7 @@ class WebSocketConnection {
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
       "id": User().id,
-      "groupid": User().groupid,
+      "groupid": User().groupId,
       "bannedid": userid,
       "messageid": messageid,
     }));
@@ -47,7 +47,7 @@ class WebSocketConnection {
     _channel.sink.add(jsonEncode({
       "action": "banreply",
       "id": User().id,
-      "groupid": User().groupid,
+      "groupid": User().groupId,
       "bannedid": banneduserid,
       "status": status,
     }));

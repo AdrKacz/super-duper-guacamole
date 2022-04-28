@@ -19,6 +19,7 @@ class NotificationHandler {
   NotificationHandler._internal();
 
   Future<void> init() async {
+    // TODO: if app is offline, it will crashes
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );

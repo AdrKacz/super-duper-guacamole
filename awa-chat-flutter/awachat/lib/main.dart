@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:awachat/user_drawer.dart';
+import 'package:awachat/widgets/users_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -315,7 +316,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         // Get group (register on load)
-        if (User().groupid == "" && state == "idle") {
+        if (User().groupId == "" && state == "idle") {
           _webSocketConnection.switchgroup();
           _messages.clear();
           state = "switch";
@@ -328,10 +329,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         // empty string is stored as undefined serverside
         // (causing a difference where there is not)
         final String newGroupId = data['groupid'] ?? "";
-        if (newGroupId == User().groupid) {
+        if (newGroupId == User().groupId) {
           // only leave if the group to leave is the group we are in
           print('\tLeave group: $newGroupId');
-          User().groupid = newGroupId;
+          User().groupId = newGroupId;
           _messages.clear();
           state = "switchwaiting";
         } else {
@@ -341,10 +342,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         break;
       case "joingroup":
         final String newGroupId = data['groupid'] ?? "";
-        if (newGroupId != User().groupid) {
+        if (newGroupId != User().groupId) {
           // only join if the group to join is not the group we are in
           print('\tJoin group: $newGroupId');
-          User().groupid = newGroupId;
+          User().groupId = newGroupId;
           _messages.clear(); // in case we receive join before leave
           state = "chat";
         } else {
@@ -425,7 +426,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             widget.setAppState('presentation');
           },
           resetAccount: () async {
-            User().groupid = "";
+            User().groupId = "";
             await Memory().clear();
             await User().init();
             widget.setAppState('presentation');
@@ -448,7 +449,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                 );
               },
             ),
-            title: const Text(""),
+            title: UsersList(users: User().otherGroupUsers),
             actions: <Widget>[
               IconButton(
                   tooltip: "Changer de groupe",
@@ -501,7 +502,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                         _webSocketConnection.close();
                         _webSocketConnection.reconnect();
                         _webSocketConnection.register();
-                        if (User().groupid != "") {
+                        if (User().groupId != "") {
                           setState(() {
                             state = "chat";
                           });
