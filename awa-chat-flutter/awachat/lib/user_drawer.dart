@@ -16,10 +16,14 @@ class UserDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            child: ClipOval(
-              child: Image.network(
-                'https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png',
-                fit: BoxFit.contain,
+            child: CircleAvatar(
+              backgroundColor: Colors.transparent,
+              child: SizedBox(
+                child: ClipOval(
+                  child: Image.network(
+                    "https://avatars.dicebear.com/api/adventurer-neutral/${User().id}.png",
+                  ),
+                ),
               ),
             ),
           ),

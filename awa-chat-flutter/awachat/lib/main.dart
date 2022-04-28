@@ -441,10 +441,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   onTap: () {
                     Scaffold.of(context).openDrawer();
                   },
-                  child: CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    backgroundImage: NetworkImage(
-                        "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.transparent,
+                      backgroundImage: NetworkImage(
+                          "https://avatars.dicebear.com/api/adventurer-neutral/${User().id}.png"),
+                    ),
                   ),
                 );
               },

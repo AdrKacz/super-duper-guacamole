@@ -17,7 +17,7 @@ class UsersList extends StatelessWidget {
                   CircleAvatar(
                     backgroundColor: Colors.transparent,
                     backgroundImage: NetworkImage(
-                        "https://avatars.dicebear.com/api/croodles-neutral/${user['id']}.png"),
+                        "https://avatars.dicebear.com/api/adventurer-neutral/${user['id']}.png"),
                   ),
                   Badge(
                       showBadge: user['isActive'],

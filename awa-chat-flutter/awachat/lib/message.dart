@@ -42,7 +42,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
           author: types.User(
               id: author,
               imageUrl:
-                  "https://avatars.dicebear.com/api/croodles-neutral/$author.png"),
+                  "https://avatars.dicebear.com/api/adventurer-neutral/$author.png"),
           createdAt: int.parse(createdAt),
           id: id,
           text: text,
