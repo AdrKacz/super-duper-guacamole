@@ -443,12 +443,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   },
                   child: CircleAvatar(
                     backgroundColor: Colors.transparent,
-                    foregroundImage: NetworkImage(
+                    backgroundImage: NetworkImage(
                         "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
                   ),
                 );
               },
             ),
+            centerTitle: true,
             title: UsersList(users: User().otherGroupUsers),
             actions: <Widget>[
               IconButton(

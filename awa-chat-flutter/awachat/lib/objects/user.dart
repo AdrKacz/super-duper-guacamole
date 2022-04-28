@@ -9,10 +9,11 @@ class User {
 
   // to be moved in a Group class
   String _groupId = "";
-  List<String> otherGroupUsers = [
-    const Uuid().v4(),
-    const Uuid().v4(),
-    const Uuid().v4(),
+  List<Map> otherGroupUsers = [
+    {'id': const Uuid().v4(), 'isActive': true},
+    {'id': const Uuid().v4(), 'isActive': true},
+    {'id': const Uuid().v4(), 'isActive': false},
+    {'id': const Uuid().v4(), 'isActive': true},
   ];
 
   String get groupId => _groupId;
