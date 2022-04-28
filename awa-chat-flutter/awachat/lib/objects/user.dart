@@ -9,12 +9,7 @@ class User {
 
   // to be moved in a Group class
   String _groupId = "";
-  List<Map> otherGroupUsers = [
-    {'id': const Uuid().v4(), 'isActive': true},
-    {'id': const Uuid().v4(), 'isActive': true},
-    {'id': const Uuid().v4(), 'isActive': false},
-    {'id': const Uuid().v4(), 'isActive': true},
-  ];
+  final List<Map> otherGroupUsers = []; // it is modified but not re-assigned
 
   String get groupId => _groupId;
   set groupId(String id) {
@@ -25,6 +20,7 @@ class User {
       Memory().lazyBoxMessages.clear();
       Memory().put('user', 'lastmessage', '0');
       _groupId = "";
+      otherGroupUsers.clear();
     }
 
     // set
@@ -55,5 +51,15 @@ class User {
       _groupId = "";
     }
     print('Init user with id $id');
+  }
+
+  // Group method
+  void setNewOtherUsers(List<String> otherUserIds) {
+    for (final String otherUserId in otherUserIds) {
+      otherGroupUsers.add({
+        'id': otherUserId,
+        'isActive': false,
+      });
+    }
   }
 }

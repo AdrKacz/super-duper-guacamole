@@ -328,29 +328,53 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       case "leavegroup":
         // empty string is stored as undefined serverside
         // (causing a difference where there is not)
-        final String newGroupId = data['groupid'] ?? "";
-        if (newGroupId == User().groupId) {
-          // only leave if the group to leave is the group we are in
-          print('\tLeave group: $newGroupId');
-          User().groupId = newGroupId;
-          _messages.clear();
-          state = "switchwaiting";
+        final String groupId = data['groupid'] ?? "";
+        final List<String> userId = data['id'] ?? [];
+        if (userId == User().id) {
+          if (groupId == User().groupId) {
+            // only leave if the group to leave is the group we are in
+            print('\tLeave group: $groupId');
+            User().groupId = "";
+            _messages.clear();
+            state = "switchwaiting";
+          } else {
+            // don't do anything
+            needUpdate = false;
+          }
         } else {
-          // don't do anything
-          needUpdate = false;
+          if (groupId == User().groupId) {
+            User()
+                .otherGroupUsers
+                .removeWhere((otherUser) => otherUser['id'] == userId);
+          }
         }
+
         break;
       case "joingroup":
         final String newGroupId = data['groupid'] ?? "";
-        if (newGroupId != User().groupId) {
-          // only join if the group to join is not the group we are in
-          print('\tJoin group: $newGroupId');
-          User().groupId = newGroupId;
-          _messages.clear(); // in case we receive join before leave
-          state = "chat";
+        final List<String> newUsers = data['newUsers'] ?? [];
+        if (newUsers.contains(User().id)) {
+          if (newGroupId != User().groupId) {
+            // only join if the group to join is not the group we are in
+            print('\tJoin group: $newGroupId');
+            User().groupId = newGroupId;
+            newUsers.remove(User().id);
+            User().setNewOtherUsers(newUsers);
+            _messages.clear(); // in case we receive join before leave
+            state = "chat";
+          } else {
+            // don't do anything
+            needUpdate = false;
+          }
         } else {
-          // don't do anything
-          needUpdate = false;
+          if (newGroupId == User().groupId) {
+            print('\tSomeone joined your group: $newUsers');
+            newUsers.remove(User().id);
+            User().setNewOtherUsers(newUsers);
+          } else {
+            // don't do anything
+            needUpdate = false;
+          }
         }
         break;
       case "textmessage":
