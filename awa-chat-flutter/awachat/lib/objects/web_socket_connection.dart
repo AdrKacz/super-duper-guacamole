@@ -6,7 +6,7 @@ import 'package:awachat/objects/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://q6gjgdgowf.execute-api.eu-west-3.amazonaws.com/dev";
+      "wss://mswpwe47tf.execute-api.eu-west-3.amazonaws.com/dev";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -16,15 +16,23 @@ class WebSocketConnection {
   }
 
   void register() {
+    print('register');
     _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
   }
 
+  void unregister() {
+    print('unregister');
+    _channel.sink.add(jsonEncode({"action": "unregister", "id": User().id}));
+  }
+
   void switchgroup() {
+    print('switchgroup');
     _channel.sink.add(jsonEncode(
         {"action": "switchgroup", "groupid": User().groupId, "id": User().id}));
   }
 
   void textmessage(String encodedMessage) {
+    print('textmessage');
     _channel.sink.add(jsonEncode({
       "action": "textmessage",
       "id": User().id,
@@ -34,6 +42,7 @@ class WebSocketConnection {
   }
 
   void banrequest(String userid, String messageid) {
+    print('banrequest');
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
       "id": User().id,
@@ -44,6 +53,7 @@ class WebSocketConnection {
   }
 
   void banreply(String banneduserid, String status) {
+    print('banreply');
     _channel.sink.add(jsonEncode({
       "action": "banreply",
       "id": User().id,
@@ -54,6 +64,7 @@ class WebSocketConnection {
   }
 
   void reconnect() {
+    print('reconnect');
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 

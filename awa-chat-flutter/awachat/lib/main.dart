@@ -305,6 +305,16 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     bool needUpdate = true;
     final data = jsonDecode(message);
     switch (data['action']) {
+      case "login":
+        if (User().otherGroupUsers.containsKey(data['id'])) {
+          User().otherGroupUsers[data['id']]!['isActive'] = true;
+        }
+        break;
+      case "logout":
+        if (User().otherGroupUsers.containsKey(data['id'])) {
+          User().otherGroupUsers[data['id']]!['isActive'] = false;
+        }
+        break;
       case "register":
         print('\tRegister with state: $state');
         // connection made
@@ -359,6 +369,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             User().updateOtherUsers(users);
             _messages.clear(); // in case we receive join before leave
             state = "chat";
+            _webSocketConnection.register();
           } else {
             // new users in group
             print('\tGroup users: $users');
@@ -519,7 +530,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     // TODO: error should re-ask server for current group if any
                     // NOTE: here it tries to infer the correct state of the app
                     child = ErrorPage(
-                      refresh: () {
+                      refresh: () async {
                         _webSocketConnection.close();
                         _webSocketConnection.reconnect();
                         _webSocketConnection.register();

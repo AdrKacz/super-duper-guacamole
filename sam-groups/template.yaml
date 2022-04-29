@@ -7,7 +7,7 @@ Globals:
     Handler: app.handler
     Environment:
       Variables:
-        USERS_TABLE_NAME: !Ref UsersTableName
+        USERS_TABLE_NAME: !Ref UsersTable
         GROUPS_TABLE_NAME: !Ref GroupsTableName
 
 Description: >
@@ -31,14 +31,6 @@ Parameters:
     Default: 2
     Description: '(Required) The number of the users required to ban someone from a group. The effective number of confirmation required will be the minimum between this number and the number of users who have received the ban request.'
     ConstraintDescription: 'Required. Must be an integer.'
-  UsersTableName:
-    Type: String
-    Default: 'users'
-    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
-    MinLength: 3
-    MaxLength: 50
-    AllowedPattern: ^[A-Za-z_]+$
-    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
   GroupsTableName:
     Type: String
     Default: 'groups'
@@ -64,9 +56,32 @@ Parameters:
 Resources:
   # Database
   UsersTable:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref UsersTableName
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        - 
+          AttributeName: "connectionId"
+          AttributeType: "S"
+      KeySchema:
+        -
+          AttributeName: "id"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        -
+          IndexName: "ConnectionIdIndex"
+          KeySchema:
+            -
+              AttributeName: "connectionId"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "group"
+            ProjectionType: "INCLUDE"
+
   GroupsTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -101,6 +116,27 @@ Resources:
       IntegrationUri:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionRegisterFunction.Arn}/invocations
+
+  OnDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: OnDisconnectRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref OnDisconnectIntegration
+  OnDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: On Disconnect Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionOnDisconnectFunction.Arn}/invocations
 
   SwitchGroupRoute:
     Type: AWS::ApiGatewayV2::Route
@@ -191,6 +227,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - RegisterRoute
+    - OnDisconnectRoute
     - SwitchGroupRoute
     - TextMessageRoute
     - BanRequestRoute
@@ -292,7 +329,7 @@ Resources:
           MAXIMUM_GROUP_SIZE_STRING: !Ref MaximumGroupSize
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
       - DynamoDBCrudPolicy:
           TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:
@@ -338,7 +375,7 @@ Resources:
         - !Ref AWSSDKDdbLayerVersion
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
       Events:
         SNSEvent:
           Type: SNS
@@ -352,7 +389,7 @@ Resources:
 
   # ===== ===== =====
   # API Functions
-  PutFirebaseToken:
+  PutFirebaseTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: put-firebase-token/
@@ -360,20 +397,25 @@ Resources:
         - !Ref AWSSDKDdbLayerVersion
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
       Events:
         HttpApiEvent:
           Type: HttpApi
           Properties:
             Path: /firebase-token
             Method: PUT
+  PutFirebaseTokenLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${PutFirebaseTokenFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
   # ===== ===== =====
   # Action Functions
   ActionRegisterFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/actionregister/
+      CodeUri: actions/register/
       Layers:
         - !Ref AWSSDKDdbLayerVersion
         - !Ref AWSSDKSnsLayerVersion
@@ -382,7 +424,9 @@ Resources:
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
   ActionRegisterPermission:
@@ -399,10 +443,42 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${ActionRegisterFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  ActionOnDisconnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actions/ondisconnect/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+        - !Ref AWSSDKSnsLayerVersion
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTableName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+  ActionOnDisconnectPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionOnDisconnectFunction
+      Principal: apigateway.amazonaws.com
+  ActionOnDisconnectLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionOnDisconnectFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
   ActionSwitchGroupFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/actionswitchgroup/
+      CodeUri: actions/switchgroup/
       Layers:
         - !Ref AWSSDKSnsLayerVersion
       Environment:
@@ -428,7 +504,7 @@ Resources:
   ActionTextMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/actiontextmessage/
+      CodeUri: actions/textmessage/
       Layers:
         - !Ref AWSSDKDdbLayerVersion
         - !Ref AWSSDKSnsLayerVersion
@@ -438,7 +514,7 @@ Resources:
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
       Policies:
       - DynamoDBReadPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:
@@ -462,7 +538,7 @@ Resources:
   ActionBanRequestFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/actionbanrequest/
+      CodeUri: actions/banrequest/
       Layers:
         - !Ref AWSSDKDdbLayerVersion
         - !Ref AWSSDKSnsLayerVersion
@@ -473,7 +549,7 @@ Resources:
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:
@@ -497,7 +573,7 @@ Resources:
   ActionBanReplyFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/actionbanreply/
+      CodeUri: actions/banreply/
       Layers:
         - !Ref AWSSDKDdbLayerVersion
         - !Ref AWSSDKSnsLayerVersion
@@ -508,7 +584,7 @@ Resources:
           SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
       Policies:
       - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTableName
+          TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName
       - SNSPublishMessagePolicy:

@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 class NotificationHandler {
   static const String _httpEndpoint =
-      "https://a4z7cyqjz2.execute-api.eu-west-3.amazonaws.com/firebase-token";
+      "https://za1icir0ie.execute-api.eu-west-3.amazonaws.com/firebase-token";
 
   static final NotificationHandler _instance = NotificationHandler._internal();
 
