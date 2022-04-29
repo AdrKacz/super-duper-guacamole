@@ -9,7 +9,8 @@ class User {
 
   // to be moved in a Group class
   String _groupId = "";
-  final List<Map> otherGroupUsers = []; // it is modified but not re-assigned
+  final Map<String, Map> otherGroupUsers =
+      {}; // it is modified but not re-assigned
 
   String get groupId => _groupId;
   set groupId(String id) {
@@ -54,12 +55,14 @@ class User {
   }
 
   // Group method
-  void setNewOtherUsers(List<String> otherUserIds) {
+  void updateOtherUsers(List<String> otherUserIds) {
     for (final String otherUserId in otherUserIds) {
-      otherGroupUsers.add({
-        'id': otherUserId,
-        'isActive': false,
-      });
+      if (!otherGroupUsers.containsKey(otherUserId)) {
+        otherGroupUsers[otherUserId] = {
+          'id': otherUserId,
+          'isActive': false,
+        };
+      }
     }
   }
 }

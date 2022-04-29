@@ -125,12 +125,10 @@ ${event.Records[0].Sns.Message}
     }
   })
 
-  const promises = [addUserToGroup(user, newGroup)]
-
-  // update old group (if any)
-  if (user.group !== undefined) {
-    promises.push(removeUserFromGroup(user))
-  }
+  const promises = [
+    addUserToGroup(user, newGroup),
+    removeUserFromGroup(user)
+  ]
 
   await Promise.allSettled(promises)
 }
@@ -178,7 +176,7 @@ async function addUserToGroup (user, newGroup) {
     // early users are user not notified of the group yet
     const earlyUsers = [user]
     const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
-    const usersIds = Array.from(newGroup.users).map((id) => ({ id: id }))
+    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id: id }))
     const otherUsers = []
     // happens only once when group becomes active for the first time``
     if (usersIds.length > 0) {
@@ -210,14 +208,15 @@ async function addUserToGroup (user, newGroup) {
     }
     console.log('Early Users:', earlyUsers)
     console.log('Other Users:', otherUsers)
+    const allUsers = earlyUsers.concat(otherUsers)
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: earlyUsers.concat(otherUsers),
+        users: allUsers,
         message: {
           action: 'joingroup',
           groupid: newGroup.id,
-          newUsers: earlyUsers.map((u) => (u.id))
+          users: allUsers.map((u) => (u.id))
         }
       })
     })
@@ -281,6 +280,22 @@ async function removeUserFromGroup (user) {
   //    group : String - user group id
   //    connectionId : String - user connection id
   //    firebaseToken : String - user firebase token
+
+  if (user.group === undefined) {
+    const publishSendMessageCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: [user],
+        message: {
+          action: 'leavegroup',
+          groupid: user.group,
+          id: user.id
+        }
+      })
+    })
+    await snsClient.send(publishSendMessageCommand)
+    return // no group so no need to update it, simply warn user
+  }
 
   // retreive group (needed to count its users)
   const getGroupCommand = new GetCommand({

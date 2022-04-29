@@ -329,7 +329,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         // empty string is stored as undefined serverside
         // (causing a difference where there is not)
         final String groupId = data['groupid'] ?? "";
-        final List<String> userId = data['id'] ?? [];
+        final String userId = data['id'] ?? [];
         if (userId == User().id) {
           if (groupId == User().groupId) {
             // only leave if the group to leave is the group we are in
@@ -343,39 +343,32 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           }
         } else {
           if (groupId == User().groupId) {
-            User()
-                .otherGroupUsers
-                .removeWhere((otherUser) => otherUser['id'] == userId);
+            User().otherGroupUsers.remove(userId);
           }
         }
 
         break;
       case "joingroup":
         final String newGroupId = data['groupid'] ?? "";
-        final List<String> newUsers = data['newUsers'] ?? [];
-        if (newUsers.contains(User().id)) {
+        final List<String> users = List<String>.from(data['users'] ?? []);
+        if (users.remove(User().id)) {
           if (newGroupId != User().groupId) {
             // only join if the group to join is not the group we are in
             print('\tJoin group: $newGroupId');
             User().groupId = newGroupId;
-            newUsers.remove(User().id);
-            User().setNewOtherUsers(newUsers);
+            User().updateOtherUsers(users);
             _messages.clear(); // in case we receive join before leave
             state = "chat";
           } else {
-            // don't do anything
-            needUpdate = false;
+            // new users in group
+            print('\tGroup users: $users');
+            User().updateOtherUsers(users);
           }
         } else {
-          if (newGroupId == User().groupId) {
-            print('\tSomeone joined your group: $newUsers');
-            newUsers.remove(User().id);
-            User().setNewOtherUsers(newUsers);
-          } else {
-            // don't do anything
-            needUpdate = false;
-          }
+// don't do anything
+          needUpdate = false;
         }
+
         break;
       case "textmessage":
         print('\tMessage: ${data['message']}');
@@ -477,7 +470,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               },
             ),
             centerTitle: true,
-            title: UsersList(users: User().otherGroupUsers),
+            title: UsersList(users: User().otherGroupUsers.values.toList()),
             actions: <Widget>[
               IconButton(
                   tooltip: "Changer de groupe",
