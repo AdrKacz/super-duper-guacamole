@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:awachat/user_drawer.dart';
+import 'package:awachat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/users_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

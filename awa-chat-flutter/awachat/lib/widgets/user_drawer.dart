@@ -76,6 +76,10 @@ class UserDrawer extends StatelessWidget {
               }
             },
           ),
+          ListTile(
+              leading: const Icon(Icons.copyright),
+              title: const Text("Sources"),
+              onTap: () {})
         ],
       ),
     );
