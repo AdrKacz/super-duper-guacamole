@@ -306,14 +306,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final data = jsonDecode(message);
     switch (data['action']) {
       case "login":
-        if (User().otherGroupUsers.containsKey(data['id'])) {
-          User().otherGroupUsers[data['id']]!['isActive'] = true;
-        }
+        User().updateOtherUserStatus(data['id'], true);
         break;
       case "logout":
-        if (User().otherGroupUsers.containsKey(data['id'])) {
-          User().otherGroupUsers[data['id']]!['isActive'] = false;
-        }
+        User().updateOtherUserStatus(data['id'], false);
         break;
       case "register":
         print('\tRegister with state: $state');

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/objects/memory.dart';
@@ -8,9 +10,8 @@ class User {
   late String id;
 
   // to be moved in a Group class
-  String _groupId = "";
-  final Map<String, Map> otherGroupUsers =
-      {}; // it is modified but not re-assigned
+  late String _groupId;
+  late Map<String, Map> otherGroupUsers;
 
   String get groupId => _groupId;
   set groupId(String id) {
@@ -19,8 +20,8 @@ class User {
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-${User().groupId}');
       Memory().lazyBoxMessages.clear();
-      Memory().put('user', 'lastmessage', '0');
       _groupId = "";
+      Memory().lazyBoxGroupUsers.clear();
       otherGroupUsers.clear();
     }
 
@@ -39,30 +40,48 @@ class User {
   User._internal();
 
   Future<void> init() async {
+    // get id
     String? userId = Memory().get('user', 'id');
     if (userId == null) {
       userId = const Uuid().v4();
       Memory().put('user', 'id', userId);
     }
     id = userId;
+    // get group
     String? memoryGroupId = Memory().get('user', 'groupid');
     if (memoryGroupId != null) {
       _groupId = memoryGroupId;
     } else {
       _groupId = "";
     }
-    print('Init user with id $id');
+    // get group users
+    otherGroupUsers = await Memory().loadGroupUsers();
+
+    print(
+        'Init user with id $id, group $_groupId, and members $otherGroupUsers');
   }
 
   // Group method
   void updateOtherUsers(List<String> otherUserIds) {
     for (final String otherUserId in otherUserIds) {
       if (!otherGroupUsers.containsKey(otherUserId)) {
-        otherGroupUsers[otherUserId] = {
+        Map groupUser = {
           'id': otherUserId,
           'isActive': false,
         };
+        otherGroupUsers[otherUserId] = groupUser;
+        Memory().addGroupUser(otherUserId, groupUser);
       }
     }
+  }
+
+  void updateOtherUserStatus(String id, bool isActive) {
+    if (!otherGroupUsers.containsKey(id)) {
+      return;
+    }
+
+    Map groupUser = {'id': id, 'isActive': isActive};
+    otherGroupUsers[id] = groupUser;
+    Memory().addGroupUser(id, groupUser);
   }
 }

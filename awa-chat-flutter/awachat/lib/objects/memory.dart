@@ -5,6 +5,7 @@ import 'package:awachat/message.dart';
 class Memory {
   late final Box<String> boxUser;
   late final LazyBox<String> lazyBoxMessages;
+  late final LazyBox<Map> lazyBoxGroupUsers;
 
   static final Memory _instance = Memory._internal();
 
@@ -16,6 +17,7 @@ class Memory {
 
   Future<void> init() async {
     await Hive.initFlutter();
+    lazyBoxGroupUsers = await Hive.openLazyBox<Map>('groupUsers');
     lazyBoxMessages = await Hive.openLazyBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
   }
@@ -40,44 +42,54 @@ class Memory {
   Future<void> clear() async {
     await boxUser.clear();
     await lazyBoxMessages.clear();
+    await lazyBoxGroupUsers.clear();
   }
 
-  void addMessage(String? id, String? text) async {
-    if (text == null) {
+  void addGroupUser(String id, Map user) {
+    lazyBoxGroupUsers.put(id, user);
+  }
+
+  void deleteGroupUser(String id) {
+    lazyBoxGroupUsers.delete(id);
+  }
+
+  Future<Map<String, Map>> loadGroupUsers() async {
+    Map<String, Map> groupUsers = {};
+
+    for (final String key in lazyBoxGroupUsers.keys) {
+      Map? groupUser = await lazyBoxGroupUsers.get(key);
+      if (groupUser != null) {
+        groupUsers[groupUser['id']] = groupUser;
+      }
+    }
+
+    return groupUsers;
+  }
+
+  void addMessage(String? id, String? text) {
+    if (id == null || text == null) {
       return;
     }
-
     lazyBoxMessages.put(id, text);
-    // verify if message already exist (to no add to lasstmessage badly)
-    String? data = await lazyBoxMessages.get(id);
-    if (data == null) {
-      final int lastmessage = int.parse(boxUser.get("lastmessage") ?? "0");
-      boxUser.put("lastmessage", (lastmessage + 1).toString());
-    }
   }
 
-  void deleteMessage(String? id) async {
+  void deleteMessage(String? id) {
     if (id == null) {
       return;
     }
-    // verify message exist (to no reduce lastmessage badly)
-    String? data = await lazyBoxMessages.get(id);
-    if (data != null) {
-      lazyBoxMessages.delete(id);
-      final int lastmessage = int.parse(boxUser.get("lastmessage") ?? "0");
-      boxUser.put("lastmessage", (lastmessage - 1).toString());
-    }
+    lazyBoxMessages.delete(id);
   }
 
   Future<List<types.Message>> loadMessages() async {
     List<types.Message> messages = [];
 
-    for (int i = 0; i < int.parse(boxUser.get('lastmessage') ?? '0'); i++) {
-      types.Message? message = messageDecode(await lazyBoxMessages.getAt(i));
+    for (final String key in lazyBoxMessages.keys) {
+      types.Message? message = messageDecode(await lazyBoxMessages.get(key));
       if (message != null) {
         messages.insert(0, message);
       }
     }
+
     return messages;
   }
 }
