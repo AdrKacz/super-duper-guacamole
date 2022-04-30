@@ -455,7 +455,7 @@ Resources:
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
           USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
       Policies:
-      - DynamoDBReadPolicy:
+      - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTableName

@@ -12,7 +12,7 @@
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, QueryCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -59,11 +59,29 @@ exports.handler = async (event) => {
     }
   })
 
-  // warn user group (if any)
-  if (user === undefined || user.group === undefined) {
+  if (user === undefined || user.id === undefined) {
     return
   }
-  // retreive group
+  // update user
+  const updateUser = new UpdateCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id: user.id },
+    UpdateExpression: 'SET #isActive = :isActive',
+    ExpressionAttributeNames: {
+      '#isActive': 'isActive'
+    },
+    ExpressionAttributeValues: {
+      ':isActive': false
+    }
+  })
+  const updatePromise = dynamoDBDocumentClient.send(updateUser)
+
+  if (user.group === undefined) {
+    await updatePromise
+    return
+  }
+
+  // retreive group (if any)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
     Key: { id: user.group },
@@ -110,6 +128,7 @@ exports.handler = async (event) => {
     })
   })
   await snsClient.send(publishSendMessageCommand)
+  await updatePromise
 }
 
 // ===== ==== ====

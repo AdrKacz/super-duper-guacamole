@@ -356,8 +356,9 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         break;
       case "joingroup":
         final String newGroupId = data['groupid'] ?? "";
-        final List<String> users = List<String>.from(data['users'] ?? []);
-        if (users.remove(User().id)) {
+        final Map<String, dynamic> users =
+            Map<String, dynamic>.from(data['users'] ?? {});
+        if (users.remove(User().id) != null) {
           if (newGroupId != User().groupId) {
             // only join if the group to join is not the group we are in
             print('\tJoin group: $newGroupId');
@@ -365,14 +366,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             User().updateOtherUsers(users);
             _messages.clear(); // in case we receive join before leave
             state = "chat";
-            _webSocketConnection.register();
           } else {
             // new users in group
             print('\tGroup users: $users');
             User().updateOtherUsers(users);
           }
         } else {
-// don't do anything
+          // don't do anything (user not concernet, error)
           needUpdate = false;
         }
 

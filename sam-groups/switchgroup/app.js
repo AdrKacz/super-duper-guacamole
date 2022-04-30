@@ -4,7 +4,7 @@
 // while the other delete it
 // keeping the group in the database forever for nothing
 // If MINIMUM_GROUP_SIZE is big enough (let say 3), the time window between
-// the deactivation of the group (isWaiting = 0) and its deletion should be
+// the deactivation of the group (isWaiting = false) and its deletion should be
 // big enough to not have concurrent run trying to update and delete at the same time
 
 // DEPENDENCIES
@@ -107,7 +107,7 @@ ${event.Records[0].Sns.Message}
       '#isWaiting': 'isWaiting'
     },
     ExpressionAttributeValues: {
-      ':true': 1
+      ':true': true
     }
   })
   const newGroup = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
@@ -120,7 +120,7 @@ ${event.Records[0].Sns.Message}
     }
     return {
       id: uuidv4(),
-      isWaiting: 1, // true
+      isWaiting: true,
       users: new Set()
     }
   })
@@ -185,11 +185,12 @@ async function addUserToGroup (user, newGroup) {
         RequestItems: {
           [USERS_TABLE_NAME]: {
             Keys: usersIds,
-            ProjectionExpression: '#id, #connectionId, #firebaseToken',
+            ProjectionExpression: '#id, #connectionId, #firebaseToken, #isActive',
             ExpressionAttributeNames: {
               '#id': 'id',
               '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken'
+              '#firebaseToken': 'firebaseToken',
+              '#isActive': 'isActive'
             }
           }
         }
@@ -209,6 +210,13 @@ async function addUserToGroup (user, newGroup) {
     console.log('Early Users:', earlyUsers)
     console.log('Other Users:', otherUsers)
     const allUsers = earlyUsers.concat(otherUsers)
+    const allUsersMap = {}
+    allUsers.forEach((loopUser) => {
+      allUsersMap[loopUser.id] = {
+        id: loopUser.id,
+        isActive: loopUser.isActive ?? true
+      }
+    })
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -216,7 +224,7 @@ async function addUserToGroup (user, newGroup) {
         message: {
           action: 'joingroup',
           groupid: newGroup.id,
-          users: allUsers.map((u) => (u.id))
+          users: allUsersMap
         }
       })
     })
@@ -249,7 +257,7 @@ async function addUserToGroup (user, newGroup) {
     }
   }
   if (newGroup.users.size >= MAXIMUM_GROUP_SIZE) {
-    newGroup.isWaiting = 0 // false
+    newGroup.isWaiting = false
   }
 
   const updateNewGroupCommand = new UpdateCommand({
@@ -318,15 +326,15 @@ async function removeUserFromGroup (user) {
 
     // NOTE: don't use if/else because both can be triggered (isWaiting to 0 will prevail)
     if (group.users.size < MAXIMUM_GROUP_SIZE) {
-      group.isWaiting = 1 // true
+      group.isWaiting = true
     }
     if (group.users.size < MINIMUM_GROUP_SIZE) {
       // NOTE: if an user leave a group it hasn't entered yet it will close it forever
-      // for exemple, user A join group ABC, group.users = { A }, group.isWaiting = 1
-      // user B join group ABC, group.users = { A, B }, group.isWaiting = 1
-      // user A switches group, group.users = { B } group.size < MINIMUM_GROUP_SIZE(3), group.isWaiting = 0
+      // for exemple, user A join group ABC, group.users = { A }, group.isWaiting = true
+      // user B join group ABC, group.users = { A, B }, group.isWaiting = true
+      // user A switches group, group.users = { B } group.size < MINIMUM_GROUP_SIZE(3), group.isWaiting = false
       // group ABC will be closed before ever being opened
-      group.isWaiting = 0 // false
+      group.isWaiting = false
     }
 
     // update or delete group
@@ -346,7 +354,7 @@ async function removeUserFromGroup (user) {
         },
         ExpressionAttributeValues: {
           ':id': new Set([user.id]),
-          ':isWaiting': group.isWaiting ?? 1 // isWaiting or true
+          ':isWaiting': group.isWaiting ?? true
         }
       })
       promises.push(dynamoDBDocumentClient.send(updateGroupCommand))

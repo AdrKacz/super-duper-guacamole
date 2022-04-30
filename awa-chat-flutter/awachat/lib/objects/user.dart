@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/objects/memory.dart';
@@ -62,15 +63,15 @@ class User {
   }
 
   // Group method
-  void updateOtherUsers(List<String> otherUserIds) {
-    for (final String otherUserId in otherUserIds) {
-      if (!otherGroupUsers.containsKey(otherUserId)) {
+  void updateOtherUsers(Map<String, dynamic> otherUsers) {
+    for (final Map otherUser in otherUsers.values) {
+      if (otherUser['id'] != null) {
         Map groupUser = {
-          'id': otherUserId,
-          'isActive': false,
+          'id': otherUser['id'],
+          'isActive': otherUser['isActive'] ?? false,
         };
-        otherGroupUsers[otherUserId] = groupUser;
-        Memory().addGroupUser(otherUserId, groupUser);
+        otherGroupUsers[otherUser['id']] = groupUser;
+        Memory().addGroupUser(otherUser['id'], groupUser);
       }
     }
   }
