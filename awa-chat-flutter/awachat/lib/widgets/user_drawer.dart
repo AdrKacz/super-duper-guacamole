@@ -109,7 +109,7 @@ class _CreditsState extends State<Credits> {
   void initState() {
     super.initState();
     text = http.get(Uri.parse(
-        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/privacy-policy/fr"));
+        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/credits/fr"));
   }
 
   Widget build(BuildContext context) {
