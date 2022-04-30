@@ -83,7 +83,10 @@ class UserDrawer extends StatelessWidget {
           ListTile(
               leading: const Icon(Icons.copyright),
               title: const Text("Sources"),
-              onTap: () {})
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const Credits()));
+              })
         ],
       ),
     );
@@ -111,33 +114,38 @@ class _CreditsState extends State<Credits> {
 
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: FutureBuilder(
-          future: text,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        snapshot.data.body,
-                        textAlign: TextAlign.justify,
-                      ),
-                    ),
-                  )
-                ],
-              );
-            }
-
-            return const Center(
-                child: CircularProgressIndicator(color: Color(0xff6f61e8)));
-          },
+        appBar: AppBar(
+          foregroundColor: const Color(0xff6f61e8),
+          backgroundColor: const Color(0xfff5f5f7),
+          title: const Text('Sources'),
         ),
-      ),
-    ));
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: FutureBuilder(
+              future: text,
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.hasData) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            snapshot.data.body,
+                            textAlign: TextAlign.justify,
+                          ),
+                        ),
+                      )
+                    ],
+                  );
+                }
+
+                return const Center(
+                    child: CircularProgressIndicator(color: Color(0xff6f61e8)));
+              },
+            ),
+          ),
+        ));
   }
 }
