@@ -130,11 +130,10 @@ class _AgreementsPageState extends State<AgreementsPage> {
                 );
               } else if (snapshot.hasError) {
                 print('Snapshot Error for ${widget.url}: ${snapshot.error}');
-                // reload (not sure it is the best idea to reload on error)
+                // reload (not sure it is the best idea to reload on error, can cause infinite reload)
                 setState(() {
                   text = http.get(Uri.parse(widget.url));
                 });
-                // returns CircularProgressIndicator
               }
 
               return const Center(
