@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'dart:ui';
 
-import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/widgets/user_drawer.dart';
-import 'package:awachat/widgets/users_list.dart';
+import 'package:awachat/widgets/glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -13,7 +10,9 @@ import 'package:awachat/objects/web_socket_connection.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/objects/memory.dart';
 import 'package:awachat/objects/user.dart';
-
+import 'package:awachat/widgets/loader.dart';
+import 'package:awachat/widgets/user_drawer.dart';
+import 'package:awachat/widgets/users_list.dart';
 import 'package:awachat/widgets/error.dart';
 import 'package:awachat/widgets/custom_chat.dart';
 import 'package:awachat/widgets/presentation.dart';
@@ -544,10 +543,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               return Stack(
                 children: [
                   child,
-                  Positioned.fill(
-                      child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Container(color: Colors.black.withOpacity(0))))
+                  const Glass(),
                 ],
               );
             case "reconnect":
@@ -555,14 +551,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               return Stack(
                 children: [
                   child,
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: Container(
-                        color: Colors.black.withOpacity(0),
-                      ),
-                    ),
-                  ),
+                  const Glass(),
                   const Loader(),
                 ],
               );
