@@ -215,6 +215,7 @@ class _QuestionsState extends State<Questions> {
   final List<Map> temporaryData = [
     {
       'id': '001',
+      'index': 0,
       'question': 'Ton type de soirée ? 🥳',
       'answers': [
         {'id': '01', 'answer': 'Talk and chill 🍷'},
@@ -224,6 +225,7 @@ class _QuestionsState extends State<Questions> {
     },
     {
       'id': '002',
+      'index': 1,
       'question': 'Ton sec au choix ? 🥴',
       'answers': [
         {'id': '01', 'answer': 'Vodka 🧯'},
@@ -232,7 +234,8 @@ class _QuestionsState extends State<Questions> {
       ],
     },
     {
-      'id': '002',
+      'id': '003',
+      'index': 2,
       'question': "T'es plutôt ? 😏",
       'answers': [
         {'id': '01', 'answer': 'Que des potes ici 👊'},
@@ -242,7 +245,7 @@ class _QuestionsState extends State<Questions> {
     }
   ];
 
-  int currentTab = 0;
+  Map<String, String> selectedAnswers = {};
 
   @override
   void initState() {
@@ -254,100 +257,78 @@ class _QuestionsState extends State<Questions> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Builder(builder: (BuildContext context) {
-          return Column(
-            children: [
-              Expanded(
-                child:
-                    Question(question: temporaryData[currentTab], onTap: () {}),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
-                child: Divider(
-                  height: 24,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Builder(
-                    builder: (BuildContext context) {
-                      final List<Widget> children = [];
-                      if (currentTab > 0) {
-                        children.add(
-                          IconButton(
-                              color: const Color(0xff6f61e8),
-                              onPressed: () {
-                                if (currentTab > 0) {
-                                  setState(() {
-                                    currentTab = currentTab - 1;
-                                  });
-                                }
-                              },
-                              icon: const Icon(Icons.arrow_back)),
-                        );
-                      }
-                      children.add(Expanded(child: Container()));
-                      children.add(
-                        IconButton(
-                          color: const Color(0xff6f61e8),
-                          onPressed: () {
-                            if (currentTab < temporaryData.length - 1) {
-                              setState(() {
-                                currentTab = currentTab + 1;
-                              });
-                            }
-                          },
-                          icon: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 350),
-                            transitionBuilder: (child, anim) =>
-                                RotationTransition(
-                              turns:
-                                  child.key == const ValueKey('arrow-forward')
-                                      ? Tween<double>(begin: 0.75, end: 1)
-                                          .animate(anim)
-                                      : Tween<double>(begin: 0.75, end: 1)
-                                          .animate(anim),
-                              child: ScaleTransition(scale: anim, child: child),
-                            ),
-                            child: currentTab == temporaryData.length - 1
-                                ? const Icon(Icons.check,
-                                    key: ValueKey('check'))
-                                : const Icon(
-                                    Icons.arrow_forward,
-                                    key: ValueKey('arrow-forward'),
-                                  ),
-                          ),
-                        ),
-                      );
+        child: DefaultTabController(
+          length: temporaryData.length + 1,
+          child: Builder(builder: (BuildContext context) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  child: TabBarView(
+                    children: List<Widget>.from(temporaryData
+                            .map((e) => (Question(
+                                  question: e,
+                                  selectedAnswer: selectedAnswers[e['id']],
+                                  onNext: () {
+                                    final TabController? controller =
+                                        DefaultTabController.of(context);
+                                    if (controller != null) {
+                                      controller.animateTo(e['index'] + 1);
+                                    }
+                                  },
+                                  onPressed: (String id) {
+                                    print('set $id for ${e['id']}');
 
-                      return Row(children: children);
-                    },
+                                    if (selectedAnswers[e['id']] == id) {
+                                      setState(() {
+                                        selectedAnswers.remove(e['id']);
+                                      });
+                                    } else {
+                                      setState(() {
+                                        selectedAnswers[e['id']] = id;
+                                      });
+                                    }
+                                  },
+                                )))
+                            .toList()) +
+                        [
+                          Center(
+                            child: ElevatedButton(
+                                onPressed: () {},
+                                child: const Text("Je valide !")),
+                          )
+                        ],
                   ),
                 ),
-              ),
-            ],
-          );
-        }),
+                const TabPageSelector(
+                  color: Color(0xfff5f5f7),
+                  selectedColor: Color(0xff6f61e8),
+                ),
+              ],
+            );
+          }),
+        ),
       ),
     );
   }
 }
 
 // Question
-class Question extends StatefulWidget {
-  const Question({Key? key, required this.question, required this.onTap})
-      : super(key: key);
+
+class Question extends StatelessWidget {
+  const Question({
+    Key? key,
+    required this.question,
+    this.selectedAnswer,
+    required this.onPressed,
+    required this.onNext,
+  }) : super(key: key);
 
   final Map question;
-  final Function onTap;
+  final String? selectedAnswer;
+  final Function onPressed;
+  final VoidCallback onNext;
 
-  @override
-  _QuestionState createState() => _QuestionState();
-}
-
-class _QuestionState extends State<Question> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -355,7 +336,7 @@ class _QuestionState extends State<Question> {
       child: Column(
         children: [
           Text(
-            widget.question['question'],
+            question['question'],
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),
@@ -364,17 +345,25 @@ class _QuestionState extends State<Question> {
           ),
           Expanded(
             child: ListView(
-              children: List<Widget>.from(widget.question['answers']
+              children: List<Widget>.from(question['answers']
                   .map((e) => (Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(100),
-                            primary: const Color(0xfff5f5f7),
-                            onPrimary: Colors.black,
-                          ),
+                          style: e['id'] == selectedAnswer
+                              ? ElevatedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(100),
+                                  primary: const Color(0xff6f61e8),
+                                  onPrimary: Colors.white,
+                                )
+                              : ElevatedButton.styleFrom(
+                                  minimumSize: const Size.fromHeight(100),
+                                  primary: const Color(0xfff5f5f7),
+                                  onPrimary: Colors.black,
+                                ),
                           onPressed: () {
-                            widget.onTap(e['id']);
+                            onPressed(e['id']);
+                            Future.delayed(const Duration(milliseconds: 500))
+                                .then((value) => {onNext()});
                           },
                           child: Text(
                             e['answer'],
@@ -390,3 +379,56 @@ class _QuestionState extends State<Question> {
     );
   }
 }
+
+
+// print(ModalRoute.of(context)?.settings);
+//                       final List<Widget> children = [];
+//                       // if (currentTab > 0) {
+//                       //   children.add(
+//                       //     IconButton(
+//                       //         color: const Color(0xff6f61e8),
+//                       //         onPressed: () {
+//                       //           if (currentTab > 0) {
+//                       //             setState(() {
+//                       //               currentTab = currentTab - 1;
+//                       //             });
+//                       //           }
+//                       //         },
+//                       //         icon: const Icon(Icons.arrow_back)),
+//                       //   );
+//                       // }
+//                       children.add(Expanded(child: Container()));
+//                       children.add(
+//                         IconButton(
+//                           color: const Color(0xff6f61e8),
+//                           onPressed: () {
+//                             // if (currentTab < temporaryData.length - 1) {
+//                             //   setState(() {
+//                             //     currentTab = currentTab + 1;
+//                             //   });
+//                             // }
+//                           },
+//                           icon: AnimatedSwitcher(
+//                             duration: const Duration(milliseconds: 350),
+//                             transitionBuilder: (child, anim) =>
+//                                 RotationTransition(
+//                               turns:
+//                                   child.key == const ValueKey('arrow-forward')
+//                                       ? Tween<double>(begin: 0.75, end: 1)
+//                                           .animate(anim)
+//                                       : Tween<double>(begin: 0.75, end: 1)
+//                                           .animate(anim),
+//                               child: ScaleTransition(scale: anim, child: child),
+//                             ),
+//                             child: 2 == temporaryData.length - 1
+//                                 ? const Icon(Icons.check,
+//                                     key: ValueKey('check'))
+//                                 : const Icon(
+//                                     Icons.arrow_forward,
+//                                     key: ValueKey('arrow-forward'),
+//                                   ),
+//                           ),
+//                         ),
+//                       );
+
+//                       return Row(children: children);
