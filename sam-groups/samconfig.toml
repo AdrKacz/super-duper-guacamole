@@ -20,5 +20,17 @@ s3_prefix = "sam-group-development"
 region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" UsersTableName=\"users_development\" GroupsTableName=\"groups_development\" LogRetentionInDays=\"1\" StageName=\"dev\""
+parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" GroupsTableName=\"groups_development\" LogRetentionInDays=\"1\" StageName=\"dev\""
+image_repositories = []
+
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "sam-group-production"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
+s3_prefix = "sam-group-production"
+region = "eu-west-3"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" GroupsTableName=\"groups_production\" LogRetentionInDays=\"1\" StageName=\"prod\""
 image_repositories = []

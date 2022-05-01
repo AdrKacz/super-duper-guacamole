@@ -1,14 +1,14 @@
 import 'dart:convert';
 
-import 'package:awachat/user.dart';
+import 'package:awachat/objects/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import '../firebase_options.dart';
 import 'package:http/http.dart' as http;
 
 class NotificationHandler {
   static const String _httpEndpoint =
-      "https://a4z7cyqjz2.execute-api.eu-west-3.amazonaws.com/firebase-token";
+      "https://za1icir0ie.execute-api.eu-west-3.amazonaws.com/firebase-token";
 
   static final NotificationHandler _instance = NotificationHandler._internal();
 
@@ -19,6 +19,7 @@ class NotificationHandler {
   NotificationHandler._internal();
 
   Future<void> init() async {
+    // TODO: if app is offline, it will crashes
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );

@@ -1,0 +1,11 @@
+{
+  "name": "unregister",
+  "version": "1.0.0",
+  "description": "Unregister from channel",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AdrKacz",
+  "license": "MIT"
+}

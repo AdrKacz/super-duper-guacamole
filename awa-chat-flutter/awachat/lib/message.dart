@@ -1,5 +1,5 @@
-import 'package:awachat/memory.dart';
-import 'package:awachat/user.dart';
+import 'package:awachat/objects/memory.dart';
+import 'package:awachat/objects/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'dart:math';
@@ -42,7 +42,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
           author: types.User(
               id: author,
               imageUrl:
-                  "https://avatars.dicebear.com/api/croodles-neutral/$author.png"),
+                  "https://avatars.dicebear.com/api/adventurer-neutral/$author.png"),
           createdAt: int.parse(createdAt),
           id: id,
           text: text,

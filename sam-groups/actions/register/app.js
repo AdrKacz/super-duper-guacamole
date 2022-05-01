@@ -14,7 +14,7 @@
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -22,6 +22,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
+  GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   AWS_REGION
 } = process.env
@@ -30,9 +31,6 @@ const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
 const snsClient = new SNSClient({ region: AWS_REGION })
-
-// ===== ==== ====
-// HELPERS
 
 // ===== ==== ====
 // HANDLER
@@ -51,19 +49,21 @@ exports.handler = async (event) => {
 
   // update user and retrieve old unreadData (if any)
   const updateCommand = new UpdateCommand({
-    ReturnValues: 'UPDATED_OLD',
+    ReturnValues: 'ALL_OLD',
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
     UpdateExpression: `
-    SET #connectionId = :connectionId
+    SET #isActive = :isActive, #connectionId = :connectionId
     REMOVE #unreadData
     `,
     ExpressionAttributeNames: {
+      '#isActive': 'isActive',
       '#connectionId': 'connectionId',
       '#unreadData': 'unreadData'
     },
     ExpressionAttributeValues: {
-      ':connectionId': event.requestContext.connectionId
+      ':connectionId': event.requestContext.connectionId,
+      ':isActive': true
     }
   })
   const user = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
@@ -86,9 +86,64 @@ exports.handler = async (event) => {
     })
   })
 
-  await snsClient.send(publishCommand)
+  const promises = [snsClient.send(publishCommand)]
+
+  if (user !== undefined && user.group !== undefined) {
+    promises.push(informGroup(id, user.group))
+  }
+
+  await Promise.allSettled(promises)
 
   return {
     statusCode: 200
   }
+}
+
+// ===== ==== ====
+// HELPERS
+
+async function informGroup (userId, groupId) {
+  // retreive group
+  const getGroupCommand = new GetCommand({
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: groupId },
+    ProjectionExpression: '#id, #users',
+    ExpressionAttributeNames: {
+      '#id': 'id',
+      '#users': 'users'
+    }
+  })
+  const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
+
+  if (group === undefined) {
+    throw new Error(`group <${groupId}> is not defined`)
+  }
+
+  // retreive users
+  const batchGetUsersCommand = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: Array.from(group.users).filter((id) => (id !== userId)).map((id) => ({ id: id })),
+        ProjectionExpression: '#id, #connectionId',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#connectionId': 'connectionId'
+        }
+      }
+    }
+  })
+
+  const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: users,
+      message: {
+        action: 'login',
+        id: userId
+      }
+    })
+  })
+  await snsClient.send(publishSendMessageCommand)
 }

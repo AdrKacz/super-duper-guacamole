@@ -1,21 +1,23 @@
 import 'dart:convert';
 import 'dart:ui';
 
-import 'package:awachat/pages/custom_chat.dart';
-import 'package:awachat/pages/presentation.dart';
-import 'package:awachat/pages/switch_group.dart';
 import 'package:awachat/user_drawer.dart';
+import 'package:awachat/widgets/users_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
-import 'package:awachat/notification_handler.dart';
-import 'package:awachat/pages/error.dart';
-import 'package:awachat/web_socket_connection.dart';
+import 'package:awachat/objects/notification_handler.dart';
+import 'package:awachat/objects/web_socket_connection.dart';
 import 'package:awachat/message.dart';
-import 'package:awachat/memory.dart';
-import 'package:awachat/user.dart';
-import 'package:awachat/pages/agreements.dart';
+import 'package:awachat/objects/memory.dart';
+import 'package:awachat/objects/user.dart';
+
+import 'package:awachat/widgets/error.dart';
+import 'package:awachat/widgets/custom_chat.dart';
+import 'package:awachat/widgets/presentation.dart';
+import 'package:awachat/widgets/switch_group.dart';
+import 'package:awachat/widgets/agreements.dart';
 
 // ===== ===== =====
 // App initialisation
@@ -110,7 +112,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     _state = newState;
   }
 
-  String connectionState = "disconnected";
+  String connectionState = "connected";
 
   // Acknowledge ban
   void acknowledgeBan(
@@ -303,6 +305,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     bool needUpdate = true;
     final data = jsonDecode(message);
     switch (data['action']) {
+      case "login":
+        User().updateOtherUserStatus(data['id'], true);
+        break;
+      case "logout":
+        User().updateOtherUserStatus(data['id'], false);
+        break;
       case "register":
         print('\tRegister with state: $state');
         // connection made
@@ -314,7 +322,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         // Get group (register on load)
-        if (User().groupid == "" && state == "idle") {
+        if (User().groupId == "" && state == "idle") {
           _webSocketConnection.switchgroup();
           _messages.clear();
           state = "switch";
@@ -326,30 +334,48 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       case "leavegroup":
         // empty string is stored as undefined serverside
         // (causing a difference where there is not)
-        final String newGroupId = data['groupid'] ?? "";
-        if (newGroupId == User().groupid) {
-          // only leave if the group to leave is the group we are in
-          print('\tLeave group: $newGroupId');
-          User().groupid = newGroupId;
-          _messages.clear();
-          state = "switchwaiting";
+        final String groupId = data['groupid'] ?? "";
+        final String userId = data['id'] ?? [];
+        if (userId == User().id) {
+          if (groupId == User().groupId) {
+            // only leave if the group to leave is the group we are in
+            print('\tLeave group: $groupId');
+            User().groupId = "";
+            _messages.clear();
+            state = "switchwaiting";
+          } else {
+            // don't do anything
+            needUpdate = false;
+          }
         } else {
-          // don't do anything
-          needUpdate = false;
+          if (groupId == User().groupId) {
+            User().otherGroupUsers.remove(userId);
+          }
         }
+
         break;
       case "joingroup":
         final String newGroupId = data['groupid'] ?? "";
-        if (newGroupId != User().groupid) {
-          // only join if the group to join is not the group we are in
-          print('\tJoin group: $newGroupId');
-          User().groupid = newGroupId;
-          _messages.clear(); // in case we receive join before leave
-          state = "chat";
+        final Map<String, dynamic> users =
+            Map<String, dynamic>.from(data['users'] ?? {});
+        if (users.remove(User().id) != null) {
+          if (newGroupId != User().groupId) {
+            // only join if the group to join is not the group we are in
+            print('\tJoin group: $newGroupId');
+            User().groupId = newGroupId;
+            User().updateOtherUsers(users);
+            _messages.clear(); // in case we receive join before leave
+            state = "chat";
+          } else {
+            // new users in group
+            print('\tGroup users: $users');
+            User().updateOtherUsers(users);
+          }
         } else {
-          // don't do anything
+          // don't do anything (user not concerted, error)
           needUpdate = false;
         }
+
         break;
       case "textmessage":
         print('\tMessage: ${data['message']}');
@@ -424,7 +450,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             widget.setAppState('presentation');
           },
           resetAccount: () async {
-            User().groupid = "";
+            User().groupId = "";
             await Memory().clear();
             await User().init();
             widget.setAppState('presentation');
@@ -439,15 +465,19 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   onTap: () {
                     Scaffold.of(context).openDrawer();
                   },
-                  child: CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    foregroundImage: NetworkImage(
-                        "https://avatars.dicebear.com/api/croodles-neutral/${User().id}.png"),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.transparent,
+                      backgroundImage: NetworkImage(
+                          "https://avatars.dicebear.com/api/adventurer-neutral/${User().id}.png"),
+                    ),
                   ),
                 );
               },
             ),
-            title: const Text(""),
+            centerTitle: true,
+            title: UsersList(users: User().otherGroupUsers.values.toList()),
             actions: <Widget>[
               IconButton(
                   tooltip: "Changer de groupe",
@@ -496,11 +526,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                     // TODO: error should re-ask server for current group if any
                     // NOTE: here it tries to infer the correct state of the app
                     child = ErrorPage(
-                      refresh: () {
+                      refresh: () async {
                         _webSocketConnection.close();
                         _webSocketConnection.reconnect();
                         _webSocketConnection.register();
-                        if (User().groupid != "") {
+                        if (User().groupId != "") {
                           setState(() {
                             state = "chat";
                           });
