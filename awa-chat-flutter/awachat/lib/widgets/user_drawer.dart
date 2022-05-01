@@ -246,6 +246,7 @@ class _QuestionsState extends State<Questions> {
   ];
 
   Map<String, String> selectedAnswers = {};
+  bool isConfirmed = false;
 
   @override
   void initState() {
@@ -294,10 +295,17 @@ class _QuestionsState extends State<Questions> {
                                 )))
                             .toList()) +
                         [
-                          Center(
-                            child: ElevatedButton(
-                                onPressed: () {},
-                                child: const Text("Je valide !")),
+                          Confirm(
+                            onPressed: () {
+                              setState(() {
+                                isConfirmed = true;
+                              });
+                              // store answers
+                              // add a pop up to notify it has been correctly stored
+                              Future.delayed(const Duration(milliseconds: 250))
+                                  .then((value) => {Navigator.pop(context)});
+                            },
+                            isConfirmed: isConfirmed,
                           )
                         ],
                   ),
@@ -316,7 +324,6 @@ class _QuestionsState extends State<Questions> {
 }
 
 // Question
-
 class Question extends StatelessWidget {
   const Question({
     Key? key,
@@ -383,55 +390,40 @@ class Question extends StatelessWidget {
   }
 }
 
+// Confirm
+class Confirm extends StatelessWidget {
+  const Confirm({
+    Key? key,
+    required this.isConfirmed,
+    required this.onPressed,
+  }) : super(key: key);
 
-// print(ModalRoute.of(context)?.settings);
-//                       final List<Widget> children = [];
-//                       // if (currentTab > 0) {
-//                       //   children.add(
-//                       //     IconButton(
-//                       //         color: const Color(0xff6f61e8),
-//                       //         onPressed: () {
-//                       //           if (currentTab > 0) {
-//                       //             setState(() {
-//                       //               currentTab = currentTab - 1;
-//                       //             });
-//                       //           }
-//                       //         },
-//                       //         icon: const Icon(Icons.arrow_back)),
-//                       //   );
-//                       // }
-//                       children.add(Expanded(child: Container()));
-//                       children.add(
-//                         IconButton(
-//                           color: const Color(0xff6f61e8),
-//                           onPressed: () {
-//                             // if (currentTab < temporaryData.length - 1) {
-//                             //   setState(() {
-//                             //     currentTab = currentTab + 1;
-//                             //   });
-//                             // }
-//                           },
-//                           icon: AnimatedSwitcher(
-//                             duration: const Duration(milliseconds: 350),
-//                             transitionBuilder: (child, anim) =>
-//                                 RotationTransition(
-//                               turns:
-//                                   child.key == const ValueKey('arrow-forward')
-//                                       ? Tween<double>(begin: 0.75, end: 1)
-//                                           .animate(anim)
-//                                       : Tween<double>(begin: 0.75, end: 1)
-//                                           .animate(anim),
-//                               child: ScaleTransition(scale: anim, child: child),
-//                             ),
-//                             child: 2 == temporaryData.length - 1
-//                                 ? const Icon(Icons.check,
-//                                     key: ValueKey('check'))
-//                                 : const Icon(
-//                                     Icons.arrow_forward,
-//                                     key: ValueKey('arrow-forward'),
-//                                   ),
-//                           ),
-//                         ),
-//                       );
+  final bool isConfirmed;
+  final VoidCallback onPressed;
 
-//                       return Row(children: children);
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Center(
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: isConfirmed
+              ? ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(100),
+                  primary: const Color(0xff6f61e8),
+                  onPrimary: Colors.white,
+                )
+              : ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(100),
+                  primary: const Color(0xfff5f5f7),
+                  onPrimary: Colors.black,
+                ),
+          child: const Text('Je valide !'),
+        ),
+      ),
+    );
+  }
+}
+
+// https://stackoverflow.com/questions/58883067/flutter-custom-animated-icon for button animation
