@@ -1,4 +1,5 @@
 import 'package:awachat/objects/user.dart';
+import 'package:awachat/widgets/loader.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -186,27 +187,21 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: FutureBuilder(
-            future: text,
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.hasData) {
-                return Questions(data: snapshot.data.body);
-              }
+      body: FutureBuilder(
+        future: text,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return Questions(data: snapshot.data.body);
+          }
 
-              return const Center(
-                  child: CircularProgressIndicator(color: Color(0xff6f61e8)));
-            },
-          ),
-        ),
+          return const Loader();
+        },
       ),
     );
   }
 }
 
-// Question
+// Questions
 class Questions extends StatefulWidget {
   const Questions({Key? key, required this.data}) : super(key: key);
 
@@ -247,6 +242,8 @@ class _QuestionsState extends State<Questions> {
     }
   ];
 
+  int currentTab = 0;
+
   @override
   void initState() {
     super.initState();
@@ -254,79 +251,142 @@ class _QuestionsState extends State<Questions> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          temporaryData[0]['question'],
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16),
-        ),
-        const Divider(
-          height: 24,
-        ),
-        Expanded(
-          child: ListView(
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Builder(builder: (BuildContext context) {
+          return Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(100),
-                    primary: const Color(0xfff5f5f7),
-                    onPrimary: Colors.black,
-                  ),
-                  onPressed: () {},
-                  child: Text(
-                    temporaryData[0]['answers'][0]['answer'],
-                    textAlign: TextAlign.center,
-                  ),
+              Expanded(
+                child:
+                    Question(question: temporaryData[currentTab], onTap: () {}),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Divider(
+                  height: 24,
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(100),
-                    primary: const Color(0xff6f61e8),
-                    onPrimary: Colors.white,
-                  ),
-                  onPressed: () {},
-                  child: Text(
-                    temporaryData[0]['answers'][1]['answer'],
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(100),
-                    primary: const Color(0xfff5f5f7),
-                    onPrimary: Colors.black,
-                  ),
-                  onPressed: () {},
-                  child: Text(
-                    temporaryData[0]['answers'][2]['answer'],
-                    textAlign: TextAlign.center,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Builder(
+                    builder: (BuildContext context) {
+                      final List<Widget> children = [];
+                      if (currentTab > 0) {
+                        children.add(
+                          IconButton(
+                              color: const Color(0xff6f61e8),
+                              onPressed: () {
+                                if (currentTab > 0) {
+                                  setState(() {
+                                    currentTab = currentTab - 1;
+                                  });
+                                }
+                              },
+                              icon: const Icon(Icons.arrow_back)),
+                        );
+                      }
+                      children.add(Expanded(child: Container()));
+                      children.add(
+                        IconButton(
+                          color: const Color(0xff6f61e8),
+                          onPressed: () {
+                            if (currentTab < temporaryData.length - 1) {
+                              setState(() {
+                                currentTab = currentTab + 1;
+                              });
+                            }
+                          },
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 350),
+                            transitionBuilder: (child, anim) =>
+                                RotationTransition(
+                              turns:
+                                  child.key == const ValueKey('arrow-forward')
+                                      ? Tween<double>(begin: 0.75, end: 1)
+                                          .animate(anim)
+                                      : Tween<double>(begin: 0.75, end: 1)
+                                          .animate(anim),
+                              child: ScaleTransition(scale: anim, child: child),
+                            ),
+                            child: currentTab == temporaryData.length - 1
+                                ? const Icon(Icons.check,
+                                    key: ValueKey('check'))
+                                : const Icon(
+                                    Icons.arrow_forward,
+                                    key: ValueKey('arrow-forward'),
+                                  ),
+                          ),
+                        ),
+                      );
+
+                      return Row(children: children);
+                    },
                   ),
                 ),
               ),
             ],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// Question
+class Question extends StatefulWidget {
+  const Question({Key? key, required this.question, required this.onTap})
+      : super(key: key);
+
+  final Map question;
+  final Function onTap;
+
+  @override
+  _QuestionState createState() => _QuestionState();
+}
+
+class _QuestionState extends State<Question> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          Text(
+            widget.question['question'],
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16),
           ),
-        ),
-        const Divider(
-          height: 24,
-        ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: IconButton(
-            color: const Color(0xff6f61e8),
-            onPressed: () {},
-            icon: const Icon(Icons.arrow_forward),
+          const Divider(
+            height: 24,
           ),
-        )
-      ],
+          Expanded(
+            child: ListView(
+              children: List<Widget>.from(widget.question['answers']
+                  .map((e) => (Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(100),
+                            primary: const Color(0xfff5f5f7),
+                            onPrimary: Colors.black,
+                          ),
+                          onPressed: () {
+                            widget.onTap(e['id']);
+                          },
+                          child: Text(
+                            e['answer'],
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )))
+                  .toList()),
+            ),
+          )
+        ],
+      ),
     );
   }
 }
