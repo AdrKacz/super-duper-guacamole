@@ -283,10 +283,12 @@ class _QuestionsState extends State<Questions> {
                                       setState(() {
                                         selectedAnswers.remove(e['id']);
                                       });
+                                      return false;
                                     } else {
                                       setState(() {
                                         selectedAnswers[e['id']] = id;
                                       });
+                                      return true;
                                     }
                                   },
                                 )))
@@ -361,9 +363,10 @@ class Question extends StatelessWidget {
                                   onPrimary: Colors.black,
                                 ),
                           onPressed: () {
-                            onPressed(e['id']);
-                            Future.delayed(const Duration(milliseconds: 500))
-                                .then((value) => {onNext()});
+                            if (onPressed(e['id'])) {
+                              Future.delayed(const Duration(milliseconds: 250))
+                                  .then((value) => {onNext()});
+                            }
                           },
                           child: Text(
                             e['answer'],
