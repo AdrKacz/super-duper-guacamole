@@ -1,5 +1,9 @@
 import 'package:awachat/objects/user.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+// ===== ===== =====
+// Drawer
 
 class UserDrawer extends StatelessWidget {
   const UserDrawer(
@@ -76,8 +80,73 @@ class UserDrawer extends StatelessWidget {
               }
             },
           ),
+          ListTile(
+              leading: const Icon(Icons.copyright),
+              title: const Text("Sources"),
+              onTap: () {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const Credits()));
+              })
         ],
       ),
     );
+  }
+}
+
+// ===== ===== =====
+// Credits
+class Credits extends StatefulWidget {
+  const Credits({Key? key}) : super(key: key);
+
+  @override
+  _CreditsState createState() => _CreditsState();
+}
+
+class _CreditsState extends State<Credits> {
+  late Future<http.Response> text;
+
+  @override
+  void initState() {
+    super.initState();
+    text = http.get(Uri.parse(
+        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/credits/fr"));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          foregroundColor: const Color(0xff6f61e8),
+          backgroundColor: const Color(0xfff5f5f7),
+          title: const Text('Sources'),
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: FutureBuilder(
+              future: text,
+              builder: (BuildContext context, AsyncSnapshot snapshot) {
+                if (snapshot.hasData) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            snapshot.data.body,
+                            textAlign: TextAlign.justify,
+                          ),
+                        ),
+                      )
+                    ],
+                  );
+                }
+
+                return const Center(
+                    child: CircularProgressIndicator(color: Color(0xff6f61e8)));
+              },
+            ),
+          ),
+        ));
   }
 }

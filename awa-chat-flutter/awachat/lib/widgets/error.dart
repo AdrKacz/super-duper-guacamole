@@ -7,27 +7,29 @@ class ErrorPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Image.asset('assets/images/undraw_warning_cyit.png'),
-              const Divider(height: 48),
-              const Text("Oups ! Il y a quelque chose d'anormal.",
-                  textAlign: TextAlign.center),
-              const SizedBox(
-                height: 24,
-              ),
-              IconButton(
-                  onPressed: refresh,
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Color(0xff6f61e8),
-                  )),
-            ],
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Image.asset('assets/images/undraw_warning_cyit.png'),
+                const Divider(height: 48),
+                const Text("Oups ! Il y a quelque chose d'anormal.",
+                    textAlign: TextAlign.center),
+                const SizedBox(
+                  height: 24,
+                ),
+                IconButton(
+                    onPressed: refresh,
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Color(0xff6f61e8),
+                    )),
+              ],
+            ),
           ),
         ),
       ),

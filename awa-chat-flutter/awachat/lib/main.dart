@@ -1,8 +1,6 @@
 import 'dart:convert';
-import 'dart:ui';
 
-import 'package:awachat/user_drawer.dart';
-import 'package:awachat/widgets/users_list.dart';
+import 'package:awachat/widgets/glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -12,7 +10,9 @@ import 'package:awachat/objects/web_socket_connection.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/objects/memory.dart';
 import 'package:awachat/objects/user.dart';
-
+import 'package:awachat/widgets/loader.dart';
+import 'package:awachat/widgets/user_drawer.dart';
+import 'package:awachat/widgets/users_list.dart';
 import 'package:awachat/widgets/error.dart';
 import 'package:awachat/widgets/custom_chat.dart';
 import 'package:awachat/widgets/presentation.dart';
@@ -445,143 +445,122 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     }
     print("State: $state - Connection State: $connectionState");
     return Scaffold(
-        drawer: UserDrawer(
-          seeIntroduction: () {
-            widget.setAppState('presentation');
-          },
-          resetAccount: () async {
-            User().groupId = "";
-            await Memory().clear();
-            await User().init();
-            widget.setAppState('presentation');
-          },
-        ),
-        appBar: AppBar(
-            foregroundColor: const Color(0xff6f61e8),
-            backgroundColor: const Color(0xfff5f5f7),
-            leading: Builder(
-              builder: (BuildContext context) {
-                return InkWell(
-                  onTap: () {
-                    Scaffold.of(context).openDrawer();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.transparent,
-                      backgroundImage: NetworkImage(
-                          "https://avatars.dicebear.com/api/adventurer-neutral/${User().id}.png"),
-                    ),
+      drawer: UserDrawer(
+        seeIntroduction: () {
+          widget.setAppState('presentation');
+        },
+        resetAccount: () async {
+          User().groupId = "";
+          await Memory().clear();
+          await User().init();
+          widget.setAppState('presentation');
+        },
+      ),
+      appBar: AppBar(
+          foregroundColor: const Color(0xff6f61e8),
+          backgroundColor: const Color(0xfff5f5f7),
+          leading: Builder(
+            builder: (BuildContext context) {
+              return InkWell(
+                onTap: () {
+                  Scaffold.of(context).openDrawer();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    backgroundImage: NetworkImage(
+                        "https://avatars.dicebear.com/api/adventurer-neutral/${User().id}.png"),
                   ),
-                );
-              },
-            ),
-            centerTitle: true,
-            title: UsersList(users: User().otherGroupUsers.values.toList()),
-            actions: <Widget>[
-              IconButton(
-                  tooltip: "Changer de groupe",
-                  onPressed: () {
-                    if (state != "chat") {
-                      return;
-                    }
-                    _webSocketConnection.switchgroup();
+                ),
+              );
+            },
+          ),
+          centerTitle: true,
+          title: UsersList(users: User().otherGroupUsers.values.toList()),
+          actions: <Widget>[
+            IconButton(
+                tooltip: "Changer de groupe",
+                onPressed: () {
+                  if (state != "chat") {
+                    return;
+                  }
+                  _webSocketConnection.switchgroup();
+                  setState(() {
+                    state = "switch";
+                  });
+                },
+                icon: Icon(
+                  Icons.door_front_door_outlined,
+                  color: state == "chat"
+                      ? const Color(0xff6f61e8)
+                      : const Color(0xff9e9cab),
+                )),
+          ]),
+      body: Builder(
+        builder: (BuildContext context) {
+          late Widget child;
+          switch (state) {
+            case "idle":
+              child = const Loader();
+              break;
+            case "switch":
+              child = const Loader();
+              break;
+            case "switchwaiting":
+              child = const SwitchGroupPage();
+              break;
+            case "chat":
+              child = CustomChat(
+                  messages: _messages,
+                  onSendPressed: sendMessage,
+                  onMessageLongPress: reportMessage);
+              break;
+            default:
+              // TODO: error should re-ask server for current group if any
+              // NOTE: here it tries to infer the correct state of the app
+              child = ErrorPage(
+                refresh: () async {
+                  _webSocketConnection.close();
+                  _webSocketConnection.reconnect();
+                  _webSocketConnection.register();
+                  if (User().groupId != "") {
                     setState(() {
-                      state = "switch";
+                      state = "chat";
                     });
-                  },
-                  icon: Icon(
-                    Icons.door_front_door_outlined,
-                    color: state == "chat"
-                        ? const Color(0xff6f61e8)
-                        : const Color(0xff9e9cab),
-                  )),
-            ]),
-        body: SafeArea(
-            bottom: false,
-            child: Builder(
-              builder: (BuildContext context) {
-                late Widget child;
-                switch (state) {
-                  case "idle":
-                    child = const Center(
-                        child: CircularProgressIndicator(
-                            color: Color(0xff6f61e8)));
-                    break;
-                  case "switch":
-                    child = const Center(
-                        child: CircularProgressIndicator(
-                            color: Color(0xff6f61e8)));
-                    break;
-                  case "switchwaiting":
-                    child = const SwitchGroupPage();
-                    break;
-                  case "chat":
-                    child = CustomChat(
-                        messages: _messages,
-                        onSendPressed: sendMessage,
-                        onMessageLongPress: reportMessage);
-                    break;
-                  default:
-                    // TODO: error should re-ask server for current group if any
-                    // NOTE: here it tries to infer the correct state of the app
-                    child = ErrorPage(
-                      refresh: () async {
-                        _webSocketConnection.close();
-                        _webSocketConnection.reconnect();
-                        _webSocketConnection.register();
-                        if (User().groupId != "") {
-                          setState(() {
-                            state = "chat";
-                          });
-                        } else {
-                          setState(() {
-                            state = "idle";
-                          });
-                        }
+                  } else {
+                    setState(() {
+                      state = "idle";
+                    });
+                  }
 
-                        listenStream();
-                      },
-                    );
-                }
-                switch (connectionState) {
-                  case "disconnected":
-                    return Stack(
-                      children: [
-                        child,
-                        Positioned.fill(
-                            child: BackdropFilter(
-                                filter:
-                                    ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                                child: Container(
-                                    color: Colors.black.withOpacity(0))))
-                      ],
-                    );
-                  case "reconnect":
-                    // TODO: create an action to retry if an error occurs or the network is not reachable
-                    return Stack(
-                      children: [
-                        child,
-                        Positioned.fill(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                            child: Container(
-                              color: Colors.black.withOpacity(0),
-                            ),
-                          ),
-                        ),
-                        const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xff6f61e8),
-                          ),
-                        ),
-                      ],
-                    );
-                  default:
-                    return child;
-                }
-              },
-            )));
+                  listenStream();
+                },
+              );
+          }
+          switch (connectionState) {
+            case "disconnected":
+              return Stack(
+                children: [
+                  child,
+                  const Glass(),
+                ],
+              );
+            case "reconnect":
+              // TODO: create an action to retry if an error occurs or the network is not reachable
+              return Stack(
+                children: [
+                  child,
+                  const Glass(),
+                  const Loader(),
+                ],
+              );
+            default:
+              return child;
+          }
+        },
+      ),
+    );
   }
 
   @override
