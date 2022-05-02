@@ -3,6 +3,8 @@ import 'package:awachat/widgets/loader.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../objects/memory.dart';
+
 // ===== ===== =====
 // Drawer
 
@@ -129,39 +131,38 @@ class _CreditsState extends State<Credits> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          foregroundColor: const Color(0xff6f61e8),
-          backgroundColor: const Color(0xfff5f5f7),
-          title: const Text('Sources'),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: FutureBuilder(
-              future: text,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.hasData) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Text(
-                            snapshot.data.body,
-                            textAlign: TextAlign.justify,
-                          ),
+      appBar: AppBar(
+        foregroundColor: const Color(0xff6f61e8),
+        backgroundColor: const Color(0xfff5f5f7),
+        title: const Text('Sources'),
+      ),
+      body: FutureBuilder(
+        future: text,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Text(
+                          snapshot.data.body,
+                          textAlign: TextAlign.left, // not beautiful if not
                         ),
-                      )
-                    ],
-                  );
-                }
-
-                return const Center(
-                    child: CircularProgressIndicator(color: Color(0xff6f61e8)));
-              },
-            ),
-          ),
-        ));
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return const Loader();
+        },
+      ),
+    );
   }
 }
 
@@ -248,9 +249,31 @@ class _QuestionsState extends State<Questions> {
   Map<String, String> selectedAnswers = {};
   bool isConfirmed = false;
 
+  void saveSelectedAnswers() {
+    Memory().put(
+        'user',
+        'questions',
+        selectedAnswers.entries.map((MapEntry selectedAnswer) {
+          return '${selectedAnswer.key}:${selectedAnswer.value}';
+        }).join("::"));
+  }
+
+  void loadSelectedAnswers() {
+    final String? encodedSelectedAnswers = Memory().get('user', 'questions');
+    if (encodedSelectedAnswers != null) {
+      encodedSelectedAnswers.split('::').forEach((element) {
+        List<String> mapEntry = element.split(':');
+        if (mapEntry.length == 2) {
+          selectedAnswers[mapEntry[0]] = mapEntry[1];
+        }
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    loadSelectedAnswers();
   }
 
   @override
@@ -301,6 +324,8 @@ class _QuestionsState extends State<Questions> {
                                 isConfirmed = true;
                               });
                               // store answers
+                              saveSelectedAnswers();
+                              // Memory().put('user', 'questions', 'bonjour');
                               Future.delayed(const Duration(milliseconds: 250))
                                   .then((value) => {Navigator.pop(context)})
                                   .then(
