@@ -214,38 +214,7 @@ class Questions extends StatefulWidget {
 }
 
 class _QuestionsState extends State<Questions> {
-  final List<Map> questions = [
-    {
-      'id': '001',
-      'index': 0,
-      'question': 'Ton type de soirée ? 🥳',
-      'answers': [
-        {'id': '01', 'answer': 'Talk and chill 🍷'},
-        {'id': '02', 'answer': 'Pizza et jeux de société 🍕'},
-        {'id': '03', 'answer': 'Ça part en boîte ! 😎'},
-      ],
-    },
-    {
-      'id': '002',
-      'index': 1,
-      'question': 'Ton sec au choix ? 🥴',
-      'answers': [
-        {'id': '01', 'answer': 'Vodka 🧯'},
-        {'id': '02', 'answer': 'Smoothie fraise banane 🍌'},
-        {'id': '03', 'answer': 'Bière 🍺'},
-      ],
-    },
-    {
-      'id': '003',
-      'index': 2,
-      'question': "T'es plutôt ? 😏",
-      'answers': [
-        {'id': '01', 'answer': 'Que des potes ici 👊'},
-        {'id': '02', 'answer': 'Ça peut toujours déraper 😇'},
-        {'id': '03', 'answer': 'Où le vent me porte 🙈'},
-      ],
-    }
-  ];
+  final List<Map> questions = [];
 
   Map<String, String> selectedAnswers = {};
   bool isConfirmed = false;
@@ -279,17 +248,25 @@ class _QuestionsState extends State<Questions> {
     if (yaml['questions'] is YamlList) {
       int index = 0;
       for (final Map question in yaml['questions']) {
-        final String id = question['id'];
-        final String q = question['question'];
-        final String answers = question['answers'];
-        print(
-            'id: ${id.runtimeType}, q: ${q.runtimeType}, answers: ${answers.runtimeType}');
-        // questions.add({
-        //   'id': question['id'],
-        //   'index': index,
-        //   'question': question['question'],
-        //   'answers': []
-        // });
+        final String? id = question['id'];
+        final String? q = question['question'];
+        final YamlList? answers = question['answers'];
+        if (id != null && q != null && answers != null && answers.isNotEmpty) {
+          final List<Map<String, String>> a = [];
+          for (final element in answers) {
+            print(element.runtimeType);
+            if (element is YamlMap) {
+              final String? elementId = element['id'];
+              final String? elementAnswer = element['answer'];
+              if (elementId != null && elementAnswer != null) {
+                a.add({'id': elementId, 'answer': elementAnswer});
+              }
+            }
+          }
+          questions
+              .add({'id': id, 'index': index, 'question': q, 'answers': a});
+          index += 1;
+        }
       }
     }
   }
