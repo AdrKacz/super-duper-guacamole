@@ -20,7 +20,7 @@ s3_prefix = "sam-group-development"
 region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" GroupsTableName=\"groups_development\" LogRetentionInDays=\"1\" StageName=\"dev\""
+parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"1\" StageName=\"dev\""
 image_repositories = []
 
 [prod]

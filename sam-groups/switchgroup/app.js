@@ -1,4 +1,4 @@
-// NOTE
+// NOTE on MINIMUM_GROUP_SIZE
 // It is better to not have MINIMUM_GROUP_SIZE too small.
 // Indeed, on concurents return, one can update an old group
 // while the other delete it
@@ -6,6 +6,14 @@
 // If MINIMUM_GROUP_SIZE is big enough (let say 3), the time window between
 // the deactivation of the group (isWaiting = false) and its deletion should be
 // big enough to not have concurrent run trying to update and delete at the same time
+
+// NOTE on IS_WAINTING encoding
+// I cannot use a BOOL key, instead I used a N key.
+// 1 is true and 0 is false
+
+// NOTE on BAN
+// On a ban, BAN_FUNCTION doesn't send user questions because they are not stored.
+// For now, I just considered a banned user as an user who hasn't answer any question.
 
 // DEPENDENCIES
 // aws-sdk-ddb
@@ -19,6 +27,8 @@
 // Switch group
 // event.Records[0].Sns.Message
 // id : String - user id
+// questions : Map<String, String>?
+//    question id <String> - answer id <String>
 // [unused] connectionId : String? - user connection id
 
 // ===== ==== ====
@@ -30,7 +40,7 @@ const {
   DeleteCommand,
   GetCommand,
   UpdateCommand,
-  ScanCommand
+  QueryCommand
 } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
@@ -44,6 +54,7 @@ const {
   MAXIMUM_GROUP_SIZE_STRING,
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
+  GROUPS_WAINTING_ID_INDEX_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
@@ -68,6 +79,7 @@ ${event.Records[0].Sns.Message}
   const body = JSON.parse(event.Records[0].Sns.Message)
 
   const id = body.id
+  const questions = body.questions ?? {}
 
   if (id === undefined) {
     throw new Error('id must be defined')
@@ -97,31 +109,62 @@ ${event.Records[0].Sns.Message}
 
   // query a new group (query doesn't work without a KeyConditionExpression, use scan instead)
   // TODO: use a sort index to query only the waiting ones faster
-  const queryCommand = new ScanCommand({
+  const queryCommand = new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
-    ProjectionExpression: '#id, #users, #isWaiting',
-    FilterExpression: '#isWaiting = :true',
+    IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
+    KeyConditionExpression: '#isWaiting = :true',
     ExpressionAttributeNames: {
-      '#id': 'id',
-      '#users': 'users',
       '#isWaiting': 'isWaiting'
     },
     ExpressionAttributeValues: {
-      ':true': true
+      ':true': 1
     }
   })
+
+  // NOTE: the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
+  // We must check that answers indeed have a greater impact on group than order of arrival.
+  // If not that means that we are still quite randomly assigning groups.
+  // NOTE: We could add ENV VARIABLE for more fine grained controls.
+  // For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
   const newGroup = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
     if (response.Count > 0) {
+      let maximumOfSimilarity = -1
+      let chosenGroup = null
       for (const group of response.Items) {
+        // Check this group is valid
         if (group.id !== user.group) {
-          return group
+          let similarity = 0
+          // iterate accross the smallest
+          const groupQuestions = group.questions ?? {}
+          if (groupQuestions.size < questions.size) {
+            for (const [key, value] of Object.entries(groupQuestions)) {
+              if (questions[key] === value) {
+                similarity += 1
+              }
+            }
+          } else {
+            for (const [key, value] of Object.entries(questions)) {
+              if (groupQuestions[key] === value) {
+                similarity += 1
+              }
+            }
+          }
+          if (similarity > maximumOfSimilarity) {
+            chosenGroup = group
+            maximumOfSimilarity = similarity
+          }
         }
+      }
+      if (chosenGroup != null) {
+        console.log(`selected group with similarity of ${maximumOfSimilarity}:\n`, chosenGroup)
+        return chosenGroup
       }
     }
     return {
       id: uuidv4(),
-      isWaiting: true,
-      users: new Set()
+      isWaiting: 1,
+      users: new Set(),
+      questions: questions
     }
   })
 
@@ -257,23 +300,25 @@ async function addUserToGroup (user, newGroup) {
     }
   }
   if (newGroup.users.size >= MAXIMUM_GROUP_SIZE) {
-    newGroup.isWaiting = false
+    newGroup.isWaiting = 0 // false
   }
 
   const updateNewGroupCommand = new UpdateCommand({
     TableName: GROUPS_TABLE_NAME,
     Key: { id: newGroup.id },
     UpdateExpression: `
-    SET #isWaiting = :isWaiting
+    SET #isWaiting = :isWaiting, #questions = :questions
     ADD #users :id
     `,
     ExpressionAttributeNames: {
       '#isWaiting': 'isWaiting',
+      '#questions': 'questions',
       '#users': 'users'
     },
     ExpressionAttributeValues: {
       ':id': new Set([user.id]),
-      ':isWaiting': newGroup.isWaiting
+      ':isWaiting': newGroup.isWaiting,
+      ':questions': newGroup.questions
     }
   })
   promises.push(dynamoDBDocumentClient.send(updateNewGroupCommand))
@@ -326,7 +371,7 @@ async function removeUserFromGroup (user) {
 
     // NOTE: don't use if/else because both can be triggered (isWaiting to 0 will prevail)
     if (group.users.size < MAXIMUM_GROUP_SIZE) {
-      group.isWaiting = true
+      group.isWaiting = 1 // true
     }
     if (group.users.size < MINIMUM_GROUP_SIZE) {
       // NOTE: if an user leave a group it hasn't entered yet it will close it forever
@@ -334,7 +379,7 @@ async function removeUserFromGroup (user) {
       // user B join group ABC, group.users = { A, B }, group.isWaiting = true
       // user A switches group, group.users = { B } group.size < MINIMUM_GROUP_SIZE(3), group.isWaiting = false
       // group ABC will be closed before ever being opened
-      group.isWaiting = false
+      group.isWaiting = 0 // false
     }
 
     // update or delete group
@@ -354,7 +399,7 @@ async function removeUserFromGroup (user) {
         },
         ExpressionAttributeValues: {
           ':id': new Set([user.id]),
-          ':isWaiting': group.isWaiting ?? true
+          ':isWaiting': group.isWaiting ?? 1 // true
         }
       })
       promises.push(dynamoDBDocumentClient.send(updateGroupCommand))

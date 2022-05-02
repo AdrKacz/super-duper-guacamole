@@ -8,7 +8,7 @@ Globals:
     Environment:
       Variables:
         USERS_TABLE_NAME: !Ref UsersTable
-        GROUPS_TABLE_NAME: !Ref GroupsTableName
+        GROUPS_TABLE_NAME: !Ref GroupsTable
 
 Description: >
   sam-group
@@ -31,14 +31,6 @@ Parameters:
     Default: 2
     Description: '(Required) The number of the users required to ban someone from a group. The effective number of confirmation required will be the minimum between this number and the number of users who have received the ban request.'
     ConstraintDescription: 'Required. Must be an integer.'
-  GroupsTableName:
-    Type: String
-    Default: 'groups'
-    Description: '(Required) The name of the new DynamoDB to store registered users. Minimum 3 characters.'
-    MinLength: 3
-    MaxLength: 50
-    AllowedPattern: ^[A-Za-z_]+$
-    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
   LogRetentionInDays:
     Type: Number
     Default: 1
@@ -83,9 +75,32 @@ Resources:
             ProjectionType: "INCLUDE"
 
   GroupsTable:
-    Type: AWS::Serverless::SimpleTable
+    Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Ref GroupsTableName
+      BillingMode: "PAY_PER_REQUEST"
+      AttributeDefinitions:
+        - 
+          AttributeName: "id"
+          AttributeType: "S"
+        - 
+          AttributeName: "isWaiting"
+          AttributeType: "N"
+      KeySchema:
+        -
+          AttributeName: "id"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        -
+          IndexName: "IsWaitingIndex"
+          KeySchema:
+            -
+              AttributeName: "isWaiting"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "users"
+              - "questions"
+            ProjectionType: "INCLUDE"
 
   # Web Socket
   SimpleChatWebSocket:
@@ -327,11 +342,12 @@ Resources:
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
           MINIMUM_GROUP_SIZE_STRING: !Ref MinimumGroupSize
           MAXIMUM_GROUP_SIZE_STRING: !Ref MaximumGroupSize
+          GROUPS_WAINTING_ID_INDEX_NAME: "IsWaitingIndex"
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTableName
+          TableName: !Ref GroupsTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:
@@ -381,7 +397,7 @@ Resources:
           Type: SNS
           Properties:
             Topic: !Ref StoreUnreadDataSNSTopic
-  SwitchGroupLogGroup:
+  StoreUnreadDataLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
@@ -426,7 +442,7 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+          TableName: !Ref GroupsTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
   ActionRegisterPermission:
@@ -458,7 +474,7 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+          TableName: !Ref GroupsTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
   ActionOnDisconnectPermission:
@@ -516,7 +532,7 @@ Resources:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+          TableName: !Ref GroupsTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:
@@ -551,7 +567,7 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+          TableName: !Ref GroupsTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:
@@ -586,7 +602,7 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTableName
+          TableName: !Ref GroupsTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:

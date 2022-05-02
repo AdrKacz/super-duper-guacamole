@@ -70,6 +70,21 @@ Tu pourras changer tes réponses en cliquant sur ton avatar.""",
 
 // ===== ===== =====
 // Questions Loader
+
+Map<String, String> loadSelectedAnswers() {
+  final Map<String, String> selectedAnswers = {};
+  final String? encodedSelectedAnswers = Memory().get('user', 'questions');
+  if (encodedSelectedAnswers != null) {
+    encodedSelectedAnswers.split('::').forEach((element) {
+      List<String> mapEntry = element.split(':');
+      if (mapEntry.length == 2) {
+        selectedAnswers[mapEntry[0]] = mapEntry[1];
+      }
+    });
+  }
+  return selectedAnswers;
+}
+
 class QuestionsLoader extends StatefulWidget {
   const QuestionsLoader({Key? key}) : super(key: key);
 
@@ -129,22 +144,10 @@ class _QuestionsState extends State<Questions> {
         }).join("::"));
   }
 
-  void loadSelectedAnswers() {
-    final String? encodedSelectedAnswers = Memory().get('user', 'questions');
-    if (encodedSelectedAnswers != null) {
-      encodedSelectedAnswers.split('::').forEach((element) {
-        List<String> mapEntry = element.split(':');
-        if (mapEntry.length == 2) {
-          selectedAnswers[mapEntry[0]] = mapEntry[1];
-        }
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    loadSelectedAnswers();
+    selectedAnswers = loadSelectedAnswers();
     final YamlMap yaml = loadYaml(widget.data);
     if (yaml['questions'] is YamlList) {
       int index = 0;
