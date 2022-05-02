@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:awachat/widgets/glass.dart';
+import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -71,7 +72,18 @@ class _MyAppState extends State<MyApp> {
           case 'agreements':
             return Agreements(setAppState: setAppState);
           case 'main':
-            return MainPage(setAppState: setAppState);
+            // check user has answers to questions
+            final String? questions = Memory().get('user', 'questions');
+            if (questions == null) {
+              // TODO: use route instead
+              return QuestionsLoader(
+                onConfirmed: () {
+                  setState(() {});
+                },
+              );
+            } else {
+              return MainPage(setAppState: setAppState);
+            }
           default:
             print('Unknown state $state');
             return const Placeholder();
@@ -80,10 +92,8 @@ class _MyAppState extends State<MyApp> {
     ));
   }
 }
-// ===== ===== =====
 
 // ===== ===== =====
-
 // Main Page
 class MainPage extends StatefulWidget {
   const MainPage({Key? key, required this.setAppState}) : super(key: key);
