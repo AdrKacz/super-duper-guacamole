@@ -2,6 +2,7 @@ import 'package:awachat/objects/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:yaml/yaml.dart';
 
 import '../objects/memory.dart';
 
@@ -182,7 +183,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
   void initState() {
     super.initState();
     text = http.get(Uri.parse(
-        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/credits/fr"));
+        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/102-ajouter-la-possibilité-de-répondre-à-des-questions/questions/fr.yaml"));
   }
 
   @override
@@ -274,6 +275,8 @@ class _QuestionsState extends State<Questions> {
   void initState() {
     super.initState();
     loadSelectedAnswers();
+    final Map<String, String> temp = loadYaml(widget.data);
+    print(temp);
   }
 
   @override
