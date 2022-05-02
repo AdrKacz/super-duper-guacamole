@@ -183,7 +183,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
   void initState() {
     super.initState();
     text = http.get(Uri.parse(
-        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/102-ajouter-la-possibilité-de-répondre-à-des-questions/questions/fr.yaml"));
+        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml"));
   }
 
   @override
