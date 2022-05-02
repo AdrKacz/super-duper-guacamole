@@ -1,41 +1,41 @@
-languages: fr
+languages: "fr"
 questions:
   - 
-    id: 001
+    id: "001"
     question: "Ton type de soirée ? 🥳"
     answers:
       - 
-        id: 01
+        id: "01"
         answer: "Talk and chill 🍷"
       - 
-        id: 02
+        id: "02"
         answer: "Pizza et jeux de société 🍕"
       - 
-        id: 03
+        id: "03"
         answer: "Ça part en boîte ! 😎"
   - 
-    id: 002
+    id: "002"
     question: "Ton sec au choix ? 🥴"
     answers:
       - 
-        id: 01
+        id: "01"
         answer: "Vodka 🧯"
       - 
-        id: 02
+        id: "02"
         answer: "Smoothie fraise banane 🍌"
       - 
-        id: 03
+        id: "03"
         answer: "Bière 🍺"
   - 
-    id: 003
+    id: "003"
     question: "T'es plutôt ? 😏"
     answers:
       - 
-        id: 01
+        id: "01"
         answer: "Que des potes ici 👊"
       - 
-        id: 02
+        id: "02"
         answer: "Ça peut toujours déraper 😇"
       - 
-        id: 03
+        id: "03"
         answer: "Où le vent me porte 🙈"

@@ -214,7 +214,7 @@ class Questions extends StatefulWidget {
 }
 
 class _QuestionsState extends State<Questions> {
-  final List<Map> temporaryData = [
+  final List<Map> questions = [
     {
       'id': '001',
       'index': 0,
@@ -275,8 +275,23 @@ class _QuestionsState extends State<Questions> {
   void initState() {
     super.initState();
     loadSelectedAnswers();
-    final Map<String, String> temp = loadYaml(widget.data);
-    print(temp);
+    final YamlMap yaml = loadYaml(widget.data);
+    if (yaml['questions'] is YamlList) {
+      int index = 0;
+      for (final Map question in yaml['questions']) {
+        final String id = question['id'];
+        final String q = question['question'];
+        final String answers = question['answers'];
+        print(
+            'id: ${id.runtimeType}, q: ${q.runtimeType}, answers: ${answers.runtimeType}');
+        // questions.add({
+        //   'id': question['id'],
+        //   'index': index,
+        //   'question': question['question'],
+        //   'answers': []
+        // });
+      }
+    }
   }
 
   @override
@@ -285,14 +300,14 @@ class _QuestionsState extends State<Questions> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: DefaultTabController(
-          length: temporaryData.length + 1,
+          length: questions.length + 1,
           child: Builder(builder: (BuildContext context) {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Expanded(
                   child: TabBarView(
-                    children: List<Widget>.from(temporaryData
+                    children: List<Widget>.from(questions
                             .map((e) => (Question(
                                   question: e,
                                   selectedAnswer: selectedAnswers[e['id']],
