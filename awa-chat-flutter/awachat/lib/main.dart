@@ -382,7 +382,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             User().updateOtherUsers(users);
           }
         } else {
-          // don't do anything (user not concernet, error)
+          // don't do anything (user not concerted, error)
           needUpdate = false;
         }
 

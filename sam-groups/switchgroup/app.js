@@ -136,7 +136,7 @@ ${event.Records[0].Sns.Message}
 // ===== ==== ====
 // HELPERS
 async function addUserToGroup (user, newGroup) {
-  // Add user grom to a new group
+  // Add user to a new group
   // user : Map
   //    id : String - user id
   //    group : String - user group id
@@ -330,10 +330,10 @@ async function removeUserFromGroup (user) {
     }
     if (group.users.size < MINIMUM_GROUP_SIZE) {
       // NOTE: if an user leave a group it hasn't entered yet it will close it forever
-      // for exemple, user A join group ABC, group.users = { A }, group.isWaiting = true
-      // user B join group ABC, group.users = { A, B }, group.isWaiting = true
+      // for exemple, user A join group C, group.users = { A }, group.isWaiting = true
+      // user B join group C, group.users = { A, B }, group.isWaiting = true
       // user A switches group, group.users = { B } group.size < MINIMUM_GROUP_SIZE(3), group.isWaiting = false
-      // group ABC will be closed before ever being opened
+      // group C will be closed before ever being opened
       group.isWaiting = false
     }
 
