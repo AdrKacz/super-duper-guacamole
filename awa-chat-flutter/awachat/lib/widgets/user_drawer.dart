@@ -301,9 +301,10 @@ class _QuestionsState extends State<Questions> {
                                 isConfirmed = true;
                               });
                               // store answers
-                              // add a pop up to notify it has been correctly stored
                               Future.delayed(const Duration(milliseconds: 250))
-                                  .then((value) => {Navigator.pop(context)});
+                                  .then((value) => {Navigator.pop(context)})
+                                  .then(
+                                      (value) => {showConfirmDialog(context)});
                             },
                             isConfirmed: isConfirmed,
                           )
@@ -392,6 +393,7 @@ class Question extends StatelessWidget {
 
 // Confirm
 class Confirm extends StatelessWidget {
+  // https://stackoverflow.com/questions/58883067/flutter-custom-animated-icon for button animation
   const Confirm({
     Key? key,
     required this.isConfirmed,
@@ -426,4 +428,20 @@ class Confirm extends StatelessWidget {
   }
 }
 
-// https://stackoverflow.com/questions/58883067/flutter-custom-animated-icon for button animation
+// Confirm Dialog
+void showConfirmDialog(BuildContext context) async {
+  return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+            title: const Text("J'ai bien enregistré tes choix"),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Ok'),
+              ),
+            ]);
+      });
+}
