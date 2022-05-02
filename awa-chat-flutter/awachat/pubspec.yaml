@@ -44,6 +44,7 @@ dependencies:
   hive_flutter: ^1.1.0
   url_launcher: ^6.0.20
   badges: ^2.0.2
+  yaml: ^3.1.0
 
 dev_dependencies:
   change_app_package_name: ^1.0.0
@@ -84,6 +85,7 @@ flutter:
     - assets/images/undraw_joyride_re_968t.png
     - assets/images/undraw_login_re_4vu2.png
     - assets/images/undraw_searching_re_3ra9.png
+    - assets/images/undraw_decide_re_ixfw.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

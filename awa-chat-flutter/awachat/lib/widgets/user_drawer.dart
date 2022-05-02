@@ -1,4 +1,6 @@
 import 'package:awachat/objects/user.dart';
+import 'package:awachat/widgets/loader.dart';
+import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -32,11 +34,33 @@ class UserDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.question_mark_rounded),
+            title: const Text("Questions"),
+            subtitle: const Text("Quel est ton état d'esprit ?"),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const QuestionsLoader(),
+                ),
+              );
+            },
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.nature),
             title: const Text(
               "Je veux revoir la présentation",
             ),
             onTap: seeIntroduction,
+          ),
+          ListTile(
+            leading: const Icon(Icons.copyright),
+            title: const Text("Sources"),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const Credits()));
+            },
           ),
           ListTile(
             leading:
@@ -80,13 +104,6 @@ class UserDrawer extends StatelessWidget {
               }
             },
           ),
-          ListTile(
-              leading: const Icon(Icons.copyright),
-              title: const Text("Sources"),
-              onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => const Credits()));
-              })
         ],
       ),
     );
@@ -115,38 +132,37 @@ class _CreditsState extends State<Credits> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          foregroundColor: const Color(0xff6f61e8),
-          backgroundColor: const Color(0xfff5f5f7),
-          title: const Text('Sources'),
-        ),
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: FutureBuilder(
-              future: text,
-              builder: (BuildContext context, AsyncSnapshot snapshot) {
-                if (snapshot.hasData) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Text(
-                            snapshot.data.body,
-                            textAlign: TextAlign.justify,
-                          ),
+      appBar: AppBar(
+        foregroundColor: const Color(0xff6f61e8),
+        backgroundColor: const Color(0xfff5f5f7),
+        title: const Text('Sources'),
+      ),
+      body: FutureBuilder(
+        future: text,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Text(
+                          snapshot.data.body,
+                          textAlign: TextAlign.left, // not beautiful if not
                         ),
-                      )
-                    ],
-                  );
-                }
-
-                return const Center(
-                    child: CircularProgressIndicator(color: Color(0xff6f61e8)));
-              },
-            ),
-          ),
-        ));
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+          return const Loader();
+        },
+      ),
+    );
   }
 }

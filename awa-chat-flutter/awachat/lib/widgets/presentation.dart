@@ -50,25 +50,31 @@ Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne 
 Un verre en terrasse, une expo', une balade au soleil, il y a toujours de quoi faire.""",
           assetPath: 'assets/images/undraw_having_fun_re_vj4h.png'),
       SlideWithButton(
-          text: "Tu as hâte de faire des rencontres ?",
-          assetPath: 'assets/images/undraw_joyride_re_968t.png',
-          buttonText: "C'est parti !",
-          onPressed: () {
-            setAppState('agreements');
-          }),
+        text: "Tu as hâte de faire des rencontres ?",
+        assetPath: 'assets/images/undraw_joyride_re_968t.png',
+        buttonText: "C'est parti !",
+        onPressed: () {
+          setAppState('agreements');
+        },
+      ),
     ];
     return Scaffold(
-        body: SafeArea(
-            child: DefaultTabController(
-                length: slides.length,
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(child: TabBarView(children: slides)),
-                      const TabPageSelector(
-                          color: Color(0xfff5f5f7),
-                          selectedColor: Color(0xff6f61e8)),
-                    ]))));
+      body: SafeArea(
+        child: DefaultTabController(
+          length: slides.length,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Expanded(child: TabBarView(children: slides)),
+              const TabPageSelector(
+                color: Color(0xfff5f5f7),
+                selectedColor: Color(0xff6f61e8),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -157,11 +163,12 @@ class SlideWithButton extends StatelessWidget {
         Text(text, textAlign: TextAlign.center),
         const Divider(height: 48),
         ElevatedButton(
-            onPressed: onPressed,
-            child: Text(buttonText),
-            style: ElevatedButton.styleFrom(
-              primary: const Color(0xff6f61e8),
-            ))
+          onPressed: onPressed,
+          child: Text(buttonText),
+          style: ElevatedButton.styleFrom(
+            primary: const Color(0xff6f61e8),
+          ),
+        ),
       ],
     ));
   }
