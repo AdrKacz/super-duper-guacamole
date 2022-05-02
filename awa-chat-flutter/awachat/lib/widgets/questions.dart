@@ -5,11 +5,73 @@ import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/objects/memory.dart';
 
 // ===== ===== =====
+// First Time Questions Loader
+class FirstTimeQuestionsLoader extends StatelessWidget {
+  const FirstTimeQuestionsLoader({Key? key, required this.onConfirmed})
+      : super(key: key);
+
+  final VoidCallback onConfirmed;
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset("assets/images/undraw_decide_re_ixfw.png"),
+                  const Divider(height: 48),
+                  const Text("""Tout d'abord, je dois savoir plus sur toi.
+                      
+Tu pourras changer tes réponses en cliquant sur ton avatar.""",
+                      textAlign: TextAlign.center),
+                  const Divider(height: 48),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const QuestionsLoader(),
+                        ),
+                      );
+                      onConfirmed();
+                    },
+                    child: const Text('Répondre aux questions'),
+                    style: ElevatedButton.styleFrom(
+                      primary: const Color(0xff6f61e8),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Memory().put('user', 'questions', '');
+                      onConfirmed();
+                    },
+                    child: const Text('Ne pas répondre'),
+                    style: ElevatedButton.styleFrom(
+                      primary: const Color(0xfff5f5f7),
+                      onPrimary: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===== ===== =====
 // Questions Loader
 class QuestionsLoader extends StatefulWidget {
-  const QuestionsLoader({Key? key, this.onConfirmed}) : super(key: key);
-
-  final VoidCallback? onConfirmed;
+  const QuestionsLoader({Key? key}) : super(key: key);
 
   @override
   _QuestionsLoaderState createState() => _QuestionsLoaderState();
@@ -32,8 +94,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         future: text,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Questions(
-                data: snapshot.data.body, onConfirmed: widget.onConfirmed);
+            return Questions(data: snapshot.data.body);
           }
 
           return const Loader();
@@ -45,11 +106,9 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
 // Questions
 class Questions extends StatefulWidget {
-  const Questions({Key? key, required this.data, this.onConfirmed})
-      : super(key: key);
+  const Questions({Key? key, required this.data}) : super(key: key);
 
   final String data;
-  final VoidCallback? onConfirmed;
 
   @override
   _QuestionsState createState() => _QuestionsState();
@@ -169,13 +228,9 @@ class _QuestionsState extends State<Questions> {
                               saveSelectedAnswers();
                               // Memory().put('user', 'questions', 'bonjour');
                               Future.delayed(const Duration(milliseconds: 250))
-                                  .then((value) {
-                                if (widget.onConfirmed != null) {
-                                  widget.onConfirmed!();
-                                } else {
-                                  Navigator.pop(context);
-                                }
-                              }).then((value) => {showConfirmDialog(context)});
+                                  .then((value) => {Navigator.pop(context)})
+                                  .then(
+                                      (value) => {showConfirmDialog(context)});
                             },
                             isConfirmed: isConfirmed,
                           )

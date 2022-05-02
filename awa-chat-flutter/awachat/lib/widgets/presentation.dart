@@ -163,11 +163,12 @@ class SlideWithButton extends StatelessWidget {
         Text(text, textAlign: TextAlign.center),
         const Divider(height: 48),
         ElevatedButton(
-            onPressed: onPressed,
-            child: Text(buttonText),
-            style: ElevatedButton.styleFrom(
-              primary: const Color(0xff6f61e8),
-            ))
+          onPressed: onPressed,
+          child: Text(buttonText),
+          style: ElevatedButton.styleFrom(
+            primary: const Color(0xff6f61e8),
+          ),
+        ),
       ],
     ));
   }

@@ -39,9 +39,11 @@ class UserDrawer extends StatelessWidget {
             subtitle: const Text("Quel est ton état d'esprit ?"),
             onTap: () {
               Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const QuestionsLoader()));
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const QuestionsLoader(),
+                ),
+              );
             },
           ),
           const Divider(),

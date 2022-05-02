@@ -76,7 +76,7 @@ class _MyAppState extends State<MyApp> {
             final String? questions = Memory().get('user', 'questions');
             if (questions == null) {
               // TODO: use route instead
-              return QuestionsLoader(
+              return FirstTimeQuestionsLoader(
                 onConfirmed: () {
                   setState(() {});
                 },
