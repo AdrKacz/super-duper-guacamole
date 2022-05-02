@@ -248,13 +248,15 @@ class _QuestionsState extends State<Questions> {
     if (yaml['questions'] is YamlList) {
       int index = 0;
       for (final Map question in yaml['questions']) {
+        // verify question is correctly formatted
         final String? id = question['id'];
         final String? q = question['question'];
         final YamlList? answers = question['answers'];
-        if (id != null && q != null && answers != null && answers.isNotEmpty) {
+
+        if (id != null && q != null && answers != null) {
           final List<Map<String, String>> a = [];
           for (final element in answers) {
-            print(element.runtimeType);
+            // only use correctly formatted answers
             if (element is YamlMap) {
               final String? elementId = element['id'];
               final String? elementAnswer = element['answer'];
@@ -263,9 +265,12 @@ class _QuestionsState extends State<Questions> {
               }
             }
           }
-          questions
-              .add({'id': id, 'index': index, 'question': q, 'answers': a});
-          index += 1;
+          if (a.isNotEmpty) {
+            // don't add a question if there is no answers associated
+            questions
+                .add({'id': id, 'index': index, 'question': q, 'answers': a});
+            index += 1;
+          }
         }
       }
     }
