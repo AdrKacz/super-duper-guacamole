@@ -10,6 +10,8 @@
 // event.body
 // id : String - user id
 // groupid : String - group id
+// questions : Map<String, String>?
+//    question id <String> - answer id <String>
 
 // ===== ==== ====
 // IMPORTS
@@ -39,6 +41,8 @@ exports.handler = async (event) => {
 
   const id = body.id
   const groupid = body.groupid
+  const questions = body.questions
+
   if (id === undefined || groupid === undefined) {
     throw new Error('id and groupid must be defined')
   }
@@ -49,7 +53,8 @@ exports.handler = async (event) => {
     Message: JSON.stringify({
       id: id,
       groupid: groupid !== '' ? groupid : undefined,
-      connectionId: event.requestContext.connectionId
+      connectionId: event.requestContext.connectionId,
+      questions: questions
     })
   })
 

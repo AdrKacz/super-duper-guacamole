@@ -1,12 +1,13 @@
 import 'dart:convert';
 
+import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:awachat/objects/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      "wss://mswpwe47tf.execute-api.eu-west-3.amazonaws.com/dev";
+      "wss://1yu5jxwgxh.execute-api.eu-west-3.amazonaws.com/dev";
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -27,8 +28,12 @@ class WebSocketConnection {
 
   void switchgroup() {
     print('switchgroup');
-    _channel.sink.add(jsonEncode(
-        {"action": "switchgroup", "groupid": User().groupId, "id": User().id}));
+    _channel.sink.add(jsonEncode({
+      "action": "switchgroup",
+      "groupid": User().groupId,
+      "id": User().id,
+      "questions": loadSelectedAnswers()
+    }));
   }
 
   void textmessage(String encodedMessage) {
