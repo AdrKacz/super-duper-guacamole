@@ -25,7 +25,8 @@ Je te préviendrai quand j'en aurai trouvé un.""",
                 const SizedBox(
                   height: 24,
                 ),
-                const CircularProgressIndicator(color: Color(0xff6f61e8)),
+                CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.onPrimary),
               ],
             ),
           ),

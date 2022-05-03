@@ -27,10 +27,11 @@ class CustomChat extends StatelessWidget {
       onSendPressed: onSendPressed,
       onMessageLongPress: onMessageLongPress,
       user: types.User(id: User().id),
-      theme: const DefaultChatTheme(
-          inputBackgroundColor: Color(0xfff5f5f7),
-          inputTextColor: Color(0xff1f1c38),
-          inputTextCursorColor: Color(0xff9e9cab)),
+      theme: DefaultChatTheme(
+          primaryColor: Theme.of(context).colorScheme.onPrimary,
+          inputBackgroundColor: Theme.of(context).colorScheme.secondary,
+          inputTextColor: Theme.of(context).colorScheme.onSecondary,
+          inputTextCursorColor: Theme.of(context).disabledColor),
     );
   }
 }

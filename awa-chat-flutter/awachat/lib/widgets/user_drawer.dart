@@ -63,11 +63,11 @@ class UserDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading:
-                Icon(Icons.delete_forever, color: Colors.redAccent.shade100),
+            leading: Icon(Icons.delete_forever,
+                color: Theme.of(context).colorScheme.onError),
             title: Text(
               "Réinitialiser mon compte",
-              style: TextStyle(color: Colors.redAccent.shade100),
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
             ),
             onTap: () async {
               switch (await showDialog(
@@ -133,8 +133,6 @@ class _CreditsState extends State<Credits> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        foregroundColor: const Color(0xff6f61e8),
-        backgroundColor: const Color(0xfff5f5f7),
         title: const Text('Sources'),
       ),
       body: FutureBuilder(

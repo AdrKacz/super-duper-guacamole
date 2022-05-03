@@ -21,7 +21,7 @@ class UsersList extends StatelessWidget {
                   ),
                   Badge(
                       showBadge: user['isActive'],
-                      badgeColor: Colors.green,
+                      badgeColor: Theme.of(context).colorScheme.tertiary,
                       position: BadgePosition.bottomEnd(),
                       child: const SizedBox(
                         width: kToolbarHeight * .5,

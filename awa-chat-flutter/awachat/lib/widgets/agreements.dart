@@ -111,20 +111,14 @@ class _AgreementsPageState extends State<AgreementsPage> {
                     ),
                     const Divider(height: 48),
                     ElevatedButton(
-                        style: _checked
-                            ? ElevatedButton.styleFrom(
-                                primary: const Color(0xff6f61e8),
-                              )
-                            : ElevatedButton.styleFrom(
-                                primary: const Color(0xfff5f5f7),
-                                onPrimary: const Color(0xff9e9cab),
-                              ),
-                        onPressed: () {
-                          if (!_checked) {
-                            return;
-                          }
-                          widget.onNextPressed();
-                        },
+                        onPressed: _checked
+                            ? () {
+                                if (!_checked) {
+                                  return;
+                                }
+                                widget.onNextPressed();
+                              }
+                            : null,
                         child: Text(widget.nextText))
                   ],
                 );
