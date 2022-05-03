@@ -40,9 +40,6 @@ Tu pourras changer tes réponses en cliquant sur ton avatar.""",
                       onConfirmed();
                     },
                     child: const Text('Répondre aux questions'),
-                    style: ElevatedButton.styleFrom(
-                      primary: const Color(0xff6f61e8),
-                    ),
                   ),
                   const SizedBox(
                     height: 12,
@@ -54,8 +51,8 @@ Tu pourras changer tes réponses en cliquant sur ton avatar.""",
                     },
                     child: const Text('Ne pas répondre'),
                     style: ElevatedButton.styleFrom(
-                      primary: const Color(0xfff5f5f7),
-                      onPrimary: Colors.black,
+                      primary: Theme.of(context).colorScheme.secondary,
+                      onPrimary: Theme.of(context).colorScheme.onSecondary,
                     ),
                   ),
                 ],
@@ -240,9 +237,9 @@ class _QuestionsState extends State<Questions> {
                         ],
                   ),
                 ),
-                const TabPageSelector(
-                  color: Color(0xfff5f5f7),
-                  selectedColor: Color(0xff6f61e8),
+                TabPageSelector(
+                  color: Theme.of(context).colorScheme.primary,
+                  selectedColor: Theme.of(context).colorScheme.onPrimary,
                 ),
               ],
             );
@@ -291,13 +288,13 @@ class Question extends StatelessWidget {
                           style: e['id'] == selectedAnswer
                               ? ElevatedButton.styleFrom(
                                   minimumSize: const Size.fromHeight(100),
-                                  primary: const Color(0xff6f61e8),
-                                  onPrimary: Colors.white,
                                 )
                               : ElevatedButton.styleFrom(
                                   minimumSize: const Size.fromHeight(100),
-                                  primary: const Color(0xfff5f5f7),
-                                  onPrimary: Colors.black,
+                                  primary:
+                                      Theme.of(context).colorScheme.secondary,
+                                  onPrimary:
+                                      Theme.of(context).colorScheme.onSecondary,
                                 ),
                           onPressed: () {
                             if (onPressed(e['id'])) {
@@ -342,13 +339,11 @@ class Confirm extends StatelessWidget {
           style: isConfirmed
               ? ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(100),
-                  primary: const Color(0xff6f61e8),
-                  onPrimary: Colors.white,
                 )
               : ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(100),
-                  primary: const Color(0xfff5f5f7),
-                  onPrimary: Colors.black,
+                  primary: Theme.of(context).colorScheme.secondary,
+                  onPrimary: Theme.of(context).colorScheme.onSecondary,
                 ),
           child: const Text('Je valide !'),
         ),

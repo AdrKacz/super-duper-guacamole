@@ -26,11 +26,7 @@ Je t'alerterai quand les gens parleront sur la conversation.""",
                 TextSpan(text: """Tu ne seras que dans un groupe à la fois.
           
 Clique sur """),
-                WidgetSpan(
-                    child: Icon(
-                  Icons.door_front_door_outlined,
-                  color: Color(0xff6f61e8),
-                )),
+                WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(
                     text:
                         " en haut à droite de ton écran pour changer de groupe.")
@@ -66,9 +62,9 @@ Un verre en terrasse, une expo', une balade au soleil, il y a toujours de quoi f
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Expanded(child: TabBarView(children: slides)),
-              const TabPageSelector(
-                color: Color(0xfff5f5f7),
-                selectedColor: Color(0xff6f61e8),
+              TabPageSelector(
+                color: Theme.of(context).colorScheme.primary,
+                selectedColor: Theme.of(context).colorScheme.onPrimary,
               ),
             ],
           ),
@@ -165,9 +161,6 @@ class SlideWithButton extends StatelessWidget {
         ElevatedButton(
           onPressed: onPressed,
           child: Text(buttonText),
-          style: ElevatedButton.styleFrom(
-            primary: const Color(0xff6f61e8),
-          ),
         ),
       ],
     ));

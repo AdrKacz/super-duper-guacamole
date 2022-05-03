@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:awachat/application_theme.dart';
 import 'package:awachat/widgets/glass.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
@@ -64,32 +65,35 @@ class _MyAppState extends State<MyApp> {
         Memory().get('user', 'hasSignedAgreements') == "true") {
       state = 'main';
     }
-    return MaterialApp(home: Builder(
-      builder: (BuildContext context) {
-        switch (state) {
-          case 'presentation':
-            return Presentation(setAppState: setAppState);
-          case 'agreements':
-            return Agreements(setAppState: setAppState);
-          case 'main':
-            // check user has answers to questions
-            final String? questions = Memory().get('user', 'questions');
-            if (questions == null) {
-              // TODO: use route instead
-              return FirstTimeQuestionsLoader(
-                onConfirmed: () {
-                  setState(() {});
-                },
-              );
-            } else {
-              return MainPage(setAppState: setAppState);
-            }
-          default:
-            print('Unknown state $state');
-            return const Placeholder();
-        }
-      },
-    ));
+    return MaterialApp(
+      theme: applicationTheme,
+      home: Builder(
+        builder: (BuildContext context) {
+          switch (state) {
+            case 'presentation':
+              return Presentation(setAppState: setAppState);
+            case 'agreements':
+              return Agreements(setAppState: setAppState);
+            case 'main':
+              // check user has answers to questions
+              final String? questions = Memory().get('user', 'questions');
+              if (questions == null) {
+                // TODO: use route instead
+                return FirstTimeQuestionsLoader(
+                  onConfirmed: () {
+                    setState(() {});
+                  },
+                );
+              } else {
+                return MainPage(setAppState: setAppState);
+              }
+            default:
+              print('Unknown state $state');
+              return const Placeholder();
+          }
+        },
+      ),
+    );
   }
 }
 
@@ -467,8 +471,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         },
       ),
       appBar: AppBar(
-          foregroundColor: const Color(0xff6f61e8),
-          backgroundColor: const Color(0xfff5f5f7),
           leading: Builder(
             builder: (BuildContext context) {
               return InkWell(
@@ -491,21 +493,18 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           actions: <Widget>[
             IconButton(
                 tooltip: "Changer de groupe",
-                onPressed: () {
-                  if (state != "chat") {
-                    return;
-                  }
-                  _webSocketConnection.switchgroup();
-                  setState(() {
-                    state = "switch";
-                  });
-                },
-                icon: Icon(
-                  Icons.door_front_door_outlined,
-                  color: state == "chat"
-                      ? const Color(0xff6f61e8)
-                      : const Color(0xff9e9cab),
-                )),
+                onPressed: state == "chat"
+                    ? () {
+                        if (state != "chat") {
+                          return;
+                        }
+                        _webSocketConnection.switchgroup();
+                        setState(() {
+                          state = "switch";
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.door_front_door_outlined)),
           ]),
       body: Builder(
         builder: (BuildContext context) {

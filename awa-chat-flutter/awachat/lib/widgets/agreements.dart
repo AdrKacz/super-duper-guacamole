@@ -96,8 +96,8 @@ class _AgreementsPageState extends State<AgreementsPage> {
                       ),
                     ),
                     CheckboxListTile(
+                      activeColor: Theme.of(context).colorScheme.onPrimary,
                       contentPadding: EdgeInsets.zero,
-                      activeColor: const Color(0xff6f61e8),
                       title: Text(widget.checkText),
                       value: _checked,
                       onChanged: (bool? value) {
@@ -111,20 +111,14 @@ class _AgreementsPageState extends State<AgreementsPage> {
                     ),
                     const Divider(height: 48),
                     ElevatedButton(
-                        style: _checked
-                            ? ElevatedButton.styleFrom(
-                                primary: const Color(0xff6f61e8),
-                              )
-                            : ElevatedButton.styleFrom(
-                                primary: const Color(0xfff5f5f7),
-                                onPrimary: const Color(0xff9e9cab),
-                              ),
-                        onPressed: () {
-                          if (!_checked) {
-                            return;
-                          }
-                          widget.onNextPressed();
-                        },
+                        onPressed: _checked
+                            ? () {
+                                if (!_checked) {
+                                  return;
+                                }
+                                widget.onNextPressed();
+                              }
+                            : null,
                         child: Text(widget.nextText))
                   ],
                 );
@@ -136,8 +130,10 @@ class _AgreementsPageState extends State<AgreementsPage> {
                 });
               }
 
-              return const Center(
-                  child: CircularProgressIndicator(color: Color(0xff6f61e8)));
+              return Center(
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.onPrimary),
+              );
             },
           ),
         ),

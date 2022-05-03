@@ -23,11 +23,11 @@ class ErrorPage extends StatelessWidget {
                   height: 24,
                 ),
                 IconButton(
-                    onPressed: refresh,
-                    icon: const Icon(
-                      Icons.refresh,
-                      color: Color(0xff6f61e8),
-                    )),
+                  onPressed: refresh,
+                  icon: const Icon(
+                    Icons.refresh,
+                  ),
+                ),
               ],
             ),
           ),

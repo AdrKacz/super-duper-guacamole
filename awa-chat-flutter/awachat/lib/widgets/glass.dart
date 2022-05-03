@@ -10,7 +10,7 @@ class Glass extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
         child: Container(
-          color: Colors.black.withOpacity(0),
+          color: Colors.transparent,
         ),
       ),
     );

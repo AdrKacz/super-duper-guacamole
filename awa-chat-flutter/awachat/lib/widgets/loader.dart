@@ -5,10 +5,10 @@ class Loader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SafeArea(
+    return SafeArea(
       child: Center(
         child: CircularProgressIndicator(
-          color: Color(0xff6f61e8),
+          color: Theme.of(context).colorScheme.onPrimary,
         ),
       ),
     );
