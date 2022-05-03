@@ -95,7 +95,6 @@ exports.handler = async (event) => {
   }
   console.log('user:', user)
   console.log('bannedUser:', bannedUser)
-  console.log('bannedUser.banVotingUsers:', bannedUser.banVotingUsers)
   console.log('group:', group)
 
   // verify both user and their group (must be the same)
@@ -140,7 +139,7 @@ exports.handler = async (event) => {
   }
 
   const updateBannedUserCommand = new UpdateCommand({
-    ReturnValues: 'UPDATED_NEW',
+    ReturnValues: 'ALL_NEW',
     TableName: USERS_TABLE_NAME,
     Key: { id: bannedid },
     UpdateExpression: `
@@ -162,7 +161,6 @@ exports.handler = async (event) => {
   const voteConfirmed = updatedBanConfirmerUsers.size >= bannedUser.confirmationRequired
   const voteDenied = updatedBanConfirmerUsers.size + updatedBanVotingUsers.size < bannedUser.confirmationRequired
 
-  // NOTE: here we inform all the group - even the user aimed by the vote - of the result
   if (voteConfirmed || voteDenied) {
     // close the vote
     const updateBannedUserCommand = new UpdateCommand({
@@ -211,6 +209,7 @@ exports.handler = async (event) => {
     }
 
     if (voteConfirmed) {
+      console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
       const publishSwitchGroupCommand = new PublishCommand({
         TopicArn: SWITCH_GROUP_TOPIC_ARN,
         Message: JSON.stringify({
@@ -247,6 +246,7 @@ exports.handler = async (event) => {
       })
       promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
     } else {
+      console.log(`Vote denied with ${updatedBanConfirmerUsers.size + updatedBanVotingUsers.size} confirmation at most (${bannedUser.confirmationRequired} needed)`)
       const publishSendMessageCommand = new PublishCommand({
         TopicArn: SEND_MESSAGE_TOPIC_ARN,
         Message: JSON.stringify({
