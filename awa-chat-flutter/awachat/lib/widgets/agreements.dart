@@ -96,8 +96,8 @@ class _AgreementsPageState extends State<AgreementsPage> {
                       ),
                     ),
                     CheckboxListTile(
+                      activeColor: Theme.of(context).colorScheme.onPrimary,
                       contentPadding: EdgeInsets.zero,
-                      activeColor: const Color(0xff6f61e8),
                       title: Text(widget.checkText),
                       value: _checked,
                       onChanged: (bool? value) {
@@ -130,8 +130,10 @@ class _AgreementsPageState extends State<AgreementsPage> {
                 });
               }
 
-              return const Center(
-                  child: CircularProgressIndicator(color: Color(0xff6f61e8)));
+              return Center(
+                child: CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.onPrimary),
+              );
             },
           ),
         ),

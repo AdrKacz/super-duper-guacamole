@@ -41,7 +41,8 @@ final applicationTheme = ThemeData(
     ),
   ),
   textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(
-    primary: primary,
-  )),
+    style: TextButton.styleFrom(
+      primary: primary,
+    ),
+  ),
 );
