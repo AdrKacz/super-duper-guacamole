@@ -29,6 +29,7 @@
 // id : String - user id
 // questions : Map<String, String>?
 //    question id <String> - answer id <String>
+// isBan : Bool? - is user banned from its old group (false by default)
 // [unused] connectionId : String? - user connection id
 
 // ===== ==== ====
@@ -80,6 +81,7 @@ ${event.Records[0].Sns.Message}
 
   const id = body.id
   const questions = body.questions ?? {}
+  const isBan = body.isBan ?? false
 
   if (id === undefined) {
     throw new Error('id must be defined')
@@ -132,7 +134,8 @@ ${event.Records[0].Sns.Message}
       let chosenGroup = null
       for (const group of response.Items) {
         // Check this group is valid
-        if (group.id !== user.group) {
+        const userNotBannedFromGroup = group.bannedUsers === undefined || !group.bannedUsers.has(user.id)
+        if (group.id !== user.group && userNotBannedFromGroup) {
           let similarity = 0
           // iterate accross the smallest
           const groupQuestions = group.questions ?? {}
@@ -170,7 +173,7 @@ ${event.Records[0].Sns.Message}
 
   const promises = [
     addUserToGroup(user, newGroup),
-    removeUserFromGroup(user)
+    removeUserFromGroup(user, isBan)
   ]
 
   await Promise.allSettled(promises)
@@ -326,7 +329,7 @@ async function addUserToGroup (user, newGroup) {
   await Promise.allSettled(promises)
 }
 
-async function removeUserFromGroup (user) {
+async function removeUserFromGroup (user, isBan) {
   // Remove user grom its group
   // user : Map
   //    id : String - user id
@@ -385,18 +388,23 @@ async function removeUserFromGroup (user) {
     // update or delete group
     const promises = []
     if (group.users.size > 0) {
-      // update group
+      // update group (add to bannedUsers if isBan)
+      const expressionAttributeNames = {
+        '#isWaiting': 'isWaiting',
+        '#users': 'users'
+      }
+      if (isBan) {
+        expressionAttributeNames['#bannedUsers'] = 'bannedUsers'
+      }
       const updateGroupCommand = new UpdateCommand({
         TableName: GROUPS_TABLE_NAME,
         Key: { id: user.group },
         UpdateExpression: `
+        ${isBan ? 'ADD #bannedUsers :id' : ''}
         SET #isWaiting = :isWaiting
         DELETE #users :id
         `,
-        ExpressionAttributeNames: {
-          '#isWaiting': 'isWaiting',
-          '#users': 'users'
-        },
+        ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: {
           ':id': new Set([user.id]),
           ':isWaiting': group.isWaiting ?? 1 // true

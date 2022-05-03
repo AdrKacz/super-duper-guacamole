@@ -215,7 +215,8 @@ exports.handler = async (event) => {
         TopicArn: SWITCH_GROUP_TOPIC_ARN,
         Message: JSON.stringify({
           id: bannedid,
-          groupid: bannedUser.group
+          groupid: bannedUser.group,
+          isBan: true
         })
       })
 
