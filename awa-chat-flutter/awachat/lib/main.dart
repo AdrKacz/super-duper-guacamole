@@ -66,6 +66,7 @@ class _MyAppState extends State<MyApp> {
       state = 'main';
     }
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: applicationTheme,
       home: Builder(
         builder: (BuildContext context) {

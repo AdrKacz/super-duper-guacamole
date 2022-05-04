@@ -15,7 +15,7 @@ class ErrorPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Image.asset('assets/images/undraw_warning_cyit.png'),
+                Image.asset('assets/images/undraw_notify_re_65on'),
                 const Divider(height: 48),
                 const Text("Oups ! Il y a quelque chose d'anormal.",
                     textAlign: TextAlign.center),
