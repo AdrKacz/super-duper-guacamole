@@ -15,7 +15,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.0+17
+version: 1.0.0+18
 
 environment:
   sdk: ">=2.16.1 <3.0.0"
@@ -66,8 +66,8 @@ flutter_icons:
   ios: true
   android: true
   image_path: "assets/icon/iconx1024.png"
-  adaptive_icon_foreground: "assets/icon/iconx1024.png"
-  adaptive_icon_background: "assets/icon/iconx1024.png"
+  adaptive_icon_foreground: "assets/icon/adaptive_icon_foregroundx108.png"
+  adaptive_icon_background: "assets/icon/adaptive_icon_backgroundx108.png"
 
 # The following section is specific to Flutter.
 flutter:
