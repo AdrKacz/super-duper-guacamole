@@ -47,6 +47,12 @@ sh assets/convert.sh 512 image
 
 [**Change app icon**](https://pub.dev/packages/flutter_launcher_icons)
 
+
+```
+flutter pub get
+flutter pub run flutter_launcher_icons:main
+```
+
 ### iOS
 
 **Use a 1024x1024 icon**

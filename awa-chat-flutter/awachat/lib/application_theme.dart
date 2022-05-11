@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 // ===== ===== =====
 // Colors
-const primary = Color(0xff6f61e8);
+const primary = Color(0xff9758f8);
 const secondary = Color(0xfff5f5f7);
 
 const black = Color(0xff1f1c38);
 const grey = Color(0xff9e9cab);
+const green = Colors.green;
 
 // ===== ===== =====
 // Themes
@@ -21,7 +22,7 @@ final applicationTheme = ThemeData(
     secondary: secondary,
     onSecondary: black,
     // active status
-    tertiary: Colors.green,
+    tertiary: green,
     // error
     error: Colors.white,
     onError: Colors.redAccent.shade100,
