@@ -15,18 +15,6 @@ However, AWA doesn't want you to steal its source code and use it opr modify it 
 
 AWA lets you explore its code and you will enjoy!
 
-# Cloud Architecture
-
-<p float="left" align="middle">
-    <img src="./assets/terrastruct/groups.gif" width="100%">
-</p>
-
-# Application
-
-<p float="left" align="middle">
-    <img src="https://drive.google.com/uc?export=view&id=1VFLjEKP4J3OqMbW6YLX6AvdBoXlxl6Fe" width="50%">
-</p>
-
 **Feel free to open an _ISSUE_ for anything you thing should be improved or fixed.**
 
 # Codebase
