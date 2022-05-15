@@ -126,8 +126,15 @@ ${event.Records[0].Sns.Message}
   // NOTE: the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
   // We must check that answers indeed have a greater impact on group than order of arrival.
   // If not that means that we are still quite randomly assigning groups.
+
   // NOTE: We could add ENV VARIABLE for more fine grained controls.
   // For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
+
+  // NOTE: We may want to shuffle the order in which we loop through the groups to have different result
+  // on each run, for different user
+  // (there is NO order in the Query, it is "first found first returned")
+  // (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
+  // (thus, the order being similar too)
   const newGroup = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
     if (response.Count > 0) {
       let maximumOfSimilarity = -1
@@ -344,7 +351,6 @@ async function removeUserFromGroup (user, isBan) {
         users: [user],
         message: {
           action: 'leavegroup',
-          groupid: user.group,
           id: user.id
         }
       })
