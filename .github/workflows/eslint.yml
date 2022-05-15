@@ -13,11 +13,11 @@ jobs:
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v2
-      - name: Install modules - Sam Groups
-        working-directory: ./sam-groups
+      - name: Install modules - Chat Backend
+        working-directory: ./chat-backend
         run: yarn
-      - name: Run ESLint - Sam Group
-        working-directory: ./sam-groups
+      - name: Run ESLint - Chat Backend
+        working-directory: ./chat-backend
         run: yarn run eslint .
       - name: Install modules - Artillery
         working-directory: ./artillery
