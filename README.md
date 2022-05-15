@@ -11,7 +11,7 @@
 
 AWA wants everyone to be able to look into its source code and to learn with it.
 
-However, AWA doesn't want you to steal its source code and use it opr modify it for your own business.
+However, AWA doesn't want you to steal its source code, and use it or modify it for your own business.
 
 AWA lets you explore its code and you will enjoy!
 

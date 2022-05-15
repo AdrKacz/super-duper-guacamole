@@ -6,20 +6,20 @@
     "configurations": [
         {
             "name": "awachat",
-            "cwd": "awa-chat-flutter/awachat",
+            "cwd": "chat-application",
             "request": "launch",
             "type": "dart"
         },
         {
             "name": "awachat (profile mode)",
-            "cwd": "awa-chat-flutter/awachat",
+            "cwd": "chat-application",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
             "name": "awachat (release mode)",
-            "cwd": "awa-chat-flutter/awachat",
+            "cwd": "chat-application",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
