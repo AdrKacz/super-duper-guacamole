@@ -13,3 +13,11 @@ Author: **Vijay Verma**
 # [Undraw](https://undraw.co)
 
 Author: **Katerina Limpitsouni**
+
+# [Storyset](https://storyset.com)
+PENSER À CRÉDITER
+- astronautsuit.gif est à utiliser sur la première slide de l'application --> lorsque l'on présente AWA
+- 404-error-lost-in-space.gif est à utiliser lorsque un message d'erreur s'affiche
+
+
+
