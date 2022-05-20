@@ -2,40 +2,57 @@ languages: "fr"
 questions:
   - 
     id: "001"
-    question: "Ton type de soirée ? 🥳"
+    question: "Tu es plutôt team..."
     answers:
       - 
         id: "01"
-        answer: "Talk and chill 🍷"
+        answer: "Séries 💻"
       - 
         id: "02"
-        answer: "Pizza et jeux de société 🍕"
+        answer: "Films 🍿"
       - 
         id: "03"
-        answer: "Ça part en boîte ! 😎"
+        answer: "Animés 🍥"
+         - 
+        id: "04"
+        answer: "Un bon livre, y'a que ça de vrai 📚"
   - 
     id: "002"
-    question: "Ton sec au choix ? 🥴"
+    question: "Ta soirée favorite..."
     answers:
       - 
         id: "01"
-        answer: "Vodka 🧯"
+        answer: "Pyjama, Netflix et popcorn 🍿"
       - 
         id: "02"
-        answer: "Smoothie fraise banane 🍌"
+        answer: "Ça part en boîte !🔥"
       - 
         id: "03"
-        answer: "Bière 🍺"
+        answer: "Soirée jeux entre amis🍻"
   - 
     id: "003"
-    question: "T'es plutôt ? 😏"
+    question: "Tu es plutôt team..."
     answers:
       - 
         id: "01"
-        answer: "Que des potes ici 👊"
+        answer: "Pizza 🍕"
       - 
         id: "02"
-        answer: "Ça peut toujours déraper 😇"
+        answer: "Burger, frites, un classique 🍔"
       - 
         id: "03"
-        answer: "Où le vent me porte 🙈"
+        answer: "Une salade merci. 🥗"
+ -
+ id: "004"
+    question: "T'es ici pour..."
+    answers:
+      - 
+        id: "01"
+        answer: "Me taper des grosses barres 🤡"
+      - 
+        id: "02"
+        answer: "Me faire des amis 🤟"
+      - 
+        id: "03"
+        answer: "Flirter un peu, on sait jamais 🙄"
+ 
