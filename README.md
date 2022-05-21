@@ -4,6 +4,7 @@
 - [Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
 - [Post Man](https://awa-ma.postman.co)
 - [Terrastruct](https://app.terrastruct.com/console)
+- [CodeMagic](https://codemagic.io)
 
 # Brief overview of the [LICENSE](./LICENSE)
 
@@ -31,10 +32,10 @@ $ cloc --config=options.txt .
 
 Language|files|blank %|comment %|code
 :-------|-------:|-------:|-------:|-------:
-Dart|21|10.90|5.90|2018
+Dart|20|10.76|5.63|2008
 JavaScript|13|19.36|25.89|1348
 YAML|8|8.27|9.78|992
-Markdown|11|34.44|0.00|842
+Markdown|11|34.64|0.00|840
 Python|10|22.59|43.09|810
-**SUM:**|**63**|**17.24**|**15.21**|**6010**
+**SUM:**|**62**|**17.22**|**15.14**|**5998**
 
