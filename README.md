@@ -1,7 +1,5 @@
 # Super Duper Guacamole
 
-# TO remove
-
 [![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/6288ca21c7038f014b56b6af/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/6288ca21c7038f014b56b6af/latest_build)
 
 - [Google Drive](https://drive.google.com/drive/folders/1VGYTlRhyS1SivX0uCPNUiKHsgLy7AHK3?usp=sharing)

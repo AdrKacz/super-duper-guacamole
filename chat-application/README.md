@@ -63,6 +63,8 @@ flutter pub run flutter_launcher_icons:main
 
 ## How to release
 
+# To remove
+
 **CodeMagic** will release a new version of the app in the *App Store - Testflight* and the *Google Play Store - Internal* when a new version of `chat-application` is push to the `main` branch.
 
 **CodeMagic** uses a *iOSDistribution* certificate and profile stored locally (ask @AdrKacz) and copied to *CloudMagic Cloud*.
