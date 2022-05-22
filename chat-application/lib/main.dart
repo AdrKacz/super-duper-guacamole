@@ -21,6 +21,8 @@ import 'package:awachat/widgets/presentation.dart';
 import 'package:awachat/widgets/switch_group.dart';
 import 'package:awachat/widgets/agreements.dart';
 
+// To remove
+
 // ===== ===== =====
 // App initialisation
 void main() async {
