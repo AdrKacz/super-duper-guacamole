@@ -25,11 +25,11 @@ workflows:
           include: true
           source: true
     when:
-    changeset:
-      includes:
-        - 'chat-application/'
-      excludes:
-        - '**/*.md'
+      changeset:
+        includes:
+          - 'chat-application/'
+        excludes:
+          - '**/*.md'
     scripts:
       - |
         # set up key.properties
