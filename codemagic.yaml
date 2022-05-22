@@ -47,7 +47,7 @@ workflows:
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/chat-application/android/local.properties"
       - name: Get Flutter packages
         script: |
-        flutter packages pub get
+          flutter packages pub get
       - name: Build APK with Flutter
         script: |
           flutter build appbundle --release \
