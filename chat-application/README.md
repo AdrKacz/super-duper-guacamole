@@ -69,7 +69,7 @@ flutter pub run flutter_launcher_icons:main
 
 ## How to *manually* release
 
-> You shoudn't have to manually release, release is handle by **CodeMagic**
+> You shoudn't have to release manually. Release is handled by **CodeMagic**
 
 1. **Increment the build number `x.y.z+a` in `pubspec.yaml`**
 
