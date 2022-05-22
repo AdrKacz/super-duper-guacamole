@@ -46,17 +46,19 @@ workflows:
       - name: Get Flutter packages
         script: |
           cd chat-application && flutter packages pub get
-      - name: Build APK with Flutter
-        script: |
-          cd chat-application
-          flutter build appbundle --release \
-            --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
+      # - name: Build APK with Flutter
+      #   script: |
+      #     cd chat-application
+      #     flutter build appbundle --release \
+      #       --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: |
           keychain initialize
       - name: Fetch signing files
         script: |
-          app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
       - name: Use system default keychain
         script: |
           keychain add-certificates
