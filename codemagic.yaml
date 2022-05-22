@@ -6,10 +6,10 @@ workflows:
     triggering:
       events:
         - push
-    branch_patterns:
-      - pattern: 'automatic-build'
-        include: true
-        source: true
+      branch_patterns:
+        - pattern: 'automatic-build'
+          include: true
+          source: true
     when:
       changeset:
         includes:
