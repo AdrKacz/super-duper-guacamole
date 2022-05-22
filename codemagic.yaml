@@ -33,45 +33,45 @@ workflows:
     scripts:
       - name: Set up key properties
         script: |
-        echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
-        cat >> "$CM_BUILD_DIR/chat-application/android/key.properties" <<EOF
-        storePassword=$CM_KEYSTORE_PASSWORD
-        keyPassword=$CM_KEY_PASSWORD
-        keyAlias=$CM_KEY_ALIAS
-        storeFile=$CM_KEYSTORE_PATH
-        EOF
+          echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
+          cat >> "$CM_BUILD_DIR/chat-application/android/key.properties" <<EOF
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOF
       - name: Set up local.properties
         script: |
-        echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/chat-application/android/local.properties"
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/chat-application/android/local.properties"
       - name: Get Flutter packages
         script: |
-        cd chat-application && flutter packages pub get
+          cd chat-application && flutter packages pub get
       - name: Build APK with Flutter
         script: |
-        cd chat-application
-        flutter build appbundle --release \
-          --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
+          cd chat-application
+          flutter build appbundle --release \
+            --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: |
-        keychain initialize
+          keychain initialize
       - name: Fetch signing files
         script: |
-        app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+          app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
       - name: Use system default keychain
         script: |
-        keychain add-certificates
+          keychain add-certificates
       - name: Set up code signing settings on Xcode project
         script: |
-        xcode-project use-profiles
+          xcode-project use-profiles
       - name: Install pods
         script: |
-        find . -name "Podfile" -execdir pod install \;
+          find . -name "Podfile" -execdir pod install \;
       - name: Flutter build ipa and automatic versioning
         script: |
-        cd chat-applicatio
-        flutter build ipa --release \
-          --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
-          --export-options-plist=/Users/builder/export_options.plist   
+          cd chat-applicatio
+          flutter build ipa --release \
+            --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
+            --export-options-plist=/Users/builder/export_options.plist   
     artifacts:
       - chat-application/build/**/outputs/apk/**/*.apk
       - chat-application/build/**/outputs/bundle/**/*.aab
