@@ -1,7 +1,5 @@
 # Super Duper Guacamole
 
-dummy update
-
 - [Google Drive](https://drive.google.com/drive/folders/1VGYTlRhyS1SivX0uCPNUiKHsgLy7AHK3?usp=sharing)
 - [Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
 - [Post Man](https://awa-ma.postman.co)
