@@ -1,7 +1,21 @@
 workflows:
   default-workflow:
     name: Default Workflow
+    working_directory: chat-application
     max_build_duration: 60
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'automatic-build'
+          include: true
+          source: true
+    when:
+      changeset:
+        includes:
+          - 'chat-application/'
+        excludes:
+          - '**/*.md'
     environment:
       groups:
         - keystore_credentials
@@ -18,19 +32,6 @@ workflows:
         - $HOME/Library/Caches/CocoaPods
         - $HOME/.gradle/caches
         - $FLUTTER_ROOT/.pub-cache
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: 'automatic-build'
-          include: true
-          source: true
-    when:
-      changeset:
-        includes:
-          - 'chat-application/'
-        excludes:
-          - '**/*.md'
     scripts:
       - name: Set up key properties
         script: |
@@ -46,10 +47,9 @@ workflows:
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/chat-application/android/local.properties"
       - name: Get Flutter packages
         script: |
-          cd chat-application && flutter packages pub get
+        flutter packages pub get
       - name: Build APK with Flutter
         script: |
-          cd chat-application
           flutter build appbundle --release \
             --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
@@ -74,7 +74,6 @@ workflows:
           find . -name "Podfile" -execdir pod install \;
       - name: Flutter build ipa and automatic versioning
         script: |
-          cd chat-application
           flutter build ipa --release \
             --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
             --export-options-plist=/Users/builder/export_options.plist   
