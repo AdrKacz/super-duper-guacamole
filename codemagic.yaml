@@ -1,0 +1,81 @@
+workflows:
+  default-workflow:
+    name: Default Workflow
+    max_build_duration: 60
+    environment:
+      groups:
+        - keystore_credentials
+        - app_store_credentials
+        - google_play
+        - other
+        - ios_config
+      flutter: default
+      xcode: latest
+      cocoapods: default
+    cache:
+      cache_paths:
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.gradle/caches
+        - $FLUTTER_ROOT/.pub-cache
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+    when:
+    changeset:
+      includes:
+        - 'chat-application/'
+      excludes:
+        - '**/*.md'
+    scripts:
+      - |
+        # set up key.properties
+        echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
+        cat >> "$CM_BUILD_DIR/chat-application/android/key.properties" <<EOF
+        storePassword=$CM_KEYSTORE_PASSWORD
+        keyPassword=$CM_KEY_PASSWORD
+        keyAlias=$CM_KEY_ALIAS
+        storeFile=$CM_KEYSTORE_PATH
+        EOF
+      - |
+        # set up local properties
+        echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/chat-application/android/local.properties"
+      - cd chat-application && flutter packages pub get
+      - 'cd chat-application && flutter build appbundle --release
+        --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1)) '
+      - find . -name "Podfile" -execdir pod install \;
+      - keychain initialize
+      - app-store-connect fetch-signing-files "$BUNDLE_ID"
+        --type IOS_APP_STORE
+        --create
+      - keychain add-certificates
+      - xcode-project use-profiles
+      - 'cd chat-application && flutter build ipa 
+        --export-options-plist=~/export_options.plist
+        --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1))'
+    artifacts:
+      - chat-application/build/**/outputs/apk/**/*.apk
+      - chat-application/build/**/outputs/bundle/**/*.aab
+      - chat-application/build/**/outputs/**/mapping.txt
+      - chat-application/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - chat-application/*.snap
+      - chat-application/build/windows/**/*.msix
+      - chat-application/flutter_drive.log
+    publishing:
+      email:
+        recipients:
+          - adrien.kaczmarek@gmail.com
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        in_app_update_priority: 0
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        submit_to_app_store: false
