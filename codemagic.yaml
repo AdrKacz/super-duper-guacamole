@@ -83,14 +83,14 @@ workflows:
             --dart-define="WEBSCOKET_ENDPOINT=$PRODUCTION_WEBSCOKET_ENDPOINT" \
             --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
     artifacts:
-      - chat-application/build/**/outputs/apk/**/*.apk
-      - chat-application/build/**/outputs/bundle/**/*.aab
-      - chat-application/build/**/outputs/**/mapping.txt
-      - chat-application/build/ios/ipa/*.ipa
+      - ./build/**/outputs/apk/**/*.apk
+      - ./build/**/outputs/bundle/**/*.aab
+      - ./build/**/outputs/**/mapping.txt
+      - ./build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-      - chat-application/*.snap
-      - chat-application/build/windows/**/*.msix
-      - chat-application/flutter_drive.log
+      - ./*.snap
+      - ./build/windows/**/*.msix
+      - ./flutter_drive.log
     publishing:
       email:
         recipients:
