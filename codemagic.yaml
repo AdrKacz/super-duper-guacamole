@@ -31,8 +31,8 @@ workflows:
         excludes:
           - '**/*.md'
     scripts:
-      - |
-        # set up key.properties
+      - name: Set up key properties
+        script: |
         echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
         cat >> "$CM_BUILD_DIR/chat-application/android/key.properties" <<EOF
         storePassword=$CM_KEYSTORE_PASSWORD
@@ -40,22 +40,38 @@ workflows:
         keyAlias=$CM_KEY_ALIAS
         storeFile=$CM_KEYSTORE_PATH
         EOF
-      - |
-        # set up local properties
+      - name: Set up local.properties
+        script: |
         echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/chat-application/android/local.properties"
-      - cd chat-application && flutter packages pub get
-      - 'cd chat-application && flutter build appbundle --release
-        --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1)) '
-      - find . -name "Podfile" -execdir pod install \;
-      - keychain initialize
-      - app-store-connect fetch-signing-files "$BUNDLE_ID"
-        --type IOS_APP_STORE
-        --create
-      - keychain add-certificates
-      - xcode-project use-profiles
-      - 'cd chat-application && flutter build ipa 
-        --export-options-plist=~/export_options.plist
-        --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1))'
+      - name: Get Flutter packages
+        script: |
+        cd chat-application && flutter packages pub get
+      - name: Build APK with Flutter
+        script: |
+        cd chat-application
+        flutter build appbundle --release \
+          --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
+      - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
+        script: |
+        keychain initialize
+      - name: Fetch signing files
+        script: |
+        app-store-connect fetch-signing-files $BUNDLE_ID --type IOS_APP_STORE --create
+      - name: Use system default keychain
+        script: |
+        keychain add-certificates
+      - name: Set up code signing settings on Xcode project
+        script: |
+        xcode-project use-profiles
+      - name: Install pods
+        script: |
+        find . -name "Podfile" -execdir pod install \;
+      - name: Flutter build ipa and automatic versioning
+        script: |
+        cd chat-applicatio
+        flutter build ipa --release \
+          --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
+          --export-options-plist=/Users/builder/export_options.plist   
     artifacts:
       - chat-application/build/**/outputs/apk/**/*.apk
       - chat-application/build/**/outputs/bundle/**/*.aab
