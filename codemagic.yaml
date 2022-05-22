@@ -7,7 +7,7 @@ workflows:
       events:
         - push
       branch_patterns:
-        - pattern: 'main'
+        - pattern: 'automatic-build'
           include: true
           source: true
     when:
@@ -24,6 +24,7 @@ workflows:
         - other
         - ios_config
         - certificate_credentials
+        - custom_networking
       flutter: default
       xcode: latest
       cocoapods: default
@@ -51,7 +52,9 @@ workflows:
       - name: Build APK with Flutter
         script: |
           flutter build appbundle --release \
-            --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1))
+            --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1)) \
+            --dart-define="WEBSCOKET_ENDPOINT=$PRODUCTION_WEBSCOKET_ENDPOINT" \
+            --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: |
           keychain initialize
@@ -76,7 +79,9 @@ workflows:
         script: |
           flutter build ipa --release \
             --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
-            --export-options-plist=/Users/builder/export_options.plist   
+            --export-options-plist=/Users/builder/export_options.plist \
+            --dart-define="WEBSCOKET_ENDPOINT=$PRODUCTION_WEBSCOKET_ENDPOINT" \
+            --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
     artifacts:
       - chat-application/build/**/outputs/apk/**/*.apk
       - chat-application/build/**/outputs/bundle/**/*.aab
