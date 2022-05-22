@@ -2,7 +2,7 @@ languages: "fr"
 questions:
   - 
     id: "001"
-    question: "UPDATE Ton type de soirée ? 🥳"
+    question: "Ton type de soirée ? 🥳"
     answers:
       - 
         id: "01"
