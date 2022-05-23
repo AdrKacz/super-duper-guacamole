@@ -16,18 +16,16 @@ Author: **Katerina Limpitsouni**
 
 # [Storyset](https://storyset.com)
 PENSER À CRÉDITER
+
 ## Pour les slides de présentation de l'application :
 | Slide number  | Image  | But | Texte  |
 |:----------|:----------|:----------|:----------|
-| 1    | astronautsuit.gif   | Présentation de qui est Awa   | Hello, je suis Awa, je vais te présenter l'application.    |
-| 2    | chat.gif    | Entrer dans un groupe   | Je vais te faire entrer dans un groupe de conversation. <br/>Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.   |
-| 3   | outer-space.gif | Quitter un groupe   | Tu ne seras que dans un groupe à la fois. <br/>Clique sur *icone porte* en haut à droite de ton écran si tu veux partir explorer un autre groupe.   |
-| 4   | taken.gif    | Signaler, expulser quelqu'un    | Si un message t'offense, reste appuyé dessus. <br/>Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.   |
-| 5   | launching.gif    | Call to action    | Hâte de découvrir de nouvelles personnes et rigoler ensemble ? |
-
-
-
-**EXTRA** : error-lost-in-space.gif est à utiliser lorsque un message d'erreur s'affiche (exemple : page non trouvée...)
+| 1 | `astronaut-suit.gif` | Présentation de qui est Awa   | Salut, je suis Awa. <br/> Je vais te présenter l'application. |
+| 2 | `chat.gif` | Entrer dans un groupe | Je vais te faire entrer dans un groupe de conversation. <br/>Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil. |
+| 3 | `outer-space.gif` | Quitter un groupe   | Tu ne seras que dans un groupe à la fois. <br/>Clique sur *icone porte* en haut à droite de ton écran pour partir explorer un autre groupe. |
+| 4 | `taken.gif` | Signaler, expulser quelqu'un  | Si un message t'offense, reste appuyé dessus. <br/>Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit. |
+| 5 | `launching.gif` | Call to action    | Hâte de découvrir et t'amuser avec de nouvelles personnes ? |
+| **Errors** | `error-lost-in-space.gif` | Errors | ... |
 
 
 

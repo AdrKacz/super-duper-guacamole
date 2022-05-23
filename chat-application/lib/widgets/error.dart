@@ -15,7 +15,7 @@ class ErrorPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Image.asset('assets/images/undraw_notify_re_65on.png'),
+                Image.asset('assets/images/error-lost-in-space.gif'),
                 const SizedBox(
                   height: 24,
                 ),

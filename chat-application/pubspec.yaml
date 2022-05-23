@@ -79,13 +79,12 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/undraw_having_fun_re_vj4h.png
-    - assets/images/undraw_people_re_8spw.png
-    - assets/images/undraw_social_interaction_re_dyjh.png
-    - assets/images/undraw_super_woman_dv-0-y.png
-    - assets/images/undraw_notify_re_65on.png
-    - assets/images/undraw_joyride_re_968t.png
-    - assets/images/undraw_login_re_4vu2.png
+    - assets/images/astronaut-suit.gif
+    - assets/images/chat.gif
+    - assets/images/error-lost-in-space.gif
+    - assets/images/launching.gif
+    - assets/images/outer-space.gif
+    - assets/images/taken.gif
     - assets/images/undraw_searching_re_3ra9.png
     - assets/images/undraw_decide_re_ixfw.png
 
