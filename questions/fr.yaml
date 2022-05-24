@@ -1,7 +1,7 @@
 languages: "fr"
 questions:
   - 
-    id: "Netflix 1.0.0"
+    id: "netflix 1.0.0"
     question: "Tu es plutôt..."
     answers:
       - 
@@ -14,7 +14,7 @@ questions:
         id: "netflix-animes 1.0.0"
         answer: "Animés 🍥"
   - 
-    id: "Night 1.0.0"
+    id: "night 1.0.0"
     question: "Ta soirée favorite ?"
     answers:
       - 
@@ -27,7 +27,7 @@ questions:
         id: "night-friends 1.0.0"
         answer: "Soirée entre amis 🍻"
   - 
-    id: "Food 1.0.0"
+    id: "food 1.0.0"
     question: "Ton plat indispensable ?"
     answers:
       - 
@@ -40,7 +40,7 @@ questions:
         id: "food-sushis 1.0.0"
         answer: "Sushis voyons ! 🍣"
  -
- id: "Desire 1.0.0"
+ id: "desire 1.0.0"
     question: "T'es ici pour..."
     answers:
       - 
