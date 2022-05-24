@@ -7,7 +7,7 @@ import 'package:awachat/objects/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      String.fromEnvironment("WEBSCOKET_ENDPOINT");
+      String.fromEnvironment("WEBSOCKET_ENDPOINT");
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;

@@ -25,6 +25,7 @@ workflows:
         - ios_config
         - certificate_credentials
         - custom_networking
+        - emails
       flutter: default
       xcode: latest
       cocoapods: default
@@ -53,7 +54,7 @@ workflows:
         script: |
           flutter build appbundle --release \
             --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1)) \
-            --dart-define="WEBSCOKET_ENDPOINT=$PRODUCTION_WEBSCOKET_ENDPOINT" \
+            --dart-define="WEBSOCKET_ENDPOINT=$PRODUCTION_WEBSOCKET_ENDPOINT" \
             --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: |
@@ -80,7 +81,7 @@ workflows:
           flutter build ipa --release \
             --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
             --export-options-plist=/Users/builder/export_options.plist \
-            --dart-define="WEBSCOKET_ENDPOINT=$PRODUCTION_WEBSCOKET_ENDPOINT" \
+            --dart-define="WEBSOCKET_ENDPOINT=$PRODUCTION_WEBSOCKET_ENDPOINT" \
             --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
     artifacts:
       - ./build/**/outputs/apk/**/*.apk
@@ -94,7 +95,9 @@ workflows:
     publishing:
       email:
         recipients:
-          - adrien.kaczmarek@gmail.com
+          - $ADRKACZ_EMAIL
+          - $ALICEETRX_EMAIL
+          - $MAXIBO_EMAIL
       google_play:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
