@@ -1,58 +1,55 @@
 languages: "fr"
 questions:
   - 
-    id: "001"
-    question: "Tu es plutôt team..."
+    id: "Netflix 1.0.0"
+    question: "Tu es plutôt..."
     answers:
       - 
-        id: "01"
+        id: "netflix-series 1.0.0"
         answer: "Séries 💻"
       - 
-        id: "02"
+        id: "netflix-films 1.0.0"
         answer: "Films 🍿"
       - 
-        id: "03"
+        id: "netflix-animes 1.0.0"
         answer: "Animés 🍥"
-         - 
-        id: "04"
-        answer: "Un bon livre, y'a que ça de vrai 📚"
   - 
-    id: "002"
-    question: "Ta soirée favorite..."
+    id: "Night 1.0.0"
+    question: "Ta soirée favorite ?"
     answers:
       - 
-        id: "01"
-        answer: "Pyjama, Netflix et popcorn 🍿"
+        id: "night-pyjama 1.0.0"
+        answer: "En pyjama, tranquille chez moi ☺️"
       - 
-        id: "02"
-        answer: "Ça part en boîte !🔥"
+        id: "night-club 1.0.0"
+        answer: "En boîte jusqu'au bout de la nuit ! 🔥"
       - 
-        id: "03"
-        answer: "Soirée jeux entre amis🍻"
+        id: "night-friends 1.0.0"
+        answer: "Soirée entre amis 🍻"
   - 
-    id: "003"
-    question: "Tu es plutôt team..."
+    id: "Food 1.0.0"
+    question: "Ton plat indispensable ?"
     answers:
       - 
-        id: "01"
-        answer: "Pizza 🍕"
+        id: "food-pizza 1.0.0"
+        answer: "Pizza ! 🍕"
       - 
-        id: "02"
+        id: "food-burger 1.0.0"
         answer: "Burger, frites, un classique 🍔"
       - 
-        id: "03"
-        answer: "Une salade merci. 🥗"
+        id: "food-sushis 1.0.0"
+        answer: "Sushis voyons ! 🍣"
  -
- id: "004"
+ id: "Desire 1.0.0"
     question: "T'es ici pour..."
     answers:
       - 
-        id: "01"
-        answer: "Me taper des grosses barres 🤡"
+        id: "desire-mates 1.0.0"
+        answer: "Me faire des potes 🤟"
       - 
-        id: "02"
-        answer: "Me faire des amis 🤟"
+        id: "desire-more 1.0.0"
+        answer: "Ça peut toujours déraper 🙄"
       - 
-        id: "03"
-        answer: "Flirter un peu, on sait jamais 🙄"
+        id: "desire-wind 1.0.0"
+        answer: "Je vais où le vent me porte 🙈"
  
