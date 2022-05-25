@@ -22,11 +22,11 @@ PENSER À CRÉDITER
 |:----------|:----------|:----------|:----------|
 | 1 | `astronaut-suit.gif` | Présentation de qui est Awa   | Salut, je suis Awa. <br/> Je vais te présenter l'application. |
 | 2 | `chat.gif` | Entrer dans un groupe | Je vais te faire entrer dans un groupe de conversation. <br/>Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil. |
-| 3 | `outer-space.gif` | Quitter un groupe   | Tu ne seras que dans un groupe à la fois. <br/>Clique sur *icone porte* en haut à droite de ton écran pour partir explorer un autre groupe. |
+| 3 | `outer-space.gif` | Quitter un groupe   | Tu ne seras que dans un groupe à la fois. <br/>Clique sur *`door icon`* en haut à droite de ton écran pour partir explorer un autre groupe. |
 | 4 | `taken.gif` | Signaler, expulser quelqu'un  | Si un message t'offense, reste appuyé dessus. <br/>Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit. |
-| 5 | `launching.gif` | Call to action    | Hâte de découvrir et t'amuser avec de nouvelles personnes ? |
-| 6   | alien-science.gif    | Chercher un groupe    | Lorsque la personne demande à changer de groupe et que la page de recherche s'affiche.
-| 7   | decision-questions.gif    | Répondre aux questions    | Lorsque l'on propose à la personne aux questions pour la mettre dans un groupe.
+| 5 | `launching.gif` | Call to action | Hâte de découvrir et t'amuser avec de nouvelles personnes ? |
+| 6   | `alien-science.gif`| Chercher un groupe | ... |
+| 7   | `decision-questions.gif`| Répondre aux questions | ... |  
 | **Errors** | `error-lost-in-space.gif` | Errors | ... |
 
 
