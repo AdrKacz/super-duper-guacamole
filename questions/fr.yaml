@@ -1,41 +1,55 @@
 languages: "fr"
 questions:
   - 
-    id: "001"
-    question: "Ton type de soirée ? 🥳"
+    id: "netflix 1.0.0"
+    question: "Tu es plutôt..."
     answers:
       - 
-        id: "01"
-        answer: "Talk and chill 🍷"
+        id: "netflix-series 1.0.0"
+        answer: "Séries 💻"
       - 
-        id: "02"
-        answer: "Pizza et jeux de société 🍕"
+        id: "netflix-films 1.0.0"
+        answer: "Films 🍿"
       - 
-        id: "03"
-        answer: "Ça part en boîte ! 😎"
+        id: "netflix-animes 1.0.0"
+        answer: "Animés 🍥"
   - 
-    id: "002"
-    question: "Ton sec au choix ? 🥴"
+    id: "night 1.0.0"
+    question: "Ta soirée favorite ?"
     answers:
       - 
-        id: "01"
-        answer: "Vodka 🧯"
+        id: "night-pyjama 1.0.0"
+        answer: "En pyjama, tranquille chez moi ☺️"
       - 
-        id: "02"
-        answer: "Smoothie fraise banane 🍌"
+        id: "night-club 1.0.0"
+        answer: "En boîte jusqu'au bout de la nuit ! 🔥"
       - 
-        id: "03"
-        answer: "Bière 🍺"
+        id: "night-friends 1.0.0"
+        answer: "Soirée entre amis 🍻"
   - 
-    id: "003"
-    question: "T'es plutôt ? 😏"
+    id: "food 1.0.0"
+    question: "Ton plat indispensable ?"
     answers:
       - 
-        id: "01"
-        answer: "Que des potes ici 👊"
+        id: "food-pizza 1.0.0"
+        answer: "Pizza ! 🍕"
       - 
-        id: "02"
-        answer: "Ça peut toujours déraper 😇"
+        id: "food-burger 1.0.0"
+        answer: "Burger, frites, un classique 🍔"
       - 
-        id: "03"
-        answer: "Où le vent me porte 🙈"
+        id: "food-sushis 1.0.0"
+        answer: "Sushis voyons ! 🍣"
+ -
+ id: "desire 1.0.0"
+    question: "T'es ici pour..."
+    answers:
+      - 
+        id: "desire-mates 1.0.0"
+        answer: "Me faire des potes 🤟"
+      - 
+        id: "desire-more 1.0.0"
+        answer: "Ça peut toujours déraper 🙄"
+      - 
+        id: "desire-wind 1.0.0"
+        answer: "Je vais où le vent me porte 🙈"
+ 
