@@ -6,23 +6,44 @@
     "configurations": [
         {
             "name": "awachat",
-            "cwd": "awa-chat-flutter/awachat",
+            "cwd": "chat-application",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define",
+                "WEBSOCKET_ENDPOINT=wss://uxxpxxigt0.execute-api.eu-west-3.amazonaws.com/dev",
+                "--dart-define",
+                "NOTIFICATION_HTTP_ENDPOINT=https://65oauoit0a.execute-api.eu-west-3.amazonaws.com/firebase-token"
+            ]
         },
         {
             "name": "awachat (profile mode)",
-            "cwd": "awa-chat-flutter/awachat",
+            "cwd": "chat-application",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "profile"
+            "flutterMode": "profile",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define",
+                "WEBSOCKET_ENDPOINT=wss://uxxpxxigt0.execute-api.eu-west-3.amazonaws.com/dev",
+                "--dart-define",
+                "NOTIFICATION_HTTP_ENDPOINT=https://65oauoit0a.execute-api.eu-west-3.amazonaws.com/firebase-token"
+            ]
         },
         {
             "name": "awachat (release mode)",
-            "cwd": "awa-chat-flutter/awachat",
+            "cwd": "chat-application",
             "request": "launch",
             "type": "dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define",
+                "WEBSOCKET_ENDPOINT=wss://uxxpxxigt0.execute-api.eu-west-3.amazonaws.com/dev",
+                "--dart-define",
+                "NOTIFICATION_HTTP_ENDPOINT=https://65oauoit0a.execute-api.eu-west-3.amazonaws.com/firebase-token"
+            ]
         }
     ]
 }
