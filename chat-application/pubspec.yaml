@@ -81,12 +81,12 @@ flutter:
   assets:
     - assets/images/astronaut-suit.gif
     - assets/images/chat.gif
-    - assets/images/error-lost-in-space.gif
+    - assets/images/404-error-lost-in-space.gif
     - assets/images/launching.gif
     - assets/images/outer-space.gif
     - assets/images/taken.gif
-    - assets/images/undraw_searching_re_3ra9.png
-    - assets/images/undraw_decide_re_ixfw.png
+    - assets/images/decision-questions.gif
+    - assets/images/alien-science.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
