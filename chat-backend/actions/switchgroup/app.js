@@ -64,7 +64,7 @@ exports.handler = async (event) => {
     }
   })
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+  if (tempUser === undefined || tempUser.id === undefined) {
     return
   }
   const id = tempUser.id
@@ -78,7 +78,7 @@ exports.handler = async (event) => {
     TopicArn: SWITCH_GROUP_TOPIC_ARN,
     Message: JSON.stringify({
       id: id,
-      groupid: groupid !== '' ? groupid : undefined,
+      groupid: groupid,
       connectionId: event.requestContext.connectionId,
       questions: questions
     })

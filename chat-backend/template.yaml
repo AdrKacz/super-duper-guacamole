@@ -497,11 +497,15 @@ Resources:
     Properties:
       CodeUri: actions/switchgroup/
       Layers:
+        - !Ref AWSSDKDdbLayerVersion
         - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
           SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
+          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
       Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
   ActionSwitchGroupPermission:
@@ -529,6 +533,7 @@ Resources:
         Variables:
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTable
@@ -564,6 +569,7 @@ Resources:
           CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired 
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
@@ -599,6 +605,7 @@ Resources:
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
           SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
+          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable

@@ -7,9 +7,9 @@
   "scripts": {
     "lint": "eslint . --fix",
     "predeploy": "sh ./predeploy.sh",
-    "deploy": "sam deploy --guided",
+    "deploy": "sam deploy",
     "prefastdeploy": "sam build",
-    "fastdeploy": "sam deploy --guided"
+    "fastdeploy": "sam deploy"
   },
   "devDependencies": {
     "eslint": "^7.32.0",

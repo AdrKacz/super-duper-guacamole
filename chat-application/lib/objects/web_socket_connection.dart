@@ -17,18 +17,18 @@ class WebSocketConnection {
   }
 
   void register() {
-    print('register');
+    print('Send action register');
     _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
   }
 
   void switchgroup() {
-    print('switchgroup');
+    print('Send action switchgroup');
     _channel.sink.add(jsonEncode(
         {"action": "switchgroup", "questions": loadSelectedAnswers()}));
   }
 
   void textmessage(String encodedMessage) {
-    print('textmessage');
+    print('Send action textmessage');
     _channel.sink.add(jsonEncode({
       "action": "textmessage",
       "message": encodedMessage,
@@ -36,7 +36,7 @@ class WebSocketConnection {
   }
 
   void banrequest(String userid, String messageid) {
-    print('banrequest');
+    print('Send action banrequest');
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
       "bannedid": userid,
@@ -45,7 +45,7 @@ class WebSocketConnection {
   }
 
   void banreply(String banneduserid, String status) {
-    print('banreply');
+    print('Send action banreply');
     _channel.sink.add(jsonEncode({
       "action": "banreply",
       "bannedid": banneduserid,
