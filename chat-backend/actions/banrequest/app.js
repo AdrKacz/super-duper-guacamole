@@ -9,8 +9,6 @@
 // EVENT
 // Switch group
 // event.body
-// id : String - user id
-// groupid : String - user group id
 // bannedid : String - banned user id
 // messageid : String - message id being banned for (to be removed)
 
@@ -67,14 +65,39 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body)
 
-  const id = body.id
-  const groupid = body.groupid
   const bannedid = body.bannedid
   const messageid = body.messageid
 
-  if (id === undefined || groupid === undefined || bannedid === undefined || messageid === undefined) {
-    throw new Error('id, groupid, bannedid, and messageid must be defined')
+  if (bannedid === undefined || messageid === undefined) {
+    throw new Error('bannedid, and messageid must be defined')
   }
+
+  // get userid and groupid
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': event.requestContext.connectionId
+    }
+  })
+  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    } else {
+      return undefined
+    }
+  })
+
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.group == undefined) {
+    return
+  }
+  const id = tempUser.id
+  const groupid = tempUser.group
 
   if (id === bannedid) {
     // cannot ban yourself

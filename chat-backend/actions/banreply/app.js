@@ -52,10 +52,10 @@ exports.handler = async (event) => {
   const status = body.status
 
   if (bannedid === undefined || !['confirmed', 'denied'].includes(status)) {
-    throw new Error("id and bannedid must be defined, and status must be either 'confirmed' or 'denied'")
+    throw new Error("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
   }
 
-  // get user
+  // get userid and groupid
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
