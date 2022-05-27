@@ -63,9 +63,17 @@ flutter pub run flutter_launcher_icons:main
 
 ## How to release
 
-> **Increment the build number `x.y.z+a` in `pubspec.yaml`**
+**CodeMagic** will release a new version of the app in the *App Store - Testflight* and the *Google Play Store - Internal* when a new version of `chat-application` is push to the `main` branch.
 
-> Run `flutter clean` before building to avoid past artefacts.
+**CodeMagic** uses a *iOSDistribution* certificate and profile stored locally (ask @AdrKacz) and copied to *CloudMagic Cloud*.
+
+## How to *manually* release
+
+> You shoudn't have to release manually. Release is handled by **CodeMagic**
+
+1. **Increment the build number `x.y.z+a` in `pubspec.yaml`**
+
+2. Run `flutter clean` before building to avoid past artefacts.
 
 ### iOS
 
