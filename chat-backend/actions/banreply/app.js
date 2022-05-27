@@ -9,8 +9,6 @@
 // EVENT
 // Switch group
 // event.body
-// id : String - user id
-// groupid : String  - user group id
 // bannedid : String - banned user id
 // status : String - 'confirmed' or 'denied'
 
@@ -50,14 +48,39 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body)
 
-  const id = body.id
-  const groupid = body.groupid
   const bannedid = body.bannedid
   const status = body.status
 
-  if (id === undefined || groupid === undefined || bannedid === undefined || !['confirmed', 'denied'].includes(status)) {
+  if (bannedid === undefined || !['confirmed', 'denied'].includes(status)) {
     throw new Error("id and bannedid must be defined, and status must be either 'confirmed' or 'denied'")
   }
+
+  // get user
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': event.requestContext.connectionId
+    }
+  })
+  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    } else {
+      return undefined
+    }
+  })
+
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.group == undefined) {
+    return
+  }
+  const id = tempUser.id
+  const groupid = tempUser.group
 
   // get users
   const batchGetUsersCommand = new BatchGetCommand({
@@ -85,7 +108,7 @@ exports.handler = async (event) => {
   })
 
   const [users, [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
-  let user, bannedUser
+  let user,bannedUser
   if (users[0].id === id) {
     user = users[0]
     bannedUser = users[1]
