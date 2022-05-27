@@ -1,6 +1,6 @@
 # Super Duper Guacamole
 
-[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/6288ca21c7038f014b56b6af/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/6288ca21c7038f014b56b6af/latest_build)
+[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/latest_build)
 
 - [Google Drive](https://drive.google.com/drive/folders/1VGYTlRhyS1SivX0uCPNUiKHsgLy7AHK3?usp=sharing)
 - [Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
