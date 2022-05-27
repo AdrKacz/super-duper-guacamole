@@ -21,27 +21,16 @@ class WebSocketConnection {
     _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
   }
 
-  void unregister() {
-    print('unregister');
-    _channel.sink.add(jsonEncode({"action": "unregister", "id": User().id}));
-  }
-
   void switchgroup() {
     print('switchgroup');
-    _channel.sink.add(jsonEncode({
-      "action": "switchgroup",
-      "groupid": User().groupId,
-      "id": User().id,
-      "questions": loadSelectedAnswers()
-    }));
+    _channel.sink.add(jsonEncode(
+        {"action": "switchgroup", "questions": loadSelectedAnswers()}));
   }
 
   void textmessage(String encodedMessage) {
     print('textmessage');
     _channel.sink.add(jsonEncode({
       "action": "textmessage",
-      "id": User().id,
-      "groupid": User().groupId,
       "message": encodedMessage,
     }));
   }
@@ -50,8 +39,6 @@ class WebSocketConnection {
     print('banrequest');
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
-      "id": User().id,
-      "groupid": User().groupId,
       "bannedid": userid,
       "messageid": messageid,
     }));
@@ -61,8 +48,6 @@ class WebSocketConnection {
     print('banreply');
     _channel.sink.add(jsonEncode({
       "action": "banreply",
-      "id": User().id,
-      "groupid": User().groupId,
       "bannedid": banneduserid,
       "status": status,
     }));

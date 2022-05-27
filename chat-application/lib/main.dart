@@ -348,7 +348,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         break;
       case "leavegroup":
         // empty string is stored as undefined serverside
-        // (causing a difference where there is not)
+        // (causing a difference when there is not)
         final String groupId = data['groupid'] ?? "";
         final String userId = data['id'] ?? [];
         if (userId == User().id) {
@@ -441,7 +441,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     _state = Memory().get('user', 'appChatState') ?? "idle";
 
@@ -588,7 +588,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     _webSocketConnection.close();
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 }
