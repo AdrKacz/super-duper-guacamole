@@ -15,7 +15,7 @@
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -23,6 +23,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
+  USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
   CONFIRMATION_REQUIRED_STRING,
   SEND_MESSAGE_TOPIC_ARN,
@@ -93,7 +94,7 @@ exports.handler = async (event) => {
     }
   })
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group == undefined) {
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
     return
   }
   const id = tempUser.id

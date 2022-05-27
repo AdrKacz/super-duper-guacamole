@@ -8,21 +8,27 @@
 // EVENT
 // Switch group
 // event.body
-// id : String - user id
-// groupid : String - group id
 // questions : Map<String, String>?
 //    question id <String> - answer id <String>
 
 // ===== ==== ====
 // IMPORTS
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+const { DynamoDBDocumentClient, QueryCommand } = require('@aws-sdk/lib-dynamodb')
+
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
 // ===== ==== ====
 // CONSTANTS
 const {
+  USERS_TABLE_NAME,
+  USERS_CONNECTION_ID_INDEX_NAME,
   SWITCH_GROUP_TOPIC_ARN,
   AWS_REGION
 } = process.env
+
+const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
+const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
 const snsClient = new SNSClient({ region: AWS_REGION })
 
@@ -37,15 +43,35 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  const body = JSON.parse(event.body)
+  // get userid and groupid
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': event.requestContext.connectionId
+    }
+  })
+  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    } else {
+      return undefined
+    }
+  })
 
-  const id = body.id
-  const groupid = body.groupid
-  const questions = body.questions
-
-  if (id === undefined || groupid === undefined) {
-    throw new Error('id and groupid must be defined')
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+    return
   }
+  const id = tempUser.id
+  const groupid = tempUser.group
+
+  const body = JSON.parse(event.body)
+  const questions = body.questions
 
   // switch group
   const publishSwithGroupCommand = new PublishCommand({
