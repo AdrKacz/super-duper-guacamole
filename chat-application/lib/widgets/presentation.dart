@@ -41,7 +41,7 @@ Clique sur """),
 Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
           assetPath: 'assets/images/taken.gif'),
       SlideWithButton(
-        text: "Hâte de découvrir et t'amuser avec de nouvelles personnes ?",
+        text: "Hâte de te faire de nouveaux potes ?",
         assetPath: 'assets/images/launching.gif',
         buttonText: "C'est parti !",
         onPressed: () {
