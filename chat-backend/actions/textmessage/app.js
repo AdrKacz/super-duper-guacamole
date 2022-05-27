@@ -9,14 +9,12 @@
 // EVENT
 // Switch group
 // event.body
-// id : String - user id
-// groupid : String - user group id
 // message : String
 
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, BatchGetCommand, GetCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -24,6 +22,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
+  USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN,
@@ -46,10 +45,35 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
+  // get userid and groupid
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': event.requestContext.connectionId
+    }
+  })
+  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    } else {
+      return undefined
+    }
+  })
+
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+    return
+  }
+  const id = tempUser.id
+  const groupid = tempUser.group
+
   const body = JSON.parse(event.body)
 
-  const id = body.id
-  const groupid = body.groupid
   const message = body.message
   if (id === undefined || groupid === undefined || message === undefined) {
     throw new Error('id, groupid, and message must be defined')

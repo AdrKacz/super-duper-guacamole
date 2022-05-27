@@ -64,15 +64,6 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  const body = JSON.parse(event.body)
-
-  const bannedid = body.bannedid
-  const messageid = body.messageid
-
-  if (bannedid === undefined || messageid === undefined) {
-    throw new Error('bannedid, and messageid must be defined')
-  }
-
   // get userid and groupid
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
@@ -99,6 +90,15 @@ exports.handler = async (event) => {
   }
   const id = tempUser.id
   const groupid = tempUser.group
+
+  const body = JSON.parse(event.body)
+
+  const bannedid = body.bannedid
+  const messageid = body.messageid
+
+  if (bannedid === undefined || messageid === undefined) {
+    throw new Error('bannedid, and messageid must be defined')
+  }
 
   if (id === bannedid) {
     // cannot ban yourself

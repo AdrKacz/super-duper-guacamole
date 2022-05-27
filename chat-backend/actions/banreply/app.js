@@ -47,15 +47,6 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  const body = JSON.parse(event.body)
-
-  const bannedid = body.bannedid
-  const status = body.status
-
-  if (bannedid === undefined || !['confirmed', 'denied'].includes(status)) {
-    throw new Error("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
-  }
-
   // get userid and groupid
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
@@ -82,6 +73,15 @@ exports.handler = async (event) => {
   }
   const id = tempUser.id
   const groupid = tempUser.group
+
+  const body = JSON.parse(event.body)
+
+  const bannedid = body.bannedid
+  const status = body.status
+
+  if (bannedid === undefined || !['confirmed', 'denied'].includes(status)) {
+    throw new Error("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
+  }
 
   // get users
   const batchGetUsersCommand = new BatchGetCommand({
