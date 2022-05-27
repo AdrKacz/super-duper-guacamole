@@ -81,7 +81,7 @@ flutter:
   assets:
     - assets/images/astronaut-suit.gif
     - assets/images/chat.gif
-    - assets/images/404-error-lost-in-space.gif
+    - assets/images/error-lost-in-space.gif
     - assets/images/launching.gif
     - assets/images/outer-space.gif
     - assets/images/taken.gif

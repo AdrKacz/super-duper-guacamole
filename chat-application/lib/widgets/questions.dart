@@ -24,9 +24,10 @@ class FirstTimeQuestionsLoader extends StatelessWidget {
                 children: [
                   Image.asset("assets/images/decision-questions.gif"),
                   const Divider(height: 48),
-                  const Text("""Tout d'abord, je dois savoir plus sur toi.
+                  const Text(
+                      """Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
                       
-Tu pourras changer tes réponses en cliquant sur ton avatar.""",
+Tu pourras changer tes réponses à tout moment en cliquant sur ton avatar.""",
                       textAlign: TextAlign.center),
                   const Divider(height: 48),
                   ElevatedButton(
