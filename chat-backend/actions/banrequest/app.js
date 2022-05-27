@@ -88,12 +88,11 @@ exports.handler = async (event) => {
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: [{ id: id }, { id: bannedid }],
-        ProjectionExpression: '#id, #group, #connectionId, #banVotingUsers, #banConfirmedUsers',
+        ProjectionExpression: '#id, #group, #connectionId, #banConfirmedUsers',
         ExpressionAttributeNames: {
           '#id': 'id',
           '#group': 'group',
           '#connectionId': 'connectionId',
-          '#banVotingUsers': 'banVotingUsers',
           '#banConfirmedUsers': 'banConfirmedUsers'
         }
       },
@@ -118,7 +117,6 @@ exports.handler = async (event) => {
   }
   console.log('user:', user)
   console.log('bannedUser:', bannedUser)
-  console.log('bannedUser.banVotingUsers:', bannedUser.banVotingUsers)
   console.log('bannedUser.banConfirmedUsers:', bannedUser.banConfirmedUsers)
   console.log('group:', group)
 
@@ -142,18 +140,15 @@ exports.handler = async (event) => {
     }
   }
 
-  const banVotingUsers = bannedUser.banVotingUsers ?? new Set()
   const banConfirmedUsers = bannedUser.banConfirmedUsers ?? new Set()
 
   const banNewVotingUsers = new Set(group.users)
   banNewVotingUsers.delete(bannedid) // banned user is not part of the vote
 
-  // NOTE: delete user who have voted and who are voting
-  // to not spam the app: the app CANNOT handle multiple banrequest
-  // TODO: implement a queue for banrequest in the app
-  for (const banVotingUser of banVotingUsers) {
-    banNewVotingUsers.delete(banVotingUser)
-  }
+  // delete user who have voted and who are voting
+  // DO NOT delete users who are voting
+  // (if the alert isn't received, the vote will never terminate)
+  // TODO: implement a alert queue in the app
   for (const banConfirmedUser of banConfirmedUsers) {
     banNewVotingUsers.delete(banConfirmedUser)
   }

@@ -13,7 +13,7 @@ class SwitchGroupPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/undraw_searching_re_3ra9.png'),
+                Image.asset('assets/images/alien-science.gif'),
                 const SizedBox(
                   height: 48,
                 ),

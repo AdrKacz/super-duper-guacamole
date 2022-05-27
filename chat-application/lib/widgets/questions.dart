@@ -22,11 +22,12 @@ class FirstTimeQuestionsLoader extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset("assets/images/undraw_decide_re_ixfw.png"),
+                  Image.asset("assets/images/decision-questions.gif"),
                   const Divider(height: 48),
-                  const Text("""Tout d'abord, je dois savoir plus sur toi.
+                  const Text(
+                      """Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
                       
-Tu pourras changer tes réponses en cliquant sur ton avatar.""",
+Tu pourras changer tes réponses à tout moment en cliquant sur ton avatar.""",
                       textAlign: TextAlign.center),
                   const Divider(height: 48),
                   ElevatedButton(
@@ -90,23 +91,63 @@ class QuestionsLoader extends StatefulWidget {
 }
 
 class _QuestionsLoaderState extends State<QuestionsLoader> {
-  late Future<http.Response> text;
+  late Future<Map<String, Object>> object;
 
   @override
   void initState() {
     super.initState();
-    text = http.get(Uri.parse(
-        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml"));
+    object = http
+        .get(Uri.parse(
+            "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml"))
+        .then((http.Response value) {
+      String body = value.body;
+      final Map<String, String> selectedAnswers = loadSelectedAnswers();
+      final List<Map> questions = [];
+      final YamlMap yaml = loadYaml(body);
+      if (yaml['questions'] is YamlList) {
+        int index = 0;
+        for (final Map question in yaml['questions']) {
+          // verify question is correctly formatted
+          final String? id = question['id'];
+          final String? q = question['question'];
+          final YamlList? answers = question['answers'];
+
+          if (id != null && q != null && answers != null) {
+            final List<Map<String, String>> a = [];
+            for (final element in answers) {
+              // only use correctly formatted answers
+              if (element is YamlMap) {
+                final String? elementId = element['id'];
+                final String? elementAnswer = element['answer'];
+                if (elementId != null && elementAnswer != null) {
+                  a.add({'id': elementId, 'answer': elementAnswer});
+                }
+              }
+            }
+            if (a.isNotEmpty) {
+              // don't add a question if there is no answers associated
+              questions
+                  .add({'id': id, 'index': index, 'question': q, 'answers': a});
+              index += 1;
+            }
+          }
+        }
+      }
+
+      return {"selectedAnswers": selectedAnswers, "questions": questions};
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: FutureBuilder(
-        future: text,
+        future: object,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Questions(data: snapshot.data.body);
+            return Questions(
+                loadedSelectedAnswer: snapshot.data["selectedAnswers"],
+                questions: snapshot.data["questions"]);
           }
 
           return const Loader();
@@ -118,18 +159,19 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
 // Questions
 class Questions extends StatefulWidget {
-  const Questions({Key? key, required this.data}) : super(key: key);
+  const Questions(
+      {Key? key, required this.loadedSelectedAnswer, required this.questions})
+      : super(key: key);
 
-  final String data;
+  final Map<String, String> loadedSelectedAnswer;
+  final List<Map> questions;
 
   @override
   _QuestionsState createState() => _QuestionsState();
 }
 
 class _QuestionsState extends State<Questions> {
-  final List<Map> questions = [];
-
-  Map<String, String> selectedAnswers = {};
+  late Map<String, String> selectedAnswers;
   bool isConfirmed = false;
 
   void saveSelectedAnswers() {
@@ -144,37 +186,7 @@ class _QuestionsState extends State<Questions> {
   @override
   void initState() {
     super.initState();
-    selectedAnswers = loadSelectedAnswers();
-    final YamlMap yaml = loadYaml(widget.data);
-    if (yaml['questions'] is YamlList) {
-      int index = 0;
-      for (final Map question in yaml['questions']) {
-        // verify question is correctly formatted
-        final String? id = question['id'];
-        final String? q = question['question'];
-        final YamlList? answers = question['answers'];
-
-        if (id != null && q != null && answers != null) {
-          final List<Map<String, String>> a = [];
-          for (final element in answers) {
-            // only use correctly formatted answers
-            if (element is YamlMap) {
-              final String? elementId = element['id'];
-              final String? elementAnswer = element['answer'];
-              if (elementId != null && elementAnswer != null) {
-                a.add({'id': elementId, 'answer': elementAnswer});
-              }
-            }
-          }
-          if (a.isNotEmpty) {
-            // don't add a question if there is no answers associated
-            questions
-                .add({'id': id, 'index': index, 'question': q, 'answers': a});
-            index += 1;
-          }
-        }
-      }
-    }
+    selectedAnswers = Map.from(widget.loadedSelectedAnswer);
   }
 
   @override
@@ -183,14 +195,14 @@ class _QuestionsState extends State<Questions> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),
         child: DefaultTabController(
-          length: questions.length + 1,
+          length: widget.questions.length + 1,
           child: Builder(builder: (BuildContext context) {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Expanded(
                   child: TabBarView(
-                    children: List<Widget>.from(questions
+                    children: List<Widget>.from(widget.questions
                             .map((e) => (Question(
                                   question: e,
                                   selectedAnswer: selectedAnswers[e['id']],

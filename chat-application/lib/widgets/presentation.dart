@@ -9,16 +9,16 @@ class Presentation extends StatelessWidget {
   Widget build(BuildContext context) {
     final slides = <Widget>[
       const Slide(
-        text: """Je suis Awa.
-Je vais te présenter l'application.
-""",
-        assetPath: 'assets/images/undraw_super_woman_dv-0-y.png',
+        text: """Salut, je suis Awa.
+        
+Je vais te présenter l'application.""",
+        assetPath: 'assets/images/astronaut-suit.gif',
       ),
       const Slide(
           text: """Je vais te faire entrer dans un groupe de conversation.
-  
-Je t'alerterai quand les gens parleront sur la conversation.""",
-          assetPath: 'assets/images/undraw_social_interaction_re_dyjh.png'),
+
+Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
+          assetPath: 'assets/images/chat.gif'),
       const CustomSlide(
           child: Text.rich(
             TextSpan(
@@ -29,25 +29,20 @@ Clique sur """),
                 WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(
                     text:
-                        " en haut à droite de ton écran pour changer de groupe.")
+                        " en haut à droite de ton écran pour partir explorer un autre groupe.")
               ],
             ),
             textAlign: TextAlign.center,
           ),
-          assetPath: 'assets/images/undraw_login_re_4vu2.png'),
+          assetPath: 'assets/images/outer-space.gif'),
       const Slide(
           text: """Si un message t'offense, reste appuyé dessus.
 
 Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
-          assetPath: 'assets/images/undraw_people_re_8spw.png'),
-      const Slide(
-          text: """Si la conversation se passe bien, donnez-vous rendez-vous !
-          
-Un verre en terrasse, une expo', une balade au soleil, il y a toujours de quoi faire.""",
-          assetPath: 'assets/images/undraw_having_fun_re_vj4h.png'),
+          assetPath: 'assets/images/taken.gif'),
       SlideWithButton(
-        text: "Tu as hâte de faire des rencontres ?",
-        assetPath: 'assets/images/undraw_joyride_re_968t.png',
+        text: "Hâte de te faire de nouveaux potes ?",
+        assetPath: 'assets/images/launching.gif',
         buttonText: "C'est parti !",
         onPressed: () {
           setAppState('agreements');

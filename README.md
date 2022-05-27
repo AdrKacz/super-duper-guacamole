@@ -14,7 +14,7 @@
 
 AWA wants everyone to be able to look into its source code and to learn with it.
 
-However, AWA doesn't want you to steal its source code and use it or modify it for your own business.
+However, AWA doesn't want you to steal its source code, and use it or modify it for your own business.
 
 AWA lets you explore its code and hope you will enjoy!
 
@@ -34,9 +34,10 @@ $ cloc --config=options.txt .
 
 Language|files|blank %|comment %|code
 :-------|-------:|-------:|-------:|-------:
-Dart|20|10.76|5.63|2008
-JavaScript|13|19.36|25.89|1348
-YAML|9|7.49|8.86|1095
-Markdown|11|34.87|0.00|846
+Dart|20|10.72|5.61|2014
+JavaScript|13|19.61|26.47|1341
+YAML|8|8.27|9.66|1004
+Markdown|11|35.01|0.00|854
 Python|10|22.59|43.09|810
-**SUM:**|**63**|**16.98**|**14.87**|**6107**
+**SUM:**|**62**|**17.33**|**15.18**|**6023**
+

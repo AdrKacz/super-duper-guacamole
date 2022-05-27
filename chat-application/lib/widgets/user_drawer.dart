@@ -27,7 +27,7 @@ class UserDrawer extends StatelessWidget {
               child: SizedBox(
                 child: ClipOval(
                   child: Image.network(
-                    "https://avatars.dicebear.com/api/adventurer-neutral/${User().id}.png",
+                    "https://avatars.dicebear.com/api/bottts/${User().id}.png",
                   ),
                 ),
               ),

@@ -90,12 +90,14 @@ The output is at `build/ios/archive/Runner.xcarchive`
 
 Then open `.xcarchive` on `Finder` and click on `Validate`.
 
-iPhone Display | iPhone Model
--- | --
-iPhone 6.5" Display | iPhone 11 Pro Max, iPhone Xs Max
-iPhone 5.5" Display | iPhone 8 Plus, iPhone 7 Plus, iPhone 6s Plus
-iPad Pro (3rd Gen) 12.9" Display | iPad Pro (12.9-inch) (3rd generation)
-iPad Pro (2nd Gen) 12.9" Display | iPad Pro (12.9-inch) (2nd generation)
+
+| iPhone Display  | iPhone Model  | iPhone Screen Size  |
+|:----------|:----------|:----------|
+| iPhone 6.5" Display    | iPhone 11 Pro Max, iPhone Xs Max   | 2688 × 1242 px   |
+| iPhone 5.5" Display   | iPhone 8 Plus, iPhone 7 Plus, iPhone 6s Plus   | 1080 x 1920 px   |
+| iPad Pro (3rd Gen) 12.9" Display    | iPad Pro (12.9-inch) (3rd generation)    | 2732 × 2048 px    |
+| iPad Pro (2nd Gen) 12.9" Display   | iPad Pro (12.9-inch) (2nd generation)| 2732 × 2048 px    |
+
 
 ### Android
 
