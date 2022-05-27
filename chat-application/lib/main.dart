@@ -510,7 +510,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       body: Builder(
         builder: (BuildContext context) {
           late Widget child;
-          state = "error";
           switch (state) {
             case "idle":
               child = const Loader();
