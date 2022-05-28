@@ -11,9 +11,7 @@
 // event.body
 // id : String - userid
 // signature : List<Int>
-// publick Key:
-//    n : String - modulo
-//    e : String - public exponent
+// publicKey: String - PEM format, base64 encoded
 
 // ===== ==== ====
 // IMPORTS

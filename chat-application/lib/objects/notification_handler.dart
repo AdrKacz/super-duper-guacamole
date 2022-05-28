@@ -48,8 +48,8 @@ class NotificationHandler {
       }
       print("[PushNotificationService] Firebase messaging token: <$token>");
       print('[PushNotificationService] Put token to $_httpEndpoint');
-      Uint8List signature =
-          rsaSign(User().pair.privateKey, Uint8List.fromList(token.codeUnits));
+      Uint8List signature = rsaSign(
+          User().pair.privateKey, Uint8List.fromList(User().id.codeUnits));
       return http
           .put(Uri.parse(_httpEndpoint),
               body: jsonEncode({

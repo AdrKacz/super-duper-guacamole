@@ -4,8 +4,8 @@ Lors de ta première utilisation de l'application, et après chaque réinitialis
 
 AWA enregistre les données suivantes :
   - ton identifiant,
-  - ta clef, cela permet à AWA de vérifier que personne n'envoie de message en ce faisant passer pour toi,
-  - ton identifiant mobile, cela permet à AWA de t'envoyer des notifications, il ne permet pas à AWA de déduire ton identité et ne peux être utilisé que par AWA tant que tu as l'application installée,
+  - ta clef, cela permet à AWA de vérifier que personne n'envoie de message en se faisant passer pour toi,
+  - ton identifiant mobile, cela permet à AWA de t'envoyer des notifications, il ne permet pas à AWA de déduire ton identité et seulement AWA peux l'utiliser si tu as l'application installée,
   - le groupe dans lequel tu es ACTUELLEMENT,
   - les messages que tu n'as PAS ENCORE reçu.
 
