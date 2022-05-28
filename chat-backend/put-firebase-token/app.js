@@ -10,6 +10,8 @@
 // event.body
 // id : String - user id
 // signature : List<Int>
+// timestamp : int - when the signature was generated
+//      -- message is only valid for +/- 3 seconds (3000 milliseconds)
 // publicKey: String - PEM format, base64 encoded
 // token: String - user firebase notification token
 
@@ -48,10 +50,18 @@ exports.handler = async (event) => {
 
   const id = body.id
   const signature = body.signature
+  const timestamp = body.timestamp
   let publicKey = body.publicKey // updated later if it already exists
   const token = body.token
-  if (id === undefined || signature === undefined || publicKey === undefined || token === undefined) {
-    throw new Error('id, signature, publicKey, and token must be defined')
+  if (id === undefined || signature === undefined || timestamp === undefined || publicKey === undefined || token === undefined) {
+    throw new Error('id, signature, timestamp, publicKey, and token must be defined')
+  }
+
+  if (Math.abs(Date.now() - timestamp) > 3000) {
+    // prevent repeat attack
+    return {
+      statusCode: 401
+    }
   }
 
   // user
@@ -71,7 +81,7 @@ exports.handler = async (event) => {
 
   // verify signature
   const verifier = createVerify('rsa-sha256')
-  verifier.update(id)
+  verifier.update(id + timestamp.toString())
   const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
   console.log('Is the message verified?', isVerified)
   if (!isVerified) {

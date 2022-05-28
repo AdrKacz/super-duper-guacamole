@@ -20,12 +20,14 @@ class WebSocketConnection {
 
   void register() {
     print('Send action register');
-    Uint8List signature = rsaSign(
-        User().pair.privateKey, Uint8List.fromList(User().id.codeUnits));
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+    Uint8List signature = rsaSign(User().pair.privateKey,
+        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
     _channel.sink.add(jsonEncode({
       'action': 'register',
       'id': User().id,
       'signature': signature,
+      'timestamp': timestamp,
       'publicKey': encodePublicKeyToPem(User().pair.publicKey)
     }));
   }
