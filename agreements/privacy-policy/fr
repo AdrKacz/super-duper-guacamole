@@ -1,11 +1,13 @@
 POLITIQUE DE CONFIDENTIALITÉ
 
-Lors de ta première utilisation de l'application, et après chaque réinitialisation, tu t'assignes de manière automatique un identifiant aléatoire. Cette identifiant ne comporte aucune information personnelle.
+Lors de ta première utilisation de l'application, et après chaque réinitialisation, tu t'assignes de manière automatique un identifiant aléatoire et une clef. Cette identifiant et cette clef ne comportent aucune information personnelle.
 
 AWA enregistre les données suivantes :
   - ton identifiant,
+  - ta clef, cela permet à AWA de vérifier que personne n'envoie de message en ce faisant passer pour toi,
+  - ton identifiant mobile, cela permet à AWA de t'envoyer des notifications, il ne permet pas à AWA de déduire ton identité et ne peux être utilisé que par AWA tant que tu as l'application installée,
   - le groupe dans lequel tu es ACTUELLEMENT,
   - les messages que tu n'as PAS ENCORE reçu.
 
 AWA n'enregistre pas tes conversations.
-Lorsque tu supprimes l'application, AWA n'a plus aucun moyen de t'identifier.
+Lorsque tu supprimes l'application, AWA n'a plus aucun moyen de te contacter.

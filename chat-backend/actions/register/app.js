@@ -38,8 +38,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
 const snsClient = new SNSClient({ region: AWS_REGION })
 
-const verifier = createVerify('rsa-sha256')
-
 // ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
@@ -52,14 +50,36 @@ exports.handler = async (event) => {
 
   const id = body.id
   const signature = body.signature
-  const publicKey = body.publicKey
+  let publicKey = body.publicKey // updated later if it already exists
   if (id === undefined || signature === undefined || publicKey === undefined) {
     throw new Error('id, signature, and publicKey must be defined')
   }
 
+  // user
+  const getUserCommand = new GetCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id: id },
+    ProjectionExpression: '#id, #publicKey',
+    ExpressionAttributeNames: {
+      '#id': 'id',
+      '#publicKey': 'publicKey'
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
+  if (user !== undefined && user.publicKey !== undefined) {
+    publicKey = user.publicKey
+  }
+
   // verify signature
+  const verifier = createVerify('rsa-sha256')
   verifier.update(id)
-  // const isVerified = verifier.verify(undefined, signature, )
+  const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
+  console.log('Is the message verified?', isVerified)
+  if (!isVerified) {
+    return {
+      statusCode: 401
+    }
+  }
 
   // update user and retrieve old unreadData (if any)
   const updateCommand = new UpdateCommand({
@@ -67,24 +87,26 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
     UpdateExpression: `
-    SET #isActive = :isActive, #connectionId = :connectionId
+    SET #isActive = :isActive, #connectionId = :connectionId, #publicKey = :publicKey
     REMOVE #unreadData
     `,
     ExpressionAttributeNames: {
       '#isActive': 'isActive',
       '#connectionId': 'connectionId',
+      '#publicKey': 'publicKey',
       '#unreadData': 'unreadData'
     },
     ExpressionAttributeValues: {
       ':connectionId': event.requestContext.connectionId,
+      ':publicKey': publicKey,
       ':isActive': true
     }
   })
-  const user = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
+  const updatedUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
   const unreadData = []
-  if (user !== undefined && user.unreadData !== undefined) {
-    unreadData.push(...user.unreadData)
+  if (updatedUser !== undefined && updatedUser.unreadData !== undefined) {
+    unreadData.push(...updatedUser.unreadData)
   }
 
   // send message
@@ -102,8 +124,8 @@ exports.handler = async (event) => {
 
   const promises = [snsClient.send(publishCommand)]
 
-  if (user !== undefined && user.group !== undefined) {
-    promises.push(informGroup(id, user.group))
+  if (updatedUser !== undefined && updatedUser.group !== undefined) {
+    promises.push(informGroup(id, updatedUser.group))
   }
 
   await Promise.allSettled(promises)
