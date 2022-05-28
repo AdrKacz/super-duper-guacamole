@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:awachat/objects/user.dart';
+import 'package:awachat/pointycastle/sign.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
@@ -41,13 +43,25 @@ class NotificationHandler {
 
       return FirebaseMessaging.instance.getToken();
     }).then((String? token) {
+      if (token == null) {
+        return null;
+      }
       print("[PushNotificationService] Firebase messaging token: <$token>");
       print('[PushNotificationService] Put token to $_httpEndpoint');
-      return http.put(Uri.parse(_httpEndpoint),
-          body: jsonEncode({'id': User().id, 'token': token}));
-    }).then((http.Response response) {
-      print(
-          '[PushNotificationService] Response status: ${response.statusCode}');
+      Uint8List signature =
+          rsaSign(User().pair.privateKey, Uint8List.fromList(token.codeUnits));
+      return http
+          .put(Uri.parse(_httpEndpoint),
+              body: jsonEncode({
+                'id': User().id,
+                'token': token,
+                'signature': signature,
+                'publicKey': encodePublicKeyToPem(User().pair.publicKey)
+              }))
+          .then((http.Response response) {
+        print(
+            "[PushNotificationService] Response status: ${response.statusCode}");
+      });
     });
   }
 }

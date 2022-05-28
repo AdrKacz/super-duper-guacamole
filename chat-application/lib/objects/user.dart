@@ -1,18 +1,19 @@
-import 'dart:convert';
-
-import 'package:flutter/material.dart';
+import 'package:awachat/pointycastle/sign.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/objects/memory.dart';
+
+import "package:pointycastle/export.dart";
 
 class User {
   static final User _instance = User._internal();
 
   late String id;
+  late AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair;
 
   // to be moved in a Group class
   late String _groupId;
-  late Map<String, Map> otherGroupUsers;
+  Map<String, Map> otherGroupUsers = {};
 
   String get groupId => _groupId;
   set groupId(String id) {
@@ -41,22 +42,36 @@ class User {
   User._internal();
 
   Future<void> init() async {
-    // get id
-    String? userId = Memory().get('user', 'id');
-    if (userId == null) {
-      userId = const Uuid().v4();
-      Memory().put('user', 'id', userId);
+    // user
+    String? storedId = Memory().get('user', 'id');
+    AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? storedPair =
+        retreiveRSAkeyPair();
+
+    if (storedId == null || storedPair == null) {
+      // clear memory
+      await Memory().clear();
+
+      // create user
+      storedId = const Uuid().v4();
+      Memory().put('user', 'id', storedId);
+
+      storedPair = generateRSAkeyPair(exampleSecureRandom());
+      storeRSAkeyPair(storedPair);
     }
-    id = userId;
-    // get group
+    id = storedId;
+    pair = storedPair;
+
+    // TODO: move to a group class
+    // group
     String? memoryGroupId = Memory().get('user', 'groupid');
     if (memoryGroupId != null) {
       _groupId = memoryGroupId;
+
+      // group users
+      otherGroupUsers = await Memory().loadGroupUsers();
     } else {
       _groupId = "";
     }
-    // get group users
-    otherGroupUsers = await Memory().loadGroupUsers();
 
     print(
         'Init user with id $id, group $_groupId, and members $otherGroupUsers');

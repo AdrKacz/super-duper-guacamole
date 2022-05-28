@@ -10,6 +10,10 @@
 // Register connectionId
 // event.body
 // id : String - userid
+// signature : List<Int>
+// publick Key:
+//    n : String - modulo
+//    e : String - public exponent
 
 // ===== ==== ====
 // IMPORTS
@@ -17,6 +21,8 @@ const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+
+const { createVerify } = require('crypto')
 
 // ===== ==== ====
 // CONSTANTS
@@ -32,6 +38,8 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
 const snsClient = new SNSClient({ region: AWS_REGION })
 
+const verifier = createVerify('rsa-sha256')
+
 // ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
@@ -43,9 +51,15 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
 
   const id = body.id
-  if (id === undefined) {
-    throw new Error('id must be defined')
+  const signature = body.signature
+  const publicKey = body.publicKey
+  if (id === undefined || signature === undefined || publicKey === undefined) {
+    throw new Error('id, signature, and publicKey must be defined')
   }
+
+  // verify signature
+  verifier.update(id)
+  // const isVerified = verifier.verify(undefined, signature, )
 
   // update user and retrieve old unreadData (if any)
   const updateCommand = new UpdateCommand({

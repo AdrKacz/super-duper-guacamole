@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:awachat/pointycastle/sign.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -18,7 +20,14 @@ class WebSocketConnection {
 
   void register() {
     print('Send action register');
-    _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
+    Uint8List signature = rsaSign(
+        User().pair.privateKey, Uint8List.fromList(User().id.codeUnits));
+    _channel.sink.add(jsonEncode({
+      'action': 'register',
+      'id': User().id,
+      'signature': signature,
+      'publicKey': encodePublicKeyToPem(User().pair.publicKey)
+    }));
   }
 
   void switchgroup() {
