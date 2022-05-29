@@ -27,7 +27,7 @@ class FirstTimeQuestionsLoader extends StatelessWidget {
                   const Text(
                       """Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
                       
-Tu pourras changer tes réponses à tout moment en cliquant sur ton avatar.""",
+Tu pourras changer tes réponses à tout moment en touchant ton avatar.""",
                       textAlign: TextAlign.center),
                   const Divider(height: 48),
                   ElevatedButton(
@@ -370,7 +370,7 @@ void showConfirmDialog(BuildContext context) async {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-            title: const Text("J'ai bien enregistré tes choix"),
+            title: const Text("J'ai bien enregistré tes réponses"),
             actions: <Widget>[
               TextButton(
                 onPressed: () {

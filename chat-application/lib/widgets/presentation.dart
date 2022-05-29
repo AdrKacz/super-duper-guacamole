@@ -25,7 +25,7 @@ Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
               children: [
                 TextSpan(text: """Tu ne seras que dans un groupe à la fois.
           
-Clique sur """),
+Touche """),
                 WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(
                     text:
