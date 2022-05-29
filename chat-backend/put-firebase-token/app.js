@@ -93,12 +93,14 @@ exports.handler = async (event) => {
   const updateCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
-    UpdateExpression: 'SET #firebaseToken = :token',
+    UpdateExpression: 'SET #firebaseToken = :token, #publicKey = :publicKey',
     ExpressionAttributeNames: {
-      '#firebaseToken': 'firebaseToken'
+      '#firebaseToken': 'firebaseToken',
+      '#publicKey': 'publicKey'
     },
     ExpressionAttributeValues: {
-      ':token': token
+      ':token': token,
+      ':publicKey': publicKey
     }
   })
 
