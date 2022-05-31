@@ -1,11 +1,13 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/message.dart';
+import 'package:http/http.dart';
 
 class Memory {
   late final Box<String> boxUser;
   late final LazyBox<String> lazyBoxMessages;
   late final LazyBox<Map> lazyBoxGroupUsers;
+  late final Box<String> rsaKeyPairBox;
 
   static final Memory _instance = Memory._internal();
 
@@ -20,6 +22,7 @@ class Memory {
     lazyBoxGroupUsers = await Hive.openLazyBox<Map>('groupUsers');
     lazyBoxMessages = await Hive.openLazyBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
+    rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
   }
 
   String? get(String box, String field) {
@@ -40,9 +43,12 @@ class Memory {
   }
 
   Future<void> clear() async {
-    await boxUser.clear();
-    await lazyBoxMessages.clear();
-    await lazyBoxGroupUsers.clear();
+    await Future.wait([
+      boxUser.clear(),
+      lazyBoxMessages.clear(),
+      lazyBoxGroupUsers.clear(),
+      rsaKeyPairBox.clear(),
+    ]);
   }
 
   void addGroupUser(String id, Map user) {

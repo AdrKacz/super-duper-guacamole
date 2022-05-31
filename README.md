@@ -1,6 +1,6 @@
 # Super Duper Guacamole
 
-[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/6288ca21c7038f014b56b6af/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/6288ca21c7038f014b56b6af/latest_build)
+[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/latest_build)
 
 - [Google Drive](https://drive.google.com/drive/folders/1VGYTlRhyS1SivX0uCPNUiKHsgLy7AHK3?usp=sharing)
 - [Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
@@ -34,10 +34,10 @@ $ cloc --config=options.txt .
 
 Language|files|blank %|comment %|code
 :-------|-------:|-------:|-------:|-------:
-Dart|20|10.72|5.61|2014
-JavaScript|13|19.61|26.47|1341
-YAML|8|8.27|9.66|1004
-Markdown|11|35.01|0.00|854
+Dart|21|11.54|6.34|2131
+JavaScript|13|18.61|24.35|1499
+YAML|9|7.38|8.63|1124
+Markdown|11|35.35|0.00|860
 Python|10|22.59|43.09|810
-**SUM:**|**62**|**17.33**|**15.18**|**6023**
+**SUM:**|**64**|**17.05**|**14.73**|**6424**
 

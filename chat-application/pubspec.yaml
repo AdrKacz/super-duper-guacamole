@@ -45,6 +45,8 @@ dependencies:
   url_launcher: ^6.0.20
   badges: ^2.0.2
   yaml: ^3.1.0
+  pointycastle: ^3.6.0
+  asn1lib: ^1.1.0
 
 dev_dependencies:
   change_app_package_name: ^1.0.0

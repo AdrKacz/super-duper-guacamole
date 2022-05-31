@@ -10,6 +10,10 @@
 // Register connectionId
 // event.body
 // id : String - userid
+// signature : List<Int>
+// timestamp : int - when the signature was generated
+//      -- message is only valid for +/- 3 seconds (3000 milliseconds)
+// publicKey: String - PEM format, base64 encoded
 
 // ===== ==== ====
 // IMPORTS
@@ -17,6 +21,8 @@ const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+
+const { createVerify } = require('crypto')
 
 // ===== ==== ====
 // CONSTANTS
@@ -43,8 +49,44 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
 
   const id = body.id
-  if (id === undefined) {
-    throw new Error('id must be defined')
+  const signature = body.signature
+  const timestamp = body.timestamp
+  let publicKey = body.publicKey // updated later if it already exists
+  if (id === undefined || signature === undefined || timestamp === undefined || publicKey === undefined) {
+    throw new Error('id, signature, timestamp, and publicKey must be defined')
+  }
+
+  if (Math.abs(Date.now() - timestamp) > 3000) {
+    // prevent repeat attack
+    return {
+      statusCode: 401
+    }
+  }
+
+  // user
+  const getUserCommand = new GetCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id: id },
+    ProjectionExpression: '#id, #publicKey',
+    ExpressionAttributeNames: {
+      '#id': 'id',
+      '#publicKey': 'publicKey'
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
+  if (user !== undefined && user.publicKey !== undefined) {
+    publicKey = user.publicKey
+  }
+
+  // verify signature
+  const verifier = createVerify('rsa-sha256')
+  verifier.update(id + timestamp.toString())
+  const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
+  console.log('Is the message verified?', isVerified)
+  if (!isVerified) {
+    return {
+      statusCode: 401
+    }
   }
 
   // update user and retrieve old unreadData (if any)
@@ -53,24 +95,26 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
     UpdateExpression: `
-    SET #isActive = :isActive, #connectionId = :connectionId
+    SET #isActive = :isActive, #connectionId = :connectionId, #publicKey = :publicKey
     REMOVE #unreadData
     `,
     ExpressionAttributeNames: {
       '#isActive': 'isActive',
       '#connectionId': 'connectionId',
+      '#publicKey': 'publicKey',
       '#unreadData': 'unreadData'
     },
     ExpressionAttributeValues: {
       ':connectionId': event.requestContext.connectionId,
+      ':publicKey': publicKey,
       ':isActive': true
     }
   })
-  const user = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
+  const updatedUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
   const unreadData = []
-  if (user !== undefined && user.unreadData !== undefined) {
-    unreadData.push(...user.unreadData)
+  if (updatedUser !== undefined && updatedUser.unreadData !== undefined) {
+    unreadData.push(...updatedUser.unreadData)
   }
 
   // send message
@@ -88,8 +132,8 @@ exports.handler = async (event) => {
 
   const promises = [snsClient.send(publishCommand)]
 
-  if (user !== undefined && user.group !== undefined) {
-    promises.push(informGroup(id, user.group))
+  if (updatedUser !== undefined && updatedUser.group !== undefined) {
+    promises.push(informGroup(id, updatedUser.group))
   }
 
   await Promise.allSettled(promises)

@@ -9,15 +9,13 @@
 // EVENT
 // Switch group
 // event.body
-// id : String - user id
-// groupid : String - user group id
 // bannedid : String - banned user id
 // messageid : String - message id being banned for (to be removed)
 
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -25,6 +23,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
+  USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
   CONFIRMATION_REQUIRED_STRING,
   SEND_MESSAGE_TOPIC_ARN,
@@ -65,15 +64,40 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
+  // get userid and groupid
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': event.requestContext.connectionId
+    }
+  })
+  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    } else {
+      return undefined
+    }
+  })
+
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+    return
+  }
+  const id = tempUser.id
+  const groupid = tempUser.group
+
   const body = JSON.parse(event.body)
 
-  const id = body.id
-  const groupid = body.groupid
   const bannedid = body.bannedid
   const messageid = body.messageid
 
-  if (id === undefined || groupid === undefined || bannedid === undefined || messageid === undefined) {
-    throw new Error('id, groupid, bannedid, and messageid must be defined')
+  if (bannedid === undefined || messageid === undefined) {
+    throw new Error('bannedid, and messageid must be defined')
   }
 
   if (id === bannedid) {

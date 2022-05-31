@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'package:awachat/pointycastle/sign.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -17,52 +19,46 @@ class WebSocketConnection {
   }
 
   void register() {
-    print('register');
-    _channel.sink.add(jsonEncode({"action": "register", "id": User().id}));
-  }
-
-  void unregister() {
-    print('unregister');
-    _channel.sink.add(jsonEncode({"action": "unregister", "id": User().id}));
-  }
-
-  void switchgroup() {
-    print('switchgroup');
+    print('Send action register');
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+    Uint8List signature = rsaSign(User().pair.privateKey,
+        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
     _channel.sink.add(jsonEncode({
-      "action": "switchgroup",
-      "groupid": User().groupId,
-      "id": User().id,
-      "questions": loadSelectedAnswers()
+      'action': 'register',
+      'id': User().id,
+      'signature': signature,
+      'timestamp': timestamp,
+      'publicKey': encodePublicKeyToPem(User().pair.publicKey)
     }));
   }
 
+  void switchgroup() {
+    print('Send action switchgroup');
+    _channel.sink.add(jsonEncode(
+        {"action": "switchgroup", "questions": loadSelectedAnswers()}));
+  }
+
   void textmessage(String encodedMessage) {
-    print('textmessage');
+    print('Send action textmessage');
     _channel.sink.add(jsonEncode({
       "action": "textmessage",
-      "id": User().id,
-      "groupid": User().groupId,
       "message": encodedMessage,
     }));
   }
 
   void banrequest(String userid, String messageid) {
-    print('banrequest');
+    print('Send action banrequest');
     _channel.sink.add(jsonEncode({
       "action": "banrequest",
-      "id": User().id,
-      "groupid": User().groupId,
       "bannedid": userid,
       "messageid": messageid,
     }));
   }
 
   void banreply(String banneduserid, String status) {
-    print('banreply');
+    print('Send action banreply');
     _channel.sink.add(jsonEncode({
       "action": "banreply",
-      "id": User().id,
-      "groupid": User().groupId,
       "bannedid": banneduserid,
       "status": status,
     }));
