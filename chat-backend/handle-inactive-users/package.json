@@ -1,7 +1,7 @@
 {
-  "name": "ondisconnect",
+  "name": "handle-inactive-users",
   "version": "1.0.0",
-  "description": "Disconnect from channel",
+  "description": "Handle inactive users on a schedule basis",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

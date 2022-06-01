@@ -4,7 +4,6 @@
   "description": "Artillery Tests",
   "main": "index.js",
   "author": "AdrKacz",
-  "license": "MIT",
   "scripts": {
     "lint": "eslint . --fix",
     "start": "$(npm bin)/artillery run --config config.yaml",

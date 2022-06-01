@@ -384,7 +384,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  StoreUnreadDataFunction:
+  HandleInactiveUsersFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: storeunreaddata/
@@ -394,15 +394,43 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       Events:
-        SNSEvent:
-          Type: SNS
+        ScheduleEvent:
+          Type: Schedule
           Properties:
-            Topic: !Ref StoreUnreadDataSNSTopic
+            Schedule: 'rate(1 hour)'
+            Enabled: true
   StoreUnreadDataLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
+      LogGroupName: !Sub '/aws/lambda/${HandleInactiveUsersFunction}'
       RetentionInDays: !Ref LogRetentionInDays
+
+  # ===== ===== =====
+  # Schedule Functions
+  SendNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: handle-inactive-users/
+      Layers:
+        - !Ref FirebaseAdminLayerVersion
+        - !Ref AWSSDKDdbLayerVersion
+      Environment:
+        Variables:
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref SendNotificationSNSTopic
+  SendNotificationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
 
   # ===== ===== =====
   # API Functions
