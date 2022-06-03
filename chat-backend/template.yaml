@@ -384,7 +384,26 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  
+  StoreUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: storeunreaddata/
+      Layers:
+        - !Ref AWSSDKDdbLayerVersion
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !Ref StoreUnreadDataSNSTopic
+  StoreUnreadDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
   # ===== ===== =====
   # Schedule Functions
   HandleInactiveUsersFunction:
