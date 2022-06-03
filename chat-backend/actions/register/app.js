@@ -95,11 +95,12 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
     UpdateExpression: `
-    SET #isActive = :isActive, #connectionId = :connectionId, #publicKey = :publicKey
+    SET #isActive = :true, #isInactive = :false, #connectionId = :connectionId, #publicKey = :publicKey
     REMOVE #unreadData
     `,
     ExpressionAttributeNames: {
       '#isActive': 'isActive',
+      '#isInactive': 'isInactive',
       '#connectionId': 'connectionId',
       '#publicKey': 'publicKey',
       '#unreadData': 'unreadData'
@@ -107,7 +108,8 @@ exports.handler = async (event) => {
     ExpressionAttributeValues: {
       ':connectionId': event.requestContext.connectionId,
       ':publicKey': publicKey,
-      ':isActive': true
+      ':true': true,
+      ':false': false
     }
   })
   const updatedUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))

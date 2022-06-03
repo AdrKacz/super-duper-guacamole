@@ -70,20 +70,20 @@ exports.handler = async (event) => {
     return
   }
   // update user
-  const updateUser = new UpdateCommand({
+  const updateUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: user.id },
-    UpdateExpression: 'SET #isActive = :isActive, #lastConnectionHalfDay = :lastConnectionHalfDay',
+    UpdateExpression: 'SET #isActive = :false, #lastConnectionHalfDay = :lastConnectionHalfDay',
     ExpressionAttributeNames: {
       '#isActive': 'isActive',
       '#lastConnectionHalfDay': 'lastConnectionHalfDay'
     },
     ExpressionAttributeValues: {
-      ':isActive': false,
+      ':false': false,
       ':lastConnectionHalfDay': ((ts) => (ts - (ts % 43200000)))(Date.now()) // timestamp rounded to 12pm or 12am
     }
   })
-  const updatePromise = dynamoDBDocumentClient.send(updateUser)
+  const updatePromise = dynamoDBDocumentClient.send(updateUserCommand)
 
   if (user.group === undefined) {
     await updatePromise
