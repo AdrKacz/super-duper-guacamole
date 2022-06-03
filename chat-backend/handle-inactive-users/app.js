@@ -31,6 +31,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 // HANDLER
 exports.handler = async (event) => {
     console.log(`Receives:
-\tEvent:\n${event}
+\tEvent:\n${JSON.stringify(event, null, '\t')}
 `)
 }
