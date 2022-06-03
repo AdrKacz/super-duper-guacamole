@@ -670,4 +670,3 @@ Outputs:
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
     Value: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
-
