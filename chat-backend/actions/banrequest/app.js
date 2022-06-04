@@ -7,7 +7,7 @@
 
 // ===== ==== ====
 // EVENT
-// Switch group
+// Send a ban request
 // event.body
 // bannedid : String - banned user id
 // messageid : String - message id being banned for (to be removed)

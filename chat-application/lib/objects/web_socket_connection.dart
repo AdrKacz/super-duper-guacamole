@@ -15,6 +15,7 @@ class WebSocketConnection {
   Stream<dynamic> get stream => _channel.stream;
 
   WebSocketConnection() {
+    print('Init WebSocket');
     reconnect();
   }
 
@@ -65,12 +66,12 @@ class WebSocketConnection {
   }
 
   void reconnect() {
-    print('reconnect');
+    print('Reconnect WebSocket');
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 
   void close() {
-    print('Close web socket');
+    print('Close WebSocket');
     _channel.sink.close();
   }
 }

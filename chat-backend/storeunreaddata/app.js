@@ -6,7 +6,7 @@
 
 // ===== ==== ====
 // EVENT
-// Switch group
+// Store unread data to user database
 // event.Records[0].Sns.Message
 // users : List<Object>
 //      id : String - user id
