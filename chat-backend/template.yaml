@@ -432,7 +432,7 @@ Resources:
         ScheduleEvent:
           Type: Schedule
           Properties:
-            Schedule: 'rate(1 day)'
+            Schedule: 'cron(0 16 * * ? *)' # Run at 6:00 pm (UTC+2 - Paris) every day
             Enabled: true
   HandleInactiveUsersLogGroup:
     Type: AWS::Logs::LogGroup

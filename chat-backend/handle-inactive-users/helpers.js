@@ -102,6 +102,23 @@ exports.removeUsersFromGroup = async (users) => {
         }
       })
       promises.push(dynamoDBDocumentClient.send(updateGroupCommand))
+
+      // retrieve remaining user to warn them
+      const batchGetUsersCommand = new BatchGetCommand({
+        RequestItems: {
+          [USERS_TABLE_NAME]: {
+            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
+            ExpressionAttributeNames: {
+              '#id': 'id',
+              '#connectionId': 'connectionId',
+              '#firebaseToken': 'firebaseToken'
+            }
+          }
+        }
+      })
+
+      users.concat(await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME])))
     } else {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
@@ -112,33 +129,12 @@ exports.removeUsersFromGroup = async (users) => {
       console.log(`Delete old group <${groupid}>`)
     }
 
-    // warn users
-    // retrieve user to warn them
-    const batchGetUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          Keys: Array.from(group.users).map((id) => ({ id: id })),
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    })
-
-    const otherUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
-    for (const user of users) {
-      group.users.add(user.id) // put back user
-    }
     // send message to group users to notify user has leaved the group (including itself)
     promises.push(Promise.allSettled(users.map(async (user) => {
       const publishSendMessageCommand = new PublishCommand({
         TopicArn: SEND_MESSAGE_TOPIC_ARN,
         Message: JSON.stringify({
-          users: otherUsers.concat(users),
+          users: users,
           message: {
             action: 'leavegroup',
             groupid: groupid,

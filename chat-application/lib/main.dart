@@ -337,7 +337,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         final String assignedGroupId = data['group'] ?? "";
-        if (assignedGroupId != User().groupId) {
+        if (assignedGroupId == "" || assignedGroupId != User().groupId) {
           // there was an error somewhere, just re-init the group
           User().groupId = "";
           _webSocketConnection.switchgroup();
