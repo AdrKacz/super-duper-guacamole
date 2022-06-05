@@ -337,13 +337,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         final String assignedGroupId = data['group'] ?? "";
-
         if (assignedGroupId != User().groupId) {
+          // there was an error somewhere, just re-init the group
           User().groupId = "";
-        }
-
-        // Get group (register on load)
-        if (User().groupId == "" && state == "idle") {
+          _webSocketConnection.switchgroup();
+          _messages.clear();
+          state = "switch";
+        } else if (User().groupId == "" && state == "idle") {
+          // Get group (register on load)
           _webSocketConnection.switchgroup();
           _messages.clear();
           state = "switch";

@@ -33,9 +33,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
@@ -90,3 +87,34 @@ exports.handler = async (event) => {
     statusCode: 200
   }
 }
+
+// ===== ==== ====
+// HELPERS
+// async function connectionIdToUserIdAndGroupId (connectionId) {
+//   // Get userId and GroupId associated with connectionId
+//   // connetionId - String
+//   const queryCommand = new QueryCommand({
+//     TableName: USERS_TABLE_NAME,
+//     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+//     KeyConditionExpression: '#connectionId = :connectionId',
+//     ExpressionAttributeNames: {
+//       '#connectionId': 'connectionId'
+//     },
+//     ExpressionAttributeValues: {
+//       ':connectionId': connectionId
+//     }
+//   })
+//   const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+//     console.log('Query Response:', response)
+//     if (response.Count > 0) {
+//       return response.Items[0]
+//     } else {
+//       return undefined
+//     }
+//   })
+
+//   if (user === undefined || user.id === undefined) {
+//     return {}
+//   }
+//   return { id: user.id, group: user.group }
+// }
