@@ -15,6 +15,11 @@
 // isBan : Bool? - is user banned from its old group (false by default)
 
 // ===== ==== ====
+// TODO
+// Remove group from user and only add it when the group become visible
+// If not, you send the new group to the user on register but the user isn't supposed to be aware of it
+
+// ===== ==== ====
 // NOTE
 // MINIMUM_GROUP_SIZE
 // It is better to not have MINIMUM_GROUP_SIZE too small.
@@ -247,7 +252,7 @@ async function addUserToGroup (user, newGroup) {
     const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
     const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id: id }))
     const otherUsers = []
-    // happens only once when group becomes active for the first time``
+    // happens only once when group becomes active for the first time
     if (usersIds.length > 0) {
       newGroup.users.delete(user.id) // remove id, already fetched
       const batchGetOtherUsers = new BatchGetCommand({
@@ -409,6 +414,7 @@ async function removeUserFromGroup (user, isBan = false) {
 
     // update or delete group
     const promises = []
+    const users = [user]
     if (group.users.size > 0) {
       // update group (add to bannedUsers if isBan)
       const expressionAttributeNames = {
@@ -433,6 +439,23 @@ async function removeUserFromGroup (user, isBan = false) {
         }
       })
       promises.push(dynamoDBDocumentClient.send(updateGroupCommand))
+
+      // retrieve user all to warn them
+      const batchGetUsersCommand = new BatchGetCommand({
+        RequestItems: {
+          [USERS_TABLE_NAME]: {
+            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
+            ExpressionAttributeNames: {
+              '#id': 'id',
+              '#connectionId': 'connectionId',
+              '#firebaseToken': 'firebaseToken'
+            }
+          }
+        }
+      })
+
+      users.concat(await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME])))
     } else {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
@@ -443,30 +466,11 @@ async function removeUserFromGroup (user, isBan = false) {
       console.log(`Delete old group <${user.group}>`)
     }
 
-    // warn user
-    group.users.add(user.id) // put back user
-    // retrieve user to warn them
-    const batchGetUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          Keys: Array.from(group.users).filter((id) => (id !== user.id)).map((id) => ({ id: id })),
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    })
-
-    const otherUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
     // send message to group users to notify user has leaved the group (including itself)
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: otherUsers.concat([user]),
+        users: users,
         message: {
           action: 'leavegroup',
           groupid: user.group,

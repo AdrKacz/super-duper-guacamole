@@ -337,7 +337,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         final String assignedGroupId = data['group'] ?? "";
-        if (assignedGroupId == "" || assignedGroupId != User().groupId) {
+        if (assignedGroupId == "" ||
+            (User().groupId != "" && assignedGroupId != User().groupId)) {
           // there was an error somewhere, just re-init the group
           User().groupId = "";
           _webSocketConnection.switchgroup();
@@ -476,6 +477,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           User().clear();
           await Memory().clear();
           await User().init();
+          await NotificationHandler().init();
           widget.setAppState('presentation');
         },
       ),
