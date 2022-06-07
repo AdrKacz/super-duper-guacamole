@@ -149,7 +149,8 @@ class _CreditsState extends State<Credits> {
                       child: SingleChildScrollView(
                         child: Text(
                           snapshot.data.body,
-                          textAlign: TextAlign.left, // not beautiful if not
+                          textAlign: TextAlign.left,
+                          style: const TextStyle(height: 1.5),
                         ),
                       ),
                     ),

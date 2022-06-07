@@ -10,6 +10,13 @@
 // Call on disconnection, client doesn't provide an event
 
 // ===== ==== ====
+// NOTE
+// Store the last day of connection
+// Disconnect may not be called everytime
+// Resulting in false "Connected" state
+// How to remediate it?
+
+// ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, QueryCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
@@ -63,18 +70,24 @@ exports.handler = async (event) => {
     return
   }
   // update user
-  const updateUser = new UpdateCommand({
+  const updateUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: user.id },
-    UpdateExpression: 'SET #isActive = :isActive',
+    UpdateExpression: `
+    SET #isActive = :false, #lastConnectionHalfDay = :lastConnectionHalfDay
+    REMOVE #connectionId
+    `,
     ExpressionAttributeNames: {
-      '#isActive': 'isActive'
+      '#isActive': 'isActive',
+      '#lastConnectionHalfDay': 'lastConnectionHalfDay',
+      '#connectionId': 'connectionId'
     },
     ExpressionAttributeValues: {
-      ':isActive': false
+      ':false': false,
+      ':lastConnectionHalfDay': ((ts) => (ts - (ts % 43200000)))(Date.now()) // timestamp rounded to 12pm or 12am
     }
   })
-  const updatePromise = dynamoDBDocumentClient.send(updateUser)
+  const updatePromise = dynamoDBDocumentClient.send(updateUserCommand)
 
   if (user.group === undefined) {
     await updatePromise
@@ -130,6 +143,3 @@ exports.handler = async (event) => {
   await snsClient.send(publishSendMessageCommand)
   await updatePromise
 }
-
-// ===== ==== ====
-// HELPERS

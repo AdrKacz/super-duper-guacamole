@@ -1,20 +1,3 @@
-// NOTE on MINIMUM_GROUP_SIZE
-// It is better to not have MINIMUM_GROUP_SIZE too small.
-// Indeed, on concurents return, one can update an old group
-// while the other delete it
-// keeping the group in the database forever for nothing
-// If MINIMUM_GROUP_SIZE is big enough (let say 3), the time window between
-// the deactivation of the group (isWaiting = false) and its deletion should be
-// big enough to not have concurrent run trying to update and delete at the same time
-
-// NOTE on IS_WAINTING encoding
-// I cannot use a BOOL key, instead I used a N key.
-// 1 is true and 0 is false
-
-// NOTE on BAN
-// On a ban, BAN_FUNCTION doesn't send user questions because they are not stored.
-// For now, I just considered a banned user as an user who hasn't answer any question.
-
 // DEPENDENCIES
 // aws-sdk-ddb
 // aws-sdk-sns
@@ -30,7 +13,45 @@
 // questions : Map<String, String>?
 //    question id <String> - answer id <String>
 // isBan : Bool? - is user banned from its old group (false by default)
-// [unused] connectionId : String? - user connection id
+
+// ===== ==== ====
+// TODO
+// Remove group from user and only add it when the group become visible
+// If not, you send the new group to the user on register but the user isn't supposed to be aware of it
+
+// ===== ==== ====
+// NOTE
+// MINIMUM_GROUP_SIZE
+// It is better to not have MINIMUM_GROUP_SIZE too small.
+// Indeed, on concurents return, one can update an old group
+// while the other delete it
+// keeping the group in the database forever for nothing
+// If MINIMUM_GROUP_SIZE is big enough (let say 3), the time window between
+// the deactivation of the group (isWaiting = false) and its deletion should be
+// big enough to not have concurrent run trying to update and delete at the same time
+
+// IS_WAINTING ENCODING
+// I cannot use a BOOL key, BOOL cannot be used as Index
+// Instead I used a N key.
+// 1 is true and 0 is false
+
+// BAN
+// On a ban, BAN_FUNCTION doesn't send user questions because they are not stored.
+// For now, I just considered a banned user as an user who hasn't answer any question.
+
+// CHOOSE GROUP LOGIC
+// the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
+// We must check that answers indeed have a greater impact on group than order of arrival.
+// If not that means that we are still quite randomly assigning groups.
+// ----- ----- -----
+// We could add ENV VARIABLE for more fine grained controls.
+// For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
+// ----- ----- -----
+// We may want to shuffle the order in which we loop through the groups to have different result
+// on each run, for different user
+// (there is NO order in the Query, it is "first found first returned")
+// (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
+// (thus, the order being similar too)
 
 // ===== ==== ====
 // IMPORTS
@@ -231,7 +252,7 @@ async function addUserToGroup (user, newGroup) {
     const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
     const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id: id }))
     const otherUsers = []
-    // happens only once when group becomes active for the first time``
+    // happens only once when group becomes active for the first time
     if (usersIds.length > 0) {
       newGroup.users.delete(user.id) // remove id, already fetched
       const batchGetOtherUsers = new BatchGetCommand({
@@ -336,7 +357,7 @@ async function addUserToGroup (user, newGroup) {
   await Promise.allSettled(promises)
 }
 
-async function removeUserFromGroup (user, isBan) {
+async function removeUserFromGroup (user, isBan = false) {
   // Remove user grom its group
   // user : Map
   //    id : String - user id
@@ -393,6 +414,7 @@ async function removeUserFromGroup (user, isBan) {
 
     // update or delete group
     const promises = []
+    const users = [user]
     if (group.users.size > 0) {
       // update group (add to bannedUsers if isBan)
       const expressionAttributeNames = {
@@ -417,6 +439,23 @@ async function removeUserFromGroup (user, isBan) {
         }
       })
       promises.push(dynamoDBDocumentClient.send(updateGroupCommand))
+
+      // retrieve user all to warn them
+      const batchGetUsersCommand = new BatchGetCommand({
+        RequestItems: {
+          [USERS_TABLE_NAME]: {
+            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
+            ExpressionAttributeNames: {
+              '#id': 'id',
+              '#connectionId': 'connectionId',
+              '#firebaseToken': 'firebaseToken'
+            }
+          }
+        }
+      })
+
+      users.concat(await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME])))
     } else {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
@@ -427,30 +466,11 @@ async function removeUserFromGroup (user, isBan) {
       console.log(`Delete old group <${user.group}>`)
     }
 
-    // warn user
-    group.users.add(user.id) // put back user
-    // retrieve user to warn them
-    const batchGetUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          Keys: Array.from(group.users).filter((id) => (id !== user.id)).map((id) => ({ id: id })),
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    })
-
-    const otherUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
     // send message to group users to notify user has leaved the group (including itself)
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: otherUsers.concat([user]),
+        users: users,
         message: {
           action: 'leavegroup',
           groupid: user.group,

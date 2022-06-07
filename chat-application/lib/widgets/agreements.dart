@@ -91,7 +91,8 @@ class _AgreementsPageState extends State<AgreementsPage> {
                       child: SingleChildScrollView(
                         child: Text(
                           snapshot.data.body,
-                          textAlign: TextAlign.justify,
+                          textAlign: TextAlign.left,
+                          style: const TextStyle(height: 1.5),
                         ),
                       ),
                     ),

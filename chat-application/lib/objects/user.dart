@@ -6,7 +6,7 @@ import 'package:awachat/objects/memory.dart';
 import "package:pointycastle/export.dart";
 
 class User {
-  static final User _instance = User._internal();
+  static User _instance = User._internal();
 
   late String id;
   late AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair;
@@ -19,6 +19,7 @@ class User {
   set groupId(String id) {
     // reset
     if (_groupId != "") {
+      print("Reset group (unsubscribe and clear messages and users)");
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-${User().groupId}');
       Memory().lazyBoxMessages.clear();
@@ -29,6 +30,7 @@ class User {
 
     // set
     if (id != "") {
+      print('Set group (subscribe)');
       FirebaseMessaging.instance.subscribeToTopic('group-$id');
       Memory().put('user', 'groupid', id);
       _groupId = id;
@@ -40,6 +42,10 @@ class User {
   }
 
   User._internal();
+
+  void clear() {
+    _instance = User._internal();
+  }
 
   Future<void> init() async {
     // user

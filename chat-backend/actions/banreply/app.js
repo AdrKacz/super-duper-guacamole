@@ -7,7 +7,7 @@
 
 // ===== ==== ====
 // EVENT
-// Switch group
+// Reply to a ban request
 // event.body
 // bannedid : String - banned user id
 // status : String - 'confirmed' or 'denied'

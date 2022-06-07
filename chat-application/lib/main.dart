@@ -336,8 +336,16 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // needUpdate cannot be false because connectionState changed
         }
 
-        // Get group (register on load)
-        if (User().groupId == "" && state == "idle") {
+        final String assignedGroupId = data['group'] ?? "";
+        if (assignedGroupId == "" ||
+            (User().groupId != "" && assignedGroupId != User().groupId)) {
+          // there was an error somewhere, just re-init the group
+          User().groupId = "";
+          _webSocketConnection.switchgroup();
+          _messages.clear();
+          state = "switch";
+        } else if (User().groupId == "" && state == "idle") {
+          // Get group (register on load)
           _webSocketConnection.switchgroup();
           _messages.clear();
           state = "switch";
@@ -350,7 +358,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         // empty string is stored as undefined serverside
         // (causing a difference when there is not)
         final String groupId = data['groupid'] ?? "";
-        final String userId = data['id'] ?? [];
+        final String userId = data['id'];
         if (userId == User().id) {
           if (groupId == User().groupId) {
             // only leave if the group to leave is the group we are in
@@ -419,7 +427,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   }
 
   void listenMessage(message) {
-    print("Message: $message");
+    print("Receive message: $message");
     bool needUpdate = processMessage(message);
     if (needUpdate) {
       setState(() {});
@@ -455,8 +463,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         (_notification == null || _notification == AppLifecycleState.resumed)) {
       connectionState = "reconnect";
       _webSocketConnection.reconnect();
-      _webSocketConnection.register();
       listenStream();
+      _webSocketConnection.register();
     }
     print("State: $state - Connection State: $connectionState");
     return Scaffold(
@@ -465,9 +473,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           widget.setAppState('presentation');
         },
         resetAccount: () async {
-          User().groupId = "";
+          print('Reset Account');
+          User().clear();
           await Memory().clear();
           await User().init();
+          await NotificationHandler().init();
           widget.setAppState('presentation');
         },
       ),
@@ -496,9 +506,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                 tooltip: "Changer de groupe",
                 onPressed: state == "chat"
                     ? () {
-                        if (state != "chat") {
-                          return;
-                        }
                         _webSocketConnection.switchgroup();
                         setState(() {
                           state = "switch";
@@ -531,8 +538,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               // NOTE: here it tries to infer the correct state of the app
               child = ErrorPage(
                 refresh: () async {
+                  print('Try to restore connection');
                   _webSocketConnection.close();
                   _webSocketConnection.reconnect();
+                  listenStream();
                   _webSocketConnection.register();
                   if (User().groupId != "") {
                     setState(() {
@@ -543,8 +552,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                       state = "idle";
                     });
                   }
-
-                  listenStream();
                 },
               );
           }
