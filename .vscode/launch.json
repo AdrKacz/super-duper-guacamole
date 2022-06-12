@@ -18,6 +18,19 @@
             ]
         },
         {
+            "name": "awachat (screenshot mode)",
+            "cwd": "chat-application",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define",
+                "WEBSOCKET_ENDPOINT=ws://localhost:8765/",
+                "--dart-define",
+                "NOTIFICATION_HTTP_ENDPOINT=https://google.com"
+            ]
+        },
+        {
             "name": "awachat (profile mode)",
             "cwd": "chat-application",
             "request": "launch",
