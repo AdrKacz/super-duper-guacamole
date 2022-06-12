@@ -295,7 +295,6 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       insertMessage(loadedMessage, useHaptic: false);
     }
     setState(() {});
-    print('state update');
   }
 
   bool processMessage(message, {bool isInnerLoop = false}) {
@@ -413,10 +412,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   void listenMessage(message) {
     print("Receive message: $message");
-    bool needUpdate = processMessage(message);
-    print('messages $_messages');
-    print('Need update? $needUpdate');
-    if (needUpdate) {
+    if (processMessage(message)) {
       setState(() {});
     }
   }
