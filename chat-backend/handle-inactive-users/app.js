@@ -9,7 +9,7 @@
 
 // ===== ==== ====
 // IMPORTS
-const { ScanCommand, UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb')
+const { ScanCommand, UpdateCommand, BatchWriteCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -42,8 +42,8 @@ exports.handler = async (event) => {
   do {
     const scanCommand = new ScanCommand({
       TableName: USERS_TABLE_NAME,
-      ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #isInactive, #lastConnectionHalfDay',
-      FilterExpression: 'attribute_not_exists(#connectionId)',
+      ProjectionExpression: '#id, #group, #firebaseToken, #isInactive, #lastConnectionHalfDay',
+      FilterExpression: 'attribute_not_exists(#connectionId)', // to retreive only disconnected users
       ExpressionAttributeNames: {
         '#id': 'id',
         '#group': 'group',
@@ -149,20 +149,26 @@ async function killUsers (deadUsers) {
   await removeUsersFromGroup(deadUsers)
 
   // Delete user from database
-  await Promise.allSettled(deadUsers.map((deadUser) => {
-    const deleteDeadUserCommand = new DeleteCommand({
-      TableName: USERS_TABLE_NAME,
-      Key: { id: deadUser.id }
+  const maximumNumberOfRequest = 25 // Cannot send more than 25 operations
+  for (let i = 0; i < Math.ceil(deadUsers.length / maximumNumberOfRequest); i++) {
+    const batchWriteDeleteCommand = new BatchWriteCommand({
+      RequestItems: {
+        [USERS_TABLE_NAME]: deadUsers.slice(i * maximumNumberOfRequest, (i + 1) * maximumNumberOfRequest).map((deadUser) => ({
+          DeleteRequest: {
+            Key: { id: deadUser.id }
+          }
+        }))
+      }
     })
-    return dynamoDBDocumentClient.send(deleteDeadUserCommand)
-  }))
+    await dynamoDBDocumentClient.send(batchWriteDeleteCommand).catch(err => { console.log('Error while deleting:\n', err) })
+  }
 }
 
 async function deactivateUser (inactiveUser) {
   // Warn user it will be killed if no action before tomorrow
   // inactiveUser: Map
   //    id: String - user id
-  //    firebaseToken : String - user firebase token
+
   console.log(`Add user ${inactiveUser.id} inactive tag`)
   const updateInactiveUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,

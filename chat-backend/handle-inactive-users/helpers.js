@@ -19,30 +19,15 @@ const {
 // ===== ==== ====
 // EXPORTS
 exports.removeUsersFromGroup = async (users) => {
-  // Remove user grom its group
+  // Remove users grom their group
   // users : List<Map>
   //    id : String - user id
   //    group : String - user group id
-  //    connectionId : String - user connection id
-  //    firebaseToken : String - user firebase token
 
   const groupid = users[0].group
 
   if (groupid === undefined) {
-    await Promise.allSettled(users.map(async (user) => {
-      const publishSendMessageCommand = new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: [user],
-          message: {
-            action: 'leavegroup',
-            id: user.id
-          }
-        })
-      })
-      return snsClient.send(publishSendMessageCommand)
-    }))
-    return // no group so no need to update it, simply warn users
+    return
   }
 
   // retreive group (needed to count its users)
@@ -97,7 +82,7 @@ exports.removeUsersFromGroup = async (users) => {
           `,
         ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: {
-          ':id': new Set(users.map(({ id }) => (id))),
+          ':ids': new Set(users.map(({ id }) => (id))),
           ':isWaiting': group.isWaiting ?? 1 // true
         }
       })
@@ -118,7 +103,22 @@ exports.removeUsersFromGroup = async (users) => {
         }
       })
 
-      users.concat(await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME])))
+      const otherUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+      // send message to other group users to notify user has leaved the group (excluding itself)
+      for (const user of users) {
+        const publishSendMessageCommand = new PublishCommand({
+          TopicArn: SEND_MESSAGE_TOPIC_ARN,
+          Message: JSON.stringify({
+            users: otherUsers,
+            message: {
+              action: 'leavegroup',
+              groupid: groupid,
+              id: user.id
+            }
+          })
+        })
+        promises.push(snsClient.send(publishSendMessageCommand))
+      }
     } else {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
@@ -129,23 +129,6 @@ exports.removeUsersFromGroup = async (users) => {
       console.log(`Delete old group <${groupid}>`)
     }
 
-    // send message to group users to notify user has leaved the group (including itself)
-    promises.push(Promise.allSettled(users.map(async (user) => {
-      const publishSendMessageCommand = new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: users,
-          message: {
-            action: 'leavegroup',
-            groupid: groupid,
-            id: user.id
-          }
-        })
-      })
-      return snsClient.send(publishSendMessageCommand)
-    })))
-
-    // NOTE: can send notification too
     await Promise.allSettled(promises)
   }
 }
