@@ -78,7 +78,7 @@ exports.handler = async (event) => {
 
       // check if user is inactive
       const userLastConnectionHalfDay = user.lastConnectionHalfDay ?? 0
-      const halfDayDifference = Math.floor(Math.abs(lastHalfDay - userLastConnectionHalfDay) / 43200000) + 2 // + 2 DEBUG
+      const halfDayDifference = Math.floor(Math.abs(lastHalfDay - userLastConnectionHalfDay) / 43200000)
       if (halfDayDifference > 1) {
         // user inactive: at least 12h without connection
         promises.push(deactivateUser(user).then(() => { console.log(`User ${user.id} deactivated`) }))
