@@ -257,66 +257,48 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         messageDecode(encodedMessage, types.Status.sending);
     if (message != null) {
       insertMessage(message);
+      setState(() {});
       _webSocketConnection.textmessage(encodedMessage);
     }
   }
 
   // Insert message (sort by date - O(n))
   // TODO: O(log(n))
-  void insertMessage(types.Message message,
-      {bool useHaptic = true, bool useSetState = true}) {
+  void insertMessage(types.Message message, {bool useHaptic = true}) {
     if (useHaptic && message.status == types.Status.delivered) {
       HapticFeedback.lightImpact();
     }
 
     if (_messages.isEmpty) {
-      setState(() {
-        _messages.add(message);
-      });
+      _messages.add(message);
       return;
     } else {
       for (int i = 0; i < _messages.length; i++) {
         if (message.createdAt! >= _messages[i].createdAt!) {
           if (message.id == _messages[i].id) {
-            if (useSetState) {
-              setState(() {
-                _messages[i] = message;
-              });
-            } else {
-              _messages[i] = message;
-            }
+            _messages[i] = message;
           } else {
-            if (useSetState) {
-              setState(() {
-                _messages.insert(i, message);
-              });
-            } else {
-              _messages.insert(i, message);
-            }
+            _messages.insert(i, message);
           }
           return;
         }
       }
     }
-    if (useSetState) {
-      setState(() {
-        _messages.add(message);
-      });
-    } else {
-      _messages.add(message);
-    }
+    _messages.add(message);
   }
 
   Future<void> loadMessagesFromMemory() async {
-    final List<types.Message> loadedMessages = await Memory().loadMessages();
+    final List<types.Message> loadedMessages = Memory().loadMessages();
     print('Loaded messages length: ${loadedMessages.length}');
     _messages.clear();
     for (final types.Message loadedMessage in loadedMessages) {
-      insertMessage(loadedMessage, useHaptic: false, useSetState: false);
+      insertMessage(loadedMessage, useHaptic: false);
     }
+    setState(() {});
+    print('state update');
   }
 
-  bool processMessage(message) {
+  bool processMessage(message, {bool isInnerLoop = false}) {
     bool needUpdate = true;
     final data = jsonDecode(message);
     switch (data['action']) {
@@ -332,7 +314,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         connectionState = 'connected';
         // process unread messages
         for (final unreadMessage in data['unreadData']) {
-          processMessage(jsonEncode(unreadMessage));
+          processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
           // needUpdate cannot be false because connectionState changed
         }
 
@@ -405,7 +387,9 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         print('\tMessage: ${data['message']}');
         types.Message? message = messageDecode(data['message']);
         if (message != null) {
-          insertMessage(message, useSetState: false);
+          if (!isInnerLoop) {
+            insertMessage(message);
+          }
           Memory().addMessage(message.id, data['message']);
         }
         break;
@@ -430,6 +414,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void listenMessage(message) {
     print("Receive message: $message");
     bool needUpdate = processMessage(message);
+    print('messages $_messages');
+    print('Need update? $needUpdate');
     if (needUpdate) {
       setState(() {});
     }

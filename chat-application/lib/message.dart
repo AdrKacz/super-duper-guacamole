@@ -180,7 +180,7 @@ Future<void> mailToReportMessage(
 """)}""",
     },
   ).toString().replaceAll("+", "%20");
-  if (!await launch(mailto)) {
+  if (!await launchUrl(Uri.parse(mailto))) {
     throw "Could not launch $mailto";
   }
 }

@@ -22,7 +22,7 @@ class User {
       print("Reset group (unsubscribe and clear messages and users)");
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-${User().groupId}');
-      Memory().lazyBoxMessages.clear();
+      Memory().boxMessages.clear();
       _groupId = "";
       Memory().lazyBoxGroupUsers.clear();
       otherGroupUsers.clear();
