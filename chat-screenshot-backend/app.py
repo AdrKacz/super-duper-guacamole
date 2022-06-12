@@ -20,7 +20,6 @@ snapshot = {}
 async def register(websocket):
     global seen_ids, snapshot
     message = await websocket.recv()
-    # print(">>>", message)
 
     body = json.loads(message)
     user_id = body['id']
@@ -32,7 +31,6 @@ async def register(websocket):
         'unreadData':[],
         })
         print(f"User {user_id} already seen")
-        # print("<<<", answer)
         await websocket.send(answer)
         await asyncio.Future()
     seen_ids.add(user_id)
