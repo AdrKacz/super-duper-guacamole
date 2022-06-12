@@ -1,5 +1,5 @@
 {
-    "isActiveUsers": [false, false, true],
+    "isActiveUsers": [false, true, true, false],
     "messages": [
         {
             "author": 1,
@@ -15,6 +15,11 @@
             "author": 2,
             "datetime": "2022-06-10 16:21:30+01:00",
             "text": "Yes !!"
+        },
+        {
+            "author": 0,
+            "datetime": "2022-06-10 16:50:40+01:00",
+            "text": "Hello ! 😇\nYou!"
         }
     ] 
 }
