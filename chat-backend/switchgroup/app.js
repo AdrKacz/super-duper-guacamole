@@ -259,12 +259,11 @@ async function addUserToGroup (user, newGroup) {
         RequestItems: {
           [USERS_TABLE_NAME]: {
             Keys: usersIds,
-            ProjectionExpression: '#id, #connectionId, #firebaseToken, #isActive',
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
               '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken',
-              '#isActive': 'isActive'
+              '#firebaseToken': 'firebaseToken'
             }
           }
         }
@@ -288,7 +287,7 @@ async function addUserToGroup (user, newGroup) {
     allUsers.forEach((loopUser) => {
       allUsersMap[loopUser.id] = {
         id: loopUser.id,
-        isActive: loopUser.isActive ?? true
+        isActive: loopUser.connectionId !== undefined
       }
     })
     const publishSendMessageCommand = new PublishCommand({

@@ -8,12 +8,6 @@
 // EVENT
 
 // ===== ==== ====
-// NOTE
-// Difference between isActive to false and isInactive to true
-// isInactive to true: No connection for the last 24h
-// isActive to false: No currently using the app
-
-// ===== ==== ====
 // IMPORTS
 const { ScanCommand, UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb')
 
@@ -48,19 +42,15 @@ exports.handler = async (event) => {
   do {
     const scanCommand = new ScanCommand({
       TableName: USERS_TABLE_NAME,
-      ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #isActive, #isInactive, #lastConnectionHalfDay',
-      FilterExpression: '#isActive = :false',
+      ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #isInactive, #lastConnectionHalfDay',
+      FilterExpression: 'attribute_not_exists(#connectionId)',
       ExpressionAttributeNames: {
         '#id': 'id',
         '#group': 'group',
         '#connectionId': 'connectionId',
         '#firebaseToken': 'firebaseToken',
-        '#isActive': 'isActive',
         '#isInactive': 'isInactive',
         '#lastConnectionHalfDay': 'lastConnectionHalfDay'
-      },
-      ExpressionAttributeValues: {
-        ':false': false
       },
       ExclusiveStartKey: lastEvaluatedKey
     })
