@@ -7,6 +7,7 @@
 - [Post Man](https://awa-ma.postman.co)
 - [Terrastruct](https://app.terrastruct.com/console)
 - [CodeMagic](https://codemagic.io)
+- [Imgbot](https://imgbot.net/app/)
 
 # Brief overview of the [LICENSE](./LICENSE)
 
@@ -34,10 +35,10 @@ $ cloc --config=options.txt .
 
 Language|files|blank %|comment %|code
 :-------|-------:|-------:|-------:|-------:
-Dart|21|11.54|6.34|2131
-JavaScript|13|18.61|24.35|1499
-YAML|9|7.38|8.63|1124
-Markdown|11|35.35|0.00|860
-Python|10|22.59|43.09|810
-**SUM:**|**64**|**17.05**|**14.73**|**6424**
+Dart|21|11.57|6.49|2126
+JavaScript|16|18.44|27.23|1741
+YAML|9|7.17|8.56|1157
+Python|11|23.09|42.09|879
+Markdown|12|35.33|0.00|869
+**SUM:**|**69**|**17.13**|**15.96**|**6772**
 
