@@ -7,8 +7,8 @@ Send a pre-defined series of messages.
 Don't react to any input from the client.
 """
 
+import yaml
 import json
-from datetime import datetime
 from math import floor
 from uuid import uuid4
 import asyncio
@@ -18,7 +18,7 @@ import websockets
 MESSAGE_COUNT = 0
 
 
-def encode_message(author, created_at_isoformat, text):
+def encode_message(author, datetime, text):
     """
     Encode message so it can be read by the app
         author : String - author id
@@ -28,8 +28,7 @@ def encode_message(author, created_at_isoformat, text):
     global MESSAGE_COUNT
     MESSAGE_COUNT += 1
 
-    created_at_datetime = datetime.fromisoformat(created_at_isoformat)
-    return f"{author}::{floor(created_at_datetime.timestamp() * 1000)}::\
+    return f"{author}::{floor(datetime.timestamp() * 1000)}::\
 text-{MESSAGE_COUNT}::{text}"
 
 
@@ -105,6 +104,7 @@ async def main():
 
 if __name__ == "__main__":
     # get instruction
-    with open("snapshot.json", "r", encoding="utf8") as f:
-        SNAPSHOT = json.load(f)
+    with open("snapshot.yaml", "r", encoding="utf8") as stream:
+        SNAPSHOT = yaml.safe_load(stream)
+    print(SNAPSHOT['messages'][0]['datetime'])
     asyncio.run(main())
