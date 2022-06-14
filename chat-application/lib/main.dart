@@ -340,6 +340,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         if (assignedGroupId == "" ||
             (User().groupId != "" && assignedGroupId != User().groupId)) {
           // there was an error somewhere, just re-init the group
+          NotificationHandler().init(); // register notification token
           User().groupId = "";
           _webSocketConnection.switchgroup();
           _messages.clear();

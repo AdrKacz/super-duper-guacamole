@@ -99,7 +99,7 @@ ${JSON.stringify(err)}`)
 
   if (rejectedUsers.length > 0) {
     const publishCommand = new PublishCommand({
-      TopicArn: STORE_UNREAD_DATA_TOPIC_ARN,
+      TopicArn: STORE_UNREAD_DATA_TOPIC_ARN, // it removes connectionId too
       Message: JSON.stringify({
         users: rejectedUsers,
         message: message

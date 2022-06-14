@@ -95,11 +95,10 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: id },
     UpdateExpression: `
-    SET #isActive = :true, #isInactive = :false, #connectionId = :connectionId, #publicKey = :publicKey
+    SET #isInactive = :false, #connectionId = :connectionId, #publicKey = :publicKey
     REMOVE #unreadData
     `,
     ExpressionAttributeNames: {
-      '#isActive': 'isActive',
       '#isInactive': 'isInactive',
       '#connectionId': 'connectionId',
       '#publicKey': 'publicKey',
@@ -108,7 +107,6 @@ exports.handler = async (event) => {
     ExpressionAttributeValues: {
       ':connectionId': event.requestContext.connectionId,
       ':publicKey': publicKey,
-      ':true': true,
       ':false': false
     }
   })

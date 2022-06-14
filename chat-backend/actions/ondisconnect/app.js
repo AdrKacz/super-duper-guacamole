@@ -74,16 +74,14 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: user.id },
     UpdateExpression: `
-    SET #isActive = :false, #lastConnectionHalfDay = :lastConnectionHalfDay
+    SET #lastConnectionHalfDay = :lastConnectionHalfDay
     REMOVE #connectionId
     `,
     ExpressionAttributeNames: {
-      '#isActive': 'isActive',
       '#lastConnectionHalfDay': 'lastConnectionHalfDay',
       '#connectionId': 'connectionId'
     },
     ExpressionAttributeValues: {
-      ':false': false,
       ':lastConnectionHalfDay': ((ts) => (ts - (ts % 43200000)))(Date.now()) // timestamp rounded to 12pm or 12am
     }
   })

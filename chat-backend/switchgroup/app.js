@@ -259,12 +259,11 @@ async function addUserToGroup (user, newGroup) {
         RequestItems: {
           [USERS_TABLE_NAME]: {
             Keys: usersIds,
-            ProjectionExpression: '#id, #connectionId, #firebaseToken, #isActive',
+            ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
               '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken',
-              '#isActive': 'isActive'
+              '#firebaseToken': 'firebaseToken'
             }
           }
         }
@@ -288,7 +287,7 @@ async function addUserToGroup (user, newGroup) {
     allUsers.forEach((loopUser) => {
       allUsersMap[loopUser.id] = {
         id: loopUser.id,
-        isActive: loopUser.isActive ?? true
+        isActive: loopUser.connectionId !== undefined
       }
     })
     const publishSendMessageCommand = new PublishCommand({
@@ -357,7 +356,7 @@ async function addUserToGroup (user, newGroup) {
   await Promise.allSettled(promises)
 }
 
-async function removeUserFromGroup (user, isBan = false) {
+async function removeUserFromGroup (user, isBan) {
   // Remove user grom its group
   // user : Map
   //    id : String - user id
@@ -376,8 +375,7 @@ async function removeUserFromGroup (user, isBan = false) {
         }
       })
     })
-    await snsClient.send(publishSendMessageCommand)
-    return // no group so no need to update it, simply warn user
+    return await snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
   }
 
   // retreive group (needed to count its users)
@@ -454,8 +452,8 @@ async function removeUserFromGroup (user, isBan = false) {
           }
         }
       })
-
-      users.concat(await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME])))
+      const otherUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+      users.push(...otherUsers)
     } else {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
