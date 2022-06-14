@@ -7,6 +7,7 @@ Send a pre-defined series of messages.
 Don't react to any input from the client.
 """
 
+from argparse import ArgumentParser
 import yaml
 import json
 from math import floor
@@ -15,9 +16,17 @@ import asyncio
 
 import websockets
 
+# ----- ----- ----- ----- -----
+# ----- ----- ----- ----- -----
+# COMAND LINE ARGUMENT
+parser = ArgumentParser(description='Mock Awa-Chat websocket server for snapshots')
+parser.add_argument('-s', '--snapshot', dest='snapshot', default='./snapshots/snapshot.yaml',\
+    help='Snapshot YAML input', metavar="filename.yaml")
+
+# ----- ----- ----- ----- -----
+# ----- ----- ----- ----- -----
+# WEB SOCKET
 MESSAGE_COUNT = 0
-
-
 def encode_message(author, datetime, text):
     """
     Encode message so it can be read by the app
@@ -102,9 +111,12 @@ async def main():
         await asyncio.Future()  # run forever
 
 
+# ----- ----- ----- ----- -----
+# ----- ----- ----- ----- -----
+# MAIN
 if __name__ == "__main__":
     # get instruction
-    with open("snapshot.yaml", "r", encoding="utf8") as stream:
+    args = parser.parse_args()
+    with open(args.snapshot, "r", encoding="utf8") as stream:
         SNAPSHOT = yaml.safe_load(stream)
-    print(SNAPSHOT['messages'][0]['datetime'])
     asyncio.run(main())
