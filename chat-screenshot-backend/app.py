@@ -8,25 +8,33 @@ Don't react to any input from the client.
 """
 
 from argparse import ArgumentParser
-import yaml
 import json
 from math import floor
 from uuid import uuid4
 import asyncio
 
+import yaml
 import websockets
 
 # ----- ----- ----- ----- -----
 # ----- ----- ----- ----- -----
 # COMAND LINE ARGUMENT
-parser = ArgumentParser(description='Mock Awa-Chat websocket server for snapshots')
-parser.add_argument('-s', '--snapshot', dest='snapshot', default='./snapshots/snapshot.yaml',\
-    help='Snapshot YAML input', metavar="filename.yaml")
+parser = ArgumentParser(description="Mock Awa-Chat websocket server for snapshots")
+parser.add_argument(
+    "-s",
+    "--snapshot",
+    dest="snapshot",
+    default="./snapshots/snapshot.yaml",
+    help="Snapshot YAML input",
+    metavar="filename.yaml",
+)
 
 # ----- ----- ----- ----- -----
 # ----- ----- ----- ----- -----
 # WEB SOCKET
 MESSAGE_COUNT = 0
+
+
 def encode_message(author, datetime, text):
     """
     Encode message so it can be read by the app
