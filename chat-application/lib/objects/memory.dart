@@ -1,11 +1,10 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/message.dart';
-import 'package:http/http.dart';
 
 class Memory {
   late final Box<String> boxUser;
-  late final LazyBox<String> lazyBoxMessages;
+  late final Box<String> boxMessages;
   late final LazyBox<Map> lazyBoxGroupUsers;
   late final Box<String> rsaKeyPairBox;
 
@@ -20,7 +19,7 @@ class Memory {
   Future<void> init() async {
     await Hive.initFlutter();
     lazyBoxGroupUsers = await Hive.openLazyBox<Map>('groupUsers');
-    lazyBoxMessages = await Hive.openLazyBox<String>('messages');
+    boxMessages = await Hive.openBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
     rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
   }
@@ -45,7 +44,7 @@ class Memory {
   Future<void> clear() async {
     await Future.wait([
       boxUser.clear(),
-      lazyBoxMessages.clear(),
+      boxMessages.clear(),
       lazyBoxGroupUsers.clear(),
       rsaKeyPairBox.clear(),
     ]);
@@ -76,21 +75,21 @@ class Memory {
     if (id == null || text == null) {
       return;
     }
-    lazyBoxMessages.put(id, text);
+    boxMessages.put(id, text);
   }
 
   void deleteMessage(String? id) {
     if (id == null) {
       return;
     }
-    lazyBoxMessages.delete(id);
+    boxMessages.delete(id);
   }
 
-  Future<List<types.Message>> loadMessages() async {
+  List<types.Message> loadMessages() {
     List<types.Message> messages = [];
 
-    for (final String key in lazyBoxMessages.keys) {
-      types.Message? message = messageDecode(await lazyBoxMessages.get(key));
+    for (final String key in boxMessages.keys) {
+      types.Message? message = messageDecode(boxMessages.get(key));
       if (message != null) {
         messages.insert(0, message);
       }

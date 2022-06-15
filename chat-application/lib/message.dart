@@ -157,7 +157,7 @@ Future<void> mailToReportMessage(
 
   final String mailto = Uri(
     scheme: 'mailto',
-    path: 'thunder_parsons.09@icloud.com',
+    path: 'awachat.app@gmail.com',
     queryParameters: {
       'subject': 'Signalement',
       'body': """--- --- ---
@@ -180,7 +180,7 @@ Future<void> mailToReportMessage(
 """)}""",
     },
   ).toString().replaceAll("+", "%20");
-  if (!await launch(mailto)) {
+  if (!await launchUrl(Uri.parse(mailto))) {
     throw "Could not launch $mailto";
   }
 }
