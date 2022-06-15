@@ -1,6 +1,31 @@
 workflows:
-  default-workflow:
-    name: Default Workflow
+  build-chat-backend:
+    name: Build Chat Backend
+    working_directory: chat-backend
+    max_build_duration: 30
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+          source: true
+    when:
+      changeset:
+        includes:
+          - 'chat-backend/'
+        excludes:
+          - '**/*.md'
+    environment:
+      groups:
+        - aws_credentials
+        - emails
+    scripts:
+      - name: Update AWS production environment
+        script: |
+          yarn deploy --no-confirm-changeset --config-env prod
+  build-chat-application:
+    name: Build Chat Application
     working_directory: chat-application
     max_build_duration: 60
     triggering:
