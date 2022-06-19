@@ -3,6 +3,7 @@ import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 // ===== ===== =====
 // Drawer
@@ -60,6 +61,16 @@ class UserDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => const Credits()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text("Nous contacter"),
+            onTap: () async {
+              if (!await launchUrl(Uri.parse(
+                  'https://awachatapplication.wordpress.com/contact/'))) {
+                throw 'Could not launch https://awachatapplication.wordpress.com/contact/';
+              }
             },
           ),
           ListTile(
