@@ -34,4 +34,4 @@ jobs:
       # Deploy defined in chat-backend/package.json
       - name: Deploy
         working-directory: ./chat-backend
-        run: yarn run deploy --config-env ${{ inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
+        run: yarn run deploy --config-env ${{ event_name == 'push' && 'dev' || inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
