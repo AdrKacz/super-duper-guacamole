@@ -5,6 +5,15 @@ name: SAM Pipeline
 # Controls when the workflow will run
 on:
   workflow_dispatch:
+    inputs:
+      configenv:
+        description: 'Configuration Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
   push:
     branches:
       - automation-for-backend
@@ -25,5 +34,4 @@ jobs:
       # Deploy defined in chat-backend/package.json
       - name: Deploy
         working-directory: ./chat-backend
-        run: yarn run deploy --config-env dev --no-confirm-changeset --no-fail-on-empty-changeset
-      # Run unit tests- specify unit tests here 
+        run: yarn run deploy --config-env ${{ inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
