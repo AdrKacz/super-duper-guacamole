@@ -1,8 +1,15 @@
+# This is a workflow to check syntax on JavaScript
+
+name: SAM Pipeline
+
+# Controls when the workflow will run
 on:
   workflow_dispatch:
   push:
     branches:
       - automation-for-backend
+
+# Jobs
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
