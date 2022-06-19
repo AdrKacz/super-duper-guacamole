@@ -16,7 +16,7 @@ on:
           - prod
   push:
     branches:
-      - automation-for-backend
+      - main
     paths:
       - chat-backend/**
 
@@ -36,4 +36,4 @@ jobs:
       # Deploy defined in chat-backend/package.json
       - name: Deploy
         working-directory: ./chat-backend
-        run: yarn run deploy --config-env ${{ github.event_name == 'push' && 'dev' || inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
+        run: yarn run deploy --config-env ${{ github.event_name == 'push' && 'prod' || inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
