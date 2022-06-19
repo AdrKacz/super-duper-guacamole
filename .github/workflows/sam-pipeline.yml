@@ -23,7 +23,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       # sam build 
-      - run: sam build --use-container
+      - name: SAM Build
+        working-directory: ./chat-backend
+        run: sam build --use-container
       # Run unit tests- specify unit tests here 
       # sam deploy
-      - run: sam deploy --config-env dev --no-confirm-changeset --no-fail-on-empty-changeset
+      - name: SAM Deploy
+        working-directory: ./chat-backend
+        run: sam deploy --config-env dev --no-confirm-changeset --no-fail-on-empty-changeset
