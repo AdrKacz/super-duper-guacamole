@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - automation-for-backend
-    paths:
-      - chat-backend/**
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
