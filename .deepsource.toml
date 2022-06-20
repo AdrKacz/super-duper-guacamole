@@ -29,6 +29,7 @@ dependency_file_paths = [
 ]
 module_system = "commonjs"
 style_guide = "standard"
+environment = ["nodejs"]
 
 [[analyzers]]
 name = "python"
