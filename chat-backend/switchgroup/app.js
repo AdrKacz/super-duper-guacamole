@@ -162,7 +162,7 @@ ${event.Records[0].Sns.Message}
       let chosenGroup = null
       for (const group of response.Items) {
         // Check this group is valid
-        const userNotBannedFromGroup = group.bannedUsers === undefined || !group.bannedUsers.has(user.id)
+        const userNotBannedFromGroup = typeof group.bannedUsers === 'undefined' || !group.bannedUsers.has(user.id)
         if (group.id !== user.group && userNotBannedFromGroup) {
           let similarity = 0
           // iterate accross the smallest
@@ -287,7 +287,7 @@ async function addUserToGroup (user, newGroup) {
     allUsers.forEach((loopUser) => {
       allUsersMap[loopUser.id] = {
         id: loopUser.id,
-        isActive: loopUser.connectionId !== undefined
+        isActive: typeof loopUser.connectionId !== 'undefined'
       }
     })
     const publishSendMessageCommand = new PublishCommand({
@@ -364,7 +364,7 @@ async function removeUserFromGroup (user, isBan) {
   //    connectionId : String - user connection id
   //    firebaseToken : String - user firebase token
 
-  if (user.group === undefined) {
+  if (typeof user.group === 'undefined') {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -481,4 +481,5 @@ async function removeUserFromGroup (user, isBan) {
     // NOTE: can send notification too
     return Promise.allSettled(promises)
   }
+  return
 }
