@@ -131,7 +131,7 @@ ${event.Records[0].Sns.Message}
   }
 
   // query a new group (query doesn't work without a KeyConditionExpression, use scan instead)
-  // TODO: use a sort index to query only the waiting ones faster
+  // TODO: use a sort index to query only the waiting ones faster, skipcq: JS-0099
   const queryCommand = new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
