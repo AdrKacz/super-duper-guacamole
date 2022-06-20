@@ -27,9 +27,9 @@ dependency_file_paths = [
   "chat-backend/.dependencies/aws-sdk-sns/",
   "chat-backend/.dependencies/firebase-admin/",
 ]
+environment = ["nodejs"]
 module_system = "commonjs"
 style_guide = "standard"
-environment = ["nodejs"]
 
 [[analyzers]]
 name = "python"
