@@ -481,5 +481,4 @@ async function removeUserFromGroup (user, isBan) {
     // NOTE: can send notification too
     return Promise.allSettled(promises)
   }
-  return
 }
