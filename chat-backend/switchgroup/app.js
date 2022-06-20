@@ -81,8 +81,8 @@ const {
   SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
 } = process.env
-const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING)
-const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING)
+const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING, 10)
+const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
@@ -104,7 +104,7 @@ ${event.Records[0].Sns.Message}
   const questions = body.questions ?? {}
   const isBan = body.isBan ?? false
 
-  if (id === undefined) {
+  if (typeof id === 'undefined') {
     throw new Error('id must be defined')
   }
 
@@ -123,7 +123,7 @@ ${event.Records[0].Sns.Message}
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
   console.log('user:', user)
 
-  if (user === undefined) {
+  if (typeof user === 'undefined') {
     console.log(`user <${id}> doesn't exist`)
     return {
       statusCode: 204
@@ -204,7 +204,7 @@ ${event.Records[0].Sns.Message}
     removeUserFromGroup(user, isBan)
   ]
 
-  await Promise.allSettled(promises)
+  return Promise.allSettled(promises)
 }
 
 // ===== ==== ====
@@ -375,7 +375,7 @@ async function removeUserFromGroup (user, isBan) {
         }
       })
     })
-    return await snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
+    return snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
   }
 
   // retreive group (needed to count its users)
@@ -393,7 +393,7 @@ async function removeUserFromGroup (user, isBan) {
 
   // check oldGroup still exists (if concurrent runs)
   // to avoid re-create it throught the update
-  if (group !== undefined) {
+  if (typeof group !== 'undefined') {
     group.users = group.users ?? new Set()
     group.users.delete(user.id) // simulate remove user id (will be removed -for real- below)
 
@@ -479,6 +479,6 @@ async function removeUserFromGroup (user, isBan) {
     promises.push(snsClient.send(publishSendMessageCommand))
 
     // NOTE: can send notification too
-    await Promise.allSettled(promises)
+    return Promise.allSettled(promises)
   }
 }
