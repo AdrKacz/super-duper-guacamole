@@ -9,12 +9,14 @@ const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 // ===== ==== ====
 // CONSTANTS
 const {
-  MAXIMUM_GROUP_SIZE,
-  MINIMUM_GROUP_SIZE,
+  MINIMUM_GROUP_SIZE_STRING,
+  MAXIMUM_GROUP_SIZE_STRING,
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN
 } = process.env
+const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING, 10)
+const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS
