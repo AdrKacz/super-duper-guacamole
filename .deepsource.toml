@@ -12,10 +12,10 @@ dependency_file_paths = [
   "chat-backend/",
   "chat-backend/handle-inactive-users/",
   "chat-backend/put-firebase-token/",
-  "chat-backend/sendmessage/",,
+  "chat-backend/sendmessage/",
   "chat-backend/sendnotification/",
   "chat-backend/storeunreaddata/",
-  "chat-backend/switchgroup/"
+  "chat-backend/switchgroup/",
   "chat-backend/actions/banreply/",
   "chat-backend/actions/banrequest/",
   "chat-backend/actions/ondisconnect/",
