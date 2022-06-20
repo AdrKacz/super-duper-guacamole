@@ -102,7 +102,7 @@ ${JSON.stringify(err)}`)
       TopicArn: STORE_UNREAD_DATA_TOPIC_ARN, // it removes connectionId too
       Message: JSON.stringify({
         users: rejectedUsers,
-        message: message
+        message
       })
     })
 

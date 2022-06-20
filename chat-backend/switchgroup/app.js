@@ -111,7 +111,7 @@ ${event.Records[0].Sns.Message}
   // get user
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -195,7 +195,7 @@ ${event.Records[0].Sns.Message}
       id: uuidv4(),
       isWaiting: 1,
       users: new Set(),
-      questions: questions
+      questions
     }
   })
 
@@ -250,7 +250,7 @@ async function addUserToGroup (user, newGroup) {
     // early users are user not notified of the group yet
     const earlyUsers = [user]
     const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
-    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id: id }))
+    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
     const otherUsers = []
     // happens only once when group becomes active for the first time
     if (usersIds.length > 0) {
@@ -442,7 +442,7 @@ async function removeUserFromGroup (user, isBan) {
       const batchGetUsersCommand = new BatchGetCommand({
         RequestItems: {
           [USERS_TABLE_NAME]: {
-            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            Keys: Array.from(group.users).map((id) => ({ id })),
             ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
@@ -468,7 +468,7 @@ async function removeUserFromGroup (user, isBan) {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
+        users,
         message: {
           action: 'leavegroup',
           groupid: user.group,

@@ -106,7 +106,7 @@ def handler(event, _context):
     user_id_raw = "".join(user_id_raw_list_string)
 
     # Get Mapped id:
-    #### Modify 
+    #### Modify
     user_id = str(get_mapped(mapping_table, USER_ID_RAW, user_id_raw, USER_ID))
     print(user_id)
     response = table_model_y.get_item(Key={USER_ID: user_id})

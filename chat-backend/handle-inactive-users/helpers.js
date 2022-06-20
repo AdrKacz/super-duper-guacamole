@@ -92,7 +92,7 @@ exports.removeUsersFromGroup = async (users) => {
       const batchGetUsersCommand = new BatchGetCommand({
         RequestItems: {
           [USERS_TABLE_NAME]: {
-            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            Keys: Array.from(group.users).map((id) => ({ id })),
             ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
@@ -112,7 +112,7 @@ exports.removeUsersFromGroup = async (users) => {
             users: otherUsers,
             message: {
               action: 'leavegroup',
-              groupid: groupid,
+              groupid,
               id: user.id
             }
           })

@@ -116,7 +116,7 @@ exports.handler = async (event) => {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: otherUserIds.map((id) => ({ id: id })),
+        Keys: otherUserIds.map((id) => ({ id })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -131,7 +131,7 @@ exports.handler = async (event) => {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       message: {
         action: 'logout',
         id: user.id

@@ -73,7 +73,7 @@ def handler(event, _context):
     by u in a conversation with others users. This number of message is
     compared to an exponential average of messages exchanged by u, to compute a rate.
     This rate will be the rating u give to the conversation, so to the other users.
-    
+
     Parameters to put in the URL:
         api_gateway_endpoint?USER_INPUT_STRING=username_1-nb_message_username_1&
         USERS_MESSAGES_OTHERS_USERS=(username_2,nb_message_username_2)-(username_3,nb_message_username_3)

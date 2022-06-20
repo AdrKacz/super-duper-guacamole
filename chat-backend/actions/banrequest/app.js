@@ -111,7 +111,7 @@ exports.handler = async (event) => {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: [{ id: id }, { id: bannedid }],
+        Keys: [{ id }, { id: bannedid }],
         ProjectionExpression: '#id, #group, #connectionId, #banConfirmedUsers',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -209,7 +209,7 @@ exports.handler = async (event) => {
     const batchGetBanNewVotingUsersCommand = new BatchGetCommand({
       RequestItems: {
         [USERS_TABLE_NAME]: {
-          Keys: Array.from(banNewVotingUsers).map((id) => ({ id: id })),
+          Keys: Array.from(banNewVotingUsers).map((id) => ({ id })),
           ProjectionExpression: '#id, #connectionId, #firebaseToken',
           ExpressionAttributeNames: {
             '#id': 'id',
@@ -224,10 +224,10 @@ exports.handler = async (event) => {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
+        users,
         message: {
           action: 'banrequest',
-          messageid: messageid
+          messageid
         }
       })
     })
@@ -236,7 +236,7 @@ exports.handler = async (event) => {
     const publishSendNotificationCommand = new PublishCommand({
       TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
+        users,
         notification: {
           title: "Quelqu'un a mal agi ❌",
           body: 'Viens donner ton avis !'

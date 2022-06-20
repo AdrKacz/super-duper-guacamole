@@ -75,7 +75,7 @@ ${event.Records[0].Sns.Message}
       }
     }
     if (tokens.length > 0) {
-      const message = { notification, tokens: tokens }
+      const message = { notification, tokens }
       console.log(`Send:\n${JSON.stringify(message)}`)
 
       promises.push(messaging.sendMulticast(message))

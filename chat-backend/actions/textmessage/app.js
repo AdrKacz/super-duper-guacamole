@@ -103,7 +103,7 @@ exports.handler = async (event) => {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).map((id) => ({ id: id })),
+        Keys: Array.from(group.users).map((id) => ({ id })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -123,10 +123,10 @@ exports.handler = async (event) => {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       message: {
         action: 'textmessage',
-        message: message
+        message
       }
     })
   })
