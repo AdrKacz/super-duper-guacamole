@@ -1,0 +1,46 @@
+version = 1
+
+[[analyzers]]
+name = "shell"
+enabled = true
+
+[[analyzers]]
+name = "javascript"
+enabled = true
+dependency_file_paths = [
+  "artillery/",
+  "chat-backend/",
+  "chat-backend/handle-inactive-users/",
+  "chat-backend/put-firebase-token/",
+  "chat-backend/sendmessage/",
+  "chat-backend/sendnotification/",
+  "chat-backend/storeunreaddata/",
+  "chat-backend/switchgroup/",
+  "chat-backend/actions/banreply/",
+  "chat-backend/actions/banrequest/",
+  "chat-backend/actions/ondisconnect/",
+  "chat-backend/actions/register/",
+  "chat-backend/actions/switchgroup/",
+  "chat-backend/actions/textmessage/",
+  "chat-backend/.dependencies/aws-sdk-api/",
+  "chat-backend/.dependencies/aws-sdk-ddb/",
+  "chat-backend/.dependencies/aws-sdk-sns/",
+  "chat-backend/.dependencies/firebase-admin/",
+]
+module_system = "commonjs"
+style_guide = "standard"
+
+[[analyzers]]
+name = "python"
+enabled = true
+
+  [analyzers.meta]
+  runtime_version = "3.x.x"
+
+[[transformers]]
+name = "black"
+enabled = true
+
+[[transformers]]
+name = "standardjs"
+enabled = true
