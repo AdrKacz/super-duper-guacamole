@@ -1,9 +1,9 @@
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient } = require('@aws-sdk/client-sns')
+const { SNSClient } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS

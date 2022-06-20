@@ -21,9 +21,9 @@
 
 // ===== ==== ====
 // IMPORTS
-const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi')
+const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS

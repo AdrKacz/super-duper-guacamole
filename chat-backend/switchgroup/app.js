@@ -55,7 +55,7 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
 const {
   DynamoDBDocumentClient,
   BatchGetCommand,
@@ -63,9 +63,9 @@ const {
   GetCommand,
   UpdateCommand,
   QueryCommand
-} = require('@aws-sdk/lib-dynamodb')
+} = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { v4: uuidv4 } = require('uuid')
 
@@ -186,7 +186,7 @@ ${event.Records[0].Sns.Message}
           }
         }
       }
-      if (chosenGroup != null) {
+      if (chosenGroup !== null) {
         console.log(`selected group with similarity of ${maximumOfSimilarity}:\n`, chosenGroup)
         return chosenGroup
       }
