@@ -1,20 +1,22 @@
 // ===== ==== ====
 // IMPORTS
-const { GetCommand, BatchGetCommand, UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb')
+const { GetCommand, BatchGetCommand, UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { PublishCommand } = require('@aws-sdk/client-sns')
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
 // ===== ==== ====
 // CONSTANTS
 const {
-  MAXIMUM_GROUP_SIZE,
-  MINIMUM_GROUP_SIZE,
+  MINIMUM_GROUP_SIZE_STRING,
+  MAXIMUM_GROUP_SIZE_STRING,
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN
 } = process.env
+const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING, 10)
+const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS
@@ -92,7 +94,7 @@ exports.removeUsersFromGroup = async (users) => {
       const batchGetUsersCommand = new BatchGetCommand({
         RequestItems: {
           [USERS_TABLE_NAME]: {
-            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            Keys: Array.from(group.users).map((id) => ({ id })),
             ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
@@ -112,7 +114,7 @@ exports.removeUsersFromGroup = async (users) => {
             users: otherUsers,
             message: {
               action: 'leavegroup',
-              groupid: groupid,
+              groupid,
               id: user.id
             }
           })

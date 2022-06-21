@@ -9,9 +9,9 @@
 
 // ===== ==== ====
 // IMPORTS
-const { ScanCommand, UpdateCommand, BatchWriteCommand } = require('@aws-sdk/lib-dynamodb')
+const { ScanCommand, UpdateCommand, BatchWriteCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { PublishCommand } = require('@aws-sdk/client-sns')
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { removeUsersFromGroup } = require('./helpers')
 

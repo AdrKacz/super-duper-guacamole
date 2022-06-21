@@ -14,10 +14,10 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS
@@ -87,7 +87,7 @@ exports.handler = async (event) => {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: [{ id: id }, { id: bannedid }],
+        Keys: [{ id }, { id: bannedid }],
         ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -215,7 +215,7 @@ exports.handler = async (event) => {
         RequestItems: {
           [USERS_TABLE_NAME]: {
             // user and banned user already requested
-            Keys: Array.from(group.users).filter((userid) => (userid !== bannedid && userid !== id)).map((id) => ({ id: id })),
+            Keys: Array.from(group.users).filter((userid) => (userid !== bannedid && userid !== id)).map((id) => ({ id })),
             ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
@@ -251,7 +251,7 @@ exports.handler = async (event) => {
           users: otherUsers.concat([user, bannedUser]),
           message: {
             action: 'banreply',
-            bannedid: bannedid,
+            bannedid,
             status: 'confirmed'
           }
         })
@@ -277,7 +277,7 @@ exports.handler = async (event) => {
           users: otherUsers.concat([user]),
           message: {
             action: 'banreply',
-            bannedid: bannedid,
+            bannedid,
             status: 'denied'
           }
         })

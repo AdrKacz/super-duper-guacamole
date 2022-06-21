@@ -17,10 +17,10 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { createVerify } = require('crypto')
 
@@ -66,7 +66,7 @@ exports.handler = async (event) => {
   // user
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     ProjectionExpression: '#id, #publicKey',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -93,7 +93,7 @@ exports.handler = async (event) => {
   const updateCommand = new UpdateCommand({
     ReturnValues: 'ALL_OLD',
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     UpdateExpression: `
     SET #isInactive = :false, #connectionId = :connectionId, #publicKey = :publicKey
     REMOVE #unreadData
@@ -125,7 +125,7 @@ exports.handler = async (event) => {
       users: [{ id, connectionId: event.requestContext.connectionId }],
       message: {
         action: 'register',
-        unreadData: unreadData,
+        unreadData,
         group: updatedUser?.group
       }
     })
@@ -168,7 +168,7 @@ async function informGroup (userId, groupId) {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).filter((id) => (id !== userId)).map((id) => ({ id: id })),
+        Keys: Array.from(group.users).filter((id) => (id !== userId)).map((id) => ({ id })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -183,7 +183,7 @@ async function informGroup (userId, groupId) {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       message: {
         action: 'login',
         id: userId
