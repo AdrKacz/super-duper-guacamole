@@ -21,8 +21,8 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, UpdateCommand, GetCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient, UpdateCommand, GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { createVerify } = require('crypto')
 
@@ -67,7 +67,7 @@ exports.handler = async (event) => {
   // user
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     ProjectionExpression: '#id, #publicKey',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -92,7 +92,7 @@ exports.handler = async (event) => {
 
   const updateCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     UpdateExpression: 'SET #firebaseToken = :token, #publicKey = :publicKey',
     ExpressionAttributeNames: {
       '#firebaseToken': 'firebaseToken',

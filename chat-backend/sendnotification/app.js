@@ -18,8 +18,8 @@
 
 // ===== ==== ====
 // IMPORTS
-const { initializeApp, cert } = require('firebase-admin/app')
-const { getMessaging } = require('firebase-admin/messaging')
+const { initializeApp, cert } = require('firebase-admin/app') // skipcq: JS-0260
+const { getMessaging } = require('firebase-admin/messaging') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS
@@ -75,7 +75,7 @@ ${event.Records[0].Sns.Message}
       }
     }
     if (tokens.length > 0) {
-      const message = { notification, tokens: tokens }
+      const message = { notification, tokens }
       console.log(`Send:\n${JSON.stringify(message)}`)
 
       promises.push(messaging.sendMulticast(message))

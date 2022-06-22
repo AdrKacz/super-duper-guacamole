@@ -13,10 +13,10 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, QueryCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient, QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS
@@ -74,10 +74,10 @@ exports.handler = async (event) => {
   const publishSwithGroupCommand = new PublishCommand({
     TopicArn: SWITCH_GROUP_TOPIC_ARN,
     Message: JSON.stringify({
-      id: id,
-      groupid: groupid,
+      id,
+      groupid,
       connectionId: event.requestContext.connectionId,
-      questions: questions
+      questions
     })
   })
 

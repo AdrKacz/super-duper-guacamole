@@ -55,7 +55,7 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
 const {
   DynamoDBDocumentClient,
   BatchGetCommand,
@@ -63,9 +63,9 @@ const {
   GetCommand,
   UpdateCommand,
   QueryCommand
-} = require('@aws-sdk/lib-dynamodb')
+} = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { v4: uuidv4 } = require('uuid')
 
@@ -81,8 +81,8 @@ const {
   SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
 } = process.env
-const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING)
-const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING)
+const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING, 10)
+const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
@@ -104,14 +104,14 @@ ${event.Records[0].Sns.Message}
   const questions = body.questions ?? {}
   const isBan = body.isBan ?? false
 
-  if (id === undefined) {
+  if (typeof id === 'undefined') {
     throw new Error('id must be defined')
   }
 
   // get user
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -123,7 +123,7 @@ ${event.Records[0].Sns.Message}
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
   console.log('user:', user)
 
-  if (user === undefined) {
+  if (typeof user === 'undefined') {
     console.log(`user <${id}> doesn't exist`)
     return {
       statusCode: 204
@@ -131,7 +131,7 @@ ${event.Records[0].Sns.Message}
   }
 
   // query a new group (query doesn't work without a KeyConditionExpression, use scan instead)
-  // TODO: use a sort index to query only the waiting ones faster
+  // TODO: use a sort index to query only the waiting ones faster, skipcq: JS-0099
   const queryCommand = new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
@@ -162,7 +162,7 @@ ${event.Records[0].Sns.Message}
       let chosenGroup = null
       for (const group of response.Items) {
         // Check this group is valid
-        const userNotBannedFromGroup = group.bannedUsers === undefined || !group.bannedUsers.has(user.id)
+        const userNotBannedFromGroup = typeof group.bannedUsers === 'undefined' || !group.bannedUsers.has(user.id)
         if (group.id !== user.group && userNotBannedFromGroup) {
           let similarity = 0
           // iterate accross the smallest
@@ -186,7 +186,7 @@ ${event.Records[0].Sns.Message}
           }
         }
       }
-      if (chosenGroup != null) {
+      if (chosenGroup !== null) {
         console.log(`selected group with similarity of ${maximumOfSimilarity}:\n`, chosenGroup)
         return chosenGroup
       }
@@ -195,7 +195,7 @@ ${event.Records[0].Sns.Message}
       id: uuidv4(),
       isWaiting: 1,
       users: new Set(),
-      questions: questions
+      questions
     }
   })
 
@@ -204,7 +204,7 @@ ${event.Records[0].Sns.Message}
     removeUserFromGroup(user, isBan)
   ]
 
-  await Promise.allSettled(promises)
+  return Promise.allSettled(promises)
 }
 
 // ===== ==== ====
@@ -250,7 +250,7 @@ async function addUserToGroup (user, newGroup) {
     // early users are user not notified of the group yet
     const earlyUsers = [user]
     const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
-    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id: id }))
+    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
     const otherUsers = []
     // happens only once when group becomes active for the first time
     if (usersIds.length > 0) {
@@ -287,7 +287,7 @@ async function addUserToGroup (user, newGroup) {
     allUsers.forEach((loopUser) => {
       allUsersMap[loopUser.id] = {
         id: loopUser.id,
-        isActive: loopUser.connectionId !== undefined
+        isActive: typeof loopUser.connectionId !== 'undefined'
       }
     })
     const publishSendMessageCommand = new PublishCommand({
@@ -364,7 +364,7 @@ async function removeUserFromGroup (user, isBan) {
   //    connectionId : String - user connection id
   //    firebaseToken : String - user firebase token
 
-  if (user.group === undefined) {
+  if (typeof user.group === 'undefined') {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -375,7 +375,7 @@ async function removeUserFromGroup (user, isBan) {
         }
       })
     })
-    return await snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
+    return snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
   }
 
   // retreive group (needed to count its users)
@@ -393,7 +393,7 @@ async function removeUserFromGroup (user, isBan) {
 
   // check oldGroup still exists (if concurrent runs)
   // to avoid re-create it throught the update
-  if (group !== undefined) {
+  if (typeof group !== 'undefined') {
     group.users = group.users ?? new Set()
     group.users.delete(user.id) // simulate remove user id (will be removed -for real- below)
 
@@ -442,7 +442,7 @@ async function removeUserFromGroup (user, isBan) {
       const batchGetUsersCommand = new BatchGetCommand({
         RequestItems: {
           [USERS_TABLE_NAME]: {
-            Keys: Array.from(group.users).map((id) => ({ id: id })),
+            Keys: Array.from(group.users).map((id) => ({ id })),
             ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
@@ -468,7 +468,7 @@ async function removeUserFromGroup (user, isBan) {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users: users,
+        users,
         message: {
           action: 'leavegroup',
           groupid: user.group,
@@ -479,6 +479,7 @@ async function removeUserFromGroup (user, isBan) {
     promises.push(snsClient.send(publishSendMessageCommand))
 
     // NOTE: can send notification too
-    await Promise.allSettled(promises)
+    return Promise.allSettled(promises)
   }
+  return Promise.resolve()
 }
