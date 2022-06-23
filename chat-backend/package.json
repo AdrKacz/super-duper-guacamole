@@ -1,7 +1,7 @@
 {
   "name": "sam-groups",
   "version": "1.0.0",
-  "description": "Groups chat managed with AWS SAM", 
+  "description": "Groups chat managed with AWS SAM",
   "author": "AdrKacz",
   "scripts": {
     "lint": "eslint . --fix",
@@ -15,7 +15,8 @@
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0"
+    "eslint-plugin-promise": "^5.2.0",
+    "jest": "^28.1.1"
   },
   "license": "SEE LICENSE IN /LICENSE"
 }
