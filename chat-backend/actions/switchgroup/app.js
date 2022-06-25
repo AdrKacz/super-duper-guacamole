@@ -44,6 +44,10 @@ exports.handler = async (event) => {
 
   const { id, group } = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
 
+  if (typeof id === 'undefined') {
+    return
+  }
+
   const body = JSON.parse(event.body)
   const questions = body.questions
   const blockedUsers = body.blockedUsers
