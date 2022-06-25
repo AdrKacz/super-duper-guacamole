@@ -67,9 +67,8 @@ class UserDrawer extends StatelessWidget {
             leading: const Icon(Icons.info_outline),
             title: const Text("Nous contacter"),
             onTap: () async {
-              if (!await launchUrl(Uri.parse(
-                  'https://awachatapplication.wordpress.com/contact/'))) {
-                throw 'Could not launch https://awachatapplication.wordpress.com/contact/';
+              if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
+                throw 'Could not launch https://awa-chat.me/contact/';
               }
             },
           ),
