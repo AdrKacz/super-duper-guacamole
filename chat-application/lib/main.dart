@@ -468,6 +468,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         },
         resetAccount: () async {
           print('Reset Account');
+          await NotificationHandler().putToken("");
           User().clear();
           await Memory().clear();
           await User().init();
