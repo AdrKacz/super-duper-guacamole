@@ -1,6 +1,6 @@
 workflows:
-  default-workflow:
-    name: Default Workflow
+  build-chat-application:
+    name: Build Chat Application
     working_directory: chat-application
     max_build_duration: 60
     triggering:
