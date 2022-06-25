@@ -232,6 +232,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     Memory().deleteMessage(message.id);
   }
 
+  void blockUser(String userId) {
+    Memory().addBlockedUser(userId);
+    _webSocketConnection.switchgroup();
+    setState(() {
+      state = "switch";
+    });
+  }
+
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.mediumImpact();
@@ -242,8 +250,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       case "report":
         await mailToReportMessage(_messages, message);
         break;
-      case 'delete':
+      case "delete":
         deleteMessage(message);
+        break;
+      case "block":
+        blockUser(message.author.id);
         break;
       default:
         print("dismiss");

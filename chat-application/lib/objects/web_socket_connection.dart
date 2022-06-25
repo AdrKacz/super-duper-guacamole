@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:awachat/objects/memory.dart';
 import 'package:awachat/pointycastle/sign.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -35,8 +36,11 @@ class WebSocketConnection {
 
   void switchgroup() {
     print('Send action switchgroup');
-    _channel.sink.add(jsonEncode(
-        {"action": "switchgroup", "questions": loadSelectedAnswers()}));
+    _channel.sink.add(jsonEncode({
+      "action": "switchgroup",
+      "questions": loadSelectedAnswers(),
+      "blockedUsers": Memory().getBlockedUsers()
+    }));
   }
 
   void textmessage(String encodedMessage) {
