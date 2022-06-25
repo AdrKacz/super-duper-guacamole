@@ -44,6 +44,7 @@ class User {
   User._internal();
 
   void clear() {
+    groupId = "";
     _instance = User._internal();
   }
 
