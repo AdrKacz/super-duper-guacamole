@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 # Upgrade and install dependencies
 
 # Store current directory
@@ -13,7 +13,7 @@ for f in *; do
         echo "----- ----- -----\n$f"
         # Will not run if no directories are available
         cd $f
-        [[ -f 'nodejs/package.json' ]] && npm update
+        [ -f 'nodejs/package.json' ] && npm update
         cd ..
     fi
 done
@@ -26,7 +26,7 @@ for f in *; do
         # Will not run if no directories are available
         echo "----- ----- -----\n$f"
         cd $f
-        [[ -f 'package.json' ]] && npm update
+        [ -f 'package.json' ] && npm update
         cd ..
     fi
 done
@@ -39,7 +39,7 @@ for f in *; do
         # Will not run if no directories are available
         echo "----- ----- -----\n$f"
         cd $f
-        [[ -f 'package.json' ]] && npm update
+        [ -f 'package.json' ] && npm update
         cd ..
     fi
 done
