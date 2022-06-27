@@ -104,6 +104,18 @@ Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans 
             ),
             SimpleDialogOption(
               onPressed: () {
+                alertInfo(context,
+                    argString: 'hasSeenBlockInformation',
+                    popAction: 'block',
+                    info: const Text(
+                        'Tu vas changer de groupe. Tu ne seras plus avec cette personne dans tes prochains groupes.'),
+                    acceptString: "Ok",
+                    refuseString: "Ne pas bloquer");
+              },
+              child: const Text("Bloquer la personne qui l'a écrit"),
+            ),
+            SimpleDialogOption(
+              onPressed: () {
                 Navigator.pop(context, "nothing");
               },
               child: const Text("Rien"),
