@@ -91,10 +91,12 @@ async function connectionIdToUserIdAndGroupId (connectionId) {
     console.log('Query Response:', response)
     if (response.Count > 0) {
       return response.Items[0]
+    } else {
+      return {}
     }
   })
 
-  if (typeof user === 'undefined' || typeof user.id === 'undefined') {
+  if (typeof user.id === 'undefined') {
     return {}
   }
   return { id: user.id, group: user.group }
