@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # Upgrade and install dependencies
 
 # Store current directory
