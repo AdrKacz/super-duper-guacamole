@@ -91,9 +91,8 @@ async function connectionIdToUserIdAndGroupId (connectionId) {
     console.log('Query Response:', response)
     if (response.Count > 0) {
       return response.Items[0]
-    } else {
-      return {}
     }
+    return {}
   })
 
   if (typeof user.id === 'undefined') {
