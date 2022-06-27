@@ -1,0 +1,39 @@
+# This is a workflow to check syntax on JavaScript
+
+name: SAM Pipeline
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+    inputs:
+      configenv:
+        description: 'Configuration Environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+  push:
+    branches:
+      - main
+    paths:
+      - chat-backend/**
+
+# Jobs
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: aws-actions/setup-sam@v1
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      # Deploy defined in chat-backend/package.json
+      - name: Deploy
+        working-directory: ./chat-backend
+        run: yarn run deploy --config-env ${{ github.event_name == 'push' && 'prod' || inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
