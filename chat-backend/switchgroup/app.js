@@ -170,14 +170,14 @@ ${event.Records[0].Sns.Message}
         // Check this group is valid
         if (group.id === user.group) {
           console.log(`group ${group.id} already has ${user.id}`)
-          continue checkGroup
+          continue
         }
 
         // Is user banned from group
         group.bannedUsers = group.bannedUsers ?? new Set()
         if (group.bannedUsers.has(user.id)) {
           console.log(`group ${group.id} has banned user ${user.id}`)
-          continue checkGroup
+          continue
         }
 
         // Is a blocked user in the group
