@@ -5,10 +5,11 @@
   "author": "AdrKacz",
   "scripts": {
     "lint": "eslint . --fix",
-    "predeploy": "sh ./predeploy.sh",
+    "predeploy": "sh ./predeploy.sh -m ci $$ sam build",
     "deploy": "sam deploy",
     "prefastdeploy": "sam build",
     "fastdeploy": "sam deploy",
+    "updateall": "sh ./predeploy.sh",
     "test": "jest"
   },
   "devDependencies": {

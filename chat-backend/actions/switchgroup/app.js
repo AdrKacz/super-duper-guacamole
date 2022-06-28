@@ -10,6 +10,8 @@
 // event.body
 // questions : Map<String, String>?
 //    question id <String> - answer id <String>
+// blockedUsers : List<String>?
+//    blockedUser userId
 
 // ===== ==== ====
 // IMPORTS
@@ -40,44 +42,25 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get userid and groupid
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': event.requestContext.connectionId
-    }
-  })
-  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    } else {
-      return undefined
-    }
-  })
+  const { id, group } = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
 
-  if (tempUser === undefined || tempUser.id === undefined) {
+  if (typeof id === 'undefined') {
     return
   }
-  const id = tempUser.id
-  const groupid = tempUser.group
 
   const body = JSON.parse(event.body)
   const questions = body.questions
+  const blockedUsers = body.blockedUsers
 
   // switch group
   const publishSwithGroupCommand = new PublishCommand({
     TopicArn: SWITCH_GROUP_TOPIC_ARN,
     Message: JSON.stringify({
       id,
-      groupid,
+      groupid: group,
       connectionId: event.requestContext.connectionId,
-      questions
+      questions,
+      blockedUsers
     })
   })
 
@@ -90,31 +73,30 @@ exports.handler = async (event) => {
 
 // ===== ==== ====
 // HELPERS
-// async function connectionIdToUserIdAndGroupId (connectionId) {
-//   // Get userId and GroupId associated with connectionId
-//   // connetionId - String
-//   const queryCommand = new QueryCommand({
-//     TableName: USERS_TABLE_NAME,
-//     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-//     KeyConditionExpression: '#connectionId = :connectionId',
-//     ExpressionAttributeNames: {
-//       '#connectionId': 'connectionId'
-//     },
-//     ExpressionAttributeValues: {
-//       ':connectionId': connectionId
-//     }
-//   })
-//   const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-//     console.log('Query Response:', response)
-//     if (response.Count > 0) {
-//       return response.Items[0]
-//     } else {
-//       return undefined
-//     }
-//   })
+async function connectionIdToUserIdAndGroupId (connectionId) {
+  // Get userId and GroupId associated with connectionId
+  // connetionId - String
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': connectionId
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    }
+    return {}
+  })
 
-//   if (user === undefined || user.id === undefined) {
-//     return {}
-//   }
-//   return { id: user.id, group: user.group }
-// }
+  if (typeof user.id === 'undefined') {
+    return {}
+  }
+  return { id: user.id, group: user.group }
+}
