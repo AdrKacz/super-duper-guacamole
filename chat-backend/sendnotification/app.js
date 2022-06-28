@@ -50,19 +50,19 @@ ${event.Records[0].Sns.Message}
 
   const topic = body.topic
   const users = body.users
-  if (topic === undefined && users === undefined) {
+  if (typeof topic === 'undefined' && typeof users === 'undefined') {
     throw new Error('topic and users cannot be both undefined')
   }
 
   const notification = body.notification
-  if (notification === undefined || notification.title === undefined || notification.body === undefined) {
+  if (typeof notification === 'undefined' || typeof notification.title === 'undefined' || typeof notification.body === 'undefined') {
     throw new Error('notification.title notification.body must both be defined')
   }
 
   const promises = []
-  if (topic !== undefined) {
+  if (typeof topic === 'string') {
     const message = { notification, topic }
-    console.log(`Send:\n${JSON.stringify(message)}`)
+    console.log(`Send message:\n${JSON.stringify(message)}`)
 
     promises.push(messaging.send(message))
   }
@@ -70,17 +70,20 @@ ${event.Records[0].Sns.Message}
   if (users !== undefined && users.length > 0) {
     const tokens = []
     for (const user of users) {
-      if (user.firebaseToken !== undefined) {
+      if (typeof user.firebaseToken === 'string' && user.firebaseToken !== '') {
         tokens.push(user.firebaseToken)
       }
     }
     if (tokens.length > 0) {
       const message = { notification, tokens }
-      console.log(`Send:\n${JSON.stringify(message)}`)
+      console.log(`Send message:\n${JSON.stringify(message)}`)
 
       promises.push(messaging.sendMulticast(message))
     }
   }
 
-  await Promise.allSettled(promises)
+  await Promise.allSettled(promises).then((results) => console.log(JSON.stringify(results)))
+  return {
+    statusCode: 200
+  }
 }
