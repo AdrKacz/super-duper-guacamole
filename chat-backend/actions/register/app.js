@@ -52,13 +52,14 @@ exports.handler = async (event) => {
   const signature = body.signature
   const timestamp = body.timestamp
   let publicKey = body.publicKey // updated later if it already exists
-  if (id === undefined || signature === undefined || timestamp === undefined || publicKey === undefined) {
+  if (typeof id === 'undefined' || typeof signature === 'undefined' || typeof timestamp === 'undefined' || typeof publicKey === 'undefined') {
     throw new Error('id, signature, timestamp, and publicKey must be defined')
   }
 
   if (Math.abs(Date.now() - timestamp) > 3000) {
     // prevent repeat attack
     return {
+      message: 'timestamp is not valid',
       statusCode: 401
     }
   }
@@ -74,7 +75,7 @@ exports.handler = async (event) => {
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
-  if (user !== undefined && user.publicKey !== undefined) {
+  if (typeof user !== 'undefined' && typeof user.publicKey !== 'undefined') {
     publicKey = user.publicKey
   }
 
@@ -85,6 +86,7 @@ exports.handler = async (event) => {
   console.log('Is the message verified?', isVerified)
   if (!isVerified) {
     return {
+      message: 'signature is not valid',
       statusCode: 401
     }
   }

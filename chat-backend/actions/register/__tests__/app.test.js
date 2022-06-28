@@ -2,15 +2,15 @@ const { handler } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 const { generateKeyPairSync, createSign } = require('crypto')
 
-const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient } = require('@aws-sdk/client-sns')
 
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-function generateIdentity (timestamp) {
-  const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+function generatedKeyPair () {
+  return generateKeyPairSync('rsa', {
     modulusLength: 2048,
     publicKeyEncoding: {
       type: 'spki',
@@ -21,7 +21,15 @@ function generateIdentity (timestamp) {
       format: 'pem'
     }
   })
-  const id = '12345'
+}
+
+function generateIdentity ({ id, timestamp } = {}) {
+  const { privateKey, publicKey } = generatedKeyPair()
+
+  if (typeof id !== 'string') {
+    id = '12345'
+  }
+
   if (typeof timestamp !== 'number') {
     timestamp = Date.now()
   }
@@ -91,7 +99,7 @@ test('it rejects body without id, signature, timestamp, and publicKey', async ()
 })
 
 test('it rejects body with old timestamp', async () => {
-  const { id, signature, timestamp, publicKey } = generateIdentity(Date.now() - 5000)
+  const { id, signature, timestamp, publicKey } = generateIdentity({ timestamp: Date.now() - 5000 })
 
   const response = await handler({
     requestContext: {
@@ -100,5 +108,54 @@ test('it rejects body with old timestamp', async () => {
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
-  expect(response).toStrictEqual({ statusCode: 401 })
+  expect(response).toStrictEqual({
+    message: 'timestamp is not valid',
+    statusCode: 401
+  })
+})
+
+test('it rejects on wrong signature', async () => {
+  const { id, signature, timestamp, publicKey } = generateIdentity()
+
+  ddbMock.on(GetCommand, {
+    Key: { id }
+  }).resolves({
+    Item: {
+      id,
+      publicKey: generatedKeyPair().publicKey
+    }
+  })
+
+  const response = await handler({
+    requestContext: {
+      connectionId: '012345678'
+    },
+    body: JSON.stringify({ id, signature, timestamp, publicKey })
+  })
+
+  expect(response).toStrictEqual({
+    message: 'signature is not valid',
+    statusCode: 401
+  })
+})
+
+test('it register new user', async () => {
+  const { id, signature, timestamp, publicKey } = generateIdentity()
+
+  ddbMock.on(GetCommand, {
+    Key: { id }
+  }).resolves({})
+
+  const response = await handler({
+    requestContext: {
+      connectionId: '012345678'
+    },
+    body: JSON.stringify({ id, signature, timestamp, publicKey })
+  })
+  console.log(response)
+
+  const ddbMockUpdateCalls = ddbMock.commandCalls(UpdateCommand)
+
+  console.log(ddbMockUpdateCalls)
+  expect(ddbMockUpdateCalls).toHaveLength(1)
 })
