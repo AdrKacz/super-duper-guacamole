@@ -1,14 +1,15 @@
 {
   "name": "sam-groups",
   "version": "1.0.0",
-  "description": "Groups chat managed with AWS SAM", 
+  "description": "Groups chat managed with AWS SAM",
   "author": "AdrKacz",
   "scripts": {
     "lint": "eslint . --fix",
-    "predeploy": "sh ./predeploy.sh",
+    "predeploy": "sh ./predeploy.sh -m ci $$ sam build",
     "deploy": "sam deploy",
     "prefastdeploy": "sam build",
-    "fastdeploy": "sam deploy"
+    "fastdeploy": "sam deploy",
+    "updateall": "sh ./predeploy.sh"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
