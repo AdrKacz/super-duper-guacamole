@@ -161,7 +161,6 @@ async function informGroup (userId, groupId) {
     }
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
-
   if (group === undefined) {
     throw new Error(`group <${groupId}> is not defined`)
   }

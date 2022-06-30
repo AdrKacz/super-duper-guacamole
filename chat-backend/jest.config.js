@@ -196,3 +196,9 @@ module.exports = {
   // Whether to use watchman for file crawling
   // watchman: true,
 }
+
+process.env = Object.assign(process.env, {
+  USERS_TABLE_NAME: 'dummy-user-table-name',
+  GROUPS_TABLE_NAME: 'dummy-group-table-name',
+  SEND_MESSAGE_TOPIC_ARN: 'dummy-send-message-topic-arn'
+})
