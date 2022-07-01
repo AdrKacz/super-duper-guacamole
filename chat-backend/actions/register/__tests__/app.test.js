@@ -304,7 +304,7 @@ test('it sends login to group users', async () => {
       users: dummyOtherGroupUsers,
       message: {
         action: 'login',
-        id: id
+        id
       }
     })
   })
