@@ -4,7 +4,11 @@ const { handler } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 const { generateKeyPairSync, createSign } = require('crypto')
 
-const { DynamoDBDocumentClient, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const {
+  DynamoDBDocumentClient,
+  GetCommand, UpdateCommand,
+  BatchGetCommand
+} = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
@@ -76,23 +80,22 @@ test('it reads environment variables', async () => {
 })
 
 test('it rejects empty body', async () => {
-  const event = {
+  const dummyConnectionId = 'dummy-connection-id'
+  await expect(handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({})
-  }
-
-  await expect(handler(event)).rejects.toThrow('id, signature, timestamp, and publicKey must be defined')
+  })).rejects.toThrow('id, signature, timestamp, and publicKey must be defined')
 })
 
 test('it rejects body without id, signature, timestamp, and publicKey', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
-
+  const dummyConnectionId = 'dummy-connection-id'
   // no id
   await expect(handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ signature, timestamp, publicKey })
   })).rejects.toThrow('id, signature, timestamp, and publicKey must be defined')
@@ -100,7 +103,7 @@ test('it rejects body without id, signature, timestamp, and publicKey', async ()
   // no signature
   await expect(handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, timestamp, publicKey })
   })).rejects.toThrow('id, signature, timestamp, and publicKey must be defined')
@@ -108,7 +111,7 @@ test('it rejects body without id, signature, timestamp, and publicKey', async ()
   // no timestamp
   await expect(handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, publicKey })
   })).rejects.toThrow('id, signature, timestamp, and publicKey must be defined')
@@ -116,7 +119,7 @@ test('it rejects body without id, signature, timestamp, and publicKey', async ()
   // no public key
   await expect(handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, timestamp })
   })).rejects.toThrow('id, signature, timestamp, and publicKey must be defined')
@@ -125,9 +128,10 @@ test('it rejects body without id, signature, timestamp, and publicKey', async ()
 test('it rejects body with old timestamp', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity({ timestamp: Date.now() - 5000 })
 
+  const dummyConnectionId = 'dummy-connection-id'
   const response = await handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
@@ -142,6 +146,7 @@ test('it rejects on wrong signature', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
   ddbMock.on(GetCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
     Key: { id }
   }).resolves({
     Item: {
@@ -150,9 +155,10 @@ test('it rejects on wrong signature', async () => {
     }
   })
 
+  const dummyConnectionId = 'dummy-connection-id'
   const response = await handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
@@ -166,16 +172,48 @@ test('it rejects on wrong signature', async () => {
 test('it register new user', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
+  const dummyConnectionId = 'dummy-connection-id'
   await handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
   expect(ddbMock).toHaveReceivedCommandTimes(GetCommand, 1)
-  expect(ddbMock).toHaveReceivedCommandTimes(UpdateCommand, 1)
-  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
+  expect(ddbMock).toHaveReceivedNthCommandWith(2, UpdateCommand, {
+    ReturnValues: 'ALL_OLD',
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id },
+    UpdateExpression: `
+    SET #isInactive = :false, #connectionId = :connectionId, #publicKey = :publicKey
+    REMOVE #unreadData
+    `,
+    ExpressionAttributeNames: {
+      '#isInactive': 'isInactive',
+      '#connectionId': 'connectionId',
+      '#publicKey': 'publicKey',
+      '#unreadData': 'unreadData'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': dummyConnectionId,
+      ':publicKey': publicKey,
+      ':false': false
+    }
+  })
+
+  expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
+    TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{
+        id, connectionId: dummyConnectionId
+      }],
+      message: {
+        action: 'register',
+        unreadData: []
+      }
+    })
+  })
 })
 
 test('it sends message with unreadData', async () => {
@@ -184,6 +222,7 @@ test('it sends message with unreadData', async () => {
   const dummyUnreadData = ['dummy-data-01', 'dummy-data-02']
 
   ddbMock.on(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
     Key: { id }
   }).resolves({
     Attributes: {
@@ -192,9 +231,10 @@ test('it sends message with unreadData', async () => {
     }
   })
 
+  const dummyConnectionId = 'dummy-connection-id'
   await handler({
     requestContext: {
-      connectionId: '012345678'
+      connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
@@ -203,7 +243,7 @@ test('it sends message with unreadData', async () => {
     TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{
-        id, connectionId: '012345678'
+        id, connectionId: dummyConnectionId
       }],
       message: {
         action: 'register',
@@ -211,4 +251,87 @@ test('it sends message with unreadData', async () => {
       }
     })
   })
+})
+
+test('it sends login to group users', async () => {
+  const { id, signature, timestamp, publicKey } = generateIdentity()
+  const dummyGroup = 'dummy-group'
+
+  ddbMock.on(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id }
+  }).resolves({
+    Attributes: {
+      id,
+      group: dummyGroup
+    }
+  })
+
+  const dummyOtherGroupUsers = [
+    { id: 'dummy-user-id-01', connectionId: 'dummy-connection-01' },
+    { id: 'dummy-user-id-02', connectionId: 'dummy-connection-02' }
+  ]
+
+  ddbMock.on(GetCommand, {
+    TableName: process.env.GROUPS_TABLE_NAME,
+    Key: { id: dummyGroup }
+  }).resolves({
+    Item: {
+      id,
+      users: new Set(dummyOtherGroupUsers.map(({ id }) => (id)))
+    }
+  })
+
+  ddbMock.on(BatchGetCommand, {
+
+  }).resolves({
+    Responses: {
+      [process.env.USERS_TABLE_NAME]: dummyOtherGroupUsers
+    }
+  })
+
+  const dummyConnectionId = 'dummy-connection-id'
+  await handler({
+    requestContext: {
+      connectionId: dummyConnectionId
+    },
+    body: JSON.stringify({ id, signature, timestamp, publicKey })
+  })
+
+  expect(snsMock).toHaveReceivedNthCommandWith(2, PublishCommand, {
+    TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: dummyOtherGroupUsers,
+      message: {
+        action: 'login',
+        id: id
+      }
+    })
+  })
+})
+
+test('it stops undefined group', async () => {
+  const { id, signature, timestamp, publicKey } = generateIdentity()
+  const dummyGroup = 'dummy-group'
+
+  ddbMock.on(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id }
+  }).resolves({
+    Attributes: {
+      id,
+      group: dummyGroup
+    }
+  })
+
+  const dummyConnectionId = 'dummy-connection-id'
+  await handler({
+    requestContext: {
+      connectionId: dummyConnectionId
+    },
+    body: JSON.stringify({ id, signature, timestamp, publicKey })
+  })
+
+  expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
+  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })
