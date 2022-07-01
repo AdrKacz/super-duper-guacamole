@@ -31,7 +31,7 @@ function generatedKeyPair () {
   })
 }
 
-function sign (message = '', privateKey) {
+function sign (privateKey, message = '') {
   const signer = createSign('rsa-sha256')
 
   signer.update(message)
@@ -42,21 +42,16 @@ function sign (message = '', privateKey) {
 function generateIdentity ({ id, timestamp } = {}) {
   const { privateKey, publicKey } = generatedKeyPair()
 
-  if (typeof id !== 'string') {
-    id = '12345'
-  }
+  const usedId = typeof id !== 'string' ? id : '12345'
+  const usedTimestamp = typeof timestamp !== 'number' ? timestamp : Date.now()
 
-  if (typeof timestamp !== 'number') {
-    timestamp = Date.now()
-  }
-
-  const signature = sign(id + timestamp.toString(), privateKey)
+  const signature = sign(privateKey, usedId + usedTimestamp.toString())
 
   return {
     privateKey,
     publicKey,
-    id,
-    timestamp,
+    usedId,
+    usedTimestamp,
     signature
   }
 }
@@ -73,7 +68,7 @@ beforeEach(() => {
 
 // ===== ==== ====
 // TESTS
-test('it reads environment variables', async () => {
+test('it reads environment variables', () => {
   expect(process.env.USERS_TABLE_NAME).toBeDefined()
   expect(process.env.GROUPS_TABLE_NAME).toBeDefined()
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
