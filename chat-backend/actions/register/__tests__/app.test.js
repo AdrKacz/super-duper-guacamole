@@ -42,16 +42,15 @@ function sign (privateKey, message = '') {
 function generateIdentity ({ id, timestamp } = {}) {
   const { privateKey, publicKey } = generatedKeyPair()
 
-  const usedId = typeof id !== 'string' ? id : '12345'
-  const usedTimestamp = typeof timestamp !== 'number' ? timestamp : Date.now()
+  const usedId = typeof id === 'string' ? id : '12345'
+  const usedTimestamp = typeof timestamp === 'number' ? timestamp : Date.now()
 
   const signature = sign(privateKey, usedId + usedTimestamp.toString())
-
   return {
     privateKey,
     publicKey,
-    usedId,
-    usedTimestamp,
+    id: usedId,
+    timestamp: usedTimestamp,
     signature
   }
 }
