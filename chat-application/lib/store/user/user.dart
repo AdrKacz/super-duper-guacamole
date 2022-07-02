@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
+// flutter packages pub run build_runner build
 part 'user.g.dart';
 
 @HiveType(typeId: 0)

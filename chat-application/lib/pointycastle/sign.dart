@@ -1,40 +1,33 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:awachat/objects/memory.dart';
 
 // ignore: implementation_imports
 import 'package:pointycastle/src/platform_check/platform_check.dart';
-import "package:pointycastle/export.dart";
-import "package:asn1lib/asn1lib.dart";
+import 'package:pointycastle/export.dart';
+import 'package:asn1lib/asn1lib.dart';
 
 // ===== ===== ===== ===== =====
 // ===== ===== ===== ===== =====
 // Storage
 
-AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? retreiveRSAkeyPair() {
-  String? n = Memory().rsaKeyPairBox.get("n");
-  String? e = Memory().rsaKeyPairBox.get("e");
-
-  String? d = Memory().rsaKeyPairBox.get("d");
-  String? p = Memory().rsaKeyPairBox.get("p");
-  String? q = Memory().rsaKeyPairBox.get("q");
+AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? retreiveRSAkeyPair(
+    String n, String e, String d, String p, String q) {
   // print('===Retreive===\nn: $n\ne: $e\nd: $d\np: $p\nq: $q');
-  if (n != null && e != null && d != null && p != null && q != null) {
-    try {
-      RSAPublicKey publicKey = RSAPublicKey(BigInt.parse(n), BigInt.parse(e));
-      RSAPrivateKey privateKey = RSAPrivateKey(
-          BigInt.parse(n), BigInt.parse(d), BigInt.parse(p), BigInt.parse(q));
-      return AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>(
-          publicKey, privateKey);
-    } catch (e) {
-      // No specified type, handles all
-      print('Something really unknown: $e');
-    }
+  try {
+    RSAPublicKey publicKey = RSAPublicKey(BigInt.parse(n), BigInt.parse(e));
+    RSAPrivateKey privateKey = RSAPrivateKey(
+        BigInt.parse(n), BigInt.parse(d), BigInt.parse(p), BigInt.parse(q));
+    return AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>(
+        publicKey, privateKey);
+  } catch (e) {
+    // No specified type, handles all
+    print('Something really unknown: $e');
   }
   return null;
 }
 
-void storeRSAkeyPair(AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair) {
+List<String> storeRSAkeyPair(
+    AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair) {
   BigInt? n = pair.publicKey.n;
   BigInt? e = pair.publicKey.publicExponent;
 
@@ -43,14 +36,16 @@ void storeRSAkeyPair(AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair) {
   BigInt? q = pair.privateKey.q;
   // print('===Store===\nn: $n\ne: $e\nd: $d\np: $p\nq: $q');
   if (n != null && e != null && d != null && p != null && q != null) {
-    Memory().rsaKeyPairBox.putAll({
-      "n": n.toString(),
-      "e": e.toString(),
-      "d": d.toString(),
-      "p": p.toString(),
-      "q": q.toString(),
-    });
+    return [
+      n.toString(),
+      e.toString(),
+      d.toString(),
+      p.toString(),
+      q.toString(),
+    ];
   }
+
+  return [];
 }
 
 // ===== ===== ===== ===== =====
@@ -132,5 +127,5 @@ String? encodePublicKeyToPem(RSAPublicKey publicKey) {
   topLevelSeq.add(publicKeySeqBitString);
   var dataBase64 = base64.encode(topLevelSeq.encodedBytes);
 
-  return """-----BEGIN PUBLIC KEY-----\r\n$dataBase64\r\n-----END PUBLIC KEY-----""";
+  return '''-----BEGIN PUBLIC KEY-----\r\n$dataBase64\r\n-----END PUBLIC KEY-----''';
 }
