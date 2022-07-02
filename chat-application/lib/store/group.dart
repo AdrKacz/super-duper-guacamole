@@ -2,15 +2,15 @@ import 'package:hive/hive.dart';
 
 part 'group.g.dart';
 
-@HiveType()
+@HiveType(typeId: 1)
 class Group extends HiveObject {
-  Group._internal();
+  Group(this.id);
 
-  static Group main = Group._internal();
+  static Group main = Group("");
 
   @HiveField(0)
   String _id;
-  String get id => _id
+  String get id => _id;
   
   @HiveField(1)
   HiveList users;
@@ -21,12 +21,12 @@ class Group extends HiveObject {
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-$id');
       users.clear();
-      _id = ""
+      _id = "";
     }
     if (newId != "") {
-      print("Subscribe to group-$newId")
+      print("Subscribe to group-$newId");
       FirebaseMessaging.instance.subscribeToTopic('group-$newId');
-      _id = newId
+      _id = newId;
     }
   }
   
