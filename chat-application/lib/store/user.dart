@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 part 'user.g.dart';
 
@@ -6,13 +7,7 @@ part 'user.g.dart';
 class User extends HiveObject {
   User(this.id, this.isOnline);
 
-  User._internal() {
-    print("Create new user");
-    this.id = const Uuid().v4();
-    this.isOnline = true;
-  }
-
-  static User me = User._internal();
+  static User me = User(const Uuid().v4(), true);
 
   @HiveField(0)
   String id;

@@ -16,9 +16,9 @@ class GroupAdapter extends TypeAdapter<Group> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Group()
-      .._id = fields[0] as String
-      ..users = (fields[1] as HiveList).castHiveList();
+    return Group(
+      fields[0] as String,
+    )..users = (fields[1] as HiveList).castHiveList();
   }
 
   @override
