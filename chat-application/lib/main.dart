@@ -20,14 +20,16 @@ import 'package:awachat/widgets/custom_chat.dart';
 import 'package:awachat/widgets/presentation.dart';
 import 'package:awachat/widgets/switch_group.dart';
 import 'package:awachat/widgets/agreements.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 // ===== ===== =====
 // App initialisation
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Memory().init();
-  await User().init();
+  await Hive.initFlutter();
+  await Hive.openBox('meta');
+
   await NotificationHandler().init();
 
   runApp(const MyApp());

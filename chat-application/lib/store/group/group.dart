@@ -9,7 +9,17 @@ class Group extends HiveObject {
   // ignore: not_initialized_non_nullable_instance_field
   Group(this._id);
 
-  static Group main = Group('');
+  factory Group.loads(String key, {String id = ''}) {
+    final dynamic user = Hive.box('meta').get(key);
+    if (user is Group) {
+      return user;
+    } else {
+      Hive.box('meta').put(key, Group(id));
+      return Hive.box('meta').get(key);
+    }
+  }
+
+  static Group main = Group.loads('main');
 
   @HiveField(0)
   String _id;
