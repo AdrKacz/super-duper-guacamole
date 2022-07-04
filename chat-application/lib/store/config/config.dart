@@ -87,11 +87,11 @@ class Config extends HiveObject {
   }
 
   // https://gist.github.com/proteye/982d9991922276ccfb011dfc55443d74
-  String? encodePublicKeyToPem() {
+  String encodePublicKeyToPem() {
     BigInt? modulus = rsaKeyPair.publicKey.modulus;
     BigInt? exponent = rsaKeyPair.publicKey.exponent;
     if (modulus == null || exponent == null) {
-      return null;
+      throw 'cannot extract modulus and exponent from rsa public key';
     }
 
     ASN1Sequence algorithmSeq = ASN1Sequence();
