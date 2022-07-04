@@ -28,7 +28,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
-  await Hive.openBox('meta');
+  await Hive.openBox('metadata');
 
   await NotificationHandler().init();
 
@@ -51,7 +51,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
 
     // retreive app state
-    state = Memory().get('user', 'appState') ?? "presentation";
+    state = Memory().get('user', 'appState') ?? 'presentation';
   }
 
   void setAppState(String newAppState) {
@@ -64,7 +64,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     if (state == 'agreements' &&
-        Memory().get('user', 'hasSignedAgreements') == "true") {
+        Memory().get('user', 'hasSignedAgreements') == 'true') {
       state = 'main';
     }
     return MaterialApp(
@@ -129,12 +129,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     _state = newState;
   }
 
-  String connectionState = "connected";
+  String connectionState = 'connected';
 
   // Acknowledge ban
   void acknowledgeBan(
       BuildContext context, String status, String banneduserid) {
-    String title = "";
+    String title = '';
     List<Widget> actions = [
       TextButton(
         child: const Text('Ok'),
@@ -208,7 +208,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       return;
     }
 
-    print("Found message $messageid:\n$message");
+    print('Found message $messageid:\n$message');
 
     HapticFeedback.mediumImpact();
     switch (await banActionOnMessage(context, message)) {
@@ -238,7 +238,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     Memory().addBlockedUser(userId);
     _webSocketConnection.switchgroup();
     setState(() {
-      state = "switch";
+      state = 'switch';
     });
   }
 
@@ -246,20 +246,20 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.mediumImpact();
     switch (await reportActionOnMessage(context)) {
-      case "ban":
+      case 'ban':
         _webSocketConnection.banrequest(message.author.id, message.id);
         break;
-      case "report":
+      case 'report':
         await mailToReportMessage(_messages, message);
         break;
-      case "delete":
+      case 'delete':
         deleteMessage(message);
         break;
-      case "block":
+      case 'block':
         blockUser(message.author.id);
         break;
       default:
-        print("dismiss");
+        print('dismiss');
     }
   }
 
@@ -314,13 +314,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     bool needUpdate = true;
     final data = jsonDecode(message);
     switch (data['action']) {
-      case "login":
+      case 'login':
         User().updateOtherUserStatus(data['id'], true);
         break;
-      case "logout":
+      case 'logout':
         User().updateOtherUserStatus(data['id'], false);
         break;
-      case "register":
+      case 'register':
         print('\tRegister with state: $state');
         // connection made
         connectionState = 'connected';
@@ -330,37 +330,37 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           // needUpdate cannot be false because connectionState changed
         }
 
-        final String assignedGroupId = data['group'] ?? "";
-        if (assignedGroupId == "" ||
-            (User().groupId != "" && assignedGroupId != User().groupId)) {
+        final String assignedGroupId = data['group'] ?? '';
+        if (assignedGroupId == '' ||
+            (User().groupId != '' && assignedGroupId != User().groupId)) {
           // there was an error somewhere, just re-init the group
           NotificationHandler().init(); // register notification token
-          User().groupId = "";
+          User().groupId = '';
           _webSocketConnection.switchgroup();
           _messages.clear();
-          state = "switch";
-        } else if (User().groupId == "" && state == "idle") {
+          state = 'switch';
+        } else if (User().groupId == '' && state == 'idle') {
           // Get group (register on load)
           _webSocketConnection.switchgroup();
           _messages.clear();
-          state = "switch";
-        } else if (state == "chat") {
+          state = 'switch';
+        } else if (state == 'chat') {
           // past messages
           loadMessagesFromMemory();
         }
         break;
-      case "leavegroup":
+      case 'leavegroup':
         // empty string is stored as undefined serverside
         // (causing a difference when there is not)
-        final String groupId = data['groupid'] ?? "";
+        final String groupId = data['groupid'] ?? '';
         final String userId = data['id'];
         if (userId == User().id) {
           if (groupId == User().groupId) {
             // only leave if the group to leave is the group we are in
             print('\tLeave group: $groupId');
-            User().groupId = "";
+            User().groupId = '';
             _messages.clear();
-            state = "switchwaiting";
+            state = 'switchwaiting';
           } else {
             // don't do anything
             needUpdate = false;
@@ -372,8 +372,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         break;
-      case "joingroup":
-        final String newGroupId = data['groupid'] ?? "";
+      case 'joingroup':
+        final String newGroupId = data['groupid'] ?? '';
         final Map<String, dynamic> users =
             Map<String, dynamic>.from(data['users'] ?? {});
         if (users.remove(User().id) != null) {
@@ -383,7 +383,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             User().groupId = newGroupId;
             User().updateOtherUsers(users);
             _messages.clear(); // in case we receive join before leave
-            state = "chat";
+            state = 'chat';
           } else {
             // new users in group
             print('\tGroup users: $users');
@@ -395,7 +395,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
 
         break;
-      case "textmessage":
+      case 'textmessage':
         print('\tMessage: ${data['message']}');
         types.Message? message = messageDecode(data['message']);
         if (message != null) {
@@ -405,12 +405,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           Memory().addMessage(message.id, data['message']);
         }
         break;
-      case "banrequest":
+      case 'banrequest':
         print('\tBan request for: ${data['messageid']}');
         banRequest(context, data['messageid']);
         needUpdate = false;
         break;
-      case "banreply":
+      case 'banreply':
         print(
             '\tBan reply for: ${data['bannedid']} with status ${data['status']}');
         acknowledgeBan(context, data['status'], data['bannedid']);
@@ -418,13 +418,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         break;
       default:
         print("\tAction ${data['action']} not recognised.");
-        state = "";
+        state = '';
     }
     return needUpdate;
   }
 
   void listenMessage(message) {
-    print("Receive message: $message");
+    print('Receive message: $message');
     if (processMessage(message)) {
       setState(() {});
     }
@@ -435,7 +435,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     _webSocketConnection.stream.listen(listenMessage, onDone: () {
       if (mounted) {
         setState(() {
-          connectionState = "disconnected";
+          connectionState = 'disconnected';
         });
       }
     }, cancelOnError: true);
@@ -447,7 +447,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _state = Memory().get('user', 'appChatState') ?? "idle";
+    _state = Memory().get('user', 'appChatState') ?? 'idle';
 
     _webSocketConnection.register();
     listenStream();
@@ -455,14 +455,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (connectionState == "disconnected" &&
+    if (connectionState == 'disconnected' &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
-      connectionState = "reconnect";
+      connectionState = 'reconnect';
       _webSocketConnection.reconnect();
       listenStream();
       _webSocketConnection.register();
     }
-    print("State: $state - Connection State: $connectionState");
+    print('State: $state - Connection State: $connectionState');
     return Scaffold(
       drawer: UserDrawer(
         seeIntroduction: () {
@@ -470,7 +470,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         },
         resetAccount: () async {
           print('Reset Account');
-          await NotificationHandler().putToken("");
+          await NotificationHandler().putToken('');
           User().clear();
           await Memory().clear();
           await User().init();
@@ -490,7 +490,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   child: CircleAvatar(
                     backgroundColor: Colors.transparent,
                     backgroundImage: NetworkImage(
-                        "https://avatars.dicebear.com/api/bottts/${User().id}.png"),
+                        'https://avatars.dicebear.com/api/bottts/${User().id}.png'),
                   ),
                 ),
               );
@@ -500,12 +500,12 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           title: UsersList(users: User().otherGroupUsers.values.toList()),
           actions: <Widget>[
             IconButton(
-                tooltip: "Changer de groupe",
-                onPressed: state == "chat"
+                tooltip: 'Changer de groupe',
+                onPressed: state == 'chat'
                     ? () {
                         _webSocketConnection.switchgroup();
                         setState(() {
-                          state = "switch";
+                          state = 'switch';
                         });
                       }
                     : null,
@@ -515,16 +515,16 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         builder: (BuildContext context) {
           late Widget child;
           switch (state) {
-            case "idle":
+            case 'idle':
               child = const Loader();
               break;
-            case "switch":
+            case 'switch':
               child = const Loader();
               break;
-            case "switchwaiting":
+            case 'switchwaiting':
               child = const SwitchGroupPage();
               break;
-            case "chat":
+            case 'chat':
               child = CustomChat(
                   messages: _messages,
                   onSendPressed: sendMessage,
@@ -540,27 +540,27 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   _webSocketConnection.reconnect();
                   listenStream();
                   _webSocketConnection.register();
-                  if (User().groupId != "") {
+                  if (User().groupId != '') {
                     setState(() {
-                      state = "chat";
+                      state = 'chat';
                     });
                   } else {
                     setState(() {
-                      state = "idle";
+                      state = 'idle';
                     });
                   }
                 },
               );
           }
           switch (connectionState) {
-            case "disconnected":
+            case 'disconnected':
               return Stack(
                 children: [
                   child,
                   const Glass(),
                 ],
               );
-            case "reconnect":
+            case 'reconnect':
               // TODO: create an action to retry if an error occurs or the network is not reachable
               return Stack(
                 children: [
@@ -579,7 +579,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState appLifecycleState) {
-    print("App Lifecycle State > $appLifecycleState");
+    print('App Lifecycle State > $appLifecycleState');
     setState(() {
       _notification = appLifecycleState;
     });

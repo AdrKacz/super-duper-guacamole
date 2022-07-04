@@ -14,8 +14,8 @@ part 'config.g.dart';
 class Config extends HiveObject {
   Config(this._rsaKeyPair);
 
-  factory Config.loads(String key) {
-    final dynamic config = Hive.box('meta').get(key);
+  factory Config.loads(String key, {String boxName = 'metadata'}) {
+    final dynamic config = Hive.box(boxName).get(key);
     if (config is Config) {
       return config;
     } else {
@@ -29,7 +29,7 @@ class Config extends HiveObject {
       BigInt? q = rsaKeyPair.privateKey.q;
       // print('===Store===\nn: $n\ne: $e\nd: $d\np: $p\nq: $q');
       if (n != null && e != null && d != null && p != null && q != null) {
-        Hive.box('meta').put(
+        Hive.box(boxName).put(
             key,
             Config([
               n.toString(),
@@ -38,7 +38,7 @@ class Config extends HiveObject {
               p.toString(),
               q.toString(),
             ]));
-        return Hive.box('meta').get(key);
+        return Hive.box(boxName).get(key);
       } else {
         throw 'cannot extract private key from rsa pair';
       }

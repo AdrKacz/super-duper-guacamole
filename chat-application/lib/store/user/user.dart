@@ -8,13 +8,14 @@ part 'user.g.dart';
 class User extends HiveObject {
   User(this.id, this.isOnline);
 
-  factory User.loads(String key, {String? id, bool isOnline = true}) {
-    final dynamic user = Hive.box('meta').get(key);
+  factory User.loads(String key,
+      {String? id, bool isOnline = true, String boxName = 'metadata'}) {
+    final dynamic user = Hive.box(boxName).get(key);
     if (user is User) {
       return user;
     } else {
-      Hive.box('meta').put(key, User(id ?? const Uuid().v4(), isOnline));
-      return Hive.box('meta').get(key);
+      Hive.box(boxName).put(key, User(id ?? const Uuid().v4(), isOnline));
+      return Hive.box(boxName).get(key);
     }
   }
 
