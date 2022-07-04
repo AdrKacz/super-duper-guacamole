@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:awachat/application_theme.dart';
+import 'package:awachat/store/group/group.dart';
 import 'package:awachat/widgets/glass.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,7 @@ import 'package:awachat/objects/notification_handler.dart';
 import 'package:awachat/objects/web_socket_connection.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/objects/memory.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/users_list.dart';
@@ -145,7 +146,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     ];
     switch (status) {
       case 'confirmed':
-        if (banneduserid == User().id) {
+        if (banneduserid == User.me.id) {
           title = "Tu t'es fait banir de ton groupe";
         } else {
           title = 'La personne est banie de ton groupe';
@@ -170,7 +171,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         }
         break;
       case 'denied':
-        if (banneduserid == User().id) {
+        if (banneduserid == User.me.id) {
           return; // no need to alert the user
         } else {
           title = "La personne n'est pas banie de ton groupe";
@@ -332,14 +333,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
         final String assignedGroupId = data['group'] ?? '';
         if (assignedGroupId == '' ||
-            (User().groupId != '' && assignedGroupId != User().groupId)) {
+            (Group.main.id != '' && assignedGroupId != Group.main.id)) {
           // there was an error somewhere, just re-init the group
           NotificationHandler().init(); // register notification token
-          User().groupId = '';
+          Group.main.change('');
+
           _webSocketConnection.switchgroup();
           _messages.clear();
           state = 'switch';
-        } else if (User().groupId == '' && state == 'idle') {
+        } else if (Group.main.id == '' && state == 'idle') {
           // Get group (register on load)
           _webSocketConnection.switchgroup();
           _messages.clear();
@@ -354,11 +356,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         // (causing a difference when there is not)
         final String groupId = data['groupid'] ?? '';
         final String userId = data['id'];
-        if (userId == User().id) {
-          if (groupId == User().groupId) {
+        if (userId == User.me.id) {
+          if (groupId == Group.main.id) {
             // only leave if the group to leave is the group we are in
             print('\tLeave group: $groupId');
-            User().groupId = '';
+            Group.main.change('');
             _messages.clear();
             state = 'switchwaiting';
           } else {
@@ -366,7 +368,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             needUpdate = false;
           }
         } else {
-          if (groupId == User().groupId) {
+          if (groupId == Group.main.id) {
             User().otherGroupUsers.remove(userId);
           }
         }
@@ -376,11 +378,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         final String newGroupId = data['groupid'] ?? '';
         final Map<String, dynamic> users =
             Map<String, dynamic>.from(data['users'] ?? {});
-        if (users.remove(User().id) != null) {
-          if (newGroupId != User().groupId) {
+        if (users.remove(User.me.id) != null) {
+          if (newGroupId != Group.main.id) {
             // only join if the group to join is not the group we are in
             print('\tJoin group: $newGroupId');
-            User().groupId = newGroupId;
+            Group.main.change(newGroupId);
             User().updateOtherUsers(users);
             _messages.clear(); // in case we receive join before leave
             state = 'chat';
@@ -540,7 +542,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   _webSocketConnection.reconnect();
                   listenStream();
                   _webSocketConnection.register();
-                  if (User().groupId != '') {
+                  if (Group.main.id != '') {
                     setState(() {
                       state = 'chat';
                     });

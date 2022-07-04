@@ -41,5 +41,6 @@ class Group extends HiveObject {
       FirebaseMessaging.instance.subscribeToTopic('group-$newId');
       _id = newId;
     }
+    save();
   }
 }
