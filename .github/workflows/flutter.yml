@@ -6,7 +6,7 @@ name: Flutter Application CI
 on:
   pull_request:
     branches:
-      - application-cicd
+      - main
     paths:
       - chat-application/**
 
