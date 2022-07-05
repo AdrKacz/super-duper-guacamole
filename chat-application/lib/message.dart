@@ -1,4 +1,4 @@
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/config/config.dart';
 import 'package:awachat/store/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -207,8 +207,8 @@ void alertInfo(BuildContext context,
     String defaultAction = 'nothing',
     String acceptString = 'accept',
     String refuseString = 'refuse'}) async {
-  String? arg = Memory().get('user', argString);
-  if (arg == null || arg == 'false') {
+  bool? arg = Config.config.booleanParameters[argString];
+  if (arg != true) {
     switch (await showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -233,7 +233,7 @@ void alertInfo(BuildContext context,
               ]);
         })) {
       case 'confirmed':
-        Memory().put('user', argString, 'true');
+        Config.config.editBooleanParameters(argString, true);
         Navigator.pop(context, popAction);
         break;
       default:

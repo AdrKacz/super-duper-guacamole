@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:awachat/application_theme.dart';
+import 'package:awachat/store/config/config.dart';
 import 'package:awachat/store/group/group.dart';
 import 'package:awachat/widgets/glass.dart';
 import 'package:awachat/widgets/questions.dart';
@@ -11,7 +12,6 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/objects/notification_handler.dart';
 import 'package:awachat/objects/web_socket_connection.dart';
 import 'package:awachat/message.dart';
-import 'package:awachat/objects/memory.dart';
 import 'package:awachat/store/user/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/user_drawer.dart';
@@ -65,7 +65,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     if (state == 'agreements' &&
-        Memory().get('user', 'hasSignedAgreements') == 'true') {
+        Config.config.booleanParameters['hasSignedAgreements'] == true) {
       state = 'main';
     }
     return MaterialApp(

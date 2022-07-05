@@ -1,4 +1,4 @@
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -25,7 +25,8 @@ class Agreements extends StatelessWidget {
                   url:
                       'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr',
                   onNextPressed: () {
-                    Memory().put('user', 'hasSignedAgreements', 'true');
+                    Config.config
+                        .editBooleanParameters('hasSignedAgreements', true);
                     Navigator.popUntil(context, ModalRoute.withName('/'));
                     setAppState('main');
                   })),
