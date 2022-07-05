@@ -18,15 +18,18 @@ class ConfigAdapter extends TypeAdapter<Config> {
     };
     return Config(
       (fields[0] as List).cast<String>(),
+      (fields[1] as Map).cast<String, bool>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Config obj) {
     writer
-      ..writeByte(1)
+      ..writeByte(2)
       ..writeByte(0)
-      ..write(obj._rsaKeyPair);
+      ..write(obj._rsaKeyPair)
+      ..writeByte(1)
+      ..write(obj._booleanParameters);
   }
 
   @override

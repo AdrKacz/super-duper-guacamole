@@ -10,7 +10,7 @@ part 'config.g.dart';
 
 @HiveType(typeId: 2)
 class Config extends HiveObject {
-  Config(this._rsaKeyPair);
+  Config(this._rsaKeyPair, this._booleanParameters);
 
   factory Config.loads(String key, {String boxName = 'metadata'}) {
     final dynamic config = Hive.box(boxName).get(key);
@@ -20,7 +20,7 @@ class Config extends HiveObject {
       final AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> rsaKeyPair =
           helpers.generateRSAkeyPair(helpers.exampleSecureRandom());
       Hive.box(boxName)
-          .put(key, Config(helpers.rsaKeyPairToString(rsaKeyPair)));
+          .put(key, Config(helpers.rsaKeyPairToString(rsaKeyPair), {}));
       return Hive.box(boxName).get(key);
     }
   }
@@ -28,9 +28,18 @@ class Config extends HiveObject {
   static final Config config = Config.loads('config');
 
   @HiveField(0)
-  final List<String> _rsaKeyPair;
+  List<String> _rsaKeyPair;
   AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> get rsaKeyPair =>
       helpers.stringToRsaKeyPair(_rsaKeyPair);
+
+  @HiveField(1)
+  Map<String, bool> _booleanParameters;
+  Map<String, bool> get booleanParameters => _booleanParameters;
+
+  void editBooleanParameters(String key, bool value) {
+    _booleanParameters[key] = value;
+    save();
+  }
 
   Uint8List rsaSign(Uint8List dataToSign) {
     return helpers.rsaSign(rsaKeyPair.privateKey, dataToSign);
@@ -38,5 +47,15 @@ class Config extends HiveObject {
 
   String encodePublicKeyToPem() {
     return helpers.encodePublicKeyToPem(rsaKeyPair.publicKey);
+  }
+
+  void reset() {
+    // new rsa key pair
+    final AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> rsaKeyPair =
+        helpers.generateRSAkeyPair(helpers.exampleSecureRandom());
+    _rsaKeyPair = helpers.rsaKeyPairToString(rsaKeyPair);
+    // reset parameters
+    _booleanParameters.clear();
+    save();
   }
 }

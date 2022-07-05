@@ -36,5 +36,6 @@ class User extends HiveObject {
   void reset() {
     _id = const Uuid().v4();
     _isOnline = true;
+    save();
   }
 }
