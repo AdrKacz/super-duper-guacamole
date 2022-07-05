@@ -36,6 +36,8 @@ void main() async {
   runApp(const MyApp());
 }
 
+enum AppStatus { presentation, agreements, main, other }
+
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -44,41 +46,35 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // State {presentation, agreements, main}
-  late String state;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // retreive app state
-    state = Memory().get('user', 'appState') ?? 'presentation';
-  }
-
-  void setAppState(String newAppState) {
-    Memory().put('user', 'appState', newAppState);
-    setState(() {
-      state = newAppState;
-    });
+  // State
+  AppStatus get appStatus => Hive.box('metadata')
+      .get('appStatus', defaultValue: AppStatus.presentation);
+  set appStatus(AppStatus newAppStatus) {
+    Hive.box('metadata').put('appStatus', newAppStatus);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    if (state == 'agreements' &&
+    if (appStatus == AppStatus.agreements &&
         Config.config.booleanParameters['hasSignedAgreements'] == true) {
-      state = 'main';
+      appStatus = AppStatus.main;
     }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: applicationTheme,
       home: Builder(
         builder: (BuildContext context) {
-          switch (state) {
-            case 'presentation':
-              return Presentation(setAppState: setAppState);
-            case 'agreements':
-              return Agreements(setAppState: setAppState);
-            case 'main':
+          switch (appStatus) {
+            case AppStatus.presentation:
+              return Presentation(setNextState: () {
+                appStatus = AppStatus.agreements;
+              });
+            case AppStatus.agreements:
+              return Agreements(setNextState: () {
+                appStatus = AppStatus.main;
+              });
+            case AppStatus.main:
               // check user has answers to questions
               if (Config.config.answeredQuestions.isEmpty) {
                 // TODO: use route instead
@@ -88,10 +84,12 @@ class _MyAppState extends State<MyApp> {
                   },
                 );
               } else {
-                return MainPage(setAppState: setAppState);
+                return MainPage(goToPresentation: () {
+                  appStatus = AppStatus.presentation;
+                });
               }
             default:
-              print('Unknown state $state');
+              print('Unknown state $appStatus');
               return const Placeholder();
           }
         },
@@ -102,10 +100,15 @@ class _MyAppState extends State<MyApp> {
 
 // ===== ===== =====
 // Main Page
-class MainPage extends StatefulWidget {
-  const MainPage({Key? key, required this.setAppState}) : super(key: key);
 
-  final Function setAppState;
+enum ChatStatus { idle, switchSent, switchAcknowledge, chat, other }
+
+enum ConnectionStatus { disconnected, reconnecting, other }
+
+class MainPage extends StatefulWidget {
+  const MainPage({Key? key, required this.goToPresentation}) : super(key: key);
+
+  final Function goToPresentation;
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -122,14 +125,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   AppLifecycleState? _notification;
 
   // State
-  late String _state;
-  String get state => _state;
-  set state(String newState) {
-    Memory().put('user', 'appChatState', newState);
-    _state = newState;
+  ChatStatus get chatStatus =>
+      Hive.box('metadata').get('chatStatus', defaultValue: ChatStatus.idle);
+  set chatStatus(ChatStatus newChatStatus) {
+    Hive.box('metadata').put('chatStatus', newChatStatus);
   }
 
-  String connectionState = 'connected';
+  ConnectionStatus connectionState = ConnectionStatus.other;
 
   // Acknowledge ban
   void acknowledgeBan(
@@ -237,9 +239,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void blockUser(String userId) {
     Memory().addBlockedUser(userId);
     _webSocketConnection.switchgroup();
-    setState(() {
-      state = 'switch';
-    });
+    chatStatus = ChatStatus.switchSent;
+    setState(() {});
   }
 
   // Report message
@@ -321,9 +322,9 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         User.loads(data['id']).isOnline = false;
         break;
       case 'register':
-        print('\tRegister with state: $state');
+        print('\tRegister with state: $chatStatus');
         // connection made
-        connectionState = 'connected';
+        connectionState = ConnectionStatus.other;
         // process unread messages
         for (final unreadMessage in data['unreadData']) {
           processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
@@ -339,13 +340,13 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
 
           _webSocketConnection.switchgroup();
           _messages.clear();
-          state = 'switch';
-        } else if (Group.main.id == '' && state == 'idle') {
+          chatStatus = ChatStatus.switchSent;
+        } else if (Group.main.id == '' && chatStatus == ChatStatus.idle) {
           // Get group (register on load)
           _webSocketConnection.switchgroup();
           _messages.clear();
-          state = 'switch';
-        } else if (state == 'chat') {
+          chatStatus = ChatStatus.switchSent;
+        } else if (chatStatus == ChatStatus.chat) {
           // past messages
           loadMessagesFromMemory();
         }
@@ -361,7 +362,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             print('\tLeave group: $groupId');
             Group.main.change('');
             _messages.clear();
-            state = 'switchwaiting';
+            chatStatus = ChatStatus.switchAcknowledge;
           } else {
             // don't do anything
             needUpdate = false;
@@ -385,7 +386,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             Group.main.addAllUsers(users.values.map((e) => User.loads(e['id'],
                 id: e['id'], isOnline: e['isActive'] ?? false)));
             _messages.clear(); // in case we receive join before leave
-            state = 'chat';
+            chatStatus = ChatStatus.chat;
           } else {
             // new users in group
             print('\tGroup users: $users');
@@ -421,7 +422,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         break;
       default:
         print("\tAction ${data['action']} not recognised.");
-        state = '';
+        chatStatus = ChatStatus.other;
     }
     return needUpdate;
   }
@@ -438,7 +439,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     _webSocketConnection.stream.listen(listenMessage, onDone: () {
       if (mounted) {
         setState(() {
-          connectionState = 'disconnected';
+          connectionState = ConnectionStatus.disconnected;
         });
       }
     }, cancelOnError: true);
@@ -449,27 +450,24 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    _state = Memory().get('user', 'appChatState') ?? 'idle';
-
     _webSocketConnection.register();
     listenStream();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (connectionState == 'disconnected' &&
+    if (connectionState == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
-      connectionState = 'reconnect';
+      connectionState = ConnectionStatus.reconnecting;
       _webSocketConnection.reconnect();
       listenStream();
       _webSocketConnection.register();
     }
-    print('State: $state - Connection State: $connectionState');
+    print('State: $chatStatus - Connection State: $connectionState');
     return Scaffold(
       drawer: UserDrawer(
         seeIntroduction: () {
-          widget.setAppState('presentation');
+          widget.goToPresentation();
         },
         resetAccount: () async {
           print('Reset Account');
@@ -477,7 +475,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           User.me.reset();
           Group.main.reset();
           await NotificationHandler().init();
-          widget.setAppState('presentation');
+          widget.goToPresentation();
         },
       ),
       appBar: AppBar(
@@ -503,11 +501,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           actions: <Widget>[
             IconButton(
                 tooltip: 'Changer de groupe',
-                onPressed: state == 'chat'
+                onPressed: chatStatus == ChatStatus.chat
                     ? () {
                         _webSocketConnection.switchgroup();
                         setState(() {
-                          state = 'switch';
+                          chatStatus = ChatStatus.switchSent;
                         });
                       }
                     : null,
@@ -516,17 +514,17 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
       body: Builder(
         builder: (BuildContext context) {
           late Widget child;
-          switch (state) {
-            case 'idle':
+          switch (chatStatus) {
+            case ChatStatus.idle:
               child = const Loader();
               break;
-            case 'switch':
+            case ChatStatus.switchSent:
               child = const Loader();
               break;
-            case 'switchwaiting':
+            case ChatStatus.switchAcknowledge:
               child = const SwitchGroupPage();
               break;
-            case 'chat':
+            case ChatStatus.chat:
               child = CustomChat(
                   messages: _messages,
                   onSendPressed: sendMessage,
@@ -544,25 +542,25 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   _webSocketConnection.register();
                   if (Group.main.id != '') {
                     setState(() {
-                      state = 'chat';
+                      chatStatus = ChatStatus.chat;
                     });
                   } else {
                     setState(() {
-                      state = 'idle';
+                      chatStatus = ChatStatus.idle;
                     });
                   }
                 },
               );
           }
           switch (connectionState) {
-            case 'disconnected':
+            case ConnectionStatus.disconnected:
               return Stack(
                 children: [
                   child,
                   const Glass(),
                 ],
               );
-            case 'reconnect':
+            case ConnectionStatus.reconnecting:
               // TODO: create an action to retry if an error occurs or the network is not reachable
               return Stack(
                 children: [
