@@ -316,10 +316,10 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     final data = jsonDecode(message);
     switch (data['action']) {
       case 'login':
-        User().updateOtherUserStatus(data['id'], true);
+        User.loads(data['id']).isOnline = true;
         break;
       case 'logout':
-        User().updateOtherUserStatus(data['id'], false);
+        User.loads(data['id']).isOnline = false;
         break;
       case 'register':
         print('\tRegister with state: $state');
@@ -369,7 +369,7 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           }
         } else {
           if (groupId == Group.main.id) {
-            User().otherGroupUsers.remove(userId);
+            Hive.box('metadata').delete(userId);
           }
         }
 
@@ -383,13 +383,15 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             // only join if the group to join is not the group we are in
             print('\tJoin group: $newGroupId');
             Group.main.change(newGroupId);
-            User().updateOtherUsers(users);
+            Group.main.addAllUsers(users.values.map((e) => User.loads(e['id'],
+                id: e['id'], isOnline: e['isActive'] ?? false)));
             _messages.clear(); // in case we receive join before leave
             state = 'chat';
           } else {
             // new users in group
             print('\tGroup users: $users');
-            User().updateOtherUsers(users);
+            Group.main.addAllUsers(users.values.map((e) => User.loads(e['id'],
+                id: e['id'], isOnline: e['isActive'] ?? false)));
           }
         } else {
           // don't do anything (user not concerted, error)
@@ -473,9 +475,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         resetAccount: () async {
           print('Reset Account');
           await NotificationHandler().putToken('');
-          User().clear();
-          await Memory().clear();
-          await User().init();
+          User.me.reset();
+          Group.main.reset();
           await NotificationHandler().init();
           widget.setAppState('presentation');
         },
@@ -492,14 +493,14 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
                   child: CircleAvatar(
                     backgroundColor: Colors.transparent,
                     backgroundImage: NetworkImage(
-                        'https://avatars.dicebear.com/api/bottts/${User().id}.png'),
+                        'https://avatars.dicebear.com/api/bottts/${User.me.id}.png'),
                   ),
                 ),
               );
             },
           ),
           centerTitle: true,
-          title: UsersList(users: User().otherGroupUsers.values.toList()),
+          title: UsersList(users: Group.main.users),
           actions: <Widget>[
             IconButton(
                 tooltip: 'Changer de groupe',

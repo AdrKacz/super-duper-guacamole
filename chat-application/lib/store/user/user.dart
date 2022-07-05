@@ -6,7 +6,7 @@ part 'user.g.dart';
 
 @HiveType(typeId: 0)
 class User extends HiveObject {
-  User(this.id, this.isOnline);
+  User(this._id, this._isOnline);
 
   factory User.loads(String key,
       {String? id, bool isOnline = true, String boxName = 'metadata'}) {
@@ -22,8 +22,19 @@ class User extends HiveObject {
   static User me = User.loads('me', id: const Uuid().v4(), isOnline: true);
 
   @HiveField(0)
-  String id;
+  String _id;
+  String get id => _id;
 
   @HiveField(1)
-  bool isOnline;
+  bool _isOnline;
+  bool get isOnline => _isOnline;
+  set isOnline(bool newIsOnline) {
+    _isOnline = newIsOnline;
+    save();
+  }
+
+  void reset() {
+    _id = const Uuid().v4();
+    _isOnline = true;
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:awachat/store/user/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:hive/hive.dart';
 
@@ -27,14 +28,23 @@ class Group extends HiveObject {
   String get id => _id;
 
   @HiveField(1)
-  HiveList users;
+  HiveList _users;
+  List<User> get users {
+    const List<User> users = [];
+    for (final user in _users) {
+      if (user is User) {
+        users.add(user);
+      }
+    }
+    return users;
+  }
 
   void change(String newId) {
     if (_id != '') {
       print('Unsubscribe from group-$id');
       FirebaseMessaging.instance.unsubscribeFromTopic('group-$id');
-      users.clear();
-      _id = "";
+      deleteAllUsers();
+      _id = '';
     }
     if (newId != '') {
       print('Subscribe to group-$newId');
@@ -42,5 +52,21 @@ class Group extends HiveObject {
       _id = newId;
     }
     save();
+  }
+
+  void addAllUsers(Iterable<User> addedUsers) {
+    _users.addAll(addedUsers);
+    save();
+  }
+
+  void deleteAllUsers() {
+    final List<HiveObjectMixin> deletedUsers = _users.toList();
+    for (final deletedUser in deletedUsers) {
+      deletedUser.delete();
+    }
+  }
+
+  void reset() {
+    change('');
   }
 }

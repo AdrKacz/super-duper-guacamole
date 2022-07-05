@@ -22,12 +22,12 @@ class FirstTimeQuestionsLoader extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset("assets/images/decision-questions.gif"),
+                  Image.asset('assets/images/decision-questions.gif'),
                   const Divider(height: 48),
                   const Text(
-                      """Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
+                      '''Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
                       
-Tu pourras changer tes réponses à tout moment en touchant ton avatar.""",
+Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                       textAlign: TextAlign.center),
                   const Divider(height: 48),
                   ElevatedButton(
@@ -98,7 +98,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
     super.initState();
     object = http
         .get(Uri.parse(
-            "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml"))
+            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml'))
         .then((http.Response value) {
       String body = value.body;
       final Map<String, String> selectedAnswers = loadSelectedAnswers();
@@ -134,7 +134,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         }
       }
 
-      return {"selectedAnswers": selectedAnswers, "questions": questions};
+      return {'selectedAnswers': selectedAnswers, 'questions': questions};
     });
   }
 
@@ -146,8 +146,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             return Questions(
-                loadedSelectedAnswer: snapshot.data["selectedAnswers"],
-                questions: snapshot.data["questions"]);
+                loadedSelectedAnswer: snapshot.data['selectedAnswers'],
+                questions: snapshot.data['questions']);
           }
 
           return const Loader();
@@ -180,7 +180,7 @@ class _QuestionsState extends State<Questions> {
         'questions',
         selectedAnswers.entries.map((MapEntry selectedAnswer) {
           return '${selectedAnswer.key}:${selectedAnswer.value}';
-        }).join("::"));
+        }).join('::'));
   }
 
   @override

@@ -27,9 +27,9 @@ class UserAdapter extends TypeAdapter<User> {
     writer
       ..writeByte(2)
       ..writeByte(0)
-      ..write(obj.id)
+      ..write(obj._id)
       ..writeByte(1)
-      ..write(obj.isOnline);
+      ..write(obj._isOnline);
   }
 
   @override
