@@ -1,5 +1,5 @@
 import 'package:awachat/flyer/l10n.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -26,7 +26,7 @@ class CustomChat extends StatelessWidget {
       messages: messages,
       onSendPressed: onSendPressed,
       onMessageLongPress: onMessageLongPress,
-      user: types.User(id: User().id),
+      user: types.User(id: User.me.id),
       theme: DefaultChatTheme(
           primaryColor: Theme.of(context).colorScheme.onPrimary,
           inputBackgroundColor: Theme.of(context).colorScheme.secondary,

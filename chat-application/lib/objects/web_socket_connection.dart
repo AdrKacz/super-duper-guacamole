@@ -3,10 +3,9 @@ import 'dart:typed_data';
 
 import 'package:awachat/objects/memory.dart';
 import 'package:awachat/store/config/config.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-
-import 'package:awachat/objects/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
@@ -24,10 +23,10 @@ class WebSocketConnection {
     print('Send action register');
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = Config.config.rsaSign(
-        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+        Uint8List.fromList((User.me.id + timestamp.toString()).codeUnits));
     _channel.sink.add(jsonEncode({
       'action': 'register',
-      'id': User().id,
+      'id': User.me.id,
       'signature': signature,
       'timestamp': timestamp,
       'publicKey': Config.config.encodePublicKeyToPem()

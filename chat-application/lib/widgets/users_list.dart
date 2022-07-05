@@ -1,4 +1,3 @@
-import 'package:awachat/store/group/group.dart';
 import 'package:awachat/store/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart';

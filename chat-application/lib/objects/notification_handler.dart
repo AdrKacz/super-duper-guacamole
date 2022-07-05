@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:awachat/objects/user.dart';
 import 'package:awachat/store/config/config.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
@@ -56,11 +56,11 @@ class NotificationHandler {
     print('[PushNotificationService - Put Token] Put token to $_httpEndpoint');
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = Config.config.rsaSign(
-        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+        Uint8List.fromList((User.me.id + timestamp.toString()).codeUnits));
     return http
         .put(Uri.parse(_httpEndpoint),
             body: jsonEncode({
-              'id': User().id,
+              'id': User.me.id,
               'token': token,
               'signature': signature,
               'timestamp': timestamp,

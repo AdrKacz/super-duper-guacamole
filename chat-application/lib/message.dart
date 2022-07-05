@@ -1,5 +1,5 @@
 import 'package:awachat/objects/memory.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'dart:math';
@@ -54,7 +54,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
 }
 
 String messageEncode(types.PartialText partialText) {
-  final String author = User().id;
+  final String author = User.me.id;
   final int createdAt = DateTime.now().millisecondsSinceEpoch;
   final String id = randomString();
   final String text = partialText.text;
@@ -177,7 +177,7 @@ Future<void> mailToReportMessage(
             --- --- ---
             
             L'utilisateur 
-            ${User().id}
+            ${User.me.id}
             signale le comportement de 
             ${message.author.id}
             Le message signalé est :

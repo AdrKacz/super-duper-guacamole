@@ -1,4 +1,4 @@
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +28,7 @@ class UserDrawer extends StatelessWidget {
               child: SizedBox(
                 child: ClipOval(
                   child: Image.network(
-                    'https://avatars.dicebear.com/api/bottts/${User().id}.png',
+                    'https://avatars.dicebear.com/api/bottts/${User.me.id}.png',
                   ),
                 ),
               ),
