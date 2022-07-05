@@ -4,9 +4,9 @@ name: Flutter Application CI
 
 # Controls when the workflow will run
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - application-cicd
     paths:
       - chat-application/**
 
