@@ -1,3 +1,4 @@
+import 'package:awachat/store/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
@@ -46,7 +47,6 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      Memory().put('user', 'questions', '');
                       onConfirmed();
                     },
                     child: const Text('Ne pas répondre'),
@@ -68,20 +68,6 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
 // ===== ===== =====
 // Questions Loader
 
-Map<String, String> loadSelectedAnswers() {
-  final Map<String, String> selectedAnswers = {};
-  final String? encodedSelectedAnswers = Memory().get('user', 'questions');
-  if (encodedSelectedAnswers != null) {
-    encodedSelectedAnswers.split('::').forEach((element) {
-      List<String> mapEntry = element.split(':');
-      if (mapEntry.length == 2) {
-        selectedAnswers[mapEntry[0]] = mapEntry[1];
-      }
-    });
-  }
-  return selectedAnswers;
-}
-
 class QuestionsLoader extends StatefulWidget {
   const QuestionsLoader({Key? key}) : super(key: key);
 
@@ -100,7 +86,6 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
             'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml'))
         .then((http.Response value) {
       String body = value.body;
-      final Map<String, String> selectedAnswers = loadSelectedAnswers();
       final List<Map> questions = [];
       final YamlMap yaml = loadYaml(body);
       if (yaml['questions'] is YamlList) {
@@ -133,7 +118,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         }
       }
 
-      return {'selectedAnswers': selectedAnswers, 'questions': questions};
+      return {'questions': questions};
     });
   }
 
@@ -144,9 +129,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         future: object,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Questions(
-                loadedSelectedAnswer: snapshot.data['selectedAnswers'],
-                questions: snapshot.data['questions']);
+            return Questions(questions: snapshot.data['questions']);
           }
 
           return const Loader();
@@ -158,11 +141,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
 // Questions
 class Questions extends StatefulWidget {
-  const Questions(
-      {Key? key, required this.loadedSelectedAnswer, required this.questions})
-      : super(key: key);
+  const Questions({Key? key, required this.questions}) : super(key: key);
 
-  final Map<String, String> loadedSelectedAnswer;
   final List<Map> questions;
 
   @override
@@ -170,23 +150,9 @@ class Questions extends StatefulWidget {
 }
 
 class _QuestionsState extends State<Questions> {
-  late Map<String, String> selectedAnswers;
+  Map<String, String> selectedAnswers =
+      Map.from(Config.config.answeredQuestions);
   bool isConfirmed = false;
-
-  void saveSelectedAnswers() {
-    Memory().put(
-        'user',
-        'questions',
-        selectedAnswers.entries.map((MapEntry selectedAnswer) {
-          return '${selectedAnswer.key}:${selectedAnswer.value}';
-        }).join('::'));
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    selectedAnswers = Map.from(widget.loadedSelectedAnswer);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -236,8 +202,8 @@ class _QuestionsState extends State<Questions> {
                                 isConfirmed = true;
                               });
                               // store answers
-                              saveSelectedAnswers();
-                              // Memory().put('user', 'questions', 'bonjour');
+                              Config.config
+                                  .overwriteAnsweredQuestions(selectedAnswers);
                               Future.delayed(const Duration(milliseconds: 250))
                                   .then((value) => {Navigator.pop(context)})
                                   .then(

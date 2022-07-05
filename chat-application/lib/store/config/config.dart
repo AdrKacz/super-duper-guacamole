@@ -10,7 +10,7 @@ part 'config.g.dart';
 
 @HiveType(typeId: 2)
 class Config extends HiveObject {
-  Config(this._rsaKeyPair, this._booleanParameters);
+  Config(this._rsaKeyPair, this._booleanParameters, this._answeredQuestions);
 
   factory Config.loads(String key, {String boxName = 'metadata'}) {
     final dynamic config = Hive.box(boxName).get(key);
@@ -20,7 +20,7 @@ class Config extends HiveObject {
       final AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> rsaKeyPair =
           helpers.generateRSAkeyPair(helpers.exampleSecureRandom());
       Hive.box(boxName)
-          .put(key, Config(helpers.rsaKeyPairToString(rsaKeyPair), {}));
+          .put(key, Config(helpers.rsaKeyPairToString(rsaKeyPair), {}, {}));
       return Hive.box(boxName).get(key);
     }
   }
@@ -35,6 +35,15 @@ class Config extends HiveObject {
   @HiveField(1)
   Map<String, bool> _booleanParameters;
   Map<String, bool> get booleanParameters => _booleanParameters;
+
+  @HiveField(2)
+  Map<String, String> _answeredQuestions;
+  Map<String, String> get answeredQuestions => _answeredQuestions;
+
+  void overwriteAnsweredQuestions(Map<String, String> newAnsweredQuestions) {
+    _answeredQuestions = Map.from(newAnsweredQuestions);
+    save();
+  }
 
   void editBooleanParameters(String key, bool value) {
     _booleanParameters[key] = value;
