@@ -1,19 +1,19 @@
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/config/config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class Agreements extends StatelessWidget {
-  const Agreements({Key? key, required this.setAppState}) : super(key: key);
+  const Agreements({Key? key, required this.setNextState}) : super(key: key);
 
-  final Function setAppState;
+  final Function setNextState;
 
   @override
   Widget build(BuildContext context) {
     return AgreementsPage(
-      nextText: "Suivant",
+      nextText: 'Suivant',
       checkText: "J'ai pris connaissance de la politique de confidentialité",
       url:
-          "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/privacy-policy/fr",
+          'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/privacy-policy/fr',
       onNextPressed: () {
         Navigator.push(
           context,
@@ -23,11 +23,12 @@ class Agreements extends StatelessWidget {
                   checkText:
                       "J'ai lu et j'accepte les conditions générales d'utilisations",
                   url:
-                      "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr",
+                      'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr',
                   onNextPressed: () {
-                    Memory().put('user', 'hasSignedAgreements', "true");
+                    Config.config
+                        .editBooleanParameters('hasSignedAgreements', true);
                     Navigator.popUntil(context, ModalRoute.withName('/'));
-                    setAppState('main');
+                    setNextState();
                   })),
         );
       },

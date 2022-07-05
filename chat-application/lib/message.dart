@@ -1,5 +1,5 @@
-import 'package:awachat/objects/memory.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/config/config.dart';
+import 'package:awachat/store/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'dart:math';
@@ -18,7 +18,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
     return null;
   }
 
-  final List<String> data = encodedMessage.split(RegExp(r"::"));
+  final List<String> data = encodedMessage.split(RegExp(r'::'));
 
   if (data.length < 4) {
     return null;
@@ -33,7 +33,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
 
   switch (author) {
     case '0':
-      print("Decode text from main: $text");
+      print('Decode text from main: $text');
       return null;
     default:
       if (int.tryParse(data[1]) != null) {
@@ -41,25 +41,25 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
           status: status,
           author: types.User(
               id: author,
-              imageUrl: "https://avatars.dicebear.com/api/bottts/$author.png"),
+              imageUrl: 'https://avatars.dicebear.com/api/bottts/$author.png'),
           createdAt: int.parse(createdAt),
           id: id,
           text: text,
         );
       } else {
-        print("Date is not integer: $createdAt");
+        print('Date is not integer: $createdAt');
         return null;
       }
   }
 }
 
 String messageEncode(types.PartialText partialText) {
-  final String author = User().id;
+  final String author = User.me.id;
   final int createdAt = DateTime.now().millisecondsSinceEpoch;
   final String id = randomString();
   final String text = partialText.text;
 
-  return "$author::$createdAt::$id::$text";
+  return '$author::$createdAt::$id::$text';
 }
 
 Future<String?> reportActionOnMessage(BuildContext context) async {
@@ -67,7 +67,7 @@ Future<String?> reportActionOnMessage(BuildContext context) async {
       context: context,
       builder: (BuildContext context) {
         return SimpleDialog(
-          title: const Text("Que souhaites-tu faire avec ce message ?"),
+          title: const Text('Que souhaites-tu faire avec ce message ?'),
           children: <Widget>[
             SimpleDialogOption(
               onPressed: () {
@@ -79,16 +79,16 @@ Future<String?> reportActionOnMessage(BuildContext context) async {
 Toutes les personnes présentes, sauf la personne ciblée, pourront accepter ou refuser ta proposition.
 
 Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans un autre groupe."""),
-                    acceptString: "Ok",
-                    refuseString: "Ne pas bannir");
+                    acceptString: 'Ok',
+                    refuseString: 'Ne pas bannir');
               },
               child: const Text("Bannir la personne qui l'a écrit"),
             ),
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(context, "report");
+                Navigator.pop(context, 'report');
               },
-              child: const Text("Signaler le message"),
+              child: const Text('Signaler le message'),
             ),
             SimpleDialogOption(
               onPressed: () {
@@ -97,10 +97,10 @@ Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans 
                     popAction: 'delete',
                     info: const Text(
                         'Le message ne sera supprimé que chez toi. Les autres personnes du groupe pourront toujours le voir.'),
-                    acceptString: "Ok",
-                    refuseString: "Ne pas supprimer");
+                    acceptString: 'Ok',
+                    refuseString: 'Ne pas supprimer');
               },
-              child: const Text("Supprimer le message"),
+              child: const Text('Supprimer le message'),
             ),
             SimpleDialogOption(
               onPressed: () {
@@ -109,16 +109,16 @@ Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans 
                     popAction: 'block',
                     info: const Text(
                         'Tu vas changer de groupe. Tu ne seras plus avec cette personne dans tes prochains groupes.'),
-                    acceptString: "Ok",
-                    refuseString: "Ne pas bloquer");
+                    acceptString: 'Ok',
+                    refuseString: 'Ne pas bloquer');
               },
               child: const Text("Bloquer la personne qui l'a écrit"),
             ),
             SimpleDialogOption(
               onPressed: () {
-                Navigator.pop(context, "nothing");
+                Navigator.pop(context, 'nothing');
               },
-              child: const Text("Rien"),
+              child: const Text('Rien'),
             ),
           ],
         );
@@ -146,13 +146,13 @@ Future<String?> banActionOnMessage(
             TextButton(
               child: const Text('Non'),
               onPressed: () {
-                Navigator.pop(context, "denied");
+                Navigator.pop(context, 'denied');
               },
             ),
             TextButton(
               child: const Text('Oui'),
               onPressed: () {
-                Navigator.pop(context, "confirmed");
+                Navigator.pop(context, 'confirmed');
               },
             ),
           ],
@@ -177,7 +177,7 @@ Future<void> mailToReportMessage(
             --- --- ---
             
             L'utilisateur 
-            ${User().id}
+            ${User.me.id}
             signale le comportement de 
             ${message.author.id}
             Le message signalé est :
@@ -191,9 +191,9 @@ Future<void> mailToReportMessage(
             """).join("""
 """)}""",
     },
-  ).toString().replaceAll("+", "%20");
+  ).toString().replaceAll('+', '%20');
   if (!await launchUrl(Uri.parse(mailto))) {
-    throw "Could not launch $mailto";
+    throw 'Could not launch $mailto';
   }
 }
 
@@ -203,17 +203,17 @@ Future<void> mailToReportMessage(
 void alertInfo(BuildContext context,
     {required String argString,
     required Widget info,
-    String popAction = "confirmed",
-    String defaultAction = "nothing",
-    String acceptString = "accept",
-    String refuseString = "refuse"}) async {
-  String? arg = Memory().get('user', argString);
-  if (arg == null || arg == "false") {
+    String popAction = 'confirmed',
+    String defaultAction = 'nothing',
+    String acceptString = 'accept',
+    String refuseString = 'refuse'}) async {
+  bool? arg = Config.config.booleanParameters[argString];
+  if (arg != true) {
     switch (await showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-              title: const Text("Attention"),
+              title: const Text('Attention'),
               content: SingleChildScrollView(
                 child: info,
               ),
@@ -221,19 +221,19 @@ void alertInfo(BuildContext context,
                 TextButton(
                   child: Text(refuseString),
                   onPressed: () {
-                    Navigator.pop(context, "nothing");
+                    Navigator.pop(context, 'nothing');
                   },
                 ),
                 TextButton(
                   child: Text(acceptString),
                   onPressed: () {
-                    Navigator.pop(context, "confirmed");
+                    Navigator.pop(context, 'confirmed');
                   },
                 )
               ]);
         })) {
       case 'confirmed':
-        Memory().put('user', argString, 'true');
+        Config.config.editBooleanParameters(argString, true);
         Navigator.pop(context, popAction);
         break;
       default:
