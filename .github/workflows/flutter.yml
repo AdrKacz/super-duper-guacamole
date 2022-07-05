@@ -1,0 +1,25 @@
+# This is a workflow to check syntax on JavaScript
+
+name: Flutter Application CI
+
+# Controls when the workflow will run
+on:
+  pull_request:
+    branches:
+      - application-cicd
+    paths:
+      - chat-application/**
+
+# Jobs
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: subosito/flutter-action@v2
+      - name: Install packages
+        working-directory: ./chat-application
+        run: flutter pub get
+      - name: Run linter
+        working-directory: ./chat-application
+        run: flutter analyze
