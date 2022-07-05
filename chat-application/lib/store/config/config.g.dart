@@ -19,17 +19,20 @@ class ConfigAdapter extends TypeAdapter<Config> {
     return Config(
       (fields[0] as List).cast<String>(),
       (fields[1] as Map).cast<String, bool>(),
+      (fields[2] as Map).cast<String, String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Config obj) {
     writer
-      ..writeByte(2)
+      ..writeByte(3)
       ..writeByte(0)
       ..write(obj._rsaKeyPair)
       ..writeByte(1)
-      ..write(obj._booleanParameters);
+      ..write(obj._booleanParameters)
+      ..writeByte(2)
+      ..write(obj._answeredQuestions);
   }
 
   @override

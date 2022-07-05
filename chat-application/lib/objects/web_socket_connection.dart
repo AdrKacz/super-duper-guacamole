@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:awachat/objects/memory.dart';
 import 'package:awachat/store/config/config.dart';
 import 'package:awachat/store/user/user.dart';
-import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketConnection {
@@ -37,7 +36,7 @@ class WebSocketConnection {
     print('Send action switchgroup');
     _channel.sink.add(jsonEncode({
       'action': 'switchgroup',
-      'questions': loadSelectedAnswers(),
+      'questions': Config.config.answeredQuestions,
       'blockedUsers': Memory().getBlockedUsers()
     }));
   }

@@ -80,8 +80,7 @@ class _MyAppState extends State<MyApp> {
               return Agreements(setAppState: setAppState);
             case 'main':
               // check user has answers to questions
-              final String? questions = Memory().get('user', 'questions');
-              if (questions == null) {
+              if (Config.config.answeredQuestions.isEmpty) {
                 // TODO: use route instead
                 return FirstTimeQuestionsLoader(
                   onConfirmed: () {
