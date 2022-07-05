@@ -19,7 +19,7 @@ class User extends HiveObject {
     }
   }
 
-  static User me = User.loads('me', id: const Uuid().v4(), isOnline: true);
+  static User get me => User.loads('me', id: const Uuid().v4(), isOnline: true);
 
   @HiveField(0)
   String _id;
@@ -37,5 +37,19 @@ class User extends HiveObject {
     _id = const Uuid().v4();
     _isOnline = true;
     save();
+  }
+
+  @override
+  bool operator ==(other) {
+    print('COMPARE $id to $other: ${other is User && id == other.id}');
+    return other is User && id == other.id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() {
+    return 'User(id: $id, isOnline: $isOnline)';
   }
 }

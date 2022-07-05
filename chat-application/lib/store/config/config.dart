@@ -25,7 +25,7 @@ class Config extends HiveObject {
     }
   }
 
-  static final Config config = Config.loads('config');
+  static Config get config => Config.loads('config');
 
   @HiveField(0)
   List<String> _rsaKeyPair;

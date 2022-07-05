@@ -7,8 +7,7 @@ part 'group.g.dart';
 
 @HiveType(typeId: 1)
 class Group extends HiveObject {
-  // ignore: not_initialized_non_nullable_instance_field
-  Group(this._id);
+  Group(this._id, this._users);
 
   factory Group.loads(String key,
       {String id = '', String boxName = 'metadata'}) {
@@ -16,12 +15,12 @@ class Group extends HiveObject {
     if (user is Group) {
       return user;
     } else {
-      Hive.box(boxName).put(key, Group(id));
+      Hive.box(boxName).put(key, Group(id, HiveList(Hive.box(boxName))));
       return Hive.box(boxName).get(key);
     }
   }
 
-  static Group main = Group.loads('main');
+  static Group get main => Group.loads('main');
 
   @HiveField(0)
   String _id;
@@ -30,7 +29,7 @@ class Group extends HiveObject {
   @HiveField(1)
   HiveList _users;
   List<User> get users {
-    const List<User> users = [];
+    List<User> users = [];
     for (final user in _users) {
       if (user is User) {
         users.add(user);
@@ -55,7 +54,15 @@ class Group extends HiveObject {
   }
 
   void addAllUsers(Iterable<User> addedUsers) {
-    _users.addAll(addedUsers);
+    print('ADD $addedUsers');
+    print('TO $users');
+    final setUsers = users.toSet();
+    for (final addedUser in addedUsers) {
+      if (!setUsers.contains(addedUser)) {
+        _users.add(addedUser);
+      }
+    }
+    print('RESULTS $users');
     save();
   }
 

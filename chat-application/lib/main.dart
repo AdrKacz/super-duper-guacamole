@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:awachat/application_theme.dart';
+import 'package:awachat/objects/memory.dart';
 import 'package:awachat/store/config/config.dart';
 import 'package:awachat/store/group/group.dart';
 import 'package:awachat/widgets/glass.dart';
@@ -29,8 +30,11 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
+  Hive.registerAdapter(UserAdapter());
+  Hive.registerAdapter(GroupAdapter());
+  Hive.registerAdapter(ConfigAdapter());
   await Hive.openBox('metadata');
-
+  await Memory().init();
   await NotificationHandler().init();
 
   runApp(const MyApp());
@@ -47,10 +51,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   // State
-  AppStatus get appStatus => Hive.box('metadata')
-      .get('appStatus', defaultValue: AppStatus.presentation);
+  AppStatus get appStatus => AppStatus.values[Hive.box('metadata')
+      .get('appStatus', defaultValue: AppStatus.presentation.index)];
   set appStatus(AppStatus newAppStatus) {
-    Hive.box('metadata').put('appStatus', newAppStatus);
+    Hive.box('metadata').put('appStatus', newAppStatus.index);
     setState(() {});
   }
 
@@ -80,6 +84,8 @@ class _MyAppState extends State<MyApp> {
                 // TODO: use route instead
                 return FirstTimeQuestionsLoader(
                   onConfirmed: () {
+                    Config.config
+                        .overwriteAnsweredQuestions({'default': 'default'});
                     setState(() {});
                   },
                 );
@@ -125,10 +131,11 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   AppLifecycleState? _notification;
 
   // State
-  ChatStatus get chatStatus =>
-      Hive.box('metadata').get('chatStatus', defaultValue: ChatStatus.idle);
+  ChatStatus get chatStatus => ChatStatus.values[Hive.box('metadata')
+      .get('chatStatus', defaultValue: ChatStatus.idle.index)];
   set chatStatus(ChatStatus newChatStatus) {
-    Hive.box('metadata').put('chatStatus', newChatStatus);
+    Hive.box('metadata').put('chatStatus', newChatStatus.index);
+    setState(() {});
   }
 
   ConnectionStatus connectionState = ConnectionStatus.other;
@@ -472,8 +479,8 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
         resetAccount: () async {
           print('Reset Account');
           await NotificationHandler().putToken('');
-          User.me.reset();
-          Group.main.reset();
+          await Hive.box('metadata').clear();
+          await Memory().clear();
           await NotificationHandler().init();
           widget.goToPresentation();
         },
