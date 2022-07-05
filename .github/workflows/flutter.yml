@@ -20,4 +20,4 @@ jobs:
         run: flutter pub get
       - name: Run linter
         working-directory: ./chat-application
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
