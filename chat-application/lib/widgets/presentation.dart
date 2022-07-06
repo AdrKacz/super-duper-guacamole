@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class Presentation extends StatelessWidget {
-  const Presentation({Key? key, required this.setAppState}) : super(key: key);
+  const Presentation({Key? key, required this.nextAppStatus}) : super(key: key);
 
-  final Function setAppState;
+  final Function nextAppStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne 
         assetPath: 'assets/images/launching.gif',
         buttonText: "C'est parti !",
         onPressed: () {
-          setAppState('agreements');
+          nextAppStatus();
         },
       ),
     ];

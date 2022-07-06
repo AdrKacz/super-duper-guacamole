@@ -26,42 +26,46 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
+enum Status { presentation, agreements, main, other }
+
 class _MyAppState extends State<MyApp> {
-  // State {presentation, agreements, main}
-  late String state;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // retreive app state
-    state = Memory().get('user', 'appState') ?? 'presentation';
+  Status get status {
+    String statusName =
+        Memory().get('user', 'appStatus') ?? Status.presentation.name;
+    for (final Status value in Status.values) {
+      if (statusName == value.name) {
+        return value;
+      }
+    }
+    return Status.other;
   }
 
-  void setAppState(String newAppState) {
-    Memory().put('user', 'appState', newAppState);
-    setState(() {
-      state = newAppState;
-    });
+  set status(Status newStatus) {
+    Memory().put('user', 'appStatus', newStatus.name);
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    if (state == 'agreements' &&
+    if (status == Status.agreements &&
         Memory().get('user', 'hasSignedAgreements') == 'true') {
-      state = 'main';
+      status = Status.main;
     }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: applicationTheme,
       home: Builder(
         builder: (BuildContext context) {
-          switch (state) {
-            case 'presentation':
-              return Presentation(setAppState: setAppState);
-            case 'agreements':
-              return Agreements(setAppState: setAppState);
-            case 'main':
+          switch (status) {
+            case Status.presentation:
+              return Presentation(nextAppStatus: () {
+                status = Status.agreements;
+              });
+            case Status.agreements:
+              return Agreements(nextAppStatus: () {
+                status = Status.main;
+              });
+            case Status.main:
               // check user has answers to questions
               final String? questions = Memory().get('user', 'questions');
               if (questions == null) {
@@ -72,10 +76,12 @@ class _MyAppState extends State<MyApp> {
                   },
                 );
               } else {
-                return ChatPage(setAppState: setAppState);
+                return ChatPage(goToPresentation: () {
+                  status = Status.presentation;
+                });
               }
             default:
-              print('Unknown state $state');
+              print('Unknown state ${status.name}');
               return const Placeholder();
           }
         },

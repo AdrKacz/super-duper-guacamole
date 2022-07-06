@@ -18,9 +18,9 @@ import 'package:awachat/widgets/chat/widgets/flyer_chat.dart';
 import 'package:awachat/widgets/chat/widgets/switch_group.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({Key? key, required this.setAppState}) : super(key: key);
+  const ChatPage({Key? key, required this.goToPresentation}) : super(key: key);
 
-  final Function setAppState;
+  final Function goToPresentation;
 
   @override
   _ChatPageState createState() => _ChatPageState();
@@ -381,7 +381,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return Scaffold(
       drawer: UserDrawer(
         seeIntroduction: () {
-          widget.setAppState('presentation');
+          widget.goToPresentation();
         },
         resetAccount: () async {
           print('Reset Account');
@@ -390,7 +390,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           await Memory().clear();
           await User().init();
           await NotificationHandler().init();
-          widget.setAppState('presentation');
+          widget.goToPresentation();
         },
       ),
       appBar: AppBar(

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class Agreements extends StatelessWidget {
-  const Agreements({Key? key, required this.setAppState}) : super(key: key);
+  const Agreements({Key? key, required this.nextAppStatus}) : super(key: key);
 
-  final Function setAppState;
+  final Function nextAppStatus;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class Agreements extends StatelessWidget {
                   onNextPressed: () {
                     Memory().put('user', 'hasSignedAgreements', 'true');
                     Navigator.popUntil(context, ModalRoute.withName('/'));
-                    setAppState('main');
+                    nextAppStatus();
                   })),
         );
       },
