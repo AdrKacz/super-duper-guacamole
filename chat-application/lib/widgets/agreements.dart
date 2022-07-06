@@ -1,4 +1,4 @@
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 

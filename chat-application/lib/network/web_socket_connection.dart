@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:awachat/objects/memory.dart';
-import 'package:awachat/pointycastle/sign.dart';
+import 'package:awachat/store/memory.dart';
+import 'package:awachat/pointycastle/helpers.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =

@@ -1,4 +1,4 @@
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';

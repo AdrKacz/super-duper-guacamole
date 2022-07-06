@@ -1,7 +1,7 @@
-import 'package:awachat/pointycastle/sign.dart';
+import 'package:awachat/pointycastle/helpers.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/memory.dart';
 
 import "package:pointycastle/export.dart";
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/memory.dart';
 
 // ===== ===== =====
 // First Time Questions Loader

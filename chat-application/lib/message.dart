@@ -1,5 +1,5 @@
-import 'package:awachat/objects/memory.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/memory.dart';
+import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'dart:math';

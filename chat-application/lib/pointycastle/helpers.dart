@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/memory.dart';
 
 // ignore: implementation_imports
 import 'package:pointycastle/src/platform_check/platform_check.dart';

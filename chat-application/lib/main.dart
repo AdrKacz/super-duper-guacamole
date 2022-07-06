@@ -1,24 +1,24 @@
 import 'dart:convert';
 
 import 'package:awachat/application_theme.dart';
-import 'package:awachat/widgets/glass.dart';
+import 'package:awachat/widgets/chat/widgets/glass.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
-import 'package:awachat/objects/notification_handler.dart';
-import 'package:awachat/objects/web_socket_connection.dart';
+import 'package:awachat/network/notification_handler.dart';
+import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/message.dart';
-import 'package:awachat/objects/memory.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/memory.dart';
+import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/widgets/user_drawer.dart';
-import 'package:awachat/widgets/users_list.dart';
-import 'package:awachat/widgets/error.dart';
-import 'package:awachat/widgets/custom_chat.dart';
+import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
+import 'package:awachat/widgets/chat/widgets/users_list.dart';
+import 'package:awachat/widgets/chat/widgets/error.dart';
+import 'package:awachat/widgets/chat/widgets/flyer_chat.dart';
 import 'package:awachat/widgets/presentation.dart';
-import 'package:awachat/widgets/switch_group.dart';
+import 'package:awachat/widgets/chat/widgets/switch_group.dart';
 import 'package:awachat/widgets/agreements.dart';
 
 // ===== ===== =====

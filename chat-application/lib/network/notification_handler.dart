@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:awachat/objects/user.dart';
-import 'package:awachat/pointycastle/sign.dart';
+import 'package:awachat/store/user.dart';
+import 'package:awachat/pointycastle/helpers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
