@@ -10,7 +10,7 @@ import 'package:awachat/store/user.dart';
 
 class WebSocketConnection {
   static const String _websocketEndpoint =
-      String.fromEnvironment("WEBSOCKET_ENDPOINT");
+      String.fromEnvironment('WEBSOCKET_ENDPOINT');
 
   late WebSocketChannel _channel;
   Stream<dynamic> get stream => _channel.stream;
@@ -37,35 +37,35 @@ class WebSocketConnection {
   void switchgroup() {
     print('Send action switchgroup');
     _channel.sink.add(jsonEncode({
-      "action": "switchgroup",
-      "questions": loadSelectedAnswers(),
-      "blockedUsers": Memory().getBlockedUsers()
+      'action': 'switchgroup',
+      'questions': loadSelectedAnswers(),
+      'blockedUsers': Memory().getBlockedUsers()
     }));
   }
 
   void textmessage(String encodedMessage) {
     print('Send action textmessage');
     _channel.sink.add(jsonEncode({
-      "action": "textmessage",
-      "message": encodedMessage,
+      'action': 'textmessage',
+      'message': encodedMessage,
     }));
   }
 
   void banrequest(String userid, String messageid) {
     print('Send action banrequest');
     _channel.sink.add(jsonEncode({
-      "action": "banrequest",
-      "bannedid": userid,
-      "messageid": messageid,
+      'action': 'banrequest',
+      'bannedid': userid,
+      'messageid': messageid,
     }));
   }
 
   void banreply(String banneduserid, String status) {
     print('Send action banreply');
     _channel.sink.add(jsonEncode({
-      "action": "banreply",
-      "bannedid": banneduserid,
-      "status": status,
+      'action': 'banreply',
+      'bannedid': banneduserid,
+      'status': status,
     }));
   }
 

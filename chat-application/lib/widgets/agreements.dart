@@ -10,10 +10,10 @@ class Agreements extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AgreementsPage(
-      nextText: "Suivant",
+      nextText: 'Suivant',
       checkText: "J'ai pris connaissance de la politique de confidentialité",
       url:
-          "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/privacy-policy/fr",
+          'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/privacy-policy/fr',
       onNextPressed: () {
         Navigator.push(
           context,
@@ -23,9 +23,9 @@ class Agreements extends StatelessWidget {
                   checkText:
                       "J'ai lu et j'accepte les conditions générales d'utilisations",
                   url:
-                      "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr",
+                      'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr',
                   onNextPressed: () {
-                    Memory().put('user', 'hasSignedAgreements', "true");
+                    Memory().put('user', 'hasSignedAgreements', 'true');
                     Navigator.popUntil(context, ModalRoute.withName('/'));
                     setAppState('main');
                   })),
