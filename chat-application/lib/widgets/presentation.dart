@@ -23,13 +23,13 @@ Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: """Tu ne seras que dans un groupe à la fois.
+                TextSpan(text: '''Tu ne seras que dans un groupe à la fois.
           
-Touche """),
+Touche '''),
                 WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(
                     text:
-                        " en haut à droite de ton écran pour partir explorer un autre groupe.")
+                        ' en haut à droite de ton écran pour partir explorer un autre groupe.')
               ],
             ),
             textAlign: TextAlign.center,
@@ -41,7 +41,7 @@ Touche """),
 Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
           assetPath: 'assets/images/taken.gif'),
       SlideWithButton(
-        text: "Hâte de te faire de nouveaux potes ?",
+        text: 'Hâte de te faire de nouveaux potes ?',
         assetPath: 'assets/images/launching.gif',
         buttonText: "C'est parti !",
         onPressed: () {
