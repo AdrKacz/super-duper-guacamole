@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:awachat/widgets/chat/widgets/glass.dart';
@@ -36,7 +37,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
   // Messages
-  final List<types.Message> _messages = [];
+  final SplayTreeMap<int, types.Message> _messages =
+      SplayTreeMap((key1, key2) => key2 - key1);
 
   // App state (lifecycle)
   AppLifecycleState? _notification;
@@ -98,7 +100,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
               child: const Text('Supprimer tous ses messages'),
               onPressed: () {
                 final List<types.Message> messagesToRemove = [];
-                for (final types.Message e in _messages) {
+                for (final types.Message e in _messages.values) {
                   if (e.author.id == banneduserid) {
                     messagesToRemove.add(e);
                   }
@@ -130,7 +132,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   // Find message
   types.Message? findMessage(String messageid) {
-    for (final types.Message message in _messages) {
+    for (final types.Message message in _messages.values) {
       if (message.id == messageid) {
         return message;
       }
@@ -189,7 +191,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         _webSocketConnection.banrequest(message.author.id, message.id);
         break;
       case 'report':
-        await mailToReportMessage(_messages, message);
+        await mailToReportMessage(_messages.values.toList(), message);
         break;
       case 'delete':
         deleteMessage(message);
@@ -221,22 +223,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       HapticFeedback.lightImpact();
     }
 
-    if (_messages.isEmpty) {
-      _messages.add(message);
-      return;
-    } else {
-      for (int i = 0; i < _messages.length; i++) {
-        if (message.createdAt! >= _messages[i].createdAt!) {
-          if (message.id == _messages[i].id) {
-            _messages[i] = message;
-          } else {
-            _messages.insert(i, message);
-          }
-          return;
-        }
-      }
-    }
-    _messages.add(message);
+    _messages[message.createdAt ?? 0] = message;
   }
 
   Future<void> loadMessagesFromMemory() async {
@@ -497,7 +484,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
               break;
             case Status.chatting:
               child = FlyerChat(
-                  messages: _messages,
+                  messages: _messages.values.toList(),
                   onSendPressed: sendMessage,
                   onMessageLongPress: reportMessage);
               break;
