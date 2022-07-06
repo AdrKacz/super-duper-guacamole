@@ -37,8 +37,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
   // Messages
-  final SplayTreeMap<int, types.Message> _messages =
-      SplayTreeMap((key1, key2) => key2 - key1);
+  final SplayTreeMap<int, types.Message> _messages = SplayTreeMap(
+      (key1, key2) => key2 - key1); // createdAt is the (sorting) key
 
   // App state (lifecycle)
   AppLifecycleState? _notification;
