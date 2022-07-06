@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
-class CustomChat extends StatelessWidget {
-  const CustomChat(
+class FlyerChat extends StatelessWidget {
+  const FlyerChat(
       {Key? key,
       required this.messages,
       required this.onSendPressed,

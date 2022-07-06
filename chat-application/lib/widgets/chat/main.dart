@@ -441,7 +441,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
               child = const SwitchGroupPage();
               break;
             case 'chat':
-              child = CustomChat(
+              child = FlyerChat(
                   messages: _messages,
                   onSendPressed: sendMessage,
                   onMessageLongPress: reportMessage);
