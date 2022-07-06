@@ -18,6 +18,10 @@ import 'package:awachat/widgets/chat/widgets/error.dart';
 import 'package:awachat/widgets/chat/widgets/flyer_chat.dart';
 import 'package:awachat/widgets/chat/widgets/switch_group.dart';
 
+enum Status { idle, switchSent, switchAcknowledge, chatting, other }
+
+enum ConnectionStatus { connected, disconnected, reconnecting }
+
 class ChatPage extends StatefulWidget {
   const ChatPage({Key? key, required this.goToPresentation}) : super(key: key);
 
@@ -38,14 +42,23 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   AppLifecycleState? _notification;
 
   // State
-  late String _state;
-  String get state => _state;
-  set state(String newState) {
-    Memory().put('user', 'appChatState', newState);
-    _state = newState;
+  Status get status {
+    String statusName =
+        Memory().get('user', 'appChatState') ?? Status.idle.name;
+    for (final Status value in Status.values) {
+      if (statusName == value.name) {
+        return value;
+      }
+    }
+    return Status.other;
   }
 
-  String connectionState = 'connected';
+  set status(Status newStatus) {
+    Memory().put('user', 'appChatState', newStatus.name);
+    setState(() {});
+  }
+
+  ConnectionStatus connectionStatus = ConnectionStatus.connected;
 
   // Acknowledge ban
   void acknowledgeBan(
@@ -154,7 +167,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     Memory().addBlockedUser(userId);
     _webSocketConnection.switchgroup();
     setState(() {
-      state = 'switch';
+      status = Status.switchSent;
     });
   }
 
@@ -237,9 +250,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         User().updateOtherUserStatus(data['id'], false);
         break;
       case 'register':
-        print('\tRegister with state: $state');
+        print('\tRegister with state: ${status.name}');
         // connection made
-        connectionState = 'connected';
+        connectionStatus = ConnectionStatus.connected;
         // process unread messages
         for (final unreadMessage in data['unreadData']) {
           processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
@@ -254,13 +267,13 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           User().groupId = '';
           _webSocketConnection.switchgroup();
           _messages.clear();
-          state = 'switch';
-        } else if (User().groupId == '' && state == 'idle') {
+          status = Status.switchSent;
+        } else if (User().groupId == '' && status == Status.idle) {
           // Get group (register on load)
           _webSocketConnection.switchgroup();
           _messages.clear();
-          state = 'switch';
-        } else if (state == 'chat') {
+          status = Status.switchSent;
+        } else if (status == Status.chatting) {
           // past messages
           loadMessagesFromMemory();
         }
@@ -276,7 +289,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             print('\tLeave group: $groupId');
             User().groupId = '';
             _messages.clear();
-            state = 'switchwaiting';
+            status = Status.switchAcknowledge;
           } else {
             // don't do anything
             needUpdate = false;
@@ -299,7 +312,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             User().groupId = newGroupId;
             User().updateOtherUsers(users);
             _messages.clear(); // in case we receive join before leave
-            state = 'chat';
+            status = Status.chatting;
           } else {
             // new users in group
             print('\tGroup users: $users');
@@ -334,7 +347,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         break;
       default:
         print("\tAction ${data['action']} not recognised.");
-        state = '';
+        status = Status.other;
     }
     return needUpdate;
   }
@@ -351,7 +364,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     _webSocketConnection.stream.listen(listenMessage, onDone: () {
       if (mounted) {
         setState(() {
-          connectionState = 'disconnected';
+          connectionStatus = ConnectionStatus.disconnected;
         });
       }
     }, cancelOnError: true);
@@ -363,22 +376,20 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _state = Memory().get('user', 'appChatState') ?? 'idle';
-
     _webSocketConnection.register();
     listenStream();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (connectionState == 'disconnected' &&
+    if (connectionStatus == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
-      connectionState = 'reconnect';
+      connectionStatus = ConnectionStatus.reconnecting;
       _webSocketConnection.reconnect();
       listenStream();
       _webSocketConnection.register();
     }
-    print('State: $state - Connection State: $connectionState');
+    print('State: ${status.name} - Connection State: ${connectionStatus.name}');
     return Scaffold(
       drawer: UserDrawer(
         seeIntroduction: () {
@@ -417,11 +428,11 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
           actions: <Widget>[
             IconButton(
                 tooltip: 'Changer de groupe',
-                onPressed: state == 'chat'
+                onPressed: status == Status.chatting
                     ? () {
                         _webSocketConnection.switchgroup();
                         setState(() {
-                          state = 'switch';
+                          status = Status.switchSent;
                         });
                       }
                     : null,
@@ -430,17 +441,17 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       body: Builder(
         builder: (BuildContext context) {
           late Widget child;
-          switch (state) {
-            case 'idle':
+          switch (status) {
+            case Status.idle:
               child = const Loader();
               break;
-            case 'switch':
+            case Status.switchSent:
               child = const Loader();
               break;
-            case 'switchwaiting':
+            case Status.switchAcknowledge:
               child = const SwitchGroupPage();
               break;
-            case 'chat':
+            case Status.chatting:
               child = FlyerChat(
                   messages: _messages,
                   onSendPressed: sendMessage,
@@ -458,25 +469,25 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                   _webSocketConnection.register();
                   if (User().groupId != '') {
                     setState(() {
-                      state = 'chat';
+                      status = Status.chatting;
                     });
                   } else {
                     setState(() {
-                      state = 'idle';
+                      status = Status.idle;
                     });
                   }
                 },
               );
           }
-          switch (connectionState) {
-            case 'disconnected':
+          switch (connectionStatus) {
+            case ConnectionStatus.disconnected:
               return Stack(
                 children: [
                   child,
                   const Glass(),
                 ],
               );
-            case 'reconnect':
+            case ConnectionStatus.reconnecting:
               // TODO: create an action to retry if an error occurs or the network is not reachable
               return Stack(
                 children: [
