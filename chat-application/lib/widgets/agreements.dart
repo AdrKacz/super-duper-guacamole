@@ -54,7 +54,7 @@ class AgreementsPage extends StatefulWidget {
   final String nextText;
 
   @override
-  _AgreementsPageState createState() => _AgreementsPageState();
+  State<AgreementsPage> createState() => _AgreementsPageState();
 }
 
 class _AgreementsPageState extends State<AgreementsPage> {

@@ -20,6 +20,7 @@ Je vais te présenter l'application.""",
 Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
           assetPath: 'assets/images/chat.gif'),
       const CustomSlide(
+          assetPath: 'assets/images/outer-space.gif',
           child: Text.rich(
             TextSpan(
               children: [
@@ -33,8 +34,7 @@ Touche '''),
               ],
             ),
             textAlign: TextAlign.center,
-          ),
-          assetPath: 'assets/images/outer-space.gif'),
+          )),
       const Slide(
           text: """Si un message t'offense, reste appuyé dessus.
 

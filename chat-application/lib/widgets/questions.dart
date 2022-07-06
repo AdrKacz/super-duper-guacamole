@@ -50,11 +50,11 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                       Memory().put('user', 'questions', '');
                       onConfirmed();
                     },
-                    child: const Text('Ne pas répondre'),
                     style: ElevatedButton.styleFrom(
                       primary: Theme.of(context).colorScheme.secondary,
                       onPrimary: Theme.of(context).colorScheme.onSecondary,
                     ),
+                    child: const Text('Ne pas répondre'),
                   ),
                 ],
               ),
@@ -87,7 +87,7 @@ class QuestionsLoader extends StatefulWidget {
   const QuestionsLoader({Key? key}) : super(key: key);
 
   @override
-  _QuestionsLoaderState createState() => _QuestionsLoaderState();
+  State<QuestionsLoader> createState() => _QuestionsLoaderState();
 }
 
 class _QuestionsLoaderState extends State<QuestionsLoader> {
@@ -167,7 +167,7 @@ class Questions extends StatefulWidget {
   final List<Map> questions;
 
   @override
-  _QuestionsState createState() => _QuestionsState();
+  State<Questions> createState() => _QuestionsState();
 }
 
 class _QuestionsState extends State<Questions> {

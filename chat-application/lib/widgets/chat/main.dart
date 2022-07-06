@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:awachat/widgets/chat/widgets/glass.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 import 'package:awachat/network/notification_handler.dart';
@@ -23,7 +24,7 @@ class ChatPage extends StatefulWidget {
   final Function goToPresentation;
 
   @override
-  _ChatPageState createState() => _ChatPageState();
+  State<ChatPage> createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
