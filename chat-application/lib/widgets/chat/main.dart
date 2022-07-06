@@ -295,21 +295,19 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     // (causing a difference when there is not)
     final String groupId = data['groupid'] ?? '';
     final String userId = data['id'];
+
+    if (groupId != User().groupId) {
+      return false; // don't do anything
+    }
+
     if (userId == User().id) {
-      if (groupId == User().groupId) {
-        // only leave if the group to leave is the group we are in
-        print('\tLeave group: $groupId');
-        User().groupId = '';
-        _messages.clear();
-        status = Status.switchAcknowledge;
-      } else {
-        // don't do anything
-        return false;
-      }
+      // you're the one to leave the group
+      print('\tLeave group: $groupId');
+      User().groupId = '';
+      _messages.clear();
+      status = Status.switchAcknowledge;
     } else {
-      if (groupId == User().groupId) {
-        User().otherGroupUsers.remove(userId);
-      }
+      User().otherGroupUsers.remove(userId);
     }
     return true;
   }
