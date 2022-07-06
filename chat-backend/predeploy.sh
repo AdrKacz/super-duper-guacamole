@@ -42,8 +42,8 @@ cd "${base_directory}/actions"
 echo "Update in $(pwd)"
 for f in *; do
     if [ -d "$f" ]; then  
-        echo "\n\n----- ----- -----\n$(pwd)"
         cd $f
+        echo "\n\n----- ----- -----\n$(pwd)"
         # Will not run if no package are available
         if [ $mode = "ci" ] && [ -f 'package-lock.json' ]; then
             echo "Clean install project"
@@ -61,8 +61,8 @@ cd "${base_directory}/"
 echo "Update in $(pwd)"
 for f in *; do
     if [ -d "$f" ]; then
-        echo "\n\n----- ----- -----\n$(pwd)"
         cd $f
+        echo "\n\n----- ----- -----\n$(pwd)"
         # Will not run if no package are available
         if [ $mode = "ci" ] && [ -f 'package-lock.json' ]; then
             echo "Clean install project"

@@ -18,6 +18,19 @@
             ]
         },
         {
+            "name": "awachat (connected to production)",
+            "cwd": "chat-application",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "toolArgs": [
+                "--dart-define",
+                "WEBSOCKET_ENDPOINT=wss://mn7ojfvss0.execute-api.eu-west-3.amazonaws.com/prod",
+                "--dart-define",
+                "NOTIFICATION_HTTP_ENDPOINT=https://jwssxdpg6f.execute-api.eu-west-3.amazonaws.com/firebase-token"
+            ]
+        },
+        {
             "name": "awachat (screenshot mode)",
             "cwd": "chat-application",
             "request": "launch",
