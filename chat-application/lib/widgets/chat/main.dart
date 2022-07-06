@@ -72,38 +72,48 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         },
       ),
     ];
+
+    if (banneduserid == User().id && status == 'confirmed') {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Tu t'es fait banir de ton groupe"),
+              actions: actions,
+            );
+          });
+      return;
+    }
+
+    if (banneduserid == User().id) {
+      return; // no need to alert the user
+    }
+
     switch (status) {
       case 'confirmed':
-        if (banneduserid == User().id) {
-          title = "Tu t'es fait banir de ton groupe";
-        } else {
-          title = 'La personne est banie de ton groupe';
-          actions.insert(
-              0,
-              TextButton(
-                child: const Text('Supprimer tous ses messages'),
-                onPressed: () {
-                  final List<types.Message> messagesToRemove = [];
-                  for (final types.Message e in _messages) {
-                    if (e.author.id == banneduserid) {
-                      messagesToRemove.add(e);
-                    }
+        title = 'La personne est banie de ton groupe';
+        actions.insert(
+            0,
+            TextButton(
+              child: const Text('Supprimer tous ses messages'),
+              onPressed: () {
+                final List<types.Message> messagesToRemove = [];
+                for (final types.Message e in _messages) {
+                  if (e.author.id == banneduserid) {
+                    messagesToRemove.add(e);
                   }
-                  for (final types.Message e in messagesToRemove) {
-                    deleteMessage(e);
-                  }
+                }
+                for (final types.Message e in messagesToRemove) {
+                  deleteMessage(e);
+                }
 
-                  Navigator.of(context).pop();
-                },
-              ));
-        }
+                Navigator.of(context).pop();
+              },
+            ));
+
         break;
       case 'denied':
-        if (banneduserid == User().id) {
-          return; // no need to alert the user
-        } else {
-          title = "La personne n'est pas banie de ton groupe";
-        }
+        title = "La personne n'est pas banie de ton groupe";
         break;
       default:
         return;
@@ -239,113 +249,149 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     setState(() {});
   }
 
+  bool messageLogin(data) {
+    User().updateOtherUserStatus(data['id'], true);
+    return true;
+  }
+
+  bool messageLogout(data) {
+    User().updateOtherUserStatus(data['id'], false);
+    return true;
+  }
+
+  bool messageRegister(data) {
+    print('\tRegister with state: ${status.name}');
+    // connection made
+    connectionStatus = ConnectionStatus.connected;
+    // process unread messages
+    for (final unreadMessage in data['unreadData']) {
+      processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
+      // needUpdate cannot be false because connectionState changed
+    }
+
+    final String assignedGroupId = data['group'] ?? '';
+    if (assignedGroupId == '' ||
+        (User().groupId != '' && assignedGroupId != User().groupId)) {
+      // there was an error somewhere, just re-init the group
+      NotificationHandler().init(); // register notification token
+      User().groupId = '';
+      _webSocketConnection.switchgroup();
+      _messages.clear();
+      status = Status.switchSent;
+    } else if (User().groupId == '' && status == Status.idle) {
+      // Get group (register on load)
+      _webSocketConnection.switchgroup();
+      _messages.clear();
+      status = Status.switchSent;
+    } else if (status == Status.chatting) {
+      // past messages
+      loadMessagesFromMemory();
+    }
+    return true;
+  }
+
+  bool messageLeaveGroup(data) {
+    // empty string is stored as undefined serverside
+    // (causing a difference when there is not)
+    final String groupId = data['groupid'] ?? '';
+    final String userId = data['id'];
+    if (userId == User().id) {
+      if (groupId == User().groupId) {
+        // only leave if the group to leave is the group we are in
+        print('\tLeave group: $groupId');
+        User().groupId = '';
+        _messages.clear();
+        status = Status.switchAcknowledge;
+      } else {
+        // don't do anything
+        return false;
+      }
+    } else {
+      if (groupId == User().groupId) {
+        User().otherGroupUsers.remove(userId);
+      }
+    }
+    return true;
+  }
+
+  bool messageJoinGroup(data) {
+    final String newGroupId = data['groupid'] ?? '';
+    final Map<String, dynamic> users =
+        Map<String, dynamic>.from(data['users'] ?? {});
+    if (users.remove(User().id) != null) {
+      if (newGroupId != User().groupId) {
+        // only join if the group to join is not the group we are in
+        print('\tJoin group: $newGroupId');
+        User().groupId = newGroupId;
+        User().updateOtherUsers(users);
+        _messages.clear(); // in case we receive join before leave
+        status = Status.chatting;
+      } else {
+        // new users in group
+        print('\tGroup users: $users');
+        User().updateOtherUsers(users);
+      }
+    } else {
+      // don't do anything (user not concerted, error)
+      return false;
+    }
+    return true;
+  }
+
+  bool messageTextMessage(data, bool isInnerLoop) {
+    print('\tMessage: ${data['message']}');
+    types.Message? message = messageDecode(data['message']);
+    if (message != null) {
+      if (!isInnerLoop) {
+        insertMessage(message);
+      }
+      Memory().addMessage(message.id, data['message']);
+    }
+    return true;
+  }
+
+  bool messageBanRequest(data) {
+    print('\tBan request for: ${data['messageid']}');
+    banRequest(context, data['messageid']);
+    return false;
+  }
+
+  bool messageBanReply(data) {
+    print('\tBan reply for: ${data['bannedid']} with status ${data['status']}');
+    acknowledgeBan(context, data['status'], data['bannedid']);
+    return false;
+  }
+
   bool processMessage(message, {bool isInnerLoop = false}) {
-    bool needUpdate = true;
+    bool needUpdate;
     final data = jsonDecode(message);
     switch (data['action']) {
       case 'login':
-        User().updateOtherUserStatus(data['id'], true);
+        needUpdate = messageLogin(data);
         break;
       case 'logout':
-        User().updateOtherUserStatus(data['id'], false);
+        needUpdate = messageLogout(data);
         break;
       case 'register':
-        print('\tRegister with state: ${status.name}');
-        // connection made
-        connectionStatus = ConnectionStatus.connected;
-        // process unread messages
-        for (final unreadMessage in data['unreadData']) {
-          processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
-          // needUpdate cannot be false because connectionState changed
-        }
-
-        final String assignedGroupId = data['group'] ?? '';
-        if (assignedGroupId == '' ||
-            (User().groupId != '' && assignedGroupId != User().groupId)) {
-          // there was an error somewhere, just re-init the group
-          NotificationHandler().init(); // register notification token
-          User().groupId = '';
-          _webSocketConnection.switchgroup();
-          _messages.clear();
-          status = Status.switchSent;
-        } else if (User().groupId == '' && status == Status.idle) {
-          // Get group (register on load)
-          _webSocketConnection.switchgroup();
-          _messages.clear();
-          status = Status.switchSent;
-        } else if (status == Status.chatting) {
-          // past messages
-          loadMessagesFromMemory();
-        }
+        needUpdate = messageRegister(data);
         break;
       case 'leavegroup':
-        // empty string is stored as undefined serverside
-        // (causing a difference when there is not)
-        final String groupId = data['groupid'] ?? '';
-        final String userId = data['id'];
-        if (userId == User().id) {
-          if (groupId == User().groupId) {
-            // only leave if the group to leave is the group we are in
-            print('\tLeave group: $groupId');
-            User().groupId = '';
-            _messages.clear();
-            status = Status.switchAcknowledge;
-          } else {
-            // don't do anything
-            needUpdate = false;
-          }
-        } else {
-          if (groupId == User().groupId) {
-            User().otherGroupUsers.remove(userId);
-          }
-        }
-
+        needUpdate = messageLeaveGroup(data);
         break;
       case 'joingroup':
-        final String newGroupId = data['groupid'] ?? '';
-        final Map<String, dynamic> users =
-            Map<String, dynamic>.from(data['users'] ?? {});
-        if (users.remove(User().id) != null) {
-          if (newGroupId != User().groupId) {
-            // only join if the group to join is not the group we are in
-            print('\tJoin group: $newGroupId');
-            User().groupId = newGroupId;
-            User().updateOtherUsers(users);
-            _messages.clear(); // in case we receive join before leave
-            status = Status.chatting;
-          } else {
-            // new users in group
-            print('\tGroup users: $users');
-            User().updateOtherUsers(users);
-          }
-        } else {
-          // don't do anything (user not concerted, error)
-          needUpdate = false;
-        }
-
+        needUpdate = messageJoinGroup(data);
         break;
       case 'textmessage':
-        print('\tMessage: ${data['message']}');
-        types.Message? message = messageDecode(data['message']);
-        if (message != null) {
-          if (!isInnerLoop) {
-            insertMessage(message);
-          }
-          Memory().addMessage(message.id, data['message']);
-        }
+        needUpdate = messageTextMessage(data, isInnerLoop);
         break;
       case 'banrequest':
-        print('\tBan request for: ${data['messageid']}');
-        banRequest(context, data['messageid']);
-        needUpdate = false;
+        needUpdate = messageBanRequest(data);
         break;
       case 'banreply':
-        print(
-            '\tBan reply for: ${data['bannedid']} with status ${data['status']}');
-        acknowledgeBan(context, data['status'], data['bannedid']);
-        needUpdate = false;
+        needUpdate = messageBanReply(data);
         break;
       default:
+        needUpdate = false;
         print("\tAction ${data['action']} not recognised.");
         status = Status.other;
     }
