@@ -23,7 +23,7 @@ const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { createVerify } = require('crypto')
 
-const { informGroup } = require('./helpers')
+const { informGroup, getOtherGroupUsers } = require('./helpers')
 
 const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
@@ -115,6 +115,9 @@ exports.handler = async (event) => {
     unreadData.push(...updatedUser.unreadData)
   }
 
+  // Retreive other group users
+  const users = await getOtherGroupUsers(id, updatedUser.group)
+
   // send message
   // NOTE: could be done in parallel of DDB updates
   const publishCommand = new PublishCommand({
@@ -124,7 +127,8 @@ exports.handler = async (event) => {
       message: {
         action: 'register',
         unreadData,
-        group: updatedUser?.group
+        group: updatedUser?.group,
+        groupUsers: users.map(({ id, connectionId }) => ({ id, isOnline: typeof connectionId !== 'undefined' }))
       }
     })
   })
@@ -132,7 +136,7 @@ exports.handler = async (event) => {
   const promises = [snsClient.send(publishCommand)]
 
   if (updatedUser !== undefined && updatedUser.group !== undefined) {
-    promises.push(informGroup(id, updatedUser.group))
+    promises.push(informGroup(id, users))
   }
 
   await Promise.allSettled(promises)

@@ -16,8 +16,7 @@ const {
 
 // ===== ==== ====
 // EXPORTS
-
-exports.informGroup = async (userId, groupId) => {
+exports.getOtherGroupUsers = async (userId, groupId) => {
   // retreive group
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -47,12 +46,14 @@ exports.informGroup = async (userId, groupId) => {
     }
   })
 
-  const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+  return dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+}
 
+exports.informGroup = async (userId, otherUsers) => {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users,
+      otherUsers,
       message: {
         action: 'login',
         id: userId
