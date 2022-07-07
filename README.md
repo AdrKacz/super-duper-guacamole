@@ -1,6 +1,6 @@
 # Super Duper Guacamole
 
-[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/build-chat-application/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/build-chat-application/latest_build)
+[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/latest_build)
 [![DeepSource](https://deepsource.io/gh/AdrKacz/super-duper-guacamole.svg/?label=active+issues&token=DKsgj5xS_AE1GQJhM8vqO1PL)](https://deepsource.io/gh/AdrKacz/super-duper-guacamole/?ref=repository-badge)
 
 <details><summary><h2>External services</h2></summary>
