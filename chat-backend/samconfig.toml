@@ -32,5 +32,5 @@ s3_prefix = "sam-group-production"
 region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"10\" WebSocketThrottlingRateLimit=\"10\" ApiThrottlingBurstLimit=\"10\" ApiThrottlingRateLimit=\"10\" StageName=\"prod\""
+parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"500\" WebSocketThrottlingRateLimit=\"500\" ApiThrottlingBurstLimit=\"500\" ApiThrottlingRateLimit=\"500\" StageName=\"prod\""
 image_repositories = []
