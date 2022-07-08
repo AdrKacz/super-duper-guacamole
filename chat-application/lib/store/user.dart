@@ -1,9 +1,9 @@
-import 'package:awachat/pointycastle/sign.dart';
+import 'package:awachat/pointycastle/helpers.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/memory.dart';
 
-import "package:pointycastle/export.dart";
+import 'package:pointycastle/export.dart';
 
 class User {
   static User _instance = User._internal();
@@ -18,18 +18,18 @@ class User {
   String get groupId => _groupId;
   set groupId(String id) {
     // reset
-    if (_groupId != "") {
-      print("Reset group (unsubscribe and clear messages and users)");
+    if (_groupId != '') {
+      print('Reset group (unsubscribe and clear messages and users)');
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-${User().groupId}');
       Memory().boxMessages.clear();
-      _groupId = "";
+      _groupId = '';
       Memory().lazyBoxGroupUsers.clear();
       otherGroupUsers.clear();
     }
 
     // set
-    if (id != "") {
+    if (id != '') {
       print('Set group (subscribe)');
       FirebaseMessaging.instance.subscribeToTopic('group-$id');
       Memory().put('user', 'groupid', id);
@@ -44,7 +44,7 @@ class User {
   User._internal();
 
   void clear() {
-    groupId = "";
+    groupId = '';
     _instance = User._internal();
   }
 
@@ -77,7 +77,7 @@ class User {
       // group users
       otherGroupUsers = await Memory().loadGroupUsers();
     } else {
-      _groupId = "";
+      _groupId = '';
     }
 
     print(

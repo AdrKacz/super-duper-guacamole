@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:awachat/objects/user.dart';
-import 'package:awachat/pointycastle/sign.dart';
+import 'package:awachat/store/user.dart';
+import 'package:awachat/pointycastle/helpers.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 
 class NotificationHandler {
   static const String _httpEndpoint =
-      String.fromEnvironment("NOTIFICATION_HTTP_ENDPOINT");
+      String.fromEnvironment('NOTIFICATION_HTTP_ENDPOINT');
 
   static final NotificationHandler _instance = NotificationHandler._internal();
 
@@ -52,7 +52,7 @@ class NotificationHandler {
   }
 
   Future<void> putToken(String token) {
-    print("[PushNotificationService - Put Token] Token: <$token>");
+    print('[PushNotificationService - Put Token] Token: <$token>');
     print('[PushNotificationService - Put Token] Put token to $_httpEndpoint');
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
@@ -68,7 +68,7 @@ class NotificationHandler {
             }))
         .then((http.Response response) {
       print(
-          "[PushNotificationService - Put Token] Response status: ${response.statusCode}");
+          '[PushNotificationService - Put Token] Response status: ${response.statusCode}');
     });
   }
 }

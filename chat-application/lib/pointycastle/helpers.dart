@@ -1,23 +1,23 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:awachat/objects/memory.dart';
+import 'package:awachat/store/memory.dart';
 
 // ignore: implementation_imports
 import 'package:pointycastle/src/platform_check/platform_check.dart';
-import "package:pointycastle/export.dart";
-import "package:asn1lib/asn1lib.dart";
+import 'package:pointycastle/export.dart';
+import 'package:asn1lib/asn1lib.dart';
 
 // ===== ===== ===== ===== =====
 // ===== ===== ===== ===== =====
 // Storage
 
 AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? retreiveRSAkeyPair() {
-  String? n = Memory().rsaKeyPairBox.get("n");
-  String? e = Memory().rsaKeyPairBox.get("e");
+  String? n = Memory().rsaKeyPairBox.get('n');
+  String? e = Memory().rsaKeyPairBox.get('e');
 
-  String? d = Memory().rsaKeyPairBox.get("d");
-  String? p = Memory().rsaKeyPairBox.get("p");
-  String? q = Memory().rsaKeyPairBox.get("q");
+  String? d = Memory().rsaKeyPairBox.get('d');
+  String? p = Memory().rsaKeyPairBox.get('p');
+  String? q = Memory().rsaKeyPairBox.get('q');
   // print('===Retreive===\nn: $n\ne: $e\nd: $d\np: $p\nq: $q');
   if (n != null && e != null && d != null && p != null && q != null) {
     try {
@@ -44,11 +44,11 @@ void storeRSAkeyPair(AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair) {
   // print('===Store===\nn: $n\ne: $e\nd: $d\np: $p\nq: $q');
   if (n != null && e != null && d != null && p != null && q != null) {
     Memory().rsaKeyPairBox.putAll({
-      "n": n.toString(),
-      "e": e.toString(),
-      "d": d.toString(),
-      "p": p.toString(),
-      "q": q.toString(),
+      'n': n.toString(),
+      'e': e.toString(),
+      'd': d.toString(),
+      'p': p.toString(),
+      'q': q.toString(),
     });
   }
 }
@@ -132,5 +132,5 @@ String? encodePublicKeyToPem(RSAPublicKey publicKey) {
   topLevelSeq.add(publicKeySeqBitString);
   var dataBase64 = base64.encode(topLevelSeq.encodedBytes);
 
-  return """-----BEGIN PUBLIC KEY-----\r\n$dataBase64\r\n-----END PUBLIC KEY-----""";
+  return '''-----BEGIN PUBLIC KEY-----\r\n$dataBase64\r\n-----END PUBLIC KEY-----''';
 }
