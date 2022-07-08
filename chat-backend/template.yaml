@@ -36,6 +36,26 @@ Parameters:
     Default: 1
     Description: '(Required) The number of days logs are kept.'
     ConstraintDescription: 'Required. Must be an integer.'
+  WebSocketThrottlingBurstLimit:
+    Type: Number
+    Default: 1
+    Description: '(Required) The maximum number of concurrent messages before receiving "429 Too Many Requests".'
+    ConstraintDescription: 'Required. Must be an integer.'
+  WebSocketThrottlingRateLimit:
+    Type: Number
+    Default: 1
+    Description: '(Required) The maximum number messages per seconds before receiving "429 Too Many Requests".'
+    ConstraintDescription: 'Required. Must be an integer.'
+  ApiThrottlingBurstLimit:
+    Type: Number
+    Default: 1
+    Description: '(Required) The maximum number of concurrent messages before receiving "429 Too Many Requests".'
+    ConstraintDescription: 'Required. Must be an integer.'
+  ApiThrottlingRateLimit:
+    Type: Number
+    Default: 1
+    Description: '(Required) The maximum number messages per seconds before receiving "429 Too Many Requests".'
+    ConstraintDescription: 'Required. Must be an integer.'
   StageName:
     Type: String
     Default: 'development'
@@ -257,6 +277,9 @@ Resources:
       Description: !Sub '${StageName} Stage'
       DeploymentId: !Ref Deployment
       ApiId: !Ref SimpleChatWebSocket
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
+        ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
 
   # Layers Functions
   AWSSDKApiLayerVersion:
@@ -457,6 +480,9 @@ Resources:
           Properties:
             Path: /firebase-token
             Method: PUT
+            RouteSettings:
+              ThrottlingBurstLimit: !Ref ApiThrottlingBurstLimit
+              ThrottlingRateLimit: !Ref ApiThrottlingRateLimit
   PutFirebaseTokenLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
