@@ -2,7 +2,7 @@ languages: "fr"
 questions:
   - 
     id: "limousin 1.0.0"
-    question: "Le limonsin c'est..."
+    question: "Le limousin c'est..."
     answers:
       - 
         id: "limousin-region 1.0.0"
