@@ -1,19 +1,20 @@
 # Super Duper Guacamole
 
-[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/default-workflow/latest_build)
+[![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/build-chat-application/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/build-chat-application/latest_build)
 [![DeepSource](https://deepsource.io/gh/AdrKacz/super-duper-guacamole.svg/?label=active+issues&token=DKsgj5xS_AE1GQJhM8vqO1PL)](https://deepsource.io/gh/AdrKacz/super-duper-guacamole/?ref=repository-badge)
 
-<details><summary><h2>External services</h2></summary>
+<details><summary>External services</summary>
 
+- [CodeMagic](https://codemagic.io)
+- [Deepsource](https://deepsource.io/gh/AdrKacz/super-duper-guacamole)
+- [CodeScene](https://codescene.com)
+- [Namecheap](https://ap.www.namecheap.com)
+- [Imgbot](https://imgbot.net/app/)
+- [Let's Encrypt](https://letsencrypt.org/about/)
 - [Google Drive](https://drive.google.com/drive/folders/1VGYTlRhyS1SivX0uCPNUiKHsgLy7AHK3?usp=sharing)
 - [Notion](https://purring-shark-0e9.notion.site/Awa-048af14525474c29828c867d0ba553a6)
 - [Post Man](https://awa-ma.postman.co)
 - [Terrastruct](https://app.terrastruct.com/console)
-- [CodeMagic](https://codemagic.io)
-- [Imgbot](https://imgbot.net/app/)
-- [Deepsource](https://deepsource.io/gh/AdrKacz/super-duper-guacamole)
-- [Namecheap](https://ap.www.namecheap.com)
-- [Let's Encrypt](https://letsencrypt.org/about/)
 
 </details>
 
