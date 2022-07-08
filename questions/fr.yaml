@@ -1,55 +1,55 @@
 languages: "fr"
 questions:
   - 
-    id: "netflix 1.0.0"
-    question: "Tu es plutôt..."
+    id: "limousin 1.0.0"
+    question: "Le limonsin c'est..."
     answers:
       - 
-        id: "netflix-series 1.0.0"
-        answer: "Séries 💻"
+        id: "limousin-region 1.0.0"
+        answer: "Une région historique 📍"
       - 
-        id: "netflix-films 1.0.0"
-        answer: "Films 🍿"
+        id: "limousin-vache 1.0.0"
+        answer: "Une race de vache 🐮"
       - 
-        id: "netflix-animes 1.0.0"
-        answer: "Animés 🥷"
+        id: "limousin-tradition 1.0.0"
+        answer: "Une tradition 🔞"
   - 
-    id: "night 1.0.0"
-    question: "Ta soirée favorite ?"
+    id: "film 1.0.0"
+    question: "Tu es plutôt ?"
     answers:
       - 
-        id: "night-pyjama 1.0.0"
-        answer: "En pyjama, tranquille chez moi ☺️"
+        id: "film-ctn 1.0.0"
+        answer: "CTN 🎬"
       - 
-        id: "night-club 1.0.0"
-        answer: "En boîte jusqu'au bout de la nuit ! 🔥"
+        id: "film-pixel 1.0.0"
+        answer: "Pixel 📷"
       - 
-        id: "night-friends 1.0.0"
-        answer: "Soirée entre amis 🍻"
+        id: "film-video 1.0.0"
+        answer: "Vidéosurveillance 🍔"
   - 
-    id: "food 1.0.0"
+    id: "food 1.0.1"
     question: "Ton plat indispensable ?"
     answers:
       - 
-        id: "food-pizza 1.0.0"
-        answer: "Pizza ! 🍕"
+        id: "food-pizza 1.0.1"
+        answer: "Pizza 🍕"
       - 
-        id: "food-burger 1.0.0"
-        answer: "Burger, frites, un classique 🍔"
+        id: "food-sushis 1.0.1"
+        answer: "Sushi 🍣"
       - 
-        id: "food-sushis 1.0.0"
-        answer: "Sushis voyons ! 🍣"
+        id: "food-cordon 1.0.0"
+        answer: "Cordon bleu 🐔"
   -
     id: "desire 1.0.0"
-    question: "T'es ici pour..."
+    question: "T'es ici pour ?"
     answers:
       - 
-        id: "desire-mates 1.0.0"
-        answer: "Me faire des potes 🤟"
+        id: "desire-tradition 1.0.0"
+        answer: "Raviver une tradition 🇫🇷"
       - 
-        id: "desire-more 1.0.0"
-        answer: "Ça peut toujours déraper 🙄"
+        id: "desire-enquete 1.0.0"
+        answer: "Mener l’enquête 🕵️‍♀️"
       - 
-        id: "desire-wind 1.0.0"
-        answer: "Je vais où le vent me porte 🙈"
+        id: "desire-rumeur 1.0.0"
+        answer: "Répandre la rumeur 😈"
  
