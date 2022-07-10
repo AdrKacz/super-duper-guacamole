@@ -142,7 +142,7 @@ exports.handler = async (event) => {
     promises.push(informGroup(id, users))
 
     message.group = updatedUser.group
-    message.groupUsers = users.map(({ id, connectionId }) => ({ id, isOnline: typeof connectionId !== 'undefined' }))
+    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ userId, isOnline: typeof connectionId !== 'undefined' }))
   } catch (e) {
     if (e.message === `groupId <${updatedUser.group}> is undefined`) {
       console.log(e)
