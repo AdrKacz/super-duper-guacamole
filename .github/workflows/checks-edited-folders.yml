@@ -22,6 +22,9 @@ jobs:
             has_edited_chat_application=false
             has_edited_chat_backend=false
             ls -a
+            echo '-----'
+            git diff
+            echo '-----'
             git diff --name-only HEAD^ HEAD > files.txt
             echo '----- ----- -----'
             cat files.txt
