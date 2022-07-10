@@ -23,9 +23,9 @@ jobs:
             has_edited_chat_backend=false
             ls -a
             echo '-----'
-            git diff
+            git diff --name-only origin/main...
             echo '-----'
-            git diff --name-only HEAD^ HEAD > files.txt
+            git diff --name-only origin/main... > files.txt
             echo '----- ----- -----'
             cat files.txt
             echo '----- ----- -----'
