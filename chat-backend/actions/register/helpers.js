@@ -52,7 +52,7 @@ exports.getOtherGroupUsers = async (userId, groupId) => {
   return dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 }
 
-exports.informGroup = async (userId, otherUsers) => {
+exports.informGroup = (userId, otherUsers) => {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
@@ -63,5 +63,5 @@ exports.informGroup = async (userId, otherUsers) => {
       }
     })
   })
-  await snsClient.send(publishSendMessageCommand)
+  return snsClient.send(publishSendMessageCommand)
 }

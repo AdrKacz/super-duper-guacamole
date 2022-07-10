@@ -108,15 +108,17 @@ exports.handler = async (event) => {
       ':false': false
     }
   })
-  const updatedUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
+  const oldUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
   const message = {
-    action: 'register'
+    action: 'register',
+    unreadData: []
   }
 
   // New User
-  if (typeof updatedUser === 'undefined') {
-    message.unreadData = []
+  if (typeof oldUser === 'undefined') {
+    console.log('Register New User')
+
     const publishCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -124,35 +126,39 @@ exports.handler = async (event) => {
         message
       })
     })
-    snsClient.send(publishCommand)
+    await snsClient.send(publishCommand)
     return {
       statusCode: 200
     }
   }
 
-  // Update User is defined
+  // old User is defined
   const promises = []
-  if (typeof updatedUser.unreadData !== 'undefined') {
-    message.unreadData = updatedUser.unreadData
+  if (typeof oldUser.unreadData !== 'undefined') {
+    console.log('Update Message With Unread Data')
+
+    message.unreadData = oldUser.unreadData
   }
 
   // Retreive other group users
   try {
-    const users = await getOtherGroupUsers(id, updatedUser.group)
+    console.log('Get Other Users')
+    const users = await getOtherGroupUsers(id, oldUser.group)
+    console.log('Inform Other Users')
     promises.push(informGroup(id, users))
-
-    message.group = updatedUser.group
-    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ userId, isOnline: typeof connectionId !== 'undefined' }))
+    console.log('Update Message with Group Information')
+    message.group = oldUser.group
+    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId !== 'undefined' }))
   } catch (e) {
-    if (e.message === `groupId <${updatedUser.group}> is undefined`) {
-      console.log(e)
-    } else if (e.message === `group <${updatedUser.group}> isn't found`) {
-      console.log(e)
+    if (e.message === `groupId <${oldUser.group}> is undefined`) {
+      console.log('Catch: ', e)
+    } else if (e.message === `group <${oldUser.group}> isn't found`) {
+      console.log('Catch: ', e)
     } else {
       throw e
     }
   }
-
+  console.log('Send Message:\n', JSON.stringify(message))
   // send message
   const publishCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
