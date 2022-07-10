@@ -1,11 +1,12 @@
-import 'package:awachat/flyer/l10n.dart';
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/l10n/flyer_l10n.dart';
+import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 
-class CustomChat extends StatelessWidget {
-  const CustomChat(
+class FlyerChat extends StatelessWidget {
+  const FlyerChat(
       {Key? key,
       required this.messages,
       required this.onSendPressed,

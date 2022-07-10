@@ -1,4 +1,4 @@
-import 'package:awachat/objects/user.dart';
+import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +28,7 @@ class UserDrawer extends StatelessWidget {
               child: SizedBox(
                 child: ClipOval(
                   child: Image.network(
-                    "https://avatars.dicebear.com/api/bottts/${User().id}.png",
+                    'https://avatars.dicebear.com/api/bottts/${User().id}.png',
                   ),
                 ),
               ),
@@ -36,7 +36,7 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.question_mark_rounded),
-            title: const Text("Questions"),
+            title: const Text('Questions'),
             subtitle: const Text("Quel est ton état d'esprit ?"),
             onTap: () {
               Navigator.push(
@@ -51,13 +51,13 @@ class UserDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.nature),
             title: const Text(
-              "Je veux revoir la présentation",
+              'Je veux revoir la présentation',
             ),
             onTap: seeIntroduction,
           ),
           ListTile(
             leading: const Icon(Icons.copyright),
-            title: const Text("Sources"),
+            title: const Text('Sources'),
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => const Credits()));
@@ -65,7 +65,7 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: const Text("Nous contacter"),
+            title: const Text('Nous contacter'),
             onTap: () async {
               if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
                 throw 'Could not launch https://awa-chat.me/contact/';
@@ -76,7 +76,7 @@ class UserDrawer extends StatelessWidget {
             leading: Icon(Icons.delete_forever,
                 color: Theme.of(context).colorScheme.onError),
             title: Text(
-              "Réinitialiser mon compte",
+              'Réinitialiser mon compte',
               style: TextStyle(color: Theme.of(context).colorScheme.onError),
             ),
             onTap: () async {
@@ -84,7 +84,7 @@ class UserDrawer extends StatelessWidget {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: const Text("Attention"),
+                      title: const Text('Attention'),
                       content: const SingleChildScrollView(
                         child: Text(
                             'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
@@ -93,13 +93,13 @@ class UserDrawer extends StatelessWidget {
                         TextButton(
                           child: const Text('Non'),
                           onPressed: () {
-                            Navigator.pop(context, "nothing");
+                            Navigator.pop(context, 'nothing');
                           },
                         ),
                         TextButton(
                           child: const Text('Oui'),
                           onPressed: () {
-                            Navigator.pop(context, "confirmed");
+                            Navigator.pop(context, 'confirmed');
                           },
                         ),
                       ],
@@ -136,7 +136,7 @@ class _CreditsState extends State<Credits> {
   void initState() {
     super.initState();
     text = http.get(Uri.parse(
-        "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/credits/fr"));
+        'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/credits/fr'));
   }
 
   @override
