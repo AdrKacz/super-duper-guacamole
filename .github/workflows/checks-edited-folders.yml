@@ -21,9 +21,8 @@ jobs:
             echo 'Get updated filed'
             has_edited_chat_application=false
             has_edited_chat_backend=false
-            ls -a
             echo '-----'
-            git diff --name-only origin/main...
+            git diff --name-only origin/master...
             echo '-----'
             git diff --name-only origin/main... > files.txt
             echo '----- ----- -----'
