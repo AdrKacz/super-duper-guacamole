@@ -1,6 +1,6 @@
 # This is a workflow to check that chat-backend and chat-application have not both been edited
 
-name: Checks Edited Folder
+name: Checks Edited Folders
 
 # Controls when the workflow will run
 on:
