@@ -30,21 +30,22 @@ jobs:
 
             while IFS= read -r file
             do
-            if [[ $file != chat-application/** ]]; then
-                has_edited_chat_application=true
-            elif [[ $file != chat-backend/** ]]; then
-                has_edited_chat_backend=true
-            fi
+              if [[ $file != chat-application/** ]]; then
+                  has_edited_chat_application=true
+              elif [[ $file != chat-backend/** ]]; then
+                  has_edited_chat_backend=true
+              fi
             done < files.txt
 
             if [ "$has_edited_chat_application" = true ] ; then
-            echo "You've edited chat-application/"
+              echo "You've edited chat-application/"
             fi
 
             if [ "$has_edited_chat_backend" = true ] ; then
-            echo "You've edited chat-backend/"
+              echo "You've edited chat-backend/"
             fi
 
             if [ "$has_edited_chat_application" = true ] && [ "$has_edited_chat_backend" = true ] ; then
-            echo 'You cannot edit chat-application/ and chat-backend/!'
+              echo 'You cannot edit chat-application/ and chat-backend/'
+              exit 1
             fi
