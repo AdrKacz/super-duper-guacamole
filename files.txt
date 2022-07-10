@@ -1,3 +1,0 @@
-.github/workflows/checks-edited-folders.yml
-chat-application/test.txt
-chat-backend/test.txt
