@@ -16,13 +16,15 @@ jobs:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
+        - name: Fetch Origin
+        - run: git fetch origin main
         - name: Checks Working Folders
           run: |
             echo 'Get updated filed'
             has_edited_chat_application=false
             has_edited_chat_backend=false
             echo '-----'
-            git diff --name-only origin/master...
+            git diff --name-only origin/master..
             echo '-----'
             git diff --name-only origin/main... > files.txt
             echo '----- ----- -----'
