@@ -121,7 +121,7 @@ exports.handler = async (event) => {
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
         users: [{ id, connectionId: event.requestContext.connectionId }],
-        message: message
+        message
       })
     })
     snsClient.send(publishCommand)
@@ -158,7 +158,7 @@ exports.handler = async (event) => {
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{ id, connectionId: event.requestContext.connectionId }],
-      message: message
+      message
     })
   })
   promises.push(snsClient.send(publishCommand))
