@@ -110,34 +110,58 @@ exports.handler = async (event) => {
   })
   const updatedUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
-  const unreadData = []
-  if (updatedUser !== undefined && updatedUser.unreadData !== undefined) {
-    unreadData.push(...updatedUser.unreadData)
+  const message = {
+    action: 'register'
+  }
+
+  // New User
+  if (typeof updatedUser === 'undefined') {
+    message.unreadData = []
+    const publishCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: [{ id, connectionId: event.requestContext.connectionId }],
+        message: message
+      })
+    })
+    snsClient.send(publishCommand)
+    return {
+      statusCode: 200
+    }
+  }
+
+  // Update User is defined
+  const promises = []
+  if (typeof updatedUser.unreadData !== 'undefined') {
+    message.unreadData = updatedUser.unreadData
   }
 
   // Retreive other group users
-  const users = await getOtherGroupUsers(id, updatedUser.group)
+  try {
+    const users = await getOtherGroupUsers(id, updatedUser.group)
+    promises.push(informGroup(id, users))
+
+    message.group = updatedUser.group
+    message.groupUsers = users.map(({ id, connectionId }) => ({ id, isOnline: typeof connectionId !== 'undefined' }))
+  } catch (e) {
+    if (e.message === `groupId <${updatedUser.group}> is undefined`) {
+      console.log(e)
+    } else if (e.message === `group <${updatedUser.group}> isn't found`) {
+      console.log(e)
+    } else {
+      throw e
+    }
+  }
 
   // send message
-  // NOTE: could be done in parallel of DDB updates
   const publishCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{ id, connectionId: event.requestContext.connectionId }],
-      message: {
-        action: 'register',
-        unreadData,
-        group: updatedUser?.group,
-        groupUsers: users.map(({ id, connectionId }) => ({ id, isOnline: typeof connectionId !== 'undefined' }))
-      }
+      message: message
     })
   })
-
-  const promises = [snsClient.send(publishCommand)]
-
-  if (updatedUser !== undefined && updatedUser.group !== undefined) {
-    promises.push(informGroup(id, users))
-  }
+  promises.push(snsClient.send(publishCommand))
 
   await Promise.allSettled(promises)
 

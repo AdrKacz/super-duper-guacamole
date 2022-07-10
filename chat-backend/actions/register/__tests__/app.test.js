@@ -167,6 +167,7 @@ test('it register new user', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
   const dummyConnectionId = 'dummy-connection-id'
+
   await handler({
     requestContext: {
       connectionId: dummyConnectionId
@@ -292,7 +293,7 @@ test('it sends login to group users', async () => {
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
-  expect(snsMock).toHaveReceivedNthCommandWith(2, PublishCommand, {
+  expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
     TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: dummyOtherGroupUsers,
@@ -304,7 +305,7 @@ test('it sends login to group users', async () => {
   })
 })
 
-test('it stops undefined group', async () => {
+test('it stops on undefined group', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
   const dummyGroup = 'dummy-group'
 
@@ -319,6 +320,7 @@ test('it stops undefined group', async () => {
   })
 
   const dummyConnectionId = 'dummy-connection-id'
+
   await handler({
     requestContext: {
       connectionId: dummyConnectionId

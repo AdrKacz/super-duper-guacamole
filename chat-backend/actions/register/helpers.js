@@ -17,6 +17,9 @@ const {
 // ===== ==== ====
 // EXPORTS
 exports.getOtherGroupUsers = async (userId, groupId) => {
+  if (typeof groupId === 'undefined') {
+    throw new Error(`groupId <${groupId}> is undefined`)
+  }
   // retreive group
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -28,8 +31,8 @@ exports.getOtherGroupUsers = async (userId, groupId) => {
     }
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
-  if (group === undefined) {
-    throw new Error(`group <${groupId}> is not defined`)
+  if (typeof group === 'undefined') {
+    throw new Error(`group <${groupId}> isn't found`)
   }
 
   // retreive users
@@ -53,7 +56,7 @@ exports.informGroup = async (userId, otherUsers) => {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      otherUsers,
+      users: otherUsers,
       message: {
         action: 'login',
         id: userId
