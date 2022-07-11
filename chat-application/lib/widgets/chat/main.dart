@@ -249,31 +249,49 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   bool messageRegister(data) {
     print('\tRegister with state: ${status.name}');
     // connection made
+    // needUpdate cannot be false because connectionState changed
     connectionStatus = ConnectionStatus.connected;
     // process unread messages
     for (final unreadMessage in data['unreadData']) {
       processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
-      // needUpdate cannot be false because connectionState changed
     }
 
     final String assignedGroupId = data['group'] ?? '';
-    if (assignedGroupId == '' ||
-        (User().groupId != '' && assignedGroupId != User().groupId)) {
-      // there was an error somewhere, just re-init the group
-      NotificationHandler().init(); // register notification token
+    if (assignedGroupId == '') {
+      print("doesn't have a group yet");
+      // doesn't have a group yet
+      NotificationHandler().init();
       User().groupId = '';
       _webSocketConnection.switchgroup();
       _messages.clear();
       status = Status.switchSent;
-    } else if (User().groupId == '' && status == Status.idle) {
-      // Get group (register on load)
-      _webSocketConnection.switchgroup();
-      _messages.clear();
-      status = Status.switchSent;
-    } else if (status == Status.chatting) {
-      // past messages
-      loadMessagesFromMemory();
+
+      return true;
     }
+    // Below, assignedGroupId is not empty
+    status = Status.chatting;
+
+    if (User().groupId != '' && assignedGroupId != User().groupId) {
+      // doesn't have the correct group
+      print("doesn't have the correct group");
+      User().groupId = assignedGroupId;
+      _messages.clear();
+    }
+
+    // convert assignedGroupUsers to correct type
+    final Map<String, dynamic> users = {};
+    for (final user in data['groupUsers'] ?? []) {
+      if (user['id'] != null) {
+        users[user['id'] ?? ''] = {
+          'id': user['id'],
+          'isActive': user['isOnline']
+        };
+      }
+    }
+    User().overrideOtherUsers(users);
+
+    loadMessagesFromMemory();
+
     return true;
   }
 
@@ -348,22 +366,39 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   }
 
   bool processMessage(message, {bool isInnerLoop = false}) {
-    bool needUpdate;
+    print('Process Message ${isInnerLoop ? '(in inner loop)' : ''}:\n$message');
+    bool needUpdate = true;
     final data = jsonDecode(message);
     switch (data['action']) {
       case 'login':
+        if (isInnerLoop) {
+          // remove not needed action in inner loop (same below)
+          break;
+        }
         needUpdate = messageLogin(data);
         break;
       case 'logout':
+        if (isInnerLoop) {
+          break;
+        }
         needUpdate = messageLogout(data);
         break;
       case 'register':
+        if (isInnerLoop) {
+          break;
+        }
         needUpdate = messageRegister(data);
         break;
       case 'leavegroup':
+        if (isInnerLoop) {
+          break;
+        }
         needUpdate = messageLeaveGroup(data);
         break;
       case 'joingroup':
+        if (isInnerLoop) {
+          break;
+        }
         needUpdate = messageJoinGroup(data);
         break;
       case 'textmessage':
