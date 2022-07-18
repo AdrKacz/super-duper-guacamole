@@ -371,35 +371,20 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     final data = jsonDecode(message);
     switch (data['action']) {
       case 'login':
-        if (isInnerLoop) {
-          // remove not needed action in inner loop (same below)
-          break;
-        }
-        needUpdate = messageLogin(data);
+        // don't execute callback if in inner loop
+        needUpdate = isInnerLoop || messageLogin(data);
         break;
       case 'logout':
-        if (isInnerLoop) {
-          break;
-        }
-        needUpdate = messageLogout(data);
+        needUpdate = isInnerLoop || messageLogout(data);
         break;
       case 'register':
-        if (isInnerLoop) {
-          break;
-        }
-        needUpdate = messageRegister(data);
+        needUpdate = isInnerLoop || messageRegister(data);
         break;
       case 'leavegroup':
-        if (isInnerLoop) {
-          break;
-        }
-        needUpdate = messageLeaveGroup(data);
+        needUpdate = isInnerLoop || messageLeaveGroup(data);
         break;
       case 'joingroup':
-        if (isInnerLoop) {
-          break;
-        }
-        needUpdate = messageJoinGroup(data);
+        needUpdate = isInnerLoop || messageJoinGroup(data);
         break;
       case 'textmessage':
         needUpdate = messageTextMessage(data, isInnerLoop);
