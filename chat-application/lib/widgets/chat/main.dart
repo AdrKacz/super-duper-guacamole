@@ -23,19 +23,6 @@ enum Status { idle, switchSent, switchAcknowledge, chatting, other }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
-enum MessageAction {
-  login,
-  logout,
-  register,
-  leavegroup,
-  joingroup,
-  textmessage,
-  banrequest,
-  banreply,
-  skip,
-  unknown
-}
-
 class ChatPage extends StatefulWidget {
   const ChatPage({Key? key, required this.goToPresentation}) : super(key: key);
 
@@ -46,6 +33,9 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
+  // Messages Actions
+  late final Map<String, Function> messageActions;
+
   // Channel
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
@@ -354,11 +344,11 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return true;
   }
 
-  bool messageTextMessage(data, bool isInnerLoop) {
+  bool messageTextMessage(data) {
     print('\tMessage: ${data['message']}');
     types.Message? message = messageDecode(data['message']);
     if (message != null) {
-      if (!isInnerLoop) {
+      if (!data['_isInnerLoop']) {
         insertMessage(message);
       }
       Memory().addMessage(message.id, data['message']);
@@ -378,75 +368,26 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return false;
   }
 
-  MessageAction getMessageAction(String? action, {bool isInnerLoop = false}) {
-    if (action == null) {
-      return MessageAction.unknown;
-    }
-
-    final List<MessageAction> skipValues = [];
-    if (isInnerLoop) {
-      skipValues.addAll([
-        MessageAction.login,
-        MessageAction.logout,
-        MessageAction.register,
-        MessageAction.leavegroup,
-        MessageAction.joingroup
-      ]);
-    }
-
-    for (final MessageAction messageAction in MessageAction.values) {
-      if (action == messageAction.name && skipValues.contains(messageAction)) {
-        return MessageAction.skip;
-      } else if (action == messageAction.name &&
-          !skipValues.contains(messageAction)) {
-        return messageAction;
-      }
-    }
-    return MessageAction.unknown;
-  }
-
   bool processMessage(message, {bool isInnerLoop = false}) {
     print('Process Message ${isInnerLoop ? '(in inner loop)' : ''}:\n$message');
     bool needUpdate = true;
     final data = jsonDecode(message);
+    data['_isInnerLoop'] = isInnerLoop;
 
-    // return skip action if no need to read the action
-    final messageAction =
-        getMessageAction(data['action'], isInnerLoop: isInnerLoop);
-
-    switch (messageAction) {
-      case MessageAction.login:
-        needUpdate = messageLogin(data);
-        break;
-      case MessageAction.logout:
-        needUpdate = messageLogout(data);
-        break;
-      case MessageAction.register:
-        needUpdate = messageRegister(data);
-        break;
-      case MessageAction.leavegroup:
-        needUpdate = messageLeaveGroup(data);
-        break;
-      case MessageAction.joingroup:
-        needUpdate = messageJoinGroup(data);
-        break;
-      case MessageAction.textmessage:
-        needUpdate = messageTextMessage(data, isInnerLoop);
-        break;
-      case MessageAction.banrequest:
-        needUpdate = messageBanRequest(data);
-        break;
-      case MessageAction.banreply:
-        needUpdate = messageBanReply(data);
-        break;
-      case MessageAction.unknown:
-        needUpdate = false;
-        print("\tAction ${data['action']} not recognised.");
-        status = Status.other;
-        break;
-      case MessageAction.skip:
-        break;
+    if (isInnerLoop &&
+        ['login', 'logout', 'register', 'leavegroup', 'joingroup']
+            .contains(data['action'])) {
+      print('Skip processing (not needed)');
+      return needUpdate;
     }
+    if (messageActions.containsKey(data['action'])) {
+      needUpdate = messageActions[data['action']]!(data);
+    } else {
+      needUpdate = false;
+      print("\tAction ${data['action']} not recognised.");
+      status = Status.other;
+    }
+
     return needUpdate;
   }
 
@@ -476,6 +417,17 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
     _webSocketConnection.register();
     listenStream();
+
+    messageActions = {
+      'login': messageLogin,
+      'logout': messageLogout,
+      'register': messageRegister,
+      'leavegroup': messageLeaveGroup,
+      'joingroup': messageJoinGroup,
+      'textmessage': messageTextMessage,
+      'banrequest': messageBanRequest,
+      'banreply': messageBanReply,
+    };
   }
 
   @override
