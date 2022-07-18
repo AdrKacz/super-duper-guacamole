@@ -23,6 +23,19 @@ enum Status { idle, switchSent, switchAcknowledge, chatting, other }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
+enum MessageAction {
+  login,
+  logout,
+  register,
+  leavegroup,
+  joingroup,
+  textmessage,
+  banrequest,
+  banreply,
+  skip,
+  unknown
+}
+
 class ChatPage extends StatefulWidget {
   const ChatPage({Key? key, required this.goToPresentation}) : super(key: key);
 
@@ -365,40 +378,74 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return false;
   }
 
+  MessageAction getMessageAction(String? action, {bool isInnerLoop = false}) {
+    if (action == null) {
+      return MessageAction.unknown;
+    }
+
+    final List<MessageAction> skipValues = [];
+    if (isInnerLoop) {
+      skipValues.addAll([
+        MessageAction.login,
+        MessageAction.logout,
+        MessageAction.register,
+        MessageAction.leavegroup,
+        MessageAction.joingroup
+      ]);
+    }
+
+    for (final MessageAction messageAction in MessageAction.values) {
+      if (action == messageAction.name && skipValues.contains(messageAction)) {
+        return MessageAction.skip;
+      } else if (action == messageAction.name &&
+          !skipValues.contains(messageAction)) {
+        return messageAction;
+      }
+    }
+    return MessageAction.unknown;
+  }
+
   bool processMessage(message, {bool isInnerLoop = false}) {
     print('Process Message ${isInnerLoop ? '(in inner loop)' : ''}:\n$message');
     bool needUpdate = true;
     final data = jsonDecode(message);
-    switch (data['action']) {
-      case 'login':
-        // don't execute callback if in inner loop
-        needUpdate = isInnerLoop || messageLogin(data);
+
+    // return skip action if no need to read the action
+    final messageAction =
+        getMessageAction(data['action'], isInnerLoop: isInnerLoop);
+
+    switch (messageAction) {
+      case MessageAction.login:
+        needUpdate = messageLogin(data);
         break;
-      case 'logout':
-        needUpdate = isInnerLoop || messageLogout(data);
+      case MessageAction.logout:
+        needUpdate = messageLogout(data);
         break;
-      case 'register':
-        needUpdate = isInnerLoop || messageRegister(data);
+      case MessageAction.register:
+        needUpdate = messageRegister(data);
         break;
-      case 'leavegroup':
-        needUpdate = isInnerLoop || messageLeaveGroup(data);
+      case MessageAction.leavegroup:
+        needUpdate = messageLeaveGroup(data);
         break;
-      case 'joingroup':
-        needUpdate = isInnerLoop || messageJoinGroup(data);
+      case MessageAction.joingroup:
+        needUpdate = messageJoinGroup(data);
         break;
-      case 'textmessage':
+      case MessageAction.textmessage:
         needUpdate = messageTextMessage(data, isInnerLoop);
         break;
-      case 'banrequest':
+      case MessageAction.banrequest:
         needUpdate = messageBanRequest(data);
         break;
-      case 'banreply':
+      case MessageAction.banreply:
         needUpdate = messageBanReply(data);
         break;
-      default:
+      case MessageAction.unknown:
         needUpdate = false;
         print("\tAction ${data['action']} not recognised.");
         status = Status.other;
+        break;
+      case MessageAction.skip:
+        break;
     }
     return needUpdate;
   }
