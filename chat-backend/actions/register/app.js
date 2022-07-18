@@ -17,26 +17,22 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
-const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { GetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { createVerify } = require('crypto')
+
+const { informGroup, getOtherGroupUsers } = require('./helpers')
+
+const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
-  GROUPS_TABLE_NAME,
-  SEND_MESSAGE_TOPIC_ARN,
-  AWS_REGION
+  SEND_MESSAGE_TOPIC_ARN
 } = process.env
-
-const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
-const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
-
-const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
 // HANDLER
@@ -112,84 +108,70 @@ exports.handler = async (event) => {
       ':false': false
     }
   })
-  const updatedUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
+  const oldUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
-  const unreadData = []
-  if (updatedUser !== undefined && updatedUser.unreadData !== undefined) {
-    unreadData.push(...updatedUser.unreadData)
+  const message = {
+    action: 'register',
+    unreadData: []
   }
 
+  // New User
+  if (typeof oldUser === 'undefined') {
+    console.log('Register New User')
+
+    const publishCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: [{ id, connectionId: event.requestContext.connectionId }],
+        message
+      })
+    })
+    await snsClient.send(publishCommand)
+    return {
+      statusCode: 200
+    }
+  }
+
+  // old User is defined
+  const promises = []
+  if (typeof oldUser.unreadData !== 'undefined') {
+    console.log('Update Message With Unread Data')
+
+    message.unreadData = oldUser.unreadData
+  }
+
+  // Retreive other group users
+  try {
+    console.log('Get Other Users')
+    const users = await getOtherGroupUsers(id, oldUser.group)
+    console.log('Inform Other Users')
+    promises.push(informGroup(id, users))
+    console.log('Update Message with Group Information')
+    message.group = oldUser.group
+    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId !== 'undefined' }))
+  } catch (e) {
+    if (e.message === `groupId <${oldUser.group}> is undefined`) {
+      console.log('Catch: ', e)
+    } else if (e.message === `group <${oldUser.group}> isn't found`) {
+      console.log('Catch: ', e)
+    } else {
+      throw e
+    }
+  }
+  console.log('Send Message:\n', JSON.stringify(message))
   // send message
-  // NOTE: could be done in parallel of DDB updates
   const publishCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{ id, connectionId: event.requestContext.connectionId }],
-      message: {
-        action: 'register',
-        unreadData,
-        group: updatedUser?.group
-      }
+      message
     })
   })
-
-  const promises = [snsClient.send(publishCommand)]
-
-  if (updatedUser !== undefined && updatedUser.group !== undefined) {
-    promises.push(informGroup(id, updatedUser.group))
-  }
+  promises.push(snsClient.send(publishCommand))
 
   await Promise.allSettled(promises)
 
   return {
     statusCode: 200
   }
-}
-
-// ===== ==== ====
-// HELPERS
-
-async function informGroup (userId, groupId) {
-  // retreive group
-  const getGroupCommand = new GetCommand({
-    TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupId },
-    ProjectionExpression: '#id, #users',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#users': 'users'
-    }
-  })
-  const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
-  if (group === undefined) {
-    throw new Error(`group <${groupId}> is not defined`)
-  }
-
-  // retreive users
-  const batchGetUsersCommand = new BatchGetCommand({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).filter((id) => (id !== userId)).map((id) => ({ id })),
-        ProjectionExpression: '#id, #connectionId',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#connectionId': 'connectionId'
-        }
-      }
-    }
-  })
-
-  const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
-  const publishSendMessageCommand = new PublishCommand({
-    TopicArn: SEND_MESSAGE_TOPIC_ARN,
-    Message: JSON.stringify({
-      users,
-      message: {
-        action: 'login',
-        id: userId
-      }
-    })
-  })
-  await snsClient.send(publishSendMessageCommand)
 }
