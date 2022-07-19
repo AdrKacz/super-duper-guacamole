@@ -35,6 +35,12 @@ exports.getOtherGroupUsers = async (userId, groupId) => {
     throw new Error(`group <${groupId}> isn't found`)
   }
 
+  const keys = Array.from(group.users).filter((id) => (id !== userId)).map((id) => ({ id }))
+
+  if (keys.length === 0) {
+    return []
+  }
+
   // retreive users
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
@@ -53,6 +59,10 @@ exports.getOtherGroupUsers = async (userId, groupId) => {
 }
 
 exports.informGroup = (userId, otherUsers) => {
+  if (otherUsers.length === 0) {
+    return
+  }
+
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
