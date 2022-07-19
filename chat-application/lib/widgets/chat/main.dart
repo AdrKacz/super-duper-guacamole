@@ -6,13 +6,14 @@ import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/chat/widgets/users_list.dart';
-import 'package:awachat/widgets/loader.dart';
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/widgets/chat/chat-page.dart';
 import 'package:flutter/material.dart';
+
+import 'widgets/fake_chat.dart';
 
 enum Status { idle, switchSent, switchAcknowledge, chatting, other }
 
@@ -584,7 +585,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     });
               } else {
                 print('Build Fake Chat');
-                return Loader(key: Key(items[index]));
+                return FakeChat(key: Key(items[index]));
               }
             },
             itemCount: items.length,
