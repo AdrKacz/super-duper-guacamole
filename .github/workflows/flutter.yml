@@ -1,6 +1,6 @@
 # This is a workflow to check syntax on JavaScript
 
-name: Flutter Application Linter
+name: Flutter Application CI
 
 # Controls when the workflow will run
 on:
@@ -10,7 +10,7 @@ on:
 
 # Jobs
 jobs:
-  flutter-application-linter:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

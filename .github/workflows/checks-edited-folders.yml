@@ -1,6 +1,6 @@
 # This is a workflow to check that chat-backend and chat-application have not both been edited
 
-name: Check Edited Folders
+name: Checks Edited Folders
 
 # Controls when the workflow will run
 on:
@@ -12,13 +12,13 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  check-edited-folders:
+  build:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
           with:
             fetch-depth: 0
-        - name: Check Edited Folders
+        - name: Checks Working Folders
           run: |
             echo 'Get updated filed'
             has_edited_chat_application=false

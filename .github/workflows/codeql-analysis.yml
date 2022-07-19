@@ -9,7 +9,7 @@
 # the `language` matrix defined below to confirm you have the correct set of
 # supported CodeQL languages.
 #
-name: "CodeQL Analyze"
+name: "CodeQL"
 
 on:
   push:
@@ -21,7 +21,7 @@ on:
     - cron: '32 7 * * 6'
 
 jobs:
-  codeql-analyze:
+  analyze:
     name: Analyze
     runs-on: ubuntu-latest
     permissions:
