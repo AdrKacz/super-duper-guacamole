@@ -22,7 +22,7 @@ on:
 
 # Jobs
 jobs:
-  build-deploy:
+  sam-pipeline-build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
