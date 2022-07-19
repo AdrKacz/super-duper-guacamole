@@ -256,10 +256,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   void blockUser(String userId) {
     Memory().addBlockedUser(userId);
-    _webSocketConnection.switchgroup();
-    setState(() {
-      status = Status.switchSent;
-    });
+    switchGroup();
   }
 
   void sendMessage(types.PartialText partialText) {
@@ -270,6 +267,17 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       insertMessage(message);
       setState(() {});
       _webSocketConnection.textmessage(encodedMessage);
+    }
+  }
+
+  void switchGroup({bool useSetState = true}) {
+    _webSocketConnection.switchgroup();
+    if (useSetState) {
+      setState(() {
+        status = Status.switchSent;
+      });
+    } else {
+      status = Status.switchSent;
     }
   }
 
@@ -301,9 +309,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       // doesn't have a group yet
       NotificationHandler().init();
       User().groupId = '';
-      _webSocketConnection.switchgroup();
+      switchGroup(useSetState: false);
       _messages.clear();
-      status = Status.switchSent;
 
       return true;
     }
@@ -454,6 +461,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         if (_isPointerUp && controller.page! > 0.5) {
           // need to recheck if user manually move the page during the delay
           print('Change Page');
+          // Swith Group
+          switchGroup();
+          // Change Page
           _reverse();
           controller.jumpToPage(0);
         }
@@ -534,10 +544,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                 tooltip: 'Changer de groupe',
                 onPressed: status == Status.chatting
                     ? () {
-                        _webSocketConnection.switchgroup();
-                        setState(() {
-                          status = Status.switchSent;
-                        });
+                        switchGroup();
                       }
                     : null,
                 icon: const Icon(Icons.door_front_door_outlined)),
