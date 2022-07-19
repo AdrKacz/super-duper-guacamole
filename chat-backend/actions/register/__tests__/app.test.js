@@ -357,7 +357,7 @@ test('it stops on undefined group', async () => {
   expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })
 
-test('it rejects on unknown error while getting group', async () => {
+test('it pass on unknown error on get command group', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
   const dummyGroup = 'dummy-group'
 
@@ -378,13 +378,50 @@ test('it rejects on unknown error while getting group', async () => {
 
   const dummyConnectionId = 'dummy-connection-id'
 
-  await expect(handler({
+  await handler({
     requestContext: {
       connectionId: dummyConnectionId
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
-  })).rejects.toThrow('unknown error')
+  })
 
   expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
-  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 0)
+  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
+})
+
+test('it pass if no other user in group', async () => {
+  const { id, signature, timestamp, publicKey } = generateIdentity()
+  const dummyGroup = 'dummy-group'
+
+  ddbMock.on(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id }
+  }).resolves({
+    Attributes: {
+      id,
+      group: dummyGroup
+    }
+  })
+
+  ddbMock.on(GetCommand, {
+    TableName: process.env.GROUPS_TABLE_NAME,
+    Key: { id: dummyGroup }
+  }).resolves({
+    Item: {
+      id,
+      users: []
+    }
+  })
+
+  const dummyConnectionId = 'dummy-connection-id'
+
+  await handler({
+    requestContext: {
+      connectionId: dummyConnectionId
+    },
+    body: JSON.stringify({ id, signature, timestamp, publicKey })
+  })
+
+  expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
+  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })
