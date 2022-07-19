@@ -155,7 +155,7 @@ exports.handler = async (event) => {
     } else if (e.message === `group <${oldUser.group}> isn't found`) {
       console.log('Catch: ', e)
     } else {
-      throw e
+      console.log('Unknown error: ', e)
     }
   }
   console.log('Send Message:\n', JSON.stringify(message))
