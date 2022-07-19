@@ -4,6 +4,7 @@ import 'package:awachat/message.dart';
 import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/chat/widgets/switch_action_button.dart';
 import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/chat/widgets/users_list.dart';
 import 'package:flutter/services.dart';
@@ -538,16 +539,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             },
           ),
           centerTitle: true,
-          title: UsersList(users: User().otherGroupUsers.values.toList()),
+          title: UsersList(users: User().otherGroupUsers.values),
           actions: <Widget>[
-            IconButton(
-                tooltip: 'Changer de groupe',
-                onPressed: status == Status.chatting
-                    ? () {
-                        switchGroup();
-                      }
-                    : null,
-                icon: const Icon(Icons.door_front_door_outlined)),
+            SwitchActionButton(
+                isChatting: status == Status.chatting, onPressed: switchGroup),
           ]),
       body: Listener(
         onPointerDown: (PointerDownEvent event) {
