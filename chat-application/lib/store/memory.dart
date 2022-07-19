@@ -62,6 +62,10 @@ class Memory {
     lazyBoxGroupUsers.delete(id);
   }
 
+  void clearGroupUser() {
+    lazyBoxGroupUsers.clear();
+  }
+
   void addBlockedUser(String id) {
     boxBlockedUsers.add(id);
   }

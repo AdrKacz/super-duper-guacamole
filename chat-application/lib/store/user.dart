@@ -98,6 +98,13 @@ class User {
     }
   }
 
+  void overrideOtherUsers(Map<String, dynamic> otherUsers) {
+    otherGroupUsers.clear();
+    Memory().clearGroupUser();
+
+    updateOtherUsers(otherUsers);
+  }
+
   void updateOtherUserStatus(String id, bool isActive) {
     if (!otherGroupUsers.containsKey(id)) {
       return;
