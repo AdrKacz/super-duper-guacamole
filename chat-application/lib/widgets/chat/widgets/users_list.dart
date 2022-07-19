@@ -9,8 +9,6 @@ class UsersList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('USERS');
-    print(users);
     if (users.isNotEmpty) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,

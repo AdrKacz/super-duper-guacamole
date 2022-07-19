@@ -317,13 +317,20 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
       return true;
     }
+
+    // the second check is to mitigate an error in the backend
+    // the front-end should not receive a group with no user
+    if (User().groupId == '' && (data['groupUsers'] as List).length < 2) {
+      return true;
+    }
+
     // Below, assignedGroupId is not empty
     status = Status.chatting;
     if (!items.contains('fake')) {
       items.add('fake');
     }
 
-    if (User().groupId != '' && assignedGroupId != User().groupId) {
+    if (assignedGroupId != User().groupId) {
       // doesn't have the correct group
       print("doesn't have the correct group");
       User().groupId = assignedGroupId;
