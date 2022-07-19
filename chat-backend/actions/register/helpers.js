@@ -60,7 +60,7 @@ exports.getOtherGroupUsers = async (userId, groupId) => {
 
 exports.informGroup = (userId, otherUsers) => {
   if (otherUsers.length === 0) {
-    return
+    return Promise.resolve()
   }
 
   const publishSendMessageCommand = new PublishCommand({
