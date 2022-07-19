@@ -91,7 +91,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   // ===== ===== =====
   // Change Group Swipe
-  List<String> items = <String>['real', 'fake'];
+  List<String> items = <String>['real'];
 
   void _reverse() {
     setState(() {
@@ -275,9 +275,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     _webSocketConnection.switchgroup();
     if (useSetState) {
       setState(() {
+        items.remove('fake');
         status = Status.switchSent;
       });
     } else {
+      items.remove('fake');
       status = Status.switchSent;
     }
   }
@@ -317,6 +319,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
     // Below, assignedGroupId is not empty
     status = Status.chatting;
+    if (!items.contains('fake')) {
+      items.add('fake');
+    }
 
     if (User().groupId != '' && assignedGroupId != User().groupId) {
       // doesn't have the correct group
@@ -376,6 +381,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         User().updateOtherUsers(users);
         _messages.clear(); // in case we receive join before leave
         status = Status.chatting;
+        if (!items.contains('fake')) {
+          items.add('fake');
+        }
       } else {
         // new users in group
         print('\tGroup users: $users');
