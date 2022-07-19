@@ -30,9 +30,9 @@ jobs:
 
             while IFS= read -r file
             do
-              if [[ $file != chat-application/** ]]; then
+              if [[ $file = chat-application/** ]]; then
                   has_edited_chat_application=true
-              elif [[ $file != chat-backend/** ]]; then
+              elif [[ $file = chat-backend/** ]]; then
                   has_edited_chat_backend=true
               fi
             done < files.txt
