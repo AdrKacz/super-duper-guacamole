@@ -6,6 +6,7 @@ import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/chat/widgets/users_list.dart';
+import 'package:awachat/widgets/loader.dart';
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -28,9 +29,15 @@ class ChatHandler extends StatefulWidget {
 }
 
 class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
+  // Pointer
+  bool _isPointerUp =
+      false; // set default to "you touch the screen" to not change page by error
+
+  bool _isChangePageLock = false;
+
   // Messages Actions
   late final Map<String, Function> messageActions;
-  
+
   // ===== ===== =====
   // App state (lifecycle)
   AppLifecycleState? _notification;
@@ -82,7 +89,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   // ===== ===== =====
   // Change Group Swipe
-  List<String> items = <String>['1', '2'];
+  List<String> items = <String>['real', 'fake'];
 
   void _reverse() {
     setState(() {
@@ -422,6 +429,38 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   // ===== ===== =====
   // Widget lifecycle
+
+  void changePage(PageController controller) {
+    if (_isChangePageLock) {
+      return;
+    }
+
+    if (!_isPointerUp) {
+      // don't change page if you touch the screen
+      return;
+    }
+
+    if (controller.page == null) {
+      // should not happen, propably an error
+      return;
+    }
+
+    if (controller.page! > 0.5) {
+      print('Start Change Page');
+      _isChangePageLock = true;
+      //TODO: update the time so it fits the end of the animation
+      final a = Future.delayed(const Duration(milliseconds: 600), () {
+        if (_isPointerUp && controller.page! > 0.5) {
+          // need to recheck if user manually move the page during the delay
+          print('Change Page');
+          _reverse();
+          controller.jumpToPage(0);
+        }
+        _isChangePageLock = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -503,26 +542,23 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                 icon: const Icon(Icons.door_front_door_outlined)),
           ]),
       body: Listener(
+        onPointerDown: (PointerDownEvent event) {
+          _isPointerUp = false;
+        },
         onPointerUp: (PointerUpEvent event) {
-          if (controller.page == null) {
-            return;
-          }
-
-          print('onHorizontalDragEnd, controller.page: ${controller.page}');
-          if (controller.page! > 0.5) {
-            //TODO: update the time so it fits the end of the animation
-            Future.delayed(const Duration(milliseconds: 700), () {
-              _reverse();
-              controller.jumpToPage(0);
-            });
-          }
+          _isPointerUp = true;
+          changePage(controller);
         },
         child: PageView.builder(
+            onPageChanged: (int index) {
+              changePage(controller);
+            },
             controller: controller,
             itemBuilder: (BuildContext context, int index) {
               if (index == 0) {
                 print('Build Chat');
                 return ChatPage(
+                    key: Key(items[index]),
                     messages: _messages.values.toList(),
                     status: status,
                     connectionStatus: connectionStatus,
@@ -548,7 +584,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     });
               } else {
                 print('Build Fake Chat');
-                return const Center(child: Text('Fake Chat'));
+                return Loader(key: Key(items[index]));
               }
             },
             itemCount: items.length,
