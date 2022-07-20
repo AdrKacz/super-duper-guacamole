@@ -15,11 +15,11 @@ class SwitchGroupPage extends StatelessWidget {
               children: [
                 Image.asset('assets/images/alien-science.gif'),
                 const SizedBox(
-                  height: 48,
+                  height: 24,
                 ),
                 const Text(
-                  """Je cherche un groupe.
-Je te préviendrai quand j'en aurai trouvé un.""",
+                  """Je te cherche un groupe.                
+Je t'envoie une notification quand j'ai trouvé.""",
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(

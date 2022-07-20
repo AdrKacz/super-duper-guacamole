@@ -19,16 +19,23 @@ Je vais te présenter l'application.""",
 
 Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
           assetPath: 'assets/images/chat.gif'),
-      const CustomSlide(
+      CustomSlide(
           assetPath: 'assets/images/outer-space.gif',
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: '''Tu ne seras que dans un groupe à la fois.
+                const TextSpan(
+                    text: '''Tu ne seras que dans un groupe à la fois.
           
-Touche '''),
-                WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
+'''),
                 TextSpan(
+                    text: 'Swipe',
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold)),
+                const TextSpan(text: ' vers la gauche ou touche la '),
+                const WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
+                const TextSpan(
                     text:
                         ' en haut à droite de ton écran pour partir explorer un autre groupe.')
               ],

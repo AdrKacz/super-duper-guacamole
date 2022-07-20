@@ -1,52 +1,76 @@
 import 'dart:collection';
 import 'dart:convert';
-
-import 'package:awachat/widgets/chat/widgets/glass.dart';
-import 'package:flutter/material.dart';
+import 'package:awachat/message.dart';
+import 'package:awachat/network/notification_handler.dart';
+import 'package:awachat/store/memory.dart';
+import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/chat/widgets/switch_action_button.dart';
+import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
+import 'package:awachat/widgets/chat/widgets/users_list.dart';
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-
-import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/network/web_socket_connection.dart';
-import 'package:awachat/message.dart';
-import 'package:awachat/store/memory.dart';
-import 'package:awachat/store/user.dart';
-import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
-import 'package:awachat/widgets/chat/widgets/users_list.dart';
-import 'package:awachat/widgets/chat/widgets/error.dart';
-import 'package:awachat/widgets/chat/widgets/flyer_chat.dart';
-import 'package:awachat/widgets/chat/widgets/switch_group.dart';
+import 'package:awachat/widgets/chat/chat-page.dart';
+import 'package:flutter/material.dart';
+
+import 'widgets/fake_chat.dart';
 
 enum Status { idle, switchSent, switchAcknowledge, chatting, other }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
-class ChatPage extends StatefulWidget {
-  const ChatPage({Key? key, required this.goToPresentation}) : super(key: key);
+class ChatHandler extends StatefulWidget {
+  const ChatHandler({Key? key, required this.goToPresentation})
+      : super(key: key);
 
   final Function goToPresentation;
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  State<ChatHandler> createState() => _ChatHandlerState();
 }
 
-class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
+class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
+  // Pointer
+  bool _isPointerUp =
+      false; // set default to "you touch the screen" to not change page by error
+
+  bool _isChangePageLock = false;
+
   // Messages Actions
   late final Map<String, Function> messageActions;
+
+  // ===== ===== =====
+  // App state (lifecycle)
+  AppLifecycleState? _notification;
 
   // Channel
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
-  // Messages
+  void listenMessage(message) {
+    print('Receive message: $message');
+    if (processMessage(message)) {
+      setState(() {});
+    }
+  }
+
+  void listenStream() {
+    _webSocketConnection.stream.listen(listenMessage, onDone: () {
+      if (mounted) {
+        setState(() {
+          connectionStatus = ConnectionStatus.disconnected;
+        });
+      }
+    }, cancelOnError: true);
+  }
+
+  // ===== ===== =====
+  // Chat Messages
   final SplayTreeMap<int, types.Message> _messages = SplayTreeMap(
       (key1, key2) => key2 - key1); // createdAt is the (sorting) key
 
-  // App state (lifecycle)
-  AppLifecycleState? _notification;
-
-  // State
+  // ===== ===== =====
+  // Status
   Status get status {
     String statusName =
         Memory().get('user', 'appChatState') ?? Status.idle.name;
@@ -65,6 +89,19 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   ConnectionStatus connectionStatus = ConnectionStatus.connected;
 
+  // ===== ===== =====
+  // Change Group Swipe
+  List<String> items = <String>['real'];
+
+  void _reverse() {
+    setState(() {
+      items = items.reversed.toList();
+    });
+    print('items: $items');
+  }
+
+  // ===== ===== =====
+  // Actions
   // Acknowledge ban
   void acknowledgeBan(
       BuildContext context, String status, String banneduserid) {
@@ -133,16 +170,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         });
   }
 
-  // Find message
-  types.Message? findMessage(String messageid) {
-    for (final types.Message message in _messages.values) {
-      if (message.id == messageid) {
-        return message;
-      }
-    }
-    return null;
-  }
-
   // Ban request
   void banRequest(BuildContext context, String messageid) async {
     // find message
@@ -169,23 +196,6 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     }
   }
 
-  void deleteMessage(types.Message message) {
-    // remove the message locally
-    setState(() {
-      _messages.remove(message);
-    });
-    // remove the message in memory
-    Memory().deleteMessage(message.id);
-  }
-
-  void blockUser(String userId) {
-    Memory().addBlockedUser(userId);
-    _webSocketConnection.switchgroup();
-    setState(() {
-      status = Status.switchSent;
-    });
-  }
-
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.mediumImpact();
@@ -207,26 +217,15 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     }
   }
 
-  // Send message
-  void sendMessage(types.PartialText partialText) {
-    final String encodedMessage = messageEncode(partialText);
-    final types.Message? message =
-        messageDecode(encodedMessage, types.Status.sending);
-    if (message != null) {
-      insertMessage(message);
-      setState(() {});
-      _webSocketConnection.textmessage(encodedMessage);
+  // ===== ===== =====
+  // Helpers
+  types.Message? findMessage(String messageid) {
+    for (final types.Message message in _messages.values) {
+      if (message.id == messageid) {
+        return message;
+      }
     }
-  }
-
-  // Insert message (sort by date - O(n))
-  // TODO: O(log(n))
-  void insertMessage(types.Message message, {bool useHaptic = true}) {
-    if (useHaptic && message.status == types.Status.delivered) {
-      HapticFeedback.lightImpact();
-    }
-
-    _messages[message.createdAt ?? 0] = message;
+    return null;
   }
 
   Future<void> loadMessagesFromMemory() async {
@@ -239,6 +238,54 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     setState(() {});
   }
 
+  void deleteMessage(types.Message message) {
+    // remove the message locally
+    setState(() {
+      _messages.remove(message);
+    });
+    // remove the message in memory
+    Memory().deleteMessage(message.id);
+  }
+
+  void insertMessage(types.Message message, {bool useHaptic = true}) {
+    if (useHaptic && message.status == types.Status.delivered) {
+      HapticFeedback.lightImpact();
+    }
+
+    _messages[message.createdAt ?? 0] = message;
+  }
+
+  void blockUser(String userId) {
+    Memory().addBlockedUser(userId);
+    switchGroup();
+  }
+
+  void sendMessage(types.PartialText partialText) {
+    final String encodedMessage = messageEncode(partialText);
+    final types.Message? message =
+        messageDecode(encodedMessage, types.Status.sending);
+    if (message != null) {
+      insertMessage(message);
+      setState(() {});
+      _webSocketConnection.textmessage(encodedMessage);
+    }
+  }
+
+  void switchGroup({bool useSetState = true}) {
+    _webSocketConnection.switchgroup();
+    if (useSetState) {
+      setState(() {
+        items.remove('fake');
+        status = Status.switchSent;
+      });
+    } else {
+      items.remove('fake');
+      status = Status.switchSent;
+    }
+  }
+
+  // ===== ===== =====
+  // Process message
   bool messageLogin(data) {
     User().updateOtherUserStatus(data['id'], true);
     return true;
@@ -265,16 +312,25 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       // doesn't have a group yet
       NotificationHandler().init();
       User().groupId = '';
-      _webSocketConnection.switchgroup();
+      switchGroup(useSetState: false);
       _messages.clear();
-      status = Status.switchSent;
 
       return true;
     }
+
+    // the second check is to mitigate an error in the backend
+    // the front-end should not receive a group with no user
+    if (User().groupId == '' && (data['groupUsers'] as List).length < 2) {
+      return true;
+    }
+
     // Below, assignedGroupId is not empty
     status = Status.chatting;
+    if (!items.contains('fake')) {
+      items.add('fake');
+    }
 
-    if (User().groupId != '' && assignedGroupId != User().groupId) {
+    if (assignedGroupId != User().groupId) {
       // doesn't have the correct group
       print("doesn't have the correct group");
       User().groupId = assignedGroupId;
@@ -332,6 +388,9 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
         User().updateOtherUsers(users);
         _messages.clear(); // in case we receive join before leave
         status = Status.chatting;
+        if (!items.contains('fake')) {
+          items.add('fake');
+        }
       } else {
         // new users in group
         print('\tGroup users: $users');
@@ -372,6 +431,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     print('Process Message ${isInnerLoop ? '(in inner loop)' : ''}:\n$message');
     bool needUpdate = true;
     final data = jsonDecode(message);
+
     data['_isInnerLoop'] = isInnerLoop;
 
     if (isInnerLoop &&
@@ -391,25 +451,43 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
     return needUpdate;
   }
 
-  void listenMessage(message) {
-    print('Receive message: $message');
-    if (processMessage(message)) {
-      setState(() {});
+  // ===== ===== =====
+  // Widget lifecycle
+
+  void changePage(PageController controller) {
+    if (_isChangePageLock) {
+      return;
+    }
+
+    if (!_isPointerUp) {
+      // don't change page if you touch the screen
+      return;
+    }
+
+    if (controller.page == null) {
+      // should not happen, propably an error
+      return;
+    }
+
+    if (controller.page! > 0.5) {
+      print('Start Change Page');
+      _isChangePageLock = true;
+      //TODO: update the time so it fits the end of the animation
+      final a = Future.delayed(const Duration(milliseconds: 600), () {
+        if (_isPointerUp && controller.page! > 0.5) {
+          // need to recheck if user manually move the page during the delay
+          print('Change Page');
+          // Swith Group
+          switchGroup();
+          // Change Page
+          _reverse();
+          controller.jumpToPage(0);
+        }
+        _isChangePageLock = false;
+      });
     }
   }
 
-  // Stream listen
-  void listenStream() {
-    _webSocketConnection.stream.listen(listenMessage, onDone: () {
-      if (mounted) {
-        setState(() {
-          connectionStatus = ConnectionStatus.disconnected;
-        });
-      }
-    }, cancelOnError: true);
-  }
-
-  // Init
   @override
   void initState() {
     super.initState();
@@ -432,6 +510,8 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    print('State: ${status.name} - Connection State: ${connectionStatus.name}');
+    final PageController controller = PageController();
     if (connectionStatus == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
       connectionStatus = ConnectionStatus.reconnecting;
@@ -439,7 +519,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
       listenStream();
       _webSocketConnection.register();
     }
-    print('State: ${status.name} - Connection State: ${connectionStatus.name}');
+
     return Scaffold(
       drawer: UserDrawer(
         seeIntroduction: () {
@@ -474,82 +554,64 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
             },
           ),
           centerTitle: true,
-          title: UsersList(users: User().otherGroupUsers.values.toList()),
+          title: UsersList(users: User().otherGroupUsers.values),
           actions: <Widget>[
-            IconButton(
-                tooltip: 'Changer de groupe',
-                onPressed: status == Status.chatting
-                    ? () {
-                        _webSocketConnection.switchgroup();
+            SwitchActionButton(
+                isChatting: status == Status.chatting, onPressed: switchGroup),
+          ]),
+      body: Listener(
+        onPointerDown: (PointerDownEvent event) {
+          _isPointerUp = false;
+        },
+        onPointerUp: (PointerUpEvent event) {
+          _isPointerUp = true;
+          changePage(controller);
+        },
+        child: PageView.builder(
+            onPageChanged: (int index) {
+              changePage(controller);
+            },
+            controller: controller,
+            itemBuilder: (BuildContext context, int index) {
+              if (index == 0) {
+                print('Build Chat');
+                return ChatPage(
+                    key: Key(items[index]),
+                    messages: _messages.values.toList(),
+                    status: status,
+                    connectionStatus: connectionStatus,
+                    onSendMessage: sendMessage,
+                    onReportMessage: reportMessage,
+                    onRefresh: () async {
+                      // TODO: error should re-ask server for current group if any
+                      // NOTE: here it tries to infer the correct state of the app
+                      print('Try to restore connection');
+                      _webSocketConnection.close();
+                      _webSocketConnection.reconnect();
+                      listenStream();
+                      _webSocketConnection.register();
+                      if (User().groupId != '') {
                         setState(() {
-                          status = Status.switchSent;
+                          status = Status.chatting;
+                        });
+                      } else {
+                        setState(() {
+                          status = Status.idle;
                         });
                       }
-                    : null,
-                icon: const Icon(Icons.door_front_door_outlined)),
-          ]),
-      body: Builder(
-        builder: (BuildContext context) {
-          late Widget child;
-          switch (status) {
-            case Status.idle:
-              child = const Loader();
-              break;
-            case Status.switchSent:
-              child = const Loader();
-              break;
-            case Status.switchAcknowledge:
-              child = const SwitchGroupPage();
-              break;
-            case Status.chatting:
-              child = FlyerChat(
-                  messages: _messages.values.toList(),
-                  onSendPressed: sendMessage,
-                  onMessageLongPress: reportMessage);
-              break;
-            default:
-              // TODO: error should re-ask server for current group if any
-              // NOTE: here it tries to infer the correct state of the app
-              child = ErrorPage(
-                refresh: () async {
-                  print('Try to restore connection');
-                  _webSocketConnection.close();
-                  _webSocketConnection.reconnect();
-                  listenStream();
-                  _webSocketConnection.register();
-                  if (User().groupId != '') {
-                    setState(() {
-                      status = Status.chatting;
                     });
-                  } else {
-                    setState(() {
-                      status = Status.idle;
-                    });
-                  }
-                },
-              );
-          }
-          switch (connectionStatus) {
-            case ConnectionStatus.disconnected:
-              return Stack(
-                children: [
-                  child,
-                  const Glass(),
-                ],
-              );
-            case ConnectionStatus.reconnecting:
-              // TODO: create an action to retry if an error occurs or the network is not reachable
-              return Stack(
-                children: [
-                  child,
-                  const Glass(),
-                  const Loader(),
-                ],
-              );
-            default:
-              return child;
-          }
-        },
+              } else {
+                print('Build Fake Chat');
+                return FakeChat(key: Key(items[index]));
+              }
+            },
+            itemCount: items.length,
+            findChildIndexCallback: (Key key) {
+              final ValueKey<String> valueKey = key as ValueKey<String>;
+              final String data = valueKey.value;
+              print('Find Key $key, valueKey $valueKey, data $data');
+              return items.indexOf(data);
+            }),
       ),
     );
   }

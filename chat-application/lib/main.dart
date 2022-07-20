@@ -76,7 +76,7 @@ class _MyAppState extends State<MyApp> {
                   },
                 );
               } else {
-                return ChatPage(goToPresentation: () {
+                return ChatHandler(goToPresentation: () {
                   status = Status.presentation;
                 });
               }

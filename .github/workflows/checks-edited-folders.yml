@@ -12,7 +12,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  check-edited-folder:
+  check-edited-folders:
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
@@ -30,9 +30,9 @@ jobs:
 
             while IFS= read -r file
             do
-              if [[ $file != chat-application/** ]]; then
+              if [[ $file = chat-application/** ]]; then
                   has_edited_chat_application=true
-              elif [[ $file != chat-backend/** ]]; then
+              elif [[ $file = chat-backend/** ]]; then
                   has_edited_chat_backend=true
               fi
             done < files.txt

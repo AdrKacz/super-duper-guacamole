@@ -20,12 +20,16 @@ class User {
     // reset
     if (_groupId != '') {
       print('Reset group (unsubscribe and clear messages and users)');
+      // unsubscribe
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-${User().groupId}');
+      // clear messages
       Memory().boxMessages.clear();
-      _groupId = '';
+      // clear users
       Memory().lazyBoxGroupUsers.clear();
       otherGroupUsers.clear();
+      // reset group
+      _groupId = '';
     }
 
     // set
@@ -36,6 +40,8 @@ class User {
       _groupId = id;
     }
   }
+
+  bool get hasGroup => _groupId != '';
 
   factory User() {
     return _instance;
