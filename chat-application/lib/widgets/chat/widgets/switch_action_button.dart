@@ -15,15 +15,7 @@ class SwitchActionButton extends StatelessWidget {
           onPressed: onPressed,
           icon: const Icon(Icons.door_front_door_outlined));
     } else {
-      return SizedBox.square(
-        child: Center(
-          child: Transform.scale(
-            scale: 0.5,
-            child: CircularProgressIndicator(
-                color: Theme.of(context).colorScheme.onSecondary.withAlpha(50)),
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
   }
 }

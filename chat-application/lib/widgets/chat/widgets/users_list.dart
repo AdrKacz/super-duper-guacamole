@@ -34,11 +34,7 @@ class UsersList extends StatelessWidget {
             .toList(),
       );
     } else {
-      return Transform.scale(
-        scale: 0.5,
-        child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.onSecondary.withAlpha(50)),
-      );
+      return const SizedBox.shrink();
     }
   }
 }
