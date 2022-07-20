@@ -1,14 +1,3 @@
-# Load test with [Artillery](https://www.artillery.io)
-
->We use [raw.githack](https://raw.githack.com) to serve our HTML reports.
-
-# Reports
-
-- [Development version](https://raw.githack.com/AdrKacz/super-duper-guacamole/update-aws-sdk/artillery/results/html/results-dev.html)
-- [Legacy version](https://raw.githack.com/AdrKacz/super-duper-guacamole/update-aws-sdk/artillery/results/html/results-prod.html)
-
->We use [raw.githack](https://raw.githack.com) to serve our HTML reports.
-
 ### *[Info]* Message on Web Socket Error
 
 ```
@@ -20,6 +9,8 @@
 ```
 
 # How to use Artillery
+
+> We don't store reports. Conduct your own experiment, if you find interesting results related to your changes, add them to your *Pull Request*
 
 ## Run a load test
 
