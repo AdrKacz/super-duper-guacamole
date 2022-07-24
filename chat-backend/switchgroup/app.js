@@ -115,9 +115,8 @@ ${event.Records[0].Sns.Message}
       statusCode: 204
     }
   }
-
-  // query a new group (query doesn't work without a KeyConditionExpression, use scan instead)
-  // TODO: use a sort index to query only the waiting ones faster, skipcq: JS-0099
+  // TODO: move findGroup to helpers and add isOpen (false by default)
+  // OR (better) add default to addUserToGroup
   const queryCommand = new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
