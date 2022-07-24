@@ -57,9 +57,7 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
 const {
-  DynamoDBDocumentClient,
   BatchGetCommand,
   DeleteCommand,
   GetCommand,
@@ -67,9 +65,11 @@ const {
   QueryCommand
 } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { v4: uuidv4 } = require('uuid')
+
+const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
 // ===== ==== ====
 // CONSTANTS
@@ -80,16 +80,11 @@ const {
   GROUPS_TABLE_NAME,
   GROUPS_WAINTING_ID_INDEX_NAME,
   SEND_MESSAGE_TOPIC_ARN,
-  SEND_NOTIFICATION_TOPIC_ARN,
-  AWS_REGION
+  SEND_NOTIFICATION_TOPIC_ARN
 } = process.env
+
 const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING, 10)
 const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
-
-const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
-const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
-
-const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
 // HANDLER
