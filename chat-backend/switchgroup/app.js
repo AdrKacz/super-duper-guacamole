@@ -14,7 +14,6 @@
 //    question id <String> - answer id <String>
 // blockedUsers : List<String>?
 //    blockedUser userId
-// isBan : Bool? - is user banned from its old group (false by default)
 
 // ===== ==== ====
 // TODO
@@ -90,7 +89,6 @@ ${event.Records[0].Sns.Message}
   const id = body.id
   const questions = body.questions ?? {}
   const blockedUsers = body.blockedUsers ?? []
-  const isBan = body.isBan ?? false
 
   if (typeof id === 'undefined') {
     throw new Error('id must be defined')
@@ -217,7 +215,7 @@ ${event.Records[0].Sns.Message}
 
   const promises = [
     addUserToGroup(user, newGroup),
-    removeUserFromGroup(user, isBan)
+    removeUserFromGroup(user)
   ]
 
   await Promise.allSettled(promises).then((results) => console.log(JSON.stringify(results)))

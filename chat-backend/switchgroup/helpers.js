@@ -27,183 +27,35 @@ const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS
-exports.addUserToGroup = async (user, newGroup) => {
-  // Add user to a new group
-  // user : Map
-  //    id : String - user id
-  //    group : String - user group id
-  //    connectionId : String - user connection id
-  //    firebaseToken : String - user firebase token
-  // newGroup : Map - new user group
-  //    id : String - group id
-  //    users : List<String> - group users ids
-  //    isWaiting : Int - 1 if is waiting for other users, else 0
-  //    question: Map<String, String>
-  //    bannedUsers: Set<String>
-
-  newGroup.users.add(user.id) // simulate add user id (will be added -for real- below)
-  console.log(`put user <${user.id}> in group ${JSON.stringify(newGroup)}`)
-
+/**
+ * Remove user from its group.
+ * @todo update user and group in parallel
+ *
+ * @param {Object} user
+ * @param {string} user.id - id
+ * @param {string} user.group - group id
+ */
+exports.removeUserFromGroup = async (user) => {
   // update user
   const updateUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: user.id },
     UpdateExpression: `
-      SET #group = :groupid
-      REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
-      `,
+          REMOVE #group, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+          `,
     ExpressionAttributeNames: {
       '#group': 'group',
       '#unreadData': 'unreadData',
       '#banConfirmedUsers': 'banConfirmedUsers',
       '#banVotingUsers': 'banVotingUsers',
       '#confirmationRequired': 'confirmationRequired'
-    },
-    ExpressionAttributeValues: {
-      ':groupid': newGroup.id
     }
   })
-  const promises = [dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes))]
+  await dynamoDBDocumentClient.send(updateUserCommand)
 
-  // update new group
-  if (newGroup.users.size >= MINIMUM_GROUP_SIZE) {
-    // alert user(s)
-    // early users are user not notified of the group yet
-    const earlyUsers = [user]
-    const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
-    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
-    const otherUsers = []
-    // happens only once when group becomes active for the first time
-    if (usersIds.length > 0) {
-      newGroup.users.delete(user.id) // remove id, already fetched
-      const batchGetOtherUsers = new BatchGetCommand({
-        RequestItems: {
-          [USERS_TABLE_NAME]: {
-            Keys: usersIds,
-            ProjectionExpression: '#id, #connectionId, #firebaseToken',
-            ExpressionAttributeNames: {
-              '#id': 'id',
-              '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken'
-            }
-          }
-        }
-      })
-      newGroup.users.add(user.id)
-
-      await dynamoDBDocumentClient.send(batchGetOtherUsers).then((response) => (response.Responses[USERS_TABLE_NAME])).then((users) => {
-        for (const u of users) {
-          if (isFirstTime) {
-            earlyUsers.push(u)
-          } else {
-            otherUsers.push(u)
-          }
-        }
-      })
-    }
-    console.log('early users:', earlyUsers)
-    console.log('other users:', otherUsers)
-    const allUsers = earlyUsers.concat(otherUsers)
-    const allUsersMap = {}
-    allUsers.forEach((loopUser) => {
-      allUsersMap[loopUser.id] = {
-        id: loopUser.id,
-        isActive: typeof loopUser.connectionId !== 'undefined'
-      }
-    })
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: allUsers,
-        message: {
-          action: 'joingroup',
-          groupid: newGroup.id,
-          users: allUsersMap
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
-
-    const publishEarlyUsersSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: earlyUsers,
-        notification: {
-          title: 'Viens te présenter 🥳',
-          body: 'Je viens de te trouver un groupe !'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishEarlyUsersSendNotificationCommand))
-
-    if (otherUsers.length > 0) {
-      const publishOtherUsersNotificationCommand = new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers,
-          notification: {
-            title: "Y'a du nouveaux 🥳",
-            body: "Quelqu'un arrive dans le groupe !"
-          }
-        })
-      })
-      promises.push(snsClient.send(publishOtherUsersNotificationCommand))
-    }
-  }
-  if (newGroup.users.size >= MAXIMUM_GROUP_SIZE) {
-    newGroup.isWaiting = 0 // false
-  }
-
-  const expressionAttributeNames = {
-    '#isWaiting': 'isWaiting',
-    '#questions': 'questions',
-    '#users': 'users'
-  }
-  const expressionAttributeValues = {
-    ':id': new Set([user.id]),
-    ':isWaiting': newGroup.isWaiting,
-    ':questions': newGroup.questions
-  }
-  if (newGroup.bannedUsers.size > 0) {
-    expressionAttributeNames['#bannedUsers'] = 'bannedUsers'
-    expressionAttributeValues[':bannedUsers'] = newGroup.bannedUsers
-  }
-
-  const updateNewGroupCommand = new UpdateCommand({
-    TableName: GROUPS_TABLE_NAME,
-    Key: { id: newGroup.id },
-    UpdateExpression: `
-      SET #isWaiting = :isWaiting, #questions = :questions
-      ADD #users :id${newGroup.bannedUsers.size > 0 ? ' ,#bannedUsers :bannedUsers' : ''}
-      `,
-    ExpressionAttributeNames: expressionAttributeNames,
-    ExpressionAttributeValues: expressionAttributeValues
-  })
-  promises.push(dynamoDBDocumentClient.send(updateNewGroupCommand).then((response) => (response.Attributes)))
-
-  return Promise.allSettled(promises).then(results => (console.log(results)))
-}
-
-exports.removeUserFromGroup = async (user, isBan) => {
-  // Remove user grom its group
-  // user : Map
-  //    id : String - user id
-  //    group : String - user group id
-  //    connectionId : String - user connection id
-  //    firebaseToken : String - user firebase token
-
+  // update group
   if (typeof user.group === 'undefined') {
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: [user],
-        message: {
-          action: 'leavegroup',
-          id: user.id
-        }
-      })
-    })
-    return snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
+    return
   }
 
   // retreive group (needed to count its users)
@@ -219,95 +71,209 @@ exports.removeUserFromGroup = async (user, isBan) => {
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
 
-  // check oldGroup still exists (if concurrent runs)
-  // to avoid re-create it throught the update
-  if (typeof group !== 'undefined') {
-    group.users = group.users ?? new Set()
-    group.users.delete(user.id) // simulate remove user id (will be removed -for real- below)
-
-    // NOTE: don't use if/else because both can be triggered (isWaiting to 0 will prevail)
-    if (group.users.size < MAXIMUM_GROUP_SIZE) {
-      group.isWaiting = 1 // true
-    }
-    if (group.users.size < MINIMUM_GROUP_SIZE) {
-      // NOTE: if an user leave a group it hasn't entered yet it will close it forever
-      // for exemple, user A join group C, group.users = { A }, group.isWaiting = true
-      // user B join group C, group.users = { A, B }, group.isWaiting = true
-      // user A switches group, group.users = { B } group.size < MINIMUM_GROUP_SIZE(3), group.isWaiting = false
-      // group C will be closed before ever being opened
-      group.isWaiting = 0 // false
-    }
-
-    // update or delete group
-    const promises = []
-    const users = [user]
-    if (group.users.size > 0) {
-      // update group (add to bannedUsers if isBan)
-      const expressionAttributeNames = {
-        '#isWaiting': 'isWaiting',
-        '#users': 'users'
-      }
-      if (isBan) {
-        expressionAttributeNames['#bannedUsers'] = 'bannedUsers'
-      }
-      const updateGroupCommand = new UpdateCommand({
-        TableName: GROUPS_TABLE_NAME,
-        Key: { id: user.group },
-        UpdateExpression: `
-          ${isBan ? 'ADD #bannedUsers :id' : ''}
-          SET #isWaiting = :isWaiting
-          DELETE #users :id
-          `,
-        ExpressionAttributeNames: expressionAttributeNames,
-        ExpressionAttributeValues: {
-          ':id': new Set([user.id]),
-          ':isWaiting': group.isWaiting ?? 1 // true
-        }
-      })
-      promises.push(dynamoDBDocumentClient.send(updateGroupCommand))
-
-      // retrieve user all to warn them
-      const batchGetUsersCommand = new BatchGetCommand({
-        RequestItems: {
-          [USERS_TABLE_NAME]: {
-            Keys: Array.from(group.users).map((id) => ({ id })),
-            ProjectionExpression: '#id, #connectionId, #firebaseToken',
-            ExpressionAttributeNames: {
-              '#id': 'id',
-              '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken'
-            }
-          }
-        }
-      })
-      const otherUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-      users.push(...otherUsers)
-    } else {
-      // delete group
-      const deleteGroupCommand = new DeleteCommand({
-        TableName: GROUPS_TABLE_NAME,
-        Key: { id: user.group }
-      })
-      promises.push(dynamoDBDocumentClient.send(deleteGroupCommand))
-      console.log(`Delete old group <${user.group}>`)
-    }
-
-    // send message to group users to notify user has leaved the group (including itself)
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users,
-        message: {
-          action: 'leavegroup',
-          groupid: user.group,
-          id: user.id
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
-
-    // NOTE: can send notification too
-    return Promise.allSettled(promises)
+  if (typeof group === 'undefined') {
+    // if group doesn't exist anymore, don't update it
+    // you don't want to re-create a record in the database
+    return
   }
-  return Promise.resolve()
+
+  const updateGroupCommand = new UpdateCommand({
+    ReturnValues: 'UPDATED_NEW',
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: user.group },
+    UpdateExpression: `
+        SET #isWaiting = :isWaiting
+        DELETE #users :id
+        `,
+    ExpressionAttributeNames: {
+      '#isWaiting': 'isWaiting',
+      '#users': 'users'
+    },
+    ExpressionAttributeValues: {
+      ':id': new Set([user.id]),
+      ':isWaiting': 1 // true
+    }
+  })
+  const updatedGroup = await dynamoDBDocumentClient.send(updateGroupCommand).then((response) => (response.Attributes))
+
+  updatedGroup.users = updatedGroup.users ?? new Set()
+
+  if (updatedGroup.users.size > 0) {
+    return
+  }
+
+  // there is no more user in the group, delete it
+  // NOTE - concurrent runs
+  // two concurrents update, one removing a user and one adding a user
+  //    to the same group can results in unexpected behaviour
+  // your group could be temporary empty, so you will delete it
+  // the added user will be in a no-mans-land
+  //    and will ask for a new group, that results in longer waiting time
+
+  const deleteGroupCommand = new DeleteCommand({
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: user.group }
+  })
+  await dynamoDBDocumentClient.send(deleteGroupCommand)
+
+  // you need to tell user of the group about the new status of the group
+  // register will do the trick on the next connection, but trigger it before
+  // WARNING: this don't deal with ban anymore, you have to deal it elsewhere
+}
+
+/**
+ * Add user to group.
+ *
+ * @param {Object} user
+ * @param {string} user.id - id
+ * @param {string} user.group - group id
+ *
+ * @param {Object} group - new group
+ * @param {string} group.id - id
+ * @param {string[]} group.users - user ids
+ * @param {boolean} group.isOpen
+ * @param {number} group.isWaiting - 1 if is not full, else 0
+ * @param {Object.<string, string>} group.questions
+ */
+exports.addUserToGroup = async (user, group) => {
+  if (!group.isOpen && group.users.size >= MINIMUM_GROUP_SIZE - 1) {
+    group.isOpen = true // open group
+  }
+
+  if (group.users.size >= MAXIMUM_GROUP_SIZE - 1) {
+    group.isWaiting = 0 // false
+  }
+
+  const updateGroupCommand = new UpdateCommand({
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: group.id },
+    UpdateExpression: `
+          SET #isWaiting = :isWaiting, #questions = :questions #isOpen = :isOpen
+          ADD #users :id
+          `,
+    ExpressionAttributeNames: {
+      '#isWaiting': 'isWaiting',
+      '#questions': 'questions',
+      '#isOpen': 'isOpen',
+      '#users': 'users'
+    },
+    ExpressionAttributeValues: {
+      ':id': new Set([user.id]),
+      ':isWaiting': group.isWaiting,
+      ':questions': group.questions,
+      ':isOpen': group.isOpen
+    }
+  })
+
+  await dynamoDBDocumentClient.send(updateGroupCommand)
+
+  if (!group.isOpen) {
+    return
+  }
+
+  // get all users
+  const batchGetUsersCommand = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: group.users,
+        ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#group': 'group',
+          '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken'
+        }
+      }
+    }
+  })
+
+  const groupUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+
+  const usersInGroup = []
+  const usersNotInGroup = []
+  for (const groupUser of groupUsers) {
+    if (groupUser.group === group.id) {
+      usersInGroup.push(user)
+    } else {
+      usersNotInGroup.push(user)
+    }
+  }
+
+  // send message
+  const publishCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: groupUsers,
+      message: {
+        action: 'register',
+        unreadData: [],
+        group: group.id,
+        groupUsers: groupUsers.map(({ id, connectionId }) => ({ id, isOnline: typeof connectionId !== 'undefined' }))
+      }
+    })
+  })
+
+  return Promise.all([
+    snsClient.send(publishCommand),
+    handleUsersInGroup(usersInGroup),
+    handlerUsersNotInGroup(usersNotInGroup)
+  ])
+}
+
+// ===== ==== ====
+// HELPERS
+function handleUsersInGroup (users) {
+  if (users.length === 0) {
+    return
+  }
+
+  const publishCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: users,
+      notification: {
+        title: "Y'a du nouveaux 🥳",
+        body: "Quelqu'un arrive dans le groupe !"
+      }
+    })
+  })
+  return snsClient.send(publishCommand)
+}
+
+function handlerUsersNotInGroup (users, group) {
+  if (users.length === 0) {
+    return
+  }
+
+  const promises = []
+  for (const user of users) {
+    const updateUserCommand = new UpdateCommand({
+      TableName: USERS_TABLE_NAME,
+      Key: { id: user.id },
+      UpdateExpression: `
+        SET #group = :groupid
+      `,
+      ExpressionAttributeNames: {
+        '#group': 'group'
+      },
+      ExpressionAttributeValues: {
+        ':groupid': group.id
+      }
+    })
+    promises.push(dynamoDBDocumentClient.send(updateUserCommand))
+  }
+
+  const publishCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: users,
+      notification: {
+        title: 'Viens te présenter 🥳',
+        body: 'Je viens de te trouver un groupe !'
+      }
+    })
+  })
+  promises.push(snsClient.send(publishCommand))
+
+  return Promise.all(promises)
 }
