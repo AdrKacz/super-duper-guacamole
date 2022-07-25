@@ -1,6 +1,7 @@
 // ===== ==== ====
 // IMPORTS
 const {
+  QueryCommand,
   GetCommand,
   UpdateCommand,
   DeleteCommand,
@@ -11,6 +12,8 @@ const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
+const { v4: uuidv4 } = require('uuid')
+
 // ===== ==== ====
 // CONSTANTS
 const {
@@ -18,6 +21,7 @@ const {
   MAXIMUM_GROUP_SIZE_STRING,
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
+  GROUPS_WAINTING_ID_INDEX_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN
 } = process.env
@@ -122,6 +126,110 @@ exports.removeUserFromGroup = async (user) => {
 }
 
 /**
+ * Returns a new group for user.
+ *
+ * @param {Object} user
+ * @param {string} user.id - id
+ * @param {string} [user.group] - current group id
+ *
+ * @param {Set.<string>} [blockedUsers] - blocked user ids
+ * @param {string[]} [questions] - answers to the questions
+ *
+ * @return {Promise<{id: string, users: ?Set.<string>, bannedUsers: ?Set.<string>, isOpen: ?boolean, isWaiting: ?number, questions: ?Object.<string, string>}>}
+ *
+ * the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
+ * We must check that answers indeed have a greater impact on group than order of arrival.
+ * If not that means that we are still quite randomly assigning groups.
+ *
+ * We could add ENV VARIABLE for more fine grained controls.
+ * For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
+ *
+ * We may want to shuffle the order in which we loop through the groups to have different result
+ * on each run, for different user
+ * (there is NO order in the Query, it is "first found first returned")
+ * (however, getting that the query is similar, we could imagine that the processed time will be similar for each item too)
+ * (thus, the order being similar too)
+ */
+exports.findGroupToUser = async (user, blockedUsers, questions) => {
+  // set default value
+  if (typeof user.group === 'undefined') {
+    user.group = ''
+  }
+
+  if (typeof blockedUsers === 'undefined') {
+    blockedUsers = new Set()
+  }
+
+  if (typeof questions === 'undefined') {
+    questions = []
+  }
+
+  // get available group
+  const queryCommand = new QueryCommand({
+    TableName: GROUPS_TABLE_NAME,
+    IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
+    KeyConditionExpression: '#isWaiting = :true',
+    ExpressionAttributeNames: {
+      '#isWaiting': 'isWaiting'
+    },
+    ExpressionAttributeValues: {
+      ':true': 1
+    }
+  })
+
+  const queryResponse = await dynamoDBDocumentClient.send(queryCommand)
+
+  let maximumOfSimilarity = -1
+  let chosenGroup = null
+  for (const group of queryResponse.Items) {
+    const isValid = isGroupValid(user, group, blockedUsers)
+    if (!isValid.isValid) {
+      console.log(isValid.message)
+      continue
+    }
+
+    let similarity = 0
+    // iterate accross the smallest
+    const groupQuestions = group.questions ?? {}
+    if (groupQuestions.size < questions.size) {
+      for (const [key, value] of Object.entries(groupQuestions)) {
+        if (questions[key] === value) {
+          similarity += 1
+        }
+      }
+    } else {
+      for (const [key, value] of Object.entries(questions)) {
+        if (groupQuestions[key] === value) {
+          similarity += 1
+        }
+      }
+    }
+    if (similarity > maximumOfSimilarity) {
+      chosenGroup = Object.assign({}, group)
+      maximumOfSimilarity = similarity
+    }
+  }
+
+  if (chosenGroup !== null) {
+    console.log(`select group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
+    // update banned user
+    for (const blockedUser of blockedUsers) {
+      console.log(`check ${blockedUser}`)
+      // add blocked user to forbidden user
+      chosenGroup.bannedUsers.add(blockedUser)
+    }
+
+    return chosenGroup
+  } else {
+    return {
+      id: uuidv4(),
+      bannedUsers: blockedUsers,
+      questions
+    }
+  }
+}
+
+/**
  * Add user to group.
  *
  * @param {Object} user
@@ -130,12 +238,35 @@ exports.removeUserFromGroup = async (user) => {
  *
  * @param {Object} group - new group
  * @param {string} group.id - id
- * @param {string[]} group.users - user ids
- * @param {boolean} group.isOpen
- * @param {number} group.isWaiting - 1 if is not full, else 0
- * @param {Object.<string, string>} group.questions
+ * @param {Set.<string>} [group.users] - user ids
+ * @param {Set.<string>} [group.bannedUsers] - banned user ids
+ * @param {boolean} [group.isOpen=false]
+ * @param {number} [group.isWaiting=1] - 1 if is not full, else 0
+ * @param {Object.<string, string>} [group.questions]
  */
 exports.addUserToGroup = async (user, group) => {
+  // set default value
+  if (typeof group.isOpen === 'undefined') {
+    group.isOpen = false
+  }
+
+  if (typeof group.isWaiting === 'undefined') {
+    group.isWaiting = 1
+  }
+
+  if (typeof group.users === 'undefined') {
+    group.users = new Set()
+  }
+
+  if (typeof group.bannedUsers === 'undefined') {
+    group.bannedUsers = new Set()
+  }
+
+  if (typeof group.questions === 'undefined') {
+    group.questions = {}
+  }
+
+  // process
   if (!group.isOpen && group.users.size >= MINIMUM_GROUP_SIZE - 1) {
     group.isOpen = true // open group
   }
@@ -276,4 +407,38 @@ function handlerUsersNotInGroup (users, group) {
   promises.push(snsClient.send(publishCommand))
 
   return Promise.all(promises)
+}
+
+function isGroupValid (user, group, blockedUsers) {
+  // Check this group is valid
+  if (group.id === user.group) {
+    return {
+      isValid: false,
+      message: `group ${group.id} already has ${user.id}`
+    }
+  }
+
+  // Is user banned from group
+  group.bannedUsers = group.bannedUsers ?? new Set()
+  if (group.bannedUsers.has(user.id)) {
+    return {
+      isValid: false,
+      message: `group ${group.id} has banned user ${user.id}`
+    }
+  }
+
+  // Is a blocked user in the group
+  for (const user of group.users) {
+    // check user not blocked
+    if (blockedUsers.has(user)) {
+      return {
+        isValid: false,
+        message: `group ${group.id} has blocked user ${user}`
+      }
+    }
+  }
+
+  return {
+    isValid: true
+  }
 }

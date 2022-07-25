@@ -57,22 +57,17 @@
 // ===== ==== ====
 // IMPORTS
 const {
-  GetCommand,
-  QueryCommand
+  GetCommand
 } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { v4: uuidv4 } = require('uuid')
-
-const { addUserToGroup, removeUserFromGroup } = require('./helpers')
+const { addUserToGroup, removeUserFromGroup, findGroupToUser } = require('./helpers')
 
 const { dynamoDBDocumentClient } = require('./aws-clients')
 
 // ===== ==== ====
 // CONSTANTS
 const {
-  USERS_TABLE_NAME,
-  GROUPS_TABLE_NAME,
-  GROUPS_WAINTING_ID_INDEX_NAME
+  USERS_TABLE_NAME
 } = process.env
 
 // ===== ==== ====
@@ -115,109 +110,13 @@ ${event.Records[0].Sns.Message}
       statusCode: 204
     }
   }
-  // TODO: move findGroup to helpers and add isOpen (false by default)
-  // OR (better) add default to addUserToGroup
-  const queryCommand = new QueryCommand({
-    TableName: GROUPS_TABLE_NAME,
-    IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
-    KeyConditionExpression: '#isWaiting = :true',
-    ExpressionAttributeNames: {
-      '#isWaiting': 'isWaiting'
-    },
-    ExpressionAttributeValues: {
-      ':true': 1
-    }
-  })
 
-  // NOTE: the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
-  // We must check that answers indeed have a greater impact on group than order of arrival.
-  // If not that means that we are still quite randomly assigning groups.
+  await removeUserFromGroup(user)
 
-  // NOTE: We could add ENV VARIABLE for more fine grained controls.
-  // For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
+  const nextGroup = await findGroupToUser(user, blockedUsers, questions)
 
-  // NOTE: We may want to shuffle the order in which we loop through the groups to have different result
-  // on each run, for different user
-  // (there is NO order in the Query, it is "first found first returned")
-  // (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
-  // (thus, the order being similar too)
-  const newGroup = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    if (response.Count > 0) {
-      let maximumOfSimilarity = -1
-      let chosenGroup = null
+  await addUserToGroup(user, nextGroup)
 
-      /* eslint no-labels: ["error", { "allowLoop": true }] */
-      checkGroup: for (const group of response.Items) {
-        console.log(`check group ${JSON.stringify(group)}`)
-        // Check this group is valid
-        if (group.id === user.group) {
-          console.log(`group ${group.id} already has ${user.id}`)
-          continue
-        }
-
-        // Is user banned from group
-        group.bannedUsers = group.bannedUsers ?? new Set()
-        if (group.bannedUsers.has(user.id)) {
-          console.log(`group ${group.id} has banned user ${user.id}`)
-          continue
-        }
-
-        // Is a blocked user in the group
-        for (const blockedUser of blockedUsers) {
-          console.log(`check ${blockedUser}`)
-          // add blocked user to forbidden user
-          group.bannedUsers.add(blockedUser)
-          // check blocked user not in group
-          if (group.users.has(blockedUser)) {
-            console.log(`group ${group.id} has blocked user ${blockedUser}`)
-            continue checkGroup
-          }
-        }
-
-        let similarity = 0
-        // iterate accross the smallest
-        const groupQuestions = group.questions ?? {}
-        if (groupQuestions.size < questions.size) {
-          for (const [key, value] of Object.entries(groupQuestions)) {
-            if (questions[key] === value) {
-              similarity += 1
-            }
-          }
-        } else {
-          for (const [key, value] of Object.entries(questions)) {
-            if (groupQuestions[key] === value) {
-              similarity += 1
-            }
-          }
-        }
-        if (similarity > maximumOfSimilarity) {
-          chosenGroup = Object.assign({}, group)
-          maximumOfSimilarity = similarity
-        }
-      }
-
-      if (chosenGroup !== null) {
-        console.log(`select group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
-        return chosenGroup
-      }
-    }
-
-    console.log('create a new group')
-    return {
-      id: uuidv4(),
-      isWaiting: 1,
-      users: new Set(),
-      bannedUsers: new Set(blockedUsers), // add forbidden users
-      questions
-    }
-  })
-
-  const promises = [
-    addUserToGroup(user, newGroup),
-    removeUserFromGroup(user)
-  ]
-
-  await Promise.allSettled(promises).then((results) => console.log(JSON.stringify(results)))
   return {
     statusCode: 200
   }
