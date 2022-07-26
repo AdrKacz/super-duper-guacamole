@@ -16,11 +16,6 @@
 //    blockedUser userId
 
 // ===== ==== ====
-// TODO
-// Remove group from user and only add it when the group become visible
-// If not, you send the new group to the user on register but the user isn't supposed to be aware of it
-
-// ===== ==== ====
 // NOTE
 // MINIMUM_GROUP_SIZE
 // It is better to not have MINIMUM_GROUP_SIZE too small.
@@ -36,23 +31,9 @@
 // Instead I used a N key.
 // 1 is true and 0 is false
 
-// BAN
+// BAN - NOT DONE HERE ANYMORE, TO MOVE
 // On a ban, BAN_FUNCTION doesn't send user questions because they are not stored.
 // For now, I just considered a banned user as an user who hasn't answer any question.
-
-// CHOOSE GROUP LOGIC
-// the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
-// We must check that answers indeed have a greater impact on group than order of arrival.
-// If not that means that we are still quite randomly assigning groups.
-// ----- ----- -----
-// We could add ENV VARIABLE for more fine grained controls.
-// For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
-// ----- ----- -----
-// We may want to shuffle the order in which we loop through the groups to have different result
-// on each run, for different user
-// (there is NO order in the Query, it is "first found first returned")
-// (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
-// (thus, the order being similar too)
 
 // ===== ==== ====
 // IMPORTS
@@ -111,11 +92,12 @@ ${event.Records[0].Sns.Message}
     }
   }
 
-  await removeUserFromGroup(user)
-
-  const nextGroup = await findGroupToUser(user, blockedUsers, questions)
-
-  await addUserToGroup(user, nextGroup)
+  await Promise.all([
+    removeUserFromGroup(user),
+    findGroupToUser(user, blockedUsers, questions).then(
+      (nextGroup) => (addUserToGroup(user, nextGroup))
+    )
+  ])
 
   return {
     statusCode: 200

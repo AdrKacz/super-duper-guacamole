@@ -55,11 +55,11 @@ exports.removeUserFromGroup = async (user) => {
       '#confirmationRequired': 'confirmationRequired'
     }
   })
-  await dynamoDBDocumentClient.send(updateUserCommand)
+  const updateUserPromise = dynamoDBDocumentClient.send(updateUserCommand)
 
   // update group
   if (typeof user.group === 'undefined') {
-    return
+    return Promise.resolve()
   }
 
   // retreive group (needed to count its users)
@@ -78,7 +78,7 @@ exports.removeUserFromGroup = async (user) => {
   if (typeof group === 'undefined') {
     // if group doesn't exist anymore, don't update it
     // you don't want to re-create a record in the database
-    return
+    return Promise.resolve()
   }
 
   const updateGroupCommand = new UpdateCommand({
@@ -103,7 +103,39 @@ exports.removeUserFromGroup = async (user) => {
   updatedGroup.users = updatedGroup.users ?? new Set()
 
   if (updatedGroup.users.size > 0) {
-    return
+    const groupUsers = Array.from(updatedGroup.users)
+    // inform group
+    const publishCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: groupUsers,
+        message: {
+          action: 'register',
+          unreadData: [],
+          group: group.id,
+          groupUsers: groupUsers.map(({ id, connectionId }) => ({ id, isOnline: typeof connectionId !== 'undefined' }))
+        }
+      })
+    })
+
+    // inform group - old way
+    const publishOldCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: groupUsers.concat(user.id),
+        message: {
+          action: 'leavegroup',
+          groupid: group.id,
+          id: user.id
+        }
+      })
+    })
+
+    return Promise.all([
+      updateUserPromise,
+      snsClient.send(publishCommand),
+      snsClient.send(publishOldCommand)
+    ])
   }
 
   // there is no more user in the group, delete it
@@ -118,11 +150,11 @@ exports.removeUserFromGroup = async (user) => {
     TableName: GROUPS_TABLE_NAME,
     Key: { id: user.group }
   })
-  await dynamoDBDocumentClient.send(deleteGroupCommand)
 
-  // you need to tell user of the group about the new status of the group
-  // register will do the trick on the next connection, but trigger it before
-  // WARNING: this don't deal with ban anymore, you have to deal it elsewhere
+  return Promise.all([
+    updateUserPromise,
+    dynamoDBDocumentClient.send(deleteGroupCommand)
+  ])
 }
 
 /**
@@ -296,7 +328,7 @@ exports.addUserToGroup = async (user, group) => {
     }
   })
 
-  await dynamoDBDocumentClient.send(updateGroupCommand)
+  const updateGroupCommandPromise = dynamoDBDocumentClient.send(updateGroupCommand)
 
   if (!group.isOpen) {
     return
@@ -330,7 +362,7 @@ exports.addUserToGroup = async (user, group) => {
     }
   }
 
-  // send message
+  // inform group
   const publishCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
@@ -344,8 +376,30 @@ exports.addUserToGroup = async (user, group) => {
     })
   })
 
+  // inform group - old way
+  const groupUsersMap = {}
+  groupUsers.forEach((loopUser) => {
+    groupUsersMap[loopUser.id] = {
+      id: loopUser.id,
+      isActive: typeof loopUser.connectionId !== 'undefined'
+    }
+  })
+  const publishOldCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: groupUsers,
+      message: {
+        action: 'joingroup',
+        groupid: group.id,
+        users: groupUsersMap
+      }
+    })
+  })
+
   return Promise.all([
+    updateGroupCommandPromise,
     snsClient.send(publishCommand),
+    snsClient.send(publishOldCommand),
     handleUsersInGroup(usersInGroup),
     handlerUsersNotInGroup(usersNotInGroup)
   ])
