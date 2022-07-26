@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
 
-enum Status { idle, switchSent, switchAcknowledge, chatting, other }
+enum Status { idle, switchSent, chatting, other }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -84,7 +84,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   set status(Status newStatus) {
     Memory().put('user', 'appChatState', newStatus.name);
-    setState(() {});
   }
 
   ConnectionStatus connectionStatus = ConnectionStatus.connected;
@@ -257,7 +256,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   void blockUser(String userId) {
     Memory().addBlockedUser(userId);
-    switchGroup();
+    setState(() {
+      switchGroup();
+    });
   }
 
   void sendMessage(types.PartialText partialText) {
@@ -271,17 +272,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
   }
 
-  void switchGroup({bool useSetState = true}) {
+  void switchGroup() {
+    print('switch group');
     _webSocketConnection.switchgroup();
-    if (useSetState) {
-      setState(() {
-        items.remove('fake');
-        status = Status.switchSent;
-      });
-    } else {
-      items.remove('fake');
-      status = Status.switchSent;
-    }
+    items = ['real'];
+    status = Status.switchSent;
   }
 
   // ===== ===== =====
@@ -297,37 +292,37 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageRegister(data) {
-    print('\tRegister with state: ${status.name}');
+    print('Message Register with state: ${status.name}');
     // connection made
     // needUpdate cannot be false because connectionState changed
     connectionStatus = ConnectionStatus.connected;
-    // process unread messages
-    for (final unreadMessage in data['unreadData']) {
-      processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
-    }
 
     final String assignedGroupId = data['group'] ?? '';
-    if (assignedGroupId == '') {
-      print("doesn't have a group yet");
-      // doesn't have a group yet
+
+    if (status == Status.switchSent && assignedGroupId == '') {
+      // group not find yet
+      print('already switching group');
+      return true;
+    }
+
+    if (status != Status.switchSent && assignedGroupId == '') {
       NotificationHandler().init();
       User().groupId = '';
-      switchGroup(useSetState: false);
+      switchGroup();
       _messages.clear();
 
       return true;
     }
 
-    // the second check is to mitigate an error in the backend
-    // the front-end should not receive a group with no user
-    if (User().groupId == '' && (data['groupUsers'] as List).length < 2) {
-      return true;
+    // process unread messages (no need before, status update are not sent anymore)
+    for (final unreadMessage in data['unreadData']) {
+      processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
     }
 
     // Below, assignedGroupId is not empty
     status = Status.chatting;
     if (!items.contains('fake')) {
-      items.add('fake');
+      items = ['real', 'fake'];
     }
 
     if (assignedGroupId != User().groupId) {
@@ -351,55 +346,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     loadMessagesFromMemory();
 
-    return true;
-  }
-
-  bool messageLeaveGroup(data) {
-    // empty string is stored as undefined serverside
-    // (causing a difference when there is not)
-    final String groupId = data['groupid'] ?? '';
-    final String userId = data['id'];
-
-    if (groupId != User().groupId) {
-      return false; // don't do anything
-    }
-
-    if (userId == User().id) {
-      // you're the one to leave the group
-      print('\tLeave group: $groupId');
-      User().groupId = '';
-      _messages.clear();
-      status = Status.switchAcknowledge;
-    } else {
-      User().otherGroupUsers.remove(userId);
-    }
-    return true;
-  }
-
-  bool messageJoinGroup(data) {
-    final String newGroupId = data['groupid'] ?? '';
-    final Map<String, dynamic> users =
-        Map<String, dynamic>.from(data['users'] ?? {});
-    if (users.remove(User().id) != null) {
-      if (newGroupId != User().groupId) {
-        // only join if the group to join is not the group we are in
-        print('\tJoin group: $newGroupId');
-        User().groupId = newGroupId;
-        User().updateOtherUsers(users);
-        _messages.clear(); // in case we receive join before leave
-        status = Status.chatting;
-        if (!items.contains('fake')) {
-          items.add('fake');
-        }
-      } else {
-        // new users in group
-        print('\tGroup users: $users');
-        User().updateOtherUsers(users);
-      }
-    } else {
-      // don't do anything (user not concerted, error)
-      return false;
-    }
     return true;
   }
 
@@ -435,8 +381,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     data['_isInnerLoop'] = isInnerLoop;
 
     if (isInnerLoop &&
-        ['login', 'logout', 'register', 'leavegroup', 'joingroup']
-            .contains(data['action'])) {
+        ['login', 'logout', 'register'].contains(data['action'])) {
       print('Skip processing (not needed)');
       return needUpdate;
     }
@@ -477,11 +422,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         if (_isPointerUp && controller.page! > 0.5) {
           // need to recheck if user manually move the page during the delay
           print('Change Page');
-          // Swith Group
-          switchGroup();
-          // Change Page
-          _reverse();
-          controller.jumpToPage(0);
+          setState(() {
+            // Swith Group
+            switchGroup();
+            // Change Page
+            _reverse();
+            controller.jumpToPage(0);
+          });
         }
         _isChangePageLock = false;
       });
@@ -500,8 +447,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       'login': messageLogin,
       'logout': messageLogout,
       'register': messageRegister,
-      'leavegroup': messageLeaveGroup,
-      'joingroup': messageJoinGroup,
       'textmessage': messageTextMessage,
       'banrequest': messageBanRequest,
       'banreply': messageBanReply,
@@ -557,7 +502,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           title: UsersList(users: User().otherGroupUsers.values),
           actions: <Widget>[
             SwitchActionButton(
-                isChatting: status == Status.chatting, onPressed: switchGroup),
+                isChatting: status == Status.chatting,
+                onPressed: () {
+                  setState(() {
+                    switchGroup();
+                  });
+                }),
           ]),
       body: Listener(
         onPointerDown: (PointerDownEvent event) {

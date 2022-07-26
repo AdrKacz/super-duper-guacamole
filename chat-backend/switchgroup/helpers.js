@@ -40,6 +40,7 @@ const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
  * @param {string} user.group - group id
  */
 exports.removeUserFromGroup = async (user) => {
+  console.log(`remove user ${user.id} from group ${user.group}`)
   // update user
   const updateUserCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
@@ -59,7 +60,8 @@ exports.removeUserFromGroup = async (user) => {
 
   // update group
   if (typeof user.group === 'undefined') {
-    return Promise.resolve()
+    console.log(`user ${user.id} has no group`)
+    return updateUserPromise // just wait for user to be updated
   }
 
   // retreive group (needed to count its users)
@@ -78,7 +80,8 @@ exports.removeUserFromGroup = async (user) => {
   if (typeof group === 'undefined') {
     // if group doesn't exist anymore, don't update it
     // you don't want to re-create a record in the database
-    return Promise.resolve()
+    console.log(`group ${user.group} is undefined`)
+    return updateUserPromise // just wait for user to be updated
   }
 
   const updateGroupCommand = new UpdateCommand({
@@ -103,6 +106,7 @@ exports.removeUserFromGroup = async (user) => {
   updatedGroup.users = updatedGroup.users ?? new Set()
 
   if (updatedGroup.users.size > 0) {
+    console.log(`inform group ${user.group} of its new user`)
     const groupUsers = Array.from(updatedGroup.users)
     // inform group
     const publishCommand = new PublishCommand({
@@ -146,6 +150,7 @@ exports.removeUserFromGroup = async (user) => {
   // the added user will be in a no-mans-land
   //    and will ask for a new group, that results in longer waiting time
 
+  console.log(`delete group ${user.group}`)
   const deleteGroupCommand = new DeleteCommand({
     TableName: GROUPS_TABLE_NAME,
     Key: { id: user.group }
@@ -210,6 +215,7 @@ exports.findGroupToUser = async (user, blockedUsers, questions) => {
   })
 
   const queryResponse = await dynamoDBDocumentClient.send(queryCommand)
+  console.log(`query groups ${JSON.stringify(queryResponse)}`)
 
   let maximumOfSimilarity = -1
   let chosenGroup = null
@@ -250,9 +256,10 @@ exports.findGroupToUser = async (user, blockedUsers, questions) => {
       // add blocked user to forbidden user
       chosenGroup.bannedUsers.add(blockedUser)
     }
-
+    console.log(`chose group ${JSON.stringify(chosenGroup)}`)
     return chosenGroup
   } else {
+    console.log('create new group')
     return {
       id: uuidv4(),
       bannedUsers: blockedUsers,
@@ -300,10 +307,12 @@ exports.addUserToGroup = async (user, group) => {
 
   // process
   if (!group.isOpen && group.users.size >= MINIMUM_GROUP_SIZE - 1) {
+    console.log(`open group ${group.id}`)
     group.isOpen = true // open group
   }
 
   if (group.users.size >= MAXIMUM_GROUP_SIZE - 1) {
+    console.log(`group ${group.id} is full`)
     group.isWaiting = 0 // false
   }
 
@@ -311,7 +320,7 @@ exports.addUserToGroup = async (user, group) => {
     TableName: GROUPS_TABLE_NAME,
     Key: { id: group.id },
     UpdateExpression: `
-          SET #isWaiting = :isWaiting, #questions = :questions #isOpen = :isOpen
+          SET #isWaiting = :isWaiting, #questions = :questions, #isOpen = :isOpen
           ADD #users :id
           `,
     ExpressionAttributeNames: {
@@ -331,6 +340,7 @@ exports.addUserToGroup = async (user, group) => {
   const updateGroupCommandPromise = dynamoDBDocumentClient.send(updateGroupCommand)
 
   if (!group.isOpen) {
+    console.log(`group ${group.id} is not open`)
     return
   }
 

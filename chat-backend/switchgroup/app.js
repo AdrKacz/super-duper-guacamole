@@ -64,7 +64,7 @@ ${event.Records[0].Sns.Message}
 
   const id = body.id
   const questions = body.questions ?? {}
-  const blockedUsers = body.blockedUsers ?? []
+  const blockedUsers = new Set(body.blockedUsers ?? [])
 
   if (typeof id === 'undefined') {
     throw new Error('id must be defined')
