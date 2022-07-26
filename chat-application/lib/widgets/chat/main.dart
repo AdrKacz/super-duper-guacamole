@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/network/web_socket_connection.dart';
-import 'package:awachat/widgets/chat/chat-page.dart';
+import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
@@ -48,7 +48,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
   void listenMessage(message) {
-    print('Receive message: $message');
+    // receive message
     if (processMessage(message)) {
       setState(() {});
     }
@@ -96,7 +96,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     setState(() {
       items = items.reversed.toList();
     });
-    print('items: $items');
   }
 
   // ===== ===== =====
@@ -174,20 +173,18 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     // find message
     types.Message? message = findMessage(messageid);
     if (message == null) {
-      print("Message $messageid wasn't found. Returns.");
+      // message was not found (see messageid)
       return;
     }
-
-    print('Found message $messageid:\n$message');
 
     HapticFeedback.mediumImpact();
     switch (await banActionOnMessage(context, message)) {
       case 'confirmed':
-        print('Ban confirmed');
+        // ban confirmed
         _webSocketConnection.banreply(message.author.id, 'confirmed');
         break;
       case 'denied':
-        print('Ban denied');
+        // ban denied
         _webSocketConnection.banreply(message.author.id, 'denied');
         break;
       default:
@@ -211,8 +208,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       case 'block':
         blockUser(message.author.id);
         break;
-      default:
-        print('dismiss');
+      // default: dismiss
     }
   }
 
@@ -229,7 +225,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> loadedMessages = Memory().loadMessages();
-    print('Loaded messages length: ${loadedMessages.length}');
+
     _messages.clear();
     for (final types.Message loadedMessage in loadedMessages) {
       insertMessage(loadedMessage, useHaptic: false);
@@ -273,7 +269,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   void switchGroup() {
-    print('switch group');
+    // switch group
     _webSocketConnection.switchgroup();
     items = ['real'];
     status = Status.switchSent;
@@ -292,7 +288,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageRegister(data) {
-    print('Message Register with state: ${status.name}');
     // connection made
     // needUpdate cannot be false because connectionState changed
     connectionStatus = ConnectionStatus.connected;
@@ -301,11 +296,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (status == Status.switchSent && assignedGroupId == '') {
       // group not find yet
-      print('already switching group');
+      // already switching group
       return true;
     }
 
     if (status != Status.switchSent && assignedGroupId == '') {
+      // not asked for a group yet
       NotificationHandler().init();
       User().groupId = '';
       switchGroup();
@@ -327,7 +323,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (assignedGroupId != User().groupId) {
       // doesn't have the correct group
-      print("doesn't have the correct group");
       User().groupId = assignedGroupId;
       _messages.clear();
     }
@@ -350,7 +345,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageTextMessage(data) {
-    print('\tMessage: ${data['message']}');
+    // see message in data['message']
     types.Message? message = messageDecode(data['message']);
     if (message != null) {
       if (!data['_isInnerLoop']) {
@@ -362,19 +357,18 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageBanRequest(data) {
-    print('\tBan request for: ${data['messageid']}');
+    // ban request for data['messageid']
     banRequest(context, data['messageid']);
     return false;
   }
 
   bool messageBanReply(data) {
-    print('\tBan reply for: ${data['bannedid']} with status ${data['status']}');
+    // ban reply for data['bannedid'] (see status in data['status'])
     acknowledgeBan(context, data['status'], data['bannedid']);
     return false;
   }
 
   bool processMessage(message, {bool isInnerLoop = false}) {
-    print('Process Message ${isInnerLoop ? '(in inner loop)' : ''}:\n$message');
     bool needUpdate = true;
     final data = jsonDecode(message);
 
@@ -382,15 +376,14 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (isInnerLoop &&
         ['login', 'logout', 'register'].contains(data['action'])) {
-      print('Skip processing (not needed)');
+      // skip processing (not needed)
       return needUpdate;
     }
     if (messageActions.containsKey(data['action'])) {
       needUpdate = messageActions[data['action']]!(data);
     } else {
+      // action not recognised (see data['action'])
       needUpdate = false;
-      print("\tAction ${data['action']} not recognised.");
-      status = Status.other;
     }
 
     return needUpdate;
@@ -415,13 +408,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     if (controller.page! > 0.5) {
-      print('Start Change Page');
+      // start to change page
       _isChangePageLock = true;
       //TODO: update the time so it fits the end of the animation
-      final a = Future.delayed(const Duration(milliseconds: 600), () {
+      Future.delayed(const Duration(milliseconds: 600), () {
         if (_isPointerUp && controller.page! > 0.5) {
           // need to recheck if user manually move the page during the delay
-          print('Change Page');
+          // change page
           setState(() {
             // Swith Group
             switchGroup();
@@ -455,7 +448,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print('State: ${status.name} - Connection State: ${connectionStatus.name}');
+    // see status in status.name and connectection status in connectionStatus.name
     final PageController controller = PageController();
     if (connectionStatus == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
@@ -471,7 +464,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           widget.goToPresentation();
         },
         resetAccount: () async {
-          print('Reset Account');
+          // reset account
           await NotificationHandler().putToken('');
           User().clear();
           await Memory().clear();
@@ -524,7 +517,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             controller: controller,
             itemBuilder: (BuildContext context, int index) {
               if (index == 0) {
-                print('Build Chat');
+                // build chat
                 return ChatPage(
                     key: Key(items[index]),
                     messages: _messages.values.toList(),
@@ -535,7 +528,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     onRefresh: () async {
                       // TODO: error should re-ask server for current group if any
                       // NOTE: here it tries to infer the correct state of the app
-                      print('Try to restore connection');
+                      // try to restore connection
                       _webSocketConnection.close();
                       _webSocketConnection.reconnect();
                       listenStream();
@@ -551,7 +544,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                       }
                     });
               } else {
-                print('Build Fake Chat');
+                // build fake chat
                 return FakeChat(key: Key(items[index]));
               }
             },
@@ -559,7 +552,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             findChildIndexCallback: (Key key) {
               final ValueKey<String> valueKey = key as ValueKey<String>;
               final String data = valueKey.value;
-              print('Find Key $key, valueKey $valueKey, data $data');
               return items.indexOf(data);
             }),
       ),
@@ -568,7 +560,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState appLifecycleState) {
-    print('App Lifecycle State > $appLifecycleState');
+    // see app lifecycle state in appLifecycleState
     setState(() {
       _notification = appLifecycleState;
     });

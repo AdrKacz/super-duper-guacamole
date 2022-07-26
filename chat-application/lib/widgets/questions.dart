@@ -214,8 +214,7 @@ class _QuestionsState extends State<Questions> {
                                     }
                                   },
                                   onPressed: (String id) {
-                                    print('set $id for ${e['id']}');
-
+                                    // set id for e['id']
                                     if (selectedAnswers[e['id']] == id) {
                                       setState(() {
                                         selectedAnswers.remove(e['id']);

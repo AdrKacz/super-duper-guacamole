@@ -249,14 +249,13 @@ exports.findGroupToUser = async (user, blockedUsers, questions) => {
   }
 
   if (chosenGroup !== null) {
-    console.log(`select group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
     // update banned user
     for (const blockedUser of blockedUsers) {
       console.log(`check ${blockedUser}`)
       // add blocked user to forbidden user
       chosenGroup.bannedUsers.add(blockedUser)
     }
-    console.log(`chose group ${JSON.stringify(chosenGroup)}`)
+    console.log(`chose group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
     return chosenGroup
   } else {
     console.log('create new group')
@@ -306,6 +305,12 @@ exports.addUserToGroup = async (user, group) => {
   }
 
   // process
+  console.log(`Process user: ${JSON.stringify(user)}`)
+  console.log(`Process group: ${JSON.stringify(group)}`)
+  console.log(`MINIMUM_GROUP_SIZE is ${MINIMUM_GROUP_SIZE}`)
+  console.log(`MAXIMUM_GROUP_SIZE is ${MAXIMUM_GROUP_SIZE}`)
+  console.log(`Process group users: [${Array.from(group.users)}]`)
+  console.log(`group size is ${group.users.size}`)
   if (!group.isOpen && group.users.size >= MINIMUM_GROUP_SIZE - 1) {
     console.log(`open group ${group.id}`)
     group.isOpen = true // open group
@@ -316,6 +321,7 @@ exports.addUserToGroup = async (user, group) => {
     group.isWaiting = 0 // false
   }
 
+  console.log('update group')
   const updateGroupCommand = new UpdateCommand({
     TableName: GROUPS_TABLE_NAME,
     Key: { id: group.id },
@@ -345,10 +351,19 @@ exports.addUserToGroup = async (user, group) => {
   }
 
   // get all users
+  console.log('get all users')
+  // NOTE: concurrent runs
+  // You should be added to an open group with 0 users
+  // Indeed, the group opens with a minimum number of users
+  // And close when reaches 0 users
+  // However, it you are added to a group at the same moment the last user leave the group
+  // You can be added to a group with 0 users
+  // (even worst, you could be added to a deleted group)
+  // TODO: HOW TO DEAL WITH IT?
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: group.users,
+        Keys: Array.from(group.users).map((id) => ({ id })),
         ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -361,7 +376,9 @@ exports.addUserToGroup = async (user, group) => {
   })
 
   const groupUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+  groupUsers.push(user)
 
+  console.log(`group users: ${JSON.stringify(groupUsers)}`)
   const usersInGroup = []
   const usersNotInGroup = []
   for (const groupUser of groupUsers) {
@@ -371,6 +388,8 @@ exports.addUserToGroup = async (user, group) => {
       usersNotInGroup.push(user)
     }
   }
+  console.log(`users not in group: ${JSON.stringify(usersNotInGroup)}`)
+  console.log(`users in group: ${JSON.stringify(usersInGroup)}`)
 
   // inform group
   const publishCommand = new PublishCommand({

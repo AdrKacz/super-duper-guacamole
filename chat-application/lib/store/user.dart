@@ -19,7 +19,7 @@ class User {
   set groupId(String id) {
     // reset
     if (_groupId != '') {
-      print('Reset group (unsubscribe and clear messages and users)');
+      // reset group
       // unsubscribe
       FirebaseMessaging.instance
           .unsubscribeFromTopic('group-${User().groupId}');
@@ -34,7 +34,7 @@ class User {
 
     // set
     if (id != '') {
-      print('Set group (subscribe)');
+      // subscribe to group notifications
       FirebaseMessaging.instance.subscribeToTopic('group-$id');
       Memory().put('user', 'groupid', id);
       _groupId = id;
@@ -85,13 +85,12 @@ class User {
     } else {
       _groupId = '';
     }
-
-    print(
-        'Init user with id $id, group $_groupId, and members $otherGroupUsers');
   }
 
   // Group method
   void updateOtherUsers(Map<String, dynamic> otherUsers) {
+    otherUsers.remove(id);
+
     for (final Map otherUser in otherUsers.values) {
       if (otherUser['id'] != null) {
         Map groupUser = {
