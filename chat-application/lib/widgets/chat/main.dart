@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
@@ -269,7 +270,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   void switchGroup() {
-    // switch group
+    // remove group locally
+    User().groupId = '';
+    // send switch group
     _webSocketConnection.switchgroup();
     items = ['real'];
     status = Status.switchSent;
@@ -292,6 +295,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     // needUpdate cannot be false because connectionState changed
     connectionStatus = ConnectionStatus.connected;
 
+    print(DateTime.now());
+    print('process register');
+    print('data group - ${data['group'] ?? ''}');
+    print('user group - ${User().groupId}');
+    print('status - ${status.name}');
+    print('----- ----- -----');
+
     final String assignedGroupId = data['group'] ?? '';
 
     if (status == Status.switchSent && assignedGroupId == '') {
@@ -303,7 +313,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (status != Status.switchSent && assignedGroupId == '') {
       // not asked for a group yet
       NotificationHandler().init();
-      User().groupId = '';
       switchGroup();
       _messages.clear();
 
@@ -369,24 +378,26 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool processMessage(message, {bool isInnerLoop = false}) {
-    bool needUpdate = true;
     final data = jsonDecode(message);
+
+    print('process message');
+    print(DateTime.now());
+    print('action - ${data['action']}');
+    print('----- ----- -----');
 
     data['_isInnerLoop'] = isInnerLoop;
 
     if (isInnerLoop &&
         ['login', 'logout', 'register'].contains(data['action'])) {
       // skip processing (not needed)
-      return needUpdate;
+      return false;
     }
     if (messageActions.containsKey(data['action'])) {
-      needUpdate = messageActions[data['action']]!(data);
+      return messageActions[data['action']]!(data);
     } else {
       // action not recognised (see data['action'])
-      needUpdate = false;
+      return false;
     }
-
-    return needUpdate;
   }
 
   // ===== ===== =====

@@ -40,28 +40,11 @@ const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
  * @param {string} user.group - group id
  */
 exports.removeUserFromGroup = async (user) => {
-  console.log(`remove user ${user.id} from group ${user.group}`)
-  // update user
-  const updateUserCommand = new UpdateCommand({
-    TableName: USERS_TABLE_NAME,
-    Key: { id: user.id },
-    UpdateExpression: `
-          REMOVE #group, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
-          `,
-    ExpressionAttributeNames: {
-      '#group': 'group',
-      '#unreadData': 'unreadData',
-      '#banConfirmedUsers': 'banConfirmedUsers',
-      '#banVotingUsers': 'banVotingUsers',
-      '#confirmationRequired': 'confirmationRequired'
-    }
-  })
-  const updateUserPromise = dynamoDBDocumentClient.send(updateUserCommand)
+  console.log(`update group ${user.group} (remove user ${user.id})`)
 
-  // update group
   if (typeof user.group === 'undefined') {
     console.log(`user ${user.id} has no group`)
-    return updateUserPromise // just wait for user to be updated
+    return Promise.resolve() // just wait for user to be updated
   }
 
   // retreive group (needed to count its users)
@@ -81,7 +64,7 @@ exports.removeUserFromGroup = async (user) => {
     // if group doesn't exist anymore, don't update it
     // you don't want to re-create a record in the database
     console.log(`group ${user.group} is undefined`)
-    return updateUserPromise // just wait for user to be updated
+    return Promise.resolve() // just wait for user to be updated
   }
 
   const updateGroupCommand = new UpdateCommand({
@@ -107,7 +90,9 @@ exports.removeUserFromGroup = async (user) => {
 
   if (updatedGroup.users.size > 0) {
     console.log(`inform group ${user.group} of its new user`)
-    const groupUsers = Array.from(updatedGroup.users)
+    const groupUsers = await getGroupOtherUsers(user, updatedGroup)
+    console.log(`group users: ${JSON.stringify(groupUsers)}`)
+
     // inform group
     const publishCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
@@ -136,10 +121,9 @@ exports.removeUserFromGroup = async (user) => {
     })
 
     return Promise.all([
-      updateUserPromise,
       snsClient.send(publishCommand),
       snsClient.send(publishOldCommand)
-    ])
+    ]).then(() => (console.log(`you warned users of group ${group.id} that user ${user.id} left`)))
   }
 
   // there is no more user in the group, delete it
@@ -156,10 +140,7 @@ exports.removeUserFromGroup = async (user) => {
     Key: { id: user.group }
   })
 
-  return Promise.all([
-    updateUserPromise,
-    dynamoDBDocumentClient.send(deleteGroupCommand)
-  ])
+  return dynamoDBDocumentClient.send(deleteGroupCommand).then(() => (console.log(`you deleted group ${user.group}`)))
 }
 
 /**
@@ -343,49 +324,54 @@ exports.addUserToGroup = async (user, group) => {
     }
   })
 
-  const updateGroupCommandPromise = dynamoDBDocumentClient.send(updateGroupCommand)
+  return dynamoDBDocumentClient.send(updateGroupCommand).then(() => (console.log(`you added user ${user.id} to group ${group.id}`)))
+}
 
+/**
+ * Update users.
+ *
+ * @param {Object} user
+ * @param {string} user.id - id
+ * @param {string} user.group - group id
+ *
+ * @param {Object} group - new group
+ * @param {string} group.id - id
+ * @param {Set.<string>} [group.users] - user ids
+ * @param {boolean} [group.isOpen=false]
+ */
+exports.updateGroupUsers = async (user, group) => {
   if (!group.isOpen) {
     console.log(`group ${group.id} is not open`)
-    return
+    // update user
+    const updateUserCommand = new UpdateCommand({
+      TableName: USERS_TABLE_NAME,
+      Key: { id: user.id },
+      UpdateExpression: `
+          REMOVE #group, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+          `,
+      ExpressionAttributeNames: {
+        '#group': 'group',
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
+      }
+    })
+    return dynamoDBDocumentClient.send(updateUserCommand).then(() => (console.log(`you removed group to user ${user.id}`)))
   }
 
   // get all users
   console.log('get all users')
-  // NOTE: concurrent runs
-  // You should be added to an open group with 0 users
-  // Indeed, the group opens with a minimum number of users
-  // And close when reaches 0 users
-  // However, it you are added to a group at the same moment the last user leave the group
-  // You can be added to a group with 0 users
-  // (even worst, you could be added to a deleted group)
-  // TODO: HOW TO DEAL WITH IT?
-  const batchGetUsersCommand = new BatchGetCommand({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).map((id) => ({ id })),
-        ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#group': 'group',
-          '#connectionId': 'connectionId',
-          '#firebaseToken': 'firebaseToken'
-        }
-      }
-    }
-  })
-
-  const groupUsers = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-  groupUsers.push(user)
-
+  const groupUsers = await getGroupOtherUsers(user, group)
   console.log(`group users: ${JSON.stringify(groupUsers)}`)
+
   const usersInGroup = []
   const usersNotInGroup = []
   for (const groupUser of groupUsers) {
     if (groupUser.group === group.id) {
-      usersInGroup.push(user)
+      usersInGroup.push(groupUser)
     } else {
-      usersNotInGroup.push(user)
+      usersNotInGroup.push(groupUser)
     }
   }
   console.log(`users not in group: ${JSON.stringify(usersNotInGroup)}`)
@@ -426,16 +412,34 @@ exports.addUserToGroup = async (user, group) => {
   })
 
   return Promise.all([
-    updateGroupCommandPromise,
     snsClient.send(publishCommand),
     snsClient.send(publishOldCommand),
     handleUsersInGroup(usersInGroup),
-    handlerUsersNotInGroup(usersNotInGroup)
-  ])
+    handlerUsersNotInGroup(usersNotInGroup, group)
+  ]).then((results) => (console.log(`add user to group results:\n${JSON.stringify(results)}`)))
 }
 
 // ===== ==== ====
 // HELPERS
+function getGroupOtherUsers (user, group) {
+  const batchGetUsersCommand = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: Array.from(group.users).map((id) => ({ id })),
+        ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#group': 'group',
+          '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken'
+        }
+      }
+    }
+  })
+
+  return dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME].concat(user)))
+}
+
 function handleUsersInGroup (users) {
   if (users.length === 0) {
     return
@@ -466,9 +470,14 @@ function handlerUsersNotInGroup (users, group) {
       Key: { id: user.id },
       UpdateExpression: `
         SET #group = :groupid
+        REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
       `,
       ExpressionAttributeNames: {
-        '#group': 'group'
+        '#group': 'group',
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
       },
       ExpressionAttributeValues: {
         ':groupid': group.id
@@ -489,7 +498,7 @@ function handlerUsersNotInGroup (users, group) {
   })
   promises.push(snsClient.send(publishCommand))
 
-  return Promise.all(promises)
+  return Promise.all(promises).then((results) => (console.log(`handle users not in group results:\n${JSON.stringify(results)}`)))
 }
 
 function isGroupValid (user, group, blockedUsers) {

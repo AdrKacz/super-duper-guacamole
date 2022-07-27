@@ -1,3 +1,4 @@
+import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/main.dart';
 import 'package:awachat/widgets/chat/widgets/error.dart';
 import 'package:awachat/widgets/chat/widgets/flyer_chat.dart';
@@ -32,6 +33,12 @@ class ChatPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Builder(
       builder: (BuildContext context) {
+        print('chat page');
+        print(DateTime.now());
+        print('status - ${status.name}');
+        print('connection status - ${connectionStatus.name}');
+        print('user group - ${User().groupId}');
+        print('----- ----- -----');
         late Widget child;
         switch (status) {
           case Status.idle:

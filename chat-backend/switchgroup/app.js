@@ -33,7 +33,16 @@
 
 // BAN - NOT DONE HERE ANYMORE, TO MOVE
 // On a ban, BAN_FUNCTION doesn't send user questions because they are not stored.
-// For now, I just considered a banned user as an user who hasn't answer any question.
+// For now, I just considered a banned user as an user who hasn't answer any question.``
+
+// NOTE: concurrent runs
+// You should be added to an open group with 0 users
+// Indeed, the group opens with a minimum number of users
+// And close when reaches 0 users
+// However, it you are added to a group at the same moment the last user leave the group
+// You can be added to a group with 0 users
+// (even worst, you could be added to a deleted group)
+// TODO: HOW TO DEAL WITH IT?
 
 // ===== ==== ====
 // IMPORTS
@@ -41,7 +50,12 @@ const {
   GetCommand
 } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { addUserToGroup, removeUserFromGroup, findGroupToUser } = require('./helpers')
+const {
+  addUserToGroup,
+  removeUserFromGroup,
+  findGroupToUser,
+  updateGroupUsers
+} = require('./helpers')
 
 const { dynamoDBDocumentClient } = require('./aws-clients')
 
@@ -95,9 +109,11 @@ ${event.Records[0].Sns.Message}
   await Promise.all([
     removeUserFromGroup(user),
     findGroupToUser(user, blockedUsers, questions).then(
-      (nextGroup) => (addUserToGroup(user, nextGroup))
-    )
-  ])
+      (nextGroup) => (Promise.all([
+        updateGroupUsers(user, nextGroup),
+        addUserToGroup(user, nextGroup)])
+      ))
+  ]).then((results) => (console.log(`main results:\n${JSON.stringify(results)}`)))
 
   return {
     statusCode: 200
