@@ -35,8 +35,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   bool _isPointerUp =
       false; // set default to "you touch the screen" to not change page by error
 
-  bool _isChangePageLock = false;
-
   // Messages Actions
   late final Map<String, Function> messageActions;
 
@@ -452,10 +450,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // Widget lifecycle
 
   void changePage(PageController controller) {
-    if (_isChangePageLock) {
-      return;
-    }
-
     if (!_isPointerUp) {
       // don't change page if you touch the screen
       return;
@@ -468,10 +462,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (controller.page! > 0.5) {
       print('Start Change Page');
-      _isChangePageLock = true;
       //TODO: update the time so it fits the end of the animation
       final a = Future.delayed(const Duration(milliseconds: 600), () {
-        if (_isPointerUp && controller.page! > 0.5) {
+        if (_isPointerUp && controller.page! > 0.95) {
           // need to recheck if user manually move the page during the delay
           print('Change Page');
           // Swith Group
@@ -480,7 +473,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           _reverse();
           controller.jumpToPage(0);
         }
-        _isChangePageLock = false;
       });
     }
   }
