@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
 
-enum Status { idle, switchSent, switchAcknowledge, chatting, other }
+enum Status { idle, switchSent, chatting, other }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -307,7 +307,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     final String assignedGroupId = data['group'] ?? '';
-    if (assignedGroupId == '') {
+
+    if (status == Status.switchSent && assignedGroupId == '') {
+      // waiting for a group
+      return true;
+    }
+
+    if (status != Status.switchSent && assignedGroupId == '') {
       print("doesn't have a group yet");
       // doesn't have a group yet
       NotificationHandler().init();
@@ -315,12 +321,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       switchGroup(useSetState: false);
       _messages.clear();
 
-      return true;
-    }
-
-    // the second check is to mitigate an error in the backend
-    // the front-end should not receive a group with no user
-    if (User().groupId == '' && (data['groupUsers'] as List).length < 2) {
       return true;
     }
 
@@ -369,7 +369,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       print('\tLeave group: $groupId');
       User().groupId = '';
       _messages.clear();
-      status = Status.switchAcknowledge;
+      status = Status.switchSent;
     } else {
       User().otherGroupUsers.remove(userId);
     }

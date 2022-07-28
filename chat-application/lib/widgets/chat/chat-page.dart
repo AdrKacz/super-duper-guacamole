@@ -38,9 +38,6 @@ class ChatPage extends StatelessWidget {
             child = const Loader();
             break;
           case Status.switchSent:
-            child = const Loader();
-            break;
-          case Status.switchAcknowledge:
             child = const SwitchGroupPage();
             break;
           case Status.chatting:
