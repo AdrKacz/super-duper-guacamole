@@ -298,13 +298,10 @@ async function addUserToGroup (user, newGroup) {
       })
 
       const batchGetOtherUsersResponse = await dynamoDBDocumentClient.send(batchGetOtherUsers)
-
-      for (const otherUser of batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME]) {
-        if (isFirstTime) {
-          earlyUsers.push(otherUser)
-        } else {
-          otherUsers.push(otherUser)
-        }
+      if (isFirstTime) {
+        earlyUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
+      } else {
+        otherUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
       }
     }
     console.log('early users:', earlyUsers)
