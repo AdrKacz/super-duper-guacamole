@@ -295,8 +295,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   bool messageRegister(data) {
     print('\tRegister with state: ${status.name}');
     // connection made
-    // needUpdate cannot be false because connectionState changed
     connectionStatus = ConnectionStatus.connected;
+
+    // needUpdate cannot be false because connectionState changed
+
     // process unread messages
     for (final unreadMessage in data['unreadData']) {
       processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
@@ -305,12 +307,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     final String assignedGroupId = data['group'] ?? '';
 
     if (status == Status.switchSent && assignedGroupId == '') {
-      // waiting for a group
+      // already waiting for a group
       return true;
     }
 
     if (status != Status.switchSent && assignedGroupId == '') {
-      print("doesn't have a group yet");
       // doesn't have a group yet
       NotificationHandler().init();
       switchGroup();
@@ -321,9 +322,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     // Below, assignedGroupId is not empty
     status = Status.chatting;
-    if (!items.contains('fake')) {
-      items = ['real', 'fake'];
-    }
+    items = ['real', 'fake'];
 
     if (assignedGroupId != User().groupId) {
       // doesn't have the correct group
