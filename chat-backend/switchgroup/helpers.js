@@ -448,7 +448,7 @@ function handleUsersInGroup (users) {
   const publishCommand = new PublishCommand({
     TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       notification: {
         title: "Y'a du nouveaux 🥳",
         body: "Quelqu'un arrive dans le groupe !"
@@ -489,7 +489,7 @@ function handlerUsersNotInGroup (users, group) {
   const publishCommand = new PublishCommand({
     TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       notification: {
         title: 'Viens te présenter 🥳',
         body: 'Je viens de te trouver un groupe !'
