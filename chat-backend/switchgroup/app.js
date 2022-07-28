@@ -17,11 +17,6 @@
 // isBan : Bool? - is user banned from its old group (false by default)
 
 // ===== ==== ====
-// TODO
-// Remove group from user and only add it when the group become visible
-// If not, you send the new group to the user on register but the user isn't supposed to be aware of it
-
-// ===== ==== ====
 // NOTE
 // MINIMUM_GROUP_SIZE
 // It is better to not have MINIMUM_GROUP_SIZE too small.
@@ -115,16 +110,18 @@ ${event.Records[0].Sns.Message}
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },
-    ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
+    ProjectionExpression: '#id, #group, #hiddenGroup, #connectionId, #firebaseToken',
     ExpressionAttributeNames: {
       '#id': 'id',
       '#group': 'group',
+      '#hiddenGroup': 'hiddenGroup',
       '#connectionId': 'connectionId',
       '#firebaseToken': 'firebaseToken'
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
   console.log('user:', user)
+  user.group = user.group ?? user.hiddenGroup // if change group while still waiting
 
   if (typeof user === 'undefined') {
     console.log(`user <${id}> doesn't exist`)
@@ -147,18 +144,6 @@ ${event.Records[0].Sns.Message}
     }
   })
 
-  // NOTE: the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
-  // We must check that answers indeed have a greater impact on group than order of arrival.
-  // If not that means that we are still quite randomly assigning groups.
-
-  // NOTE: We could add ENV VARIABLE for more fine grained controls.
-  // For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
-
-  // NOTE: We may want to shuffle the order in which we loop through the groups to have different result
-  // on each run, for different user
-  // (there is NO order in the Query, it is "first found first returned")
-  // (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
-  // (thus, the order being similar too)
   const newGroup = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
     if (response.Count > 0) {
       let maximumOfSimilarity = -1
@@ -260,26 +245,7 @@ async function addUserToGroup (user, newGroup) {
   newGroup.users.add(user.id) // simulate add user id (will be added -for real- below)
   console.log(`put user <${user.id}> in group ${JSON.stringify(newGroup)}`)
 
-  // update user
-  const updateUserCommand = new UpdateCommand({
-    TableName: USERS_TABLE_NAME,
-    Key: { id: user.id },
-    UpdateExpression: `
-    SET #group = :groupid
-    REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
-    `,
-    ExpressionAttributeNames: {
-      '#group': 'group',
-      '#unreadData': 'unreadData',
-      '#banConfirmedUsers': 'banConfirmedUsers',
-      '#banVotingUsers': 'banVotingUsers',
-      '#confirmationRequired': 'confirmationRequired'
-    },
-    ExpressionAttributeValues: {
-      ':groupid': newGroup.id
-    }
-  })
-  const promises = [dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes))]
+  const promises = []
 
   // update new group
   if (newGroup.users.size >= MINIMUM_GROUP_SIZE) {
@@ -289,7 +255,7 @@ async function addUserToGroup (user, newGroup) {
     const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
     const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
     const otherUsers = []
-    // happens only once when group becomes active for the first time
+
     if (usersIds.length > 0) {
       newGroup.users.delete(user.id) // remove id, already fetched
       const batchGetOtherUsers = new BatchGetCommand({
@@ -319,6 +285,31 @@ async function addUserToGroup (user, newGroup) {
     }
     console.log('early users:', earlyUsers)
     console.log('other users:', otherUsers)
+
+    // update early user group
+    for (const earlyUser of earlyUsers) {
+      const updateEarlyUserCommand = new UpdateCommand({
+        TableName: USERS_TABLE_NAME,
+        Key: { id: earlyUser.id },
+        UpdateExpression: `
+        SET #group = :groupid, #hiddenGroup = :groupid
+        REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+        `,
+        ExpressionAttributeNames: {
+          '#group': 'group',
+          '#hiddenGroup': 'hiddenGroup',
+          '#unreadData': 'unreadData',
+          '#banConfirmedUsers': 'banConfirmedUsers',
+          '#banVotingUsers': 'banVotingUsers',
+          '#confirmationRequired': 'confirmationRequired'
+        },
+        ExpressionAttributeValues: {
+          ':groupid': newGroup.id
+        }
+      })
+      promises.push(dynamoDBDocumentClient.send(updateEarlyUserCommand).then((response) => (response.Attributes)))
+    }
+
     const allUsers = earlyUsers.concat(otherUsers)
     const allUsersMap = {}
     allUsers.forEach((loopUser) => {
@@ -365,6 +356,29 @@ async function addUserToGroup (user, newGroup) {
       })
       promises.push(snsClient.send(publishOtherUsersNotificationCommand))
     }
+  } else {
+    // hide group id
+    // update user
+    const updateUserCommand = new UpdateCommand({
+      TableName: USERS_TABLE_NAME,
+      Key: { id: user.id },
+      UpdateExpression: `
+    SET #hiddenGroup = :groupid
+    REMOVE #group, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+    `,
+      ExpressionAttributeNames: {
+        '#group': 'group',
+        '#hiddenGroup': 'hiddenGroup',
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
+      },
+      ExpressionAttributeValues: {
+        ':groupid': newGroup.id
+      }
+    })
+    promises.push(dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes)))
   }
   if (newGroup.users.size >= MAXIMUM_GROUP_SIZE) {
     newGroup.isWaiting = 0 // false
