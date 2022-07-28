@@ -271,17 +271,15 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
   }
 
-  void switchGroup({bool useSetState = true}) {
+  void switchGroup() {
+    // NOTE: updating the status trigger setState
+    // THAT SHOULDN'T BE THE CASE
+    // For now, so, no need to setState around switchGroup
+    // remove group locally
+    User().groupId = '';
     _webSocketConnection.switchgroup();
-    if (useSetState) {
-      setState(() {
-        items.remove('fake');
-        status = Status.switchSent;
-      });
-    } else {
-      items.remove('fake');
-      status = Status.switchSent;
-    }
+    items = ['real'];
+    status = Status.switchSent;
   }
 
   // ===== ===== =====
@@ -317,8 +315,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       print("doesn't have a group yet");
       // doesn't have a group yet
       NotificationHandler().init();
-      User().groupId = '';
-      switchGroup(useSetState: false);
+      switchGroup();
       _messages.clear();
 
       return true;
@@ -327,7 +324,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     // Below, assignedGroupId is not empty
     status = Status.chatting;
     if (!items.contains('fake')) {
-      items.add('fake');
+      items = ['real', 'fake'];
     }
 
     if (assignedGroupId != User().groupId) {
@@ -389,7 +386,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         _messages.clear(); // in case we receive join before leave
         status = Status.chatting;
         if (!items.contains('fake')) {
-          items.add('fake');
+          items = ['real', 'fake'];
         }
       } else {
         // new users in group
