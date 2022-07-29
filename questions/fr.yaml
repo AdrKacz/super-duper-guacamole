@@ -11,7 +11,7 @@ questions:
         id: "netflix-films 1.0.0"
         answer: "Films 🍿"
       - 
-        id: "netflix-animes"
+        id: "netflix-animes 1.0.0"
         answer: "Animés 🥷"
   - 
     id: "night 1.0.0"
@@ -50,6 +50,6 @@ questions:
         id: "desire-more 1.0.0"
         answer: "Ça peut toujours déraper 🙄"
       - 
-        id: "desire-wind 1.1.0"
-        answer: "Je découvre l'application déjà, on en parle après 🧐"
+        id: "desire-discovery 1.0.0"
+        answer: "Je découvre l'application d'abord 🧐"
  
