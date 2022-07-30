@@ -1,0 +1,40 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+  desc "Publish the latest test version to the Google Play Store"
+  lane :publish do
+    alpha_tracks = google_play_track_version_codes(
+      track: "alpha",
+      package_name: "com.awa.ma.dev.app",
+      json_key: "json_key",
+    )
+
+    if alpha_tracks.empty?
+      puts "No alpha track to promote."
+      next
+    end
+
+    puts "Will promote from alpha to production track #{alpha_tracks[0]}"
+    supply(
+      package_name: "com.awa.ma.dev.app",
+      json_key: "json_key",
+      version_code: alpha_tracks[0],
+      track_promote_to: "production",
+    )
+  end
+end
