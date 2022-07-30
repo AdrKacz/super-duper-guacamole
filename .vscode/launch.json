@@ -25,9 +25,9 @@
             "program": "lib/main.dart",
             "toolArgs": [
                 "--dart-define",
-                "WEBSOCKET_ENDPOINT=wss://mn7ojfvss0.execute-api.eu-west-3.amazonaws.com/prod",
+                "WEBSOCKET_ENDPOINT=",
                 "--dart-define",
-                "NOTIFICATION_HTTP_ENDPOINT=https://jwssxdpg6f.execute-api.eu-west-3.amazonaws.com/firebase-token"
+                "NOTIFICATION_HTTP_ENDPOINT="
             ]
         },
         {
@@ -40,7 +40,7 @@
                 "--dart-define",
                 "WEBSOCKET_ENDPOINT=ws://localhost:8765/",
                 "--dart-define",
-                "NOTIFICATION_HTTP_ENDPOINT=https://google.com"
+                "NOTIFICATION_HTTP_ENDPOINT="
             ]
         },
         {
@@ -52,9 +52,9 @@
             "program": "lib/main.dart",
             "toolArgs": [
                 "--dart-define",
-                "WEBSOCKET_ENDPOINT=wss://uxxpxxigt0.execute-api.eu-west-3.amazonaws.com/dev",
+                "WEBSOCKET_ENDPOINT=",
                 "--dart-define",
-                "NOTIFICATION_HTTP_ENDPOINT=https://65oauoit0a.execute-api.eu-west-3.amazonaws.com/firebase-token"
+                "NOTIFICATION_HTTP_ENDPOINT="
             ]
         },
         {
@@ -66,9 +66,9 @@
             "program": "lib/main.dart",
             "toolArgs": [
                 "--dart-define",
-                "WEBSOCKET_ENDPOINT=wss://uxxpxxigt0.execute-api.eu-west-3.amazonaws.com/dev",
+                "WEBSOCKET_ENDPOINT=",
                 "--dart-define",
-                "NOTIFICATION_HTTP_ENDPOINT=https://65oauoit0a.execute-api.eu-west-3.amazonaws.com/firebase-token"
+                "NOTIFICATION_HTTP_ENDPOINT="
             ]
         }
     ]
