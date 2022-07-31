@@ -24,7 +24,7 @@ jobs:
           working-directory: chat-application/ios
       
       - name: Publish app to App Store
-      - run: bundle exec fastlane publish
+        run: bundle exec fastlane publish
         env:
           KEY_ID: ${{ secrets.APPLE_KEY_ID }}
           ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
@@ -43,6 +43,6 @@ jobs:
           working-directory: chat-application/android
       
       - name: Publish app to App Store
-      - run: bundle exec fastlane publish
+        run: bundle exec fastlane publish
         env:
           SUPPLY_JSON_KEY_DATA: ${{ secrets.SUPPLY_JSON_KEY_DATA }}
