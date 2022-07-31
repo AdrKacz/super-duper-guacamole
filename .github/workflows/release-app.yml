@@ -26,9 +26,9 @@ jobs:
       - name: Publish app to App Store
         run: bundle exec fastlane publish
         env:
-          KEY_ID: ${{ secrets.APPLE_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APPLE_ISSUER_ID }}
-          KEY_CONTENT: ${{ secrets.APPLE_KEY_CONTENT }}
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
   publish-android-app:
     name: Publish Android App
     runs-on: macos-latest
