@@ -18,10 +18,13 @@ default_platform(:android)
 platform :android do
   desc "Publish the latest test version to the Google Play Store"
   lane :publish do
+    ensure_env_vars(
+      env_vars: ["SUPPLY_JSON_KEY_DATA"]
+    )
+
     alpha_tracks = google_play_track_version_codes(
       track: "alpha",
       package_name: "com.awa.ma.dev.app",
-      json_key: "json_key",
     )
 
     if alpha_tracks.empty?
@@ -32,7 +35,6 @@ platform :android do
     puts "Will promote from alpha to production track #{alpha_tracks[0]}"
     supply(
       package_name: "com.awa.ma.dev.app",
-      json_key: "json_key",
       version_code: alpha_tracks[0],
       track_promote_to: "production",
     )
