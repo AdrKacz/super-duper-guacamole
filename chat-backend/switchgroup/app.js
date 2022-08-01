@@ -253,7 +253,7 @@ function isGroupValid (user, group) {
   return true
 }
 
-async function addUserToGroup (user, newGroup) {
+function addUserToGroup (user, newGroup) {
   // Add user to a new group
   // user : Map
   //    id : String - user id
