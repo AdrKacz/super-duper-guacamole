@@ -197,6 +197,7 @@ class _QuestionsState extends State<Questions> {
   bool isConfirmed = false;
 
   String pageId = '1';
+  bool isPressed = false;
 
   void saveSelectedAnswers() {
     Memory().put(
@@ -230,12 +231,17 @@ class _QuestionsState extends State<Questions> {
             if (nextPageId == null) {
             } else {
               pageId = nextPageId;
+              isPressed = false;
               controller.nextPage(
-                  duration: const Duration(milliseconds: 1000),
+                  duration: const Duration(milliseconds: 500),
                   curve: Curves.easeInOut);
             }
           },
           onPressed: (String id) {
+            if (isPressed) {
+              return false;
+            }
+            isPressed = true;
             if (selectedAnswers[pageId] == id) {
               selectedAnswers.remove(pageId);
               return false;
