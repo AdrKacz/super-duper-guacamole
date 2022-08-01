@@ -123,7 +123,7 @@ ${event.Records[0].Sns.Message}
     removeUserFromGroup(user, isBan)
   ]
 
-  await Promise.allSettled(promises).then((results) => console.log(JSON.stringify(results)))
+  await Promise.allSettled(promises).then(results => (console.log(`main - ${JSON.stringify(results)}`)))
   return {
     statusCode: 200
   }
@@ -182,6 +182,8 @@ async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [
 
   for (const group of queryResponse.Items) {
     console.log(`check group ${JSON.stringify(group)}`)
+    console.log('with users')
+    console.log(group.users)
     // add blocked users to banned users
     for (const blockedUser of blockedUsersSet) {
       group.bannedUsers.add(blockedUser)
@@ -332,7 +334,7 @@ function addUserToGroup (user, newGroup) {
   })
   promises.push(dynamoDBDocumentClient.send(updateNewGroupCommand).then((response) => (response.Attributes)))
 
-  return Promise.allSettled(promises).then(results => (console.log(results)))
+  return Promise.allSettled(promises).then(results => (console.log(`addUserToGroup - ${JSON.stringify(results)}`)))
 }
 
 async function updateOpenedGroup (user, group) {
@@ -441,7 +443,7 @@ async function updateOpenedGroup (user, group) {
     promises.push(snsClient.send(publishOtherUsersNotificationCommand))
   }
 
-  return Promise.allSettled(promises).then(results => (console.log(results)))
+  return Promise.allSettled(promises).then(results => (console.log(`updateOpenedGroup - ${JSON.stringify(results)}`)))
 }
 
 async function removeUserFromGroup (user, isBan) {
@@ -451,8 +453,8 @@ async function removeUserFromGroup (user, isBan) {
   //    group : String - user group id
   //    connectionId : String - user connection id
   //    firebaseToken : String - user firebase token
-
-  if (typeof user.group === 'undefined') {
+  console.log(`remove user ${JSON.stringify(user)}`)
+  if (typeof user.group === 'undefined' || user.group === '') {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -465,7 +467,7 @@ async function removeUserFromGroup (user, isBan) {
     })
     return snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
   }
-
+  console.log(`user is in group ${user.group}, ${typeof user.group}`)
   // retreive group (needed to count its users)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -567,7 +569,7 @@ async function removeUserFromGroup (user, isBan) {
     promises.push(snsClient.send(publishSendMessageCommand))
 
     // NOTE: can send notification too
-    return Promise.allSettled(promises)
+    return Promise.allSettled(promises).then(results => (console.log(`removeUserFromGroup - ${JSON.stringify(results)}`)))
   }
   return Promise.resolve()
 }
