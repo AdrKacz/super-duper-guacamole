@@ -112,7 +112,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
     for (final Map node in yamlMap['nodes']) {
       final String? id = node['id'];
       final String? text = node['text'];
-      final YamlList? answers = node['aswers'];
+      final YamlList? answers = node['answers'];
 
       if (id is! String || text is! String || answers is! YamlList) {
         continue;
@@ -166,8 +166,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             return Questions(
-                loadedSelectedAnswer: snapshot.data['selectedAnswers'],
-                questions: snapshot.data['questions']);
+                loadedSelectedAnswer: loadSelectedAnswers(),
+                questionTree: snapshot.data);
           }
 
           return const Loader();
@@ -180,11 +180,13 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 // Questions
 class Questions extends StatefulWidget {
   const Questions(
-      {Key? key, required this.loadedSelectedAnswer, required this.questions})
+      {Key? key,
+      required this.loadedSelectedAnswer,
+      required this.questionTree})
       : super(key: key);
 
   final Map<String, String> loadedSelectedAnswer;
-  final List<Map> questions;
+  final Map questionTree;
 
   @override
   State<Questions> createState() => _QuestionsState();
@@ -193,6 +195,8 @@ class Questions extends StatefulWidget {
 class _QuestionsState extends State<Questions> {
   late Map<String, String> selectedAnswers;
   bool isConfirmed = false;
+
+  String pageId = '1';
 
   void saveSelectedAnswers() {
     Memory().put(
@@ -211,73 +215,37 @@ class _QuestionsState extends State<Questions> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: DefaultTabController(
-          length: widget.questions.length + 1,
-          child: Builder(builder: (BuildContext context) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Expanded(
-                  child: TabBarView(
-                    children: List<Widget>.from(widget.questions
-                            .map((e) => (Question(
-                                  question: e,
-                                  selectedAnswer: selectedAnswers[e['id']],
-                                  onNext: () {
-                                    final TabController? controller =
-                                        DefaultTabController.of(context);
-                                    if (controller != null) {
-                                      controller.animateTo(e['index'] + 1);
-                                    }
-                                  },
-                                  onPressed: (String id) {
-                                    print('set $id for ${e['id']}');
+    final PageController controller = PageController();
+    return PageView.builder(
+      physics: const NeverScrollableScrollPhysics(parent: PageScrollPhysics()),
+      controller: controller,
+      itemBuilder: (BuildContext context, int index) {
+        return Question(
+          question: widget.questionTree[pageId],
+          selectedAnswer: selectedAnswers[pageId],
+          onNext: () {
+            final String? nextPageId = widget.questionTree[pageId]['answers']
+                [selectedAnswers[pageId]]['next'];
 
-                                    if (selectedAnswers[e['id']] == id) {
-                                      setState(() {
-                                        selectedAnswers.remove(e['id']);
-                                      });
-                                      return false;
-                                    } else {
-                                      setState(() {
-                                        selectedAnswers[e['id']] = id;
-                                      });
-                                      return true;
-                                    }
-                                  },
-                                )))
-                            .toList()) +
-                        [
-                          Confirm(
-                            onPressed: () {
-                              setState(() {
-                                isConfirmed = true;
-                              });
-                              // store answers
-                              saveSelectedAnswers();
-                              // Memory().put('user', 'questions', 'bonjour');
-                              Future.delayed(const Duration(milliseconds: 250))
-                                  .then((value) => {Navigator.pop(context)})
-                                  .then(
-                                      (value) => {showConfirmDialog(context)});
-                            },
-                            isConfirmed: isConfirmed,
-                          )
-                        ],
-                  ),
-                ),
-                TabPageSelector(
-                  color: Theme.of(context).colorScheme.primary,
-                  selectedColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ],
-            );
-          }),
-        ),
-      ),
+            if (nextPageId == null) {
+            } else {
+              pageId = nextPageId;
+              controller.nextPage(
+                  duration: const Duration(milliseconds: 1000),
+                  curve: Curves.easeInOut);
+            }
+          },
+          onPressed: (String id) {
+            if (selectedAnswers[pageId] == id) {
+              selectedAnswers.remove(pageId);
+              return false;
+            } else {
+              selectedAnswers[pageId] = id;
+              return true;
+            }
+          },
+        );
+      },
     );
   }
 }
@@ -299,51 +267,55 @@ class Question extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          Text(
-            question['question'],
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
-          ),
-          const Divider(
-            height: 24,
-          ),
-          Expanded(
-            child: ListView(
-              children: List<Widget>.from(question['answers']
-                  .map((e) => (Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: ElevatedButton(
-                          style: e['id'] == selectedAnswer
-                              ? ElevatedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(100),
-                                )
-                              : ElevatedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(100),
-                                  primary:
-                                      Theme.of(context).colorScheme.secondary,
-                                  onPrimary:
-                                      Theme.of(context).colorScheme.onSecondary,
-                                ),
-                          onPressed: () {
-                            if (onPressed(e['id'])) {
-                              Future.delayed(const Duration(milliseconds: 250))
-                                  .then((value) => {onNext()});
-                            }
-                          },
-                          child: Text(
-                            e['answer'],
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )))
-                  .toList()),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          children: [
+            Text(
+              question['text'],
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
             ),
-          )
-        ],
+            const Divider(
+              height: 24,
+            ),
+            Expanded(
+              child: ListView(
+                children: List<Widget>.from(Map.from(question['answers'])
+                    .entries
+                    .map((answer) => (Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: ElevatedButton(
+                            style: answer.value['id'] == selectedAnswer
+                                ? ElevatedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(100),
+                                  )
+                                : ElevatedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(100),
+                                    primary:
+                                        Theme.of(context).colorScheme.secondary,
+                                    onPrimary: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondary,
+                                  ),
+                            onPressed: () {
+                              if (onPressed(answer.value['id'])) {
+                                Future.delayed(
+                                    const Duration(milliseconds: 250), onNext);
+                              }
+                            },
+                            child: Text(
+                              answer.value['text'],
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )))
+                    .toList()),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
