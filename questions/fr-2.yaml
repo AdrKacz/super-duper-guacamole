@@ -3,7 +3,7 @@ nodes:
     text: "Question 1"
     answers:
       - id: "A"
-        next: "1.A, 1.AB"
+        next: "1.A"
         text: "Answer 1.A"
       - id: "B"
         next: "1.AB"
@@ -14,10 +14,13 @@ nodes:
     text: "Question 1.A"
     answers:
       - id: "A"
+        next: "1.AB"
         text: "Answer 1.A.A"
       - id: "B"
+        next: "1.AB"
         text: "Answer 1.A.B"
       - id: "C"
+        next: "1.AB"
         text: "Answer 1.A.C"
   - id: "1.AB"
     text: "Question 1.AB"
