@@ -85,7 +85,7 @@ ${event.Records[0].Sns.Message}
 
   const id = body.id
   const questions = body.questions ?? {}
-  const blockedUsers = body.blockedUsers ?? []
+  const blockedUsersSet = new Set(body.blockedUsers ?? [])
   const isBan = body.isBan ?? false
 
   if (typeof id === 'undefined') {
@@ -117,7 +117,7 @@ ${event.Records[0].Sns.Message}
   }
 
   const promises = [
-    findGroupToUser(user, blockedUsers, questions).then(
+    findGroupToUser(user, blockedUsersSet, questions).then(
       (newGroup) => (addUserToGroup(user, newGroup))
     ),
     removeUserFromGroup(user, isBan)
@@ -139,7 +139,7 @@ ${event.Records[0].Sns.Message}
  * @param {string} user.id - id
  * @param {string} [user.group] - current group id
  *
- * @param {Set.<string>} [blockedUsers] - blocked user ids
+ * @param {Set.<string>} [blockedUsersSet] - blocked user ids
  * @param {string[]} [questions] - answers to the questions
  *
  * @return {Promise<{id: string, users: ?Set.<string>, bannedUsers: ?Set.<string>, isOpen: ?boolean, isWaiting: ?number, questions: ?Object.<string, string>}>}
@@ -157,19 +157,9 @@ ${event.Records[0].Sns.Message}
  * (however, getting that the query is similar, we could imagine that the processed time will be similar for each item too)
  * (thus, the order being similar too)
  */
-async function findGroupToUser (user, blockedUsers, questions) {
+async function findGroupToUser (user, blockedUsersSet = new Set(), questions = []) {
   // set default value
-  if (typeof user.group === 'undefined') {
-    user.group = ''
-  }
-
-  if (typeof blockedUsers === 'undefined') {
-    blockedUsers = new Set()
-  }
-
-  if (typeof questions === 'undefined') {
-    questions = []
-  }
+  user.group = user.group ?? ''
 
   // get available group
   const queryCommand = new QueryCommand({
@@ -189,32 +179,16 @@ async function findGroupToUser (user, blockedUsers, questions) {
 
   let maximumOfSimilarity = -1
   let chosenGroup = null
-  /* eslint no-labels: ["error", { "allowLoop": true }] */
-  checkGroup: for (const group of queryResponse.Items) {
+
+  for (const group of queryResponse.Items) {
     console.log(`check group ${JSON.stringify(group)}`)
-    // Check this group is valid
-    if (group.id === user.group) {
-      console.log(`group ${group.id} already has ${user.id}`)
-      continue
-    }
-
-    // Is user banned from group
-    group.bannedUsers = group.bannedUsers ?? new Set()
-    if (group.bannedUsers.has(user.id)) {
-      console.log(`group ${group.id} has banned user ${user.id}`)
-      continue
-    }
-
-    // Is a blocked user in the group
-    for (const blockedUser of blockedUsers) {
-      console.log(`check ${blockedUser}`)
-      // add blocked user to forbidden user
+    // add blocked users to banned users
+    for (const blockedUser of blockedUsersSet) {
       group.bannedUsers.add(blockedUser)
-      // check blocked user not in group
-      if (group.users.has(blockedUser)) {
-        console.log(`group ${group.id} has blocked user ${blockedUser}`)
-        continue checkGroup
-      }
+    }
+    if (!isGroupValid(user, group)) {
+      console.log(`group ${group.id} not valid for user ${JSON.stringify(user)}`)
+      continue
     }
 
     let similarity = 0
@@ -242,16 +216,41 @@ async function findGroupToUser (user, blockedUsers, questions) {
   if (chosenGroup !== null) {
     console.log(`chose group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
     return chosenGroup
-  } else {
-    console.log('create new group')
-    return {
-      id: uuidv4(),
-      isWaiting: 1,
-      users: new Set(),
-      bannedUsers: new Set(blockedUsers), // add forbidden users
-      questions
+  }
+
+  console.log('create new group')
+  return {
+    id: uuidv4(),
+    isWaiting: 1,
+    users: new Set(),
+    bannedUsers: blockedUsersSet, // add forbidden users
+    questions
+  }
+}
+
+function isGroupValid (user, group) {
+  // Check this group is valid
+  if (group.id === user.group) {
+    console.log(`group ${group.id} already has ${user.id}`)
+    return false
+  }
+
+  // Is user banned from group
+  group.bannedUsers = group.bannedUsers ?? new Set()
+  if (group.bannedUsers.has(user.id)) {
+    console.log(`group ${group.id} has banned user ${user.id}`)
+    return false
+  }
+
+  // Is an user in the updated group banned users
+  for (const groupUser of group.users) {
+    if (group.bannedUsers.has(groupUser)) {
+      console.log(`group ${group.id} has blocked user ${groupUser}`)
+      return false
     }
   }
+
+  return true
 }
 
 async function addUserToGroup (user, newGroup) {
@@ -275,108 +274,7 @@ async function addUserToGroup (user, newGroup) {
 
   // update new group
   if (newGroup.users.size >= MINIMUM_GROUP_SIZE) {
-    // alert user(s)
-    // early users are user not notified of the group yet
-    const earlyUsers = [user]
-    const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
-    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
-    const otherUsers = []
-
-    if (usersIds.length > 0) {
-      const batchGetOtherUsers = new BatchGetCommand({
-        RequestItems: {
-          [USERS_TABLE_NAME]: {
-            Keys: usersIds,
-            ProjectionExpression: '#id, #connectionId, #firebaseToken',
-            ExpressionAttributeNames: {
-              '#id': 'id',
-              '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken'
-            }
-          }
-        }
-      })
-
-      const batchGetOtherUsersResponse = await dynamoDBDocumentClient.send(batchGetOtherUsers)
-      if (isFirstTime) {
-        earlyUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
-      } else {
-        otherUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
-      }
-    }
-    console.log('early users:', earlyUsers)
-    console.log('other users:', otherUsers)
-
-    // update early user group
-    for (const earlyUser of earlyUsers) {
-      const updateEarlyUserCommand = new UpdateCommand({
-        TableName: USERS_TABLE_NAME,
-        Key: { id: earlyUser.id },
-        UpdateExpression: `
-        SET #group = :groupid, #hiddenGroup = :groupid
-        REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
-        `,
-        ExpressionAttributeNames: {
-          '#group': 'group',
-          '#hiddenGroup': 'hiddenGroup',
-          '#unreadData': 'unreadData',
-          '#banConfirmedUsers': 'banConfirmedUsers',
-          '#banVotingUsers': 'banVotingUsers',
-          '#confirmationRequired': 'confirmationRequired'
-        },
-        ExpressionAttributeValues: {
-          ':groupid': newGroup.id
-        }
-      })
-      promises.push(dynamoDBDocumentClient.send(updateEarlyUserCommand))
-    }
-
-    const allUsers = earlyUsers.concat(otherUsers)
-    const allUsersMap = {}
-    allUsers.forEach((loopUser) => {
-      allUsersMap[loopUser.id] = {
-        id: loopUser.id,
-        isActive: typeof loopUser.connectionId !== 'undefined'
-      }
-    })
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: allUsers,
-        message: {
-          action: 'joingroup',
-          groupid: newGroup.id,
-          users: allUsersMap
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
-
-    const publishEarlyUsersSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: earlyUsers,
-        notification: {
-          title: 'Viens te présenter 🥳',
-          body: 'Je viens de te trouver un groupe !'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishEarlyUsersSendNotificationCommand))
-
-    if (otherUsers.length > 0) {
-      const publishOtherUsersNotificationCommand = new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers,
-          notification: {
-            title: "Y'a du nouveaux 🥳",
-            body: "Quelqu'un arrive dans le groupe !"
-          }
-        })
-      })
-      promises.push(snsClient.send(publishOtherUsersNotificationCommand))
-    }
+    promises.push(updateOpenedGroup(user, newGroup))
   } else {
     // hide group id
     // update user
@@ -433,6 +331,115 @@ async function addUserToGroup (user, newGroup) {
     ExpressionAttributeValues: expressionAttributeValues
   })
   promises.push(dynamoDBDocumentClient.send(updateNewGroupCommand).then((response) => (response.Attributes)))
+
+  return Promise.allSettled(promises).then(results => (console.log(results)))
+}
+
+async function updateOpenedGroup (user, group) {
+  // alert user(s)
+  // early users are user not notified of the group yet
+  const earlyUsers = [user]
+  const isFirstTime = group.users.size === MINIMUM_GROUP_SIZE
+  const usersIds = Array.from(group.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
+  const otherUsers = []
+
+  const promises = []
+
+  if (usersIds.length > 0) {
+    const batchGetOtherUsers = new BatchGetCommand({
+      RequestItems: {
+        [USERS_TABLE_NAME]: {
+          Keys: usersIds,
+          ProjectionExpression: '#id, #connectionId, #firebaseToken',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#connectionId': 'connectionId',
+            '#firebaseToken': 'firebaseToken'
+          }
+        }
+      }
+    })
+
+    const batchGetOtherUsersResponse = await dynamoDBDocumentClient.send(batchGetOtherUsers)
+    if (isFirstTime) {
+      earlyUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
+    } else {
+      otherUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
+    }
+  }
+  console.log('early users:', earlyUsers)
+  console.log('other users:', otherUsers)
+
+  // update early user group
+  for (const earlyUser of earlyUsers) {
+    const updateEarlyUserCommand = new UpdateCommand({
+      TableName: USERS_TABLE_NAME,
+      Key: { id: earlyUser.id },
+      UpdateExpression: `
+        SET #group = :groupid, #hiddenGroup = :groupid
+        REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+        `,
+      ExpressionAttributeNames: {
+        '#group': 'group',
+        '#hiddenGroup': 'hiddenGroup',
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
+      },
+      ExpressionAttributeValues: {
+        ':groupid': group.id
+      }
+    })
+    promises.push(dynamoDBDocumentClient.send(updateEarlyUserCommand))
+  }
+
+  const allUsers = earlyUsers.concat(otherUsers)
+  const allUsersMap = {}
+  allUsers.forEach((loopUser) => {
+    allUsersMap[loopUser.id] = {
+      id: loopUser.id,
+      isActive: typeof loopUser.connectionId !== 'undefined'
+    }
+  })
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: allUsers,
+      message: {
+        action: 'joingroup',
+        groupid: group.id,
+        users: allUsersMap
+      }
+    })
+  })
+  promises.push(snsClient.send(publishSendMessageCommand))
+
+  const publishEarlyUsersSendNotificationCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: earlyUsers,
+      notification: {
+        title: 'Viens te présenter 🥳',
+        body: 'Je viens de te trouver un groupe !'
+      }
+    })
+  })
+  promises.push(snsClient.send(publishEarlyUsersSendNotificationCommand))
+
+  if (otherUsers.length > 0) {
+    const publishOtherUsersNotificationCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: otherUsers,
+        notification: {
+          title: "Y'a du nouveaux 🥳",
+          body: "Quelqu'un arrive dans le groupe !"
+        }
+      })
+    })
+    promises.push(snsClient.send(publishOtherUsersNotificationCommand))
+  }
 
   return Promise.allSettled(promises).then(results => (console.log(results)))
 }
