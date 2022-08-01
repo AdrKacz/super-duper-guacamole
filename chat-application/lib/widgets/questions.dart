@@ -91,51 +91,71 @@ class QuestionsLoader extends StatefulWidget {
 }
 
 class _QuestionsLoaderState extends State<QuestionsLoader> {
-  late Future<Map<String, Object>> object;
+  late Future<Map> object;
+
+  Future<Map> readQuestionTree() async {
+    http.Response response = await http.get(Uri.parse(
+        'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/206-entrer-sa-localisation/questions/fr-2.yaml'));
+
+    if (response.body.isEmpty) {
+      return {};
+    }
+
+    final YamlMap yamlMap = loadYaml(response.body);
+
+    if (yamlMap['nodes'] is! YamlList) {
+      return {};
+    }
+
+    final Map questionTree = {};
+
+    for (final Map node in yamlMap['nodes']) {
+      final String? id = node['id'];
+      final String? text = node['text'];
+      final YamlList? answers = node['aswers'];
+
+      if (id is! String || text is! String || answers is! YamlList) {
+        continue;
+      }
+
+      final Map answersMap = {};
+      for (final YamlMap answer in answers) {
+        final String? answerId = answer['id'];
+        final String? answerText = answer['text'];
+        final String? next = answer['next'];
+
+        if (answerId is! String || answerText is! String) {
+          continue;
+        }
+
+        answersMap[answerId] = {
+          'id': answerId,
+          'text': answerText,
+          'next': next,
+        };
+      }
+      if (answersMap.isEmpty) {
+        continue;
+      }
+
+      questionTree[id] = {
+        'id': id,
+        'text': text,
+        'answers': answersMap,
+      };
+    }
+
+    if (questionTree.isEmpty) {
+      return {};
+    }
+
+    return questionTree;
+  }
 
   @override
   void initState() {
     super.initState();
-    object = http
-        .get(Uri.parse(
-            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml'))
-        .then((http.Response value) {
-      String body = value.body;
-      final Map<String, String> selectedAnswers = loadSelectedAnswers();
-      final List<Map> questions = [];
-      final YamlMap yaml = loadYaml(body);
-      if (yaml['questions'] is YamlList) {
-        int index = 0;
-        for (final Map question in yaml['questions']) {
-          // verify question is correctly formatted
-          final String? id = question['id'];
-          final String? q = question['question'];
-          final YamlList? answers = question['answers'];
-
-          if (id != null && q != null && answers != null) {
-            final List<Map<String, String>> a = [];
-            for (final element in answers) {
-              // only use correctly formatted answers
-              if (element is YamlMap) {
-                final String? elementId = element['id'];
-                final String? elementAnswer = element['answer'];
-                if (elementId != null && elementAnswer != null) {
-                  a.add({'id': elementId, 'answer': elementAnswer});
-                }
-              }
-            }
-            if (a.isNotEmpty) {
-              // don't add a question if there is no answers associated
-              questions
-                  .add({'id': id, 'index': index, 'question': q, 'answers': a});
-              index += 1;
-            }
-          }
-        }
-      }
-
-      return {'selectedAnswers': selectedAnswers, 'questions': questions};
-    });
+    object = readQuestionTree();
   }
 
   @override
