@@ -32,25 +32,19 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
 
   status ??= types.Status.delivered;
 
-  switch (author) {
-    case '0':
-      print('Decode text from main: $text');
-      return null;
-    default:
-      if (int.tryParse(data[1]) != null) {
-        return types.TextMessage(
-          status: status,
-          author: types.User(
-              id: author,
-              imageUrl: 'https://avatars.dicebear.com/api/bottts/$author.png'),
-          createdAt: int.parse(createdAt),
-          id: id,
-          text: text,
-        );
-      } else {
-        print('Date is not integer: $createdAt');
-        return null;
-      }
+  if (int.tryParse(data[1]) != null) {
+    return types.TextMessage(
+      status: status,
+      author: types.User(
+          id: author,
+          imageUrl: 'https://avatars.dicebear.com/api/bottts/$author.png'),
+      createdAt: int.parse(createdAt),
+      id: id,
+      text: text,
+    );
+  } else {
+    // date is not an integer
+    return null;
   }
 }
 

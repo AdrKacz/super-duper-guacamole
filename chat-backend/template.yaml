@@ -121,6 +121,7 @@ Resources:
               - "users"
               - "questions"
               - "bannedUsers"
+              - "isOpen"
             ProjectionType: "INCLUDE"
 
   # Web Socket

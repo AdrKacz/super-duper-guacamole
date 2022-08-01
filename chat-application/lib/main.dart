@@ -81,7 +81,7 @@ class _MyAppState extends State<MyApp> {
                 });
               }
             default:
-              print('Unknown state ${status.name}');
+              // unknown state (see status.name)
               return const Placeholder();
           }
         },

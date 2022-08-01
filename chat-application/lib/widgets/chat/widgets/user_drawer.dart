@@ -126,7 +126,7 @@ class Credits extends StatefulWidget {
   const Credits({Key? key}) : super(key: key);
 
   @override
-  _CreditsState createState() => _CreditsState();
+  State<Credits> createState() => _CreditsState();
 }
 
 class _CreditsState extends State<Credits> {

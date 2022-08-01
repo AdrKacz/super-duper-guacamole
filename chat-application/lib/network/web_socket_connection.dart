@@ -16,12 +16,12 @@ class WebSocketConnection {
   Stream<dynamic> get stream => _channel.stream;
 
   WebSocketConnection() {
-    print('Init WebSocket');
+    // init web socket
     reconnect();
   }
 
   void register() {
-    print('Send action register');
+    // send action register
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
@@ -35,7 +35,7 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    print('Send action switchgroup');
+    // send action switchgroup
     _channel.sink.add(jsonEncode({
       'action': 'switchgroup',
       'questions': loadSelectedAnswers(),
@@ -44,7 +44,7 @@ class WebSocketConnection {
   }
 
   void textmessage(String encodedMessage) {
-    print('Send action textmessage');
+    // send action textmessage
     _channel.sink.add(jsonEncode({
       'action': 'textmessage',
       'message': encodedMessage,
@@ -52,7 +52,7 @@ class WebSocketConnection {
   }
 
   void banrequest(String userid, String messageid) {
-    print('Send action banrequest');
+    // send action banrequest
     _channel.sink.add(jsonEncode({
       'action': 'banrequest',
       'bannedid': userid,
@@ -61,7 +61,7 @@ class WebSocketConnection {
   }
 
   void banreply(String banneduserid, String status) {
-    print('Send action banreply');
+    // send action banreply
     _channel.sink.add(jsonEncode({
       'action': 'banreply',
       'bannedid': banneduserid,
@@ -70,12 +70,12 @@ class WebSocketConnection {
   }
 
   void reconnect() {
-    print('Reconnect WebSocket');
+    // reconnect web socket
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 
   void close() {
-    print('Close WebSocket');
+    // close web socket
     _channel.sink.close();
   }
 }
