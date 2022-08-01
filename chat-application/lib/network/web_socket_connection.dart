@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/pointycastle/helpers.dart';
-import 'package:awachat/widgets/questions.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'package:awachat/store/user.dart';
@@ -35,10 +34,11 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    print('Send action switchgroup');
+    // get answers
+    print('Send action switchgroup: ${Memory().boxAnswers.toMap()}');
     _channel.sink.add(jsonEncode({
       'action': 'switchgroup',
-      'questions': loadSelectedAnswers(),
+      'questions': Memory().boxAnswers.toMap(),
       'blockedUsers': Memory().getBlockedUsers()
     }));
   }

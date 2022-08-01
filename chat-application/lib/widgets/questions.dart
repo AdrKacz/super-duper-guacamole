@@ -69,20 +69,6 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
 // ===== ===== =====
 // Questions Loader
 
-Map<String, String> loadSelectedAnswers() {
-  final Map<String, String> selectedAnswers = {};
-  final String? encodedSelectedAnswers = Memory().get('user', 'questions');
-  if (encodedSelectedAnswers != null) {
-    encodedSelectedAnswers.split('::').forEach((element) {
-      List<String> mapEntry = element.split(':');
-      if (mapEntry.length == 2) {
-        selectedAnswers[mapEntry[0]] = mapEntry[1];
-      }
-    });
-  }
-  return selectedAnswers;
-}
-
 class QuestionsLoader extends StatefulWidget {
   const QuestionsLoader({Key? key}) : super(key: key);
 
@@ -165,9 +151,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         future: object,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Questions(
-                loadedSelectedAnswer: loadSelectedAnswers(),
-                questionTree: snapshot.data);
+            return Questions(questionTree: snapshot.data);
           }
 
           return const Loader();
@@ -179,13 +163,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
 // Questions
 class Questions extends StatefulWidget {
-  const Questions(
-      {Key? key,
-      required this.loadedSelectedAnswer,
-      required this.questionTree})
-      : super(key: key);
+  const Questions({Key? key, required this.questionTree}) : super(key: key);
 
-  final Map<String, String> loadedSelectedAnswer;
   final Map questionTree;
 
   @override
@@ -193,62 +172,52 @@ class Questions extends StatefulWidget {
 }
 
 class _QuestionsState extends State<Questions> {
-  late Map<String, String> selectedAnswers;
   bool isConfirmed = false;
 
-  String pageId = '1';
-  bool isPressed = false;
+  List<String> pages = ['1'];
+  final PageController controller = PageController();
 
-  void saveSelectedAnswers() {
-    Memory().put(
-        'user',
-        'questions',
-        selectedAnswers.entries.map((MapEntry selectedAnswer) {
-          return '${selectedAnswer.key}:${selectedAnswer.value}';
-        }).join('::'));
+  void createNextPage(String pageId, String answerId) {
+    final String? nextPageId =
+        widget.questionTree[pageId]['answers'][answerId]['next'];
+
+    setState(() {
+      pages.add(nextPageId ?? 'end');
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    selectedAnswers = Map.from(widget.loadedSelectedAnswer);
   }
 
   @override
   Widget build(BuildContext context) {
-    final PageController controller = PageController();
     return PageView.builder(
+      itemCount: pages.length,
       physics: const NeverScrollableScrollPhysics(parent: PageScrollPhysics()),
       controller: controller,
       itemBuilder: (BuildContext context, int index) {
+        String pageId = pages[index];
+        if (pageId == 'end') {
+          return const Text('End');
+        }
+
         return Question(
           question: widget.questionTree[pageId],
-          selectedAnswer: selectedAnswers[pageId],
-          onNext: () {
-            final String? nextPageId = widget.questionTree[pageId]['answers']
-                [selectedAnswers[pageId]]['next'];
-
-            if (nextPageId == null) {
+          onPressed: (String answerId) {
+            if (Memory().boxAnswers.get(pageId) == answerId) {
+              Memory().boxAnswers.delete(pageId);
             } else {
-              pageId = nextPageId;
-              isPressed = false;
-              controller.nextPage(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut);
+              Memory().boxAnswers.put(pageId, answerId);
+              Future.delayed(const Duration(milliseconds: 250), () {
+                createNextPage(pageId, answerId);
+                controller.nextPage(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut);
+              });
             }
-          },
-          onPressed: (String id) {
-            if (isPressed) {
-              return false;
-            }
-            isPressed = true;
-            if (selectedAnswers[pageId] == id) {
-              selectedAnswers.remove(pageId);
-              return false;
-            } else {
-              selectedAnswers[pageId] = id;
-              return true;
-            }
+            setState(() {});
           },
         );
       },
@@ -261,21 +230,18 @@ class Question extends StatelessWidget {
   const Question({
     Key? key,
     required this.question,
-    this.selectedAnswer,
     required this.onPressed,
-    required this.onNext,
   }) : super(key: key);
 
   final Map question;
-  final String? selectedAnswer;
   final Function onPressed;
-  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
+    final String? currentAnswer = Memory().boxAnswers.get(question['id']);
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             Text(
@@ -293,7 +259,7 @@ class Question extends StatelessWidget {
                     .map((answer) => (Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: ElevatedButton(
-                            style: answer.value['id'] == selectedAnswer
+                            style: answer.value['id'] == currentAnswer
                                 ? ElevatedButton.styleFrom(
                                     minimumSize: const Size.fromHeight(100),
                                   )
@@ -306,10 +272,7 @@ class Question extends StatelessWidget {
                                         .onSecondary,
                                   ),
                             onPressed: () {
-                              if (onPressed(answer.value['id'])) {
-                                Future.delayed(
-                                    const Duration(milliseconds: 250), onNext);
-                              }
+                              onPressed(answer.value['id']);
                             },
                             child: Text(
                               answer.value['text'],

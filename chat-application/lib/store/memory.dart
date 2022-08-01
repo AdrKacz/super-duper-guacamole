@@ -5,6 +5,7 @@ import 'package:awachat/message.dart';
 
 class Memory {
   late final Box<String> boxUser;
+  late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
   late final LazyBox<Map> lazyBoxGroupUsers;
@@ -24,6 +25,7 @@ class Memory {
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
     boxMessages = await Hive.openBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
+    boxAnswers = await Hive.openBox<String>('answers');
     rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
   }
 
@@ -47,6 +49,7 @@ class Memory {
   Future<void> clear() async {
     await Future.wait([
       boxUser.clear(),
+      boxAnswers.clear(),
       boxMessages.clear(),
       boxBlockedUsers.clear(),
       lazyBoxGroupUsers.clear(),
