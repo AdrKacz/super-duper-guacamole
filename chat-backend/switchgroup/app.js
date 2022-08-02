@@ -17,11 +17,6 @@
 // isBan : Bool? - is user banned from its old group (false by default)
 
 // ===== ==== ====
-// TODO
-// Remove group from user and only add it when the group become visible
-// If not, you send the new group to the user on register but the user isn't supposed to be aware of it
-
-// ===== ==== ====
 // NOTE
 // MINIMUM_GROUP_SIZE
 // It is better to not have MINIMUM_GROUP_SIZE too small.
@@ -40,20 +35,6 @@
 // BAN
 // On a ban, BAN_FUNCTION doesn't send user questions because they are not stored.
 // For now, I just considered a banned user as an user who hasn't answer any question.
-
-// CHOOSE GROUP LOGIC
-// the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
-// We must check that answers indeed have a greater impact on group than order of arrival.
-// If not that means that we are still quite randomly assigning groups.
-// ----- ----- -----
-// We could add ENV VARIABLE for more fine grained controls.
-// For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
-// ----- ----- -----
-// We may want to shuffle the order in which we loop through the groups to have different result
-// on each run, for different user
-// (there is NO order in the Query, it is "first found first returned")
-// (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
-// (thus, the order being similar too)
 
 // ===== ==== ====
 // IMPORTS
@@ -104,7 +85,7 @@ ${event.Records[0].Sns.Message}
 
   const id = body.id
   const questions = body.questions ?? {}
-  const blockedUsers = body.blockedUsers ?? []
+  const blockedUsersSet = new Set(body.blockedUsers ?? [])
   const isBan = body.isBan ?? false
 
   if (typeof id === 'undefined') {
@@ -115,16 +96,18 @@ ${event.Records[0].Sns.Message}
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },
-    ProjectionExpression: '#id, #group, #connectionId, #firebaseToken',
+    ProjectionExpression: '#id, #group, #hiddenGroup, #connectionId, #firebaseToken',
     ExpressionAttributeNames: {
       '#id': 'id',
       '#group': 'group',
+      '#hiddenGroup': 'hiddenGroup',
       '#connectionId': 'connectionId',
       '#firebaseToken': 'firebaseToken'
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
   console.log('user:', user)
+  user.group = user.group ?? user.hiddenGroup // if change group while still waiting
 
   if (typeof user === 'undefined') {
     console.log(`user <${id}> doesn't exist`)
@@ -133,8 +116,52 @@ ${event.Records[0].Sns.Message}
     }
   }
 
-  // query a new group (query doesn't work without a KeyConditionExpression, use scan instead)
-  // TODO: use a sort index to query only the waiting ones faster, skipcq: JS-0099
+  const promises = [
+    findGroupToUser(user, blockedUsersSet, questions).then(
+      (newGroup) => (addUserToGroup(user, newGroup))
+    ),
+    removeUserFromGroup(user, isBan)
+  ]
+
+  await Promise.allSettled(promises).then(results => (console.log(`main - ${JSON.stringify(results)}`)))
+  return {
+    statusCode: 200
+  }
+}
+
+// ===== ==== ====
+// HELPERS
+
+/**
+ * Returns a new group for user.
+ *
+ * @param {Object} user
+ * @param {string} user.id - id
+ * @param {string} [user.group] - current group id
+ *
+ * @param {Set.<string>} [blockedUsersSet] - blocked user ids
+ * @param {string[]} [questions] - answers to the questions
+ *
+ * @return {Promise<{id: string, users: ?Set.<string>, bannedUsers: ?Set.<string>, isOpen: ?boolean, isWaiting: ?number, questions: ?Object.<string, string>}>}
+ *
+ * the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
+ * We must check that answers indeed have a greater impact on group than order of arrival.
+ * If not that means that we are still quite randomly assigning groups.
+ *
+ * We could add ENV VARIABLE for more fine grained controls.
+ * For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
+ *
+ * We may want to shuffle the order in which we loop through the groups to have different result
+ * on each run, for different user
+ * (there is NO order in the Query, it is "first found first returned")
+ * (however, getting that the query is similar, we could imagine that the processed time will be similar for each item too)
+ * (thus, the order being similar too)
+ */
+async function findGroupToUser (user, blockedUsersSet = new Set(), questions = []) {
+  // set default value
+  user.group = user.group ?? ''
+
+  // get available group
   const queryCommand = new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_WAINTING_ID_INDEX_NAME,
@@ -147,103 +174,88 @@ ${event.Records[0].Sns.Message}
     }
   })
 
-  // NOTE: the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
-  // We must check that answers indeed have a greater impact on group than order of arrival.
-  // If not that means that we are still quite randomly assigning groups.
+  const queryResponse = await dynamoDBDocumentClient.send(queryCommand)
+  console.log(`query groups ${JSON.stringify(queryResponse)}`)
 
-  // NOTE: We could add ENV VARIABLE for more fine grained controls.
-  // For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
+  let maximumOfSimilarity = -1
+  let chosenGroup = null
 
-  // NOTE: We may want to shuffle the order in which we loop through the groups to have different result
-  // on each run, for different user
-  // (there is NO order in the Query, it is "first found first returned")
-  // (however, getting that the query is simlar, we could imagine that the processed time will be similar for each item too)
-  // (thus, the order being similar too)
-  const newGroup = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    if (response.Count > 0) {
-      let maximumOfSimilarity = -1
-      let chosenGroup = null
-
-      /* eslint no-labels: ["error", { "allowLoop": true }] */
-      checkGroup: for (const group of response.Items) {
-        console.log(`check group ${JSON.stringify(group)}`)
-        // Check this group is valid
-        if (group.id === user.group) {
-          console.log(`group ${group.id} already has ${user.id}`)
-          continue
-        }
-
-        // Is user banned from group
-        group.bannedUsers = group.bannedUsers ?? new Set()
-        if (group.bannedUsers.has(user.id)) {
-          console.log(`group ${group.id} has banned user ${user.id}`)
-          continue
-        }
-
-        // Is a blocked user in the group
-        for (const blockedUser of blockedUsers) {
-          console.log(`check ${blockedUser}`)
-          // add blocked user to forbidden user
-          group.bannedUsers.add(blockedUser)
-          // check blocked user not in group
-          if (group.users.has(blockedUser)) {
-            console.log(`group ${group.id} has blocked user ${blockedUser}`)
-            continue checkGroup
-          }
-        }
-
-        let similarity = 0
-        // iterate accross the smallest
-        const groupQuestions = group.questions ?? {}
-        if (groupQuestions.size < questions.size) {
-          for (const [key, value] of Object.entries(groupQuestions)) {
-            if (questions[key] === value) {
-              similarity += 1
-            }
-          }
-        } else {
-          for (const [key, value] of Object.entries(questions)) {
-            if (groupQuestions[key] === value) {
-              similarity += 1
-            }
-          }
-        }
-        if (similarity > maximumOfSimilarity) {
-          chosenGroup = Object.assign({}, group)
-          maximumOfSimilarity = similarity
-        }
-      }
-
-      if (chosenGroup !== null) {
-        console.log(`select group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
-        return chosenGroup
-      }
+  for (const group of queryResponse.Items) {
+    console.log(`check group ${JSON.stringify(group)}`)
+    console.log('with users')
+    console.log(group.users)
+    // add blocked users to banned users
+    for (const blockedUser of blockedUsersSet) {
+      group.bannedUsers.add(blockedUser)
+    }
+    if (!isGroupValid(user, group)) {
+      console.log(`group ${group.id} not valid for user ${JSON.stringify(user)}`)
+      continue
     }
 
-    console.log('create a new group')
-    return {
-      id: uuidv4(),
-      isWaiting: 1,
-      users: new Set(),
-      bannedUsers: new Set(blockedUsers), // add forbidden users
-      questions
+    let similarity = 0
+    // iterate accross the smallest
+    const groupQuestions = group.questions ?? {}
+    if (groupQuestions.size < questions.size) {
+      for (const [key, value] of Object.entries(groupQuestions)) {
+        if (questions[key] === value) {
+          similarity += 1
+        }
+      }
+    } else {
+      for (const [key, value] of Object.entries(questions)) {
+        if (groupQuestions[key] === value) {
+          similarity += 1
+        }
+      }
     }
-  })
+    if (similarity > maximumOfSimilarity) {
+      chosenGroup = Object.assign({}, group)
+      maximumOfSimilarity = similarity
+    }
+  }
 
-  const promises = [
-    addUserToGroup(user, newGroup),
-    removeUserFromGroup(user, isBan)
-  ]
+  if (chosenGroup !== null) {
+    console.log(`chose group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
+    return chosenGroup
+  }
 
-  await Promise.allSettled(promises).then((results) => console.log(JSON.stringify(results)))
+  console.log('create new group')
   return {
-    statusCode: 200
+    id: uuidv4(),
+    isWaiting: 1,
+    users: new Set(),
+    bannedUsers: blockedUsersSet, // add forbidden users
+    questions
   }
 }
 
-// ===== ==== ====
-// HELPERS
-async function addUserToGroup (user, newGroup) {
+function isGroupValid (user, group) {
+  // Check this group is valid
+  if (group.id === user.group) {
+    console.log(`group ${group.id} already has ${user.id}`)
+    return false
+  }
+
+  // Is user banned from group
+  group.bannedUsers = group.bannedUsers ?? new Set()
+  if (group.bannedUsers.has(user.id)) {
+    console.log(`group ${group.id} has banned user ${user.id}`)
+    return false
+  }
+
+  // Is an user in the updated group banned users
+  for (const groupUser of group.users) {
+    if (group.bannedUsers.has(groupUser)) {
+      console.log(`group ${group.id} has blocked user ${groupUser}`)
+      return false
+    }
+  }
+
+  return true
+}
+
+function addUserToGroup (user, newGroup) {
   // Add user to a new group
   // user : Map
   //    id : String - user id
@@ -260,112 +272,36 @@ async function addUserToGroup (user, newGroup) {
   newGroup.users.add(user.id) // simulate add user id (will be added -for real- below)
   console.log(`put user <${user.id}> in group ${JSON.stringify(newGroup)}`)
 
-  // update user
-  const updateUserCommand = new UpdateCommand({
-    TableName: USERS_TABLE_NAME,
-    Key: { id: user.id },
-    UpdateExpression: `
-    SET #group = :groupid
-    REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
-    `,
-    ExpressionAttributeNames: {
-      '#group': 'group',
-      '#unreadData': 'unreadData',
-      '#banConfirmedUsers': 'banConfirmedUsers',
-      '#banVotingUsers': 'banVotingUsers',
-      '#confirmationRequired': 'confirmationRequired'
-    },
-    ExpressionAttributeValues: {
-      ':groupid': newGroup.id
-    }
-  })
-  const promises = [dynamoDBDocumentClient.send(updateUserCommand).then((response) => (response.Attributes))]
+  const promises = []
 
   // update new group
   if (newGroup.users.size >= MINIMUM_GROUP_SIZE) {
-    // alert user(s)
-    // early users are user not notified of the group yet
-    const earlyUsers = [user]
-    const isFirstTime = newGroup.users.size === MINIMUM_GROUP_SIZE
-    const usersIds = Array.from(newGroup.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
-    const otherUsers = []
-    // happens only once when group becomes active for the first time
-    if (usersIds.length > 0) {
-      newGroup.users.delete(user.id) // remove id, already fetched
-      const batchGetOtherUsers = new BatchGetCommand({
-        RequestItems: {
-          [USERS_TABLE_NAME]: {
-            Keys: usersIds,
-            ProjectionExpression: '#id, #connectionId, #firebaseToken',
-            ExpressionAttributeNames: {
-              '#id': 'id',
-              '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken'
-            }
-          }
-        }
-      })
-      newGroup.users.add(user.id)
-
-      await dynamoDBDocumentClient.send(batchGetOtherUsers).then((response) => (response.Responses[USERS_TABLE_NAME])).then((users) => {
-        for (const u of users) {
-          if (isFirstTime) {
-            earlyUsers.push(u)
-          } else {
-            otherUsers.push(u)
-          }
-        }
-      })
-    }
-    console.log('early users:', earlyUsers)
-    console.log('other users:', otherUsers)
-    const allUsers = earlyUsers.concat(otherUsers)
-    const allUsersMap = {}
-    allUsers.forEach((loopUser) => {
-      allUsersMap[loopUser.id] = {
-        id: loopUser.id,
-        isActive: typeof loopUser.connectionId !== 'undefined'
+    promises.push(updateOpenedGroup(user, newGroup))
+  } else {
+    // hide group id
+    // update user
+    const updateUserCommand = new UpdateCommand({
+      TableName: USERS_TABLE_NAME,
+      Key: { id: user.id },
+      UpdateExpression: `
+      SET #hiddenGroup = :groupid
+      REMOVE #group, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+      `,
+      ExpressionAttributeNames: {
+        '#group': 'group',
+        '#hiddenGroup': 'hiddenGroup',
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
+      },
+      ExpressionAttributeValues: {
+        ':groupid': newGroup.id
       }
     })
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: allUsers,
-        message: {
-          action: 'joingroup',
-          groupid: newGroup.id,
-          users: allUsersMap
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
-
-    const publishEarlyUsersSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: earlyUsers,
-        notification: {
-          title: 'Viens te présenter 🥳',
-          body: 'Je viens de te trouver un groupe !'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishEarlyUsersSendNotificationCommand))
-
-    if (otherUsers.length > 0) {
-      const publishOtherUsersNotificationCommand = new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers,
-          notification: {
-            title: "Y'a du nouveaux 🥳",
-            body: "Quelqu'un arrive dans le groupe !"
-          }
-        })
-      })
-      promises.push(snsClient.send(publishOtherUsersNotificationCommand))
-    }
+    promises.push(dynamoDBDocumentClient.send(updateUserCommand))
   }
+
   if (newGroup.users.size >= MAXIMUM_GROUP_SIZE) {
     newGroup.isWaiting = 0 // false
   }
@@ -380,6 +316,7 @@ async function addUserToGroup (user, newGroup) {
     ':isWaiting': newGroup.isWaiting,
     ':questions': newGroup.questions
   }
+
   if (newGroup.bannedUsers.size > 0) {
     expressionAttributeNames['#bannedUsers'] = 'bannedUsers'
     expressionAttributeValues[':bannedUsers'] = newGroup.bannedUsers
@@ -397,7 +334,116 @@ async function addUserToGroup (user, newGroup) {
   })
   promises.push(dynamoDBDocumentClient.send(updateNewGroupCommand).then((response) => (response.Attributes)))
 
-  return Promise.allSettled(promises).then(results => (console.log(results)))
+  return Promise.allSettled(promises).then(results => (console.log(`addUserToGroup - ${JSON.stringify(results)}`)))
+}
+
+async function updateOpenedGroup (user, group) {
+  // alert user(s)
+  // early users are user not notified of the group yet
+  const earlyUsers = [user]
+  const isFirstTime = group.users.size === MINIMUM_GROUP_SIZE
+  const usersIds = Array.from(group.users).filter((id) => (id !== user.id)).map((id) => ({ id }))
+  const otherUsers = []
+
+  const promises = []
+
+  if (usersIds.length > 0) {
+    const batchGetOtherUsers = new BatchGetCommand({
+      RequestItems: {
+        [USERS_TABLE_NAME]: {
+          Keys: usersIds,
+          ProjectionExpression: '#id, #connectionId, #firebaseToken',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#connectionId': 'connectionId',
+            '#firebaseToken': 'firebaseToken'
+          }
+        }
+      }
+    })
+
+    const batchGetOtherUsersResponse = await dynamoDBDocumentClient.send(batchGetOtherUsers)
+    if (isFirstTime) {
+      earlyUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
+    } else {
+      otherUsers.push(...batchGetOtherUsersResponse.Responses[USERS_TABLE_NAME])
+    }
+  }
+  console.log('early users:', earlyUsers)
+  console.log('other users:', otherUsers)
+
+  // update early user group
+  for (const earlyUser of earlyUsers) {
+    const updateEarlyUserCommand = new UpdateCommand({
+      TableName: USERS_TABLE_NAME,
+      Key: { id: earlyUser.id },
+      UpdateExpression: `
+        SET #group = :groupid, #hiddenGroup = :groupid
+        REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+        `,
+      ExpressionAttributeNames: {
+        '#group': 'group',
+        '#hiddenGroup': 'hiddenGroup',
+        '#unreadData': 'unreadData',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#banVotingUsers': 'banVotingUsers',
+        '#confirmationRequired': 'confirmationRequired'
+      },
+      ExpressionAttributeValues: {
+        ':groupid': group.id
+      }
+    })
+    promises.push(dynamoDBDocumentClient.send(updateEarlyUserCommand))
+  }
+
+  const allUsers = earlyUsers.concat(otherUsers)
+  const allUsersMap = {}
+  allUsers.forEach((loopUser) => {
+    allUsersMap[loopUser.id] = {
+      id: loopUser.id,
+      isActive: typeof loopUser.connectionId !== 'undefined'
+    }
+  })
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: allUsers,
+      message: {
+        action: 'joingroup',
+        groupid: group.id,
+        users: allUsersMap
+      }
+    })
+  })
+  promises.push(snsClient.send(publishSendMessageCommand))
+
+  const publishEarlyUsersSendNotificationCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: earlyUsers,
+      notification: {
+        title: 'Viens te présenter 🥳',
+        body: 'Je viens de te trouver un groupe !'
+      }
+    })
+  })
+  promises.push(snsClient.send(publishEarlyUsersSendNotificationCommand))
+
+  if (otherUsers.length > 0) {
+    const publishOtherUsersNotificationCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: otherUsers,
+        notification: {
+          title: "Y'a du nouveaux 🥳",
+          body: "Quelqu'un arrive dans le groupe !"
+        }
+      })
+    })
+    promises.push(snsClient.send(publishOtherUsersNotificationCommand))
+  }
+
+  return Promise.allSettled(promises).then(results => (console.log(`updateOpenedGroup - ${JSON.stringify(results)}`)))
 }
 
 async function removeUserFromGroup (user, isBan) {
@@ -407,8 +453,8 @@ async function removeUserFromGroup (user, isBan) {
   //    group : String - user group id
   //    connectionId : String - user connection id
   //    firebaseToken : String - user firebase token
-
-  if (typeof user.group === 'undefined') {
+  console.log(`remove user ${JSON.stringify(user)}`)
+  if (typeof user.group === 'undefined' || user.group === '') {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -421,7 +467,7 @@ async function removeUserFromGroup (user, isBan) {
     })
     return snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
   }
-
+  console.log(`user is in group ${user.group}, ${typeof user.group}`)
   // retreive group (needed to count its users)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -523,7 +569,7 @@ async function removeUserFromGroup (user, isBan) {
     promises.push(snsClient.send(publishSendMessageCommand))
 
     // NOTE: can send notification too
-    return Promise.allSettled(promises)
+    return Promise.allSettled(promises).then(results => (console.log(`removeUserFromGroup - ${JSON.stringify(results)}`)))
   }
   return Promise.resolve()
 }
