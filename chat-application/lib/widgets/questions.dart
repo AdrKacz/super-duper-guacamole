@@ -46,10 +46,7 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                     height: 12,
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      Memory().put('user', 'questions', '');
-                      onConfirmed();
-                    },
+                    onPressed: onConfirmed,
                     style: ElevatedButton.styleFrom(
                       primary: Theme.of(context).colorScheme.secondary,
                       onPrimary: Theme.of(context).colorScheme.onSecondary,
@@ -95,6 +92,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
     final Map questionTree = {};
 
+    String? root;
+
     for (final Map node in yamlMap['nodes']) {
       final String? id = node['id'];
       final String? text = node['text'];
@@ -103,6 +102,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
       if (id is! String || text is! String || answers is! YamlList) {
         continue;
       }
+
+      root = root ?? id;
 
       final Map answersMap = {};
       for (final YamlMap answer in answers) {
@@ -135,13 +136,24 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
       return {};
     }
 
-    return questionTree;
+    return {'questionTree': questionTree, 'root': root};
   }
 
   @override
   void initState() {
     super.initState();
+
+    // read question
     object = readQuestionTree();
+
+    // de-actualise answer (remove "_" marker)
+    for (String key in Memory().boxAnswers.keys) {
+      final String? answer = Memory().boxAnswers.get(key);
+      if (answer == null) {
+        continue;
+      }
+      Memory().boxAnswers.put(key, Memory().unmarkedAnswer(answer));
+    }
   }
 
   @override
@@ -151,7 +163,9 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         future: object,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Questions(questionTree: snapshot.data);
+            return Questions(
+                questionTree: snapshot.data['questionTree'],
+                root: snapshot.data['root']);
           }
 
           return const Loader();
@@ -163,9 +177,11 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
 // Questions
 class Questions extends StatefulWidget {
-  const Questions({Key? key, required this.questionTree}) : super(key: key);
+  const Questions({Key? key, required this.questionTree, required this.root})
+      : super(key: key);
 
   final Map questionTree;
+  final String? root;
 
   @override
   State<Questions> createState() => _QuestionsState();
@@ -174,7 +190,7 @@ class Questions extends StatefulWidget {
 class _QuestionsState extends State<Questions> {
   bool isConfirmed = false;
 
-  List<String> pages = ['1'];
+  List<String> pages = [];
   final PageController controller = PageController();
 
   void createNextPage(String pageId, String answerId) {
@@ -189,6 +205,7 @@ class _QuestionsState extends State<Questions> {
   @override
   void initState() {
     super.initState();
+    pages.add(widget.root ?? 'end');
   }
 
   @override
@@ -206,10 +223,10 @@ class _QuestionsState extends State<Questions> {
         return Question(
           question: widget.questionTree[pageId],
           onPressed: (String answerId) {
-            if (Memory().boxAnswers.get(pageId) == answerId) {
+            if (Memory().getUnmarkedAnswer(pageId) == answerId) {
               Memory().boxAnswers.delete(pageId);
             } else {
-              Memory().boxAnswers.put(pageId, answerId);
+              Memory().boxAnswers.put(pageId, Memory().markedAnswer(answerId));
               Future.delayed(const Duration(milliseconds: 250), () {
                 createNextPage(pageId, answerId);
                 controller.nextPage(
@@ -238,7 +255,7 @@ class Question extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? currentAnswer = Memory().boxAnswers.get(question['id']);
+    final String? currentAnswer = Memory().getUnmarkedAnswer(question['id']);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),

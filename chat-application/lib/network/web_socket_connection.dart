@@ -15,12 +15,12 @@ class WebSocketConnection {
   Stream<dynamic> get stream => _channel.stream;
 
   WebSocketConnection() {
-    print('Init WebSocket');
+    // init websocket
     reconnect();
   }
 
   void register() {
-    print('Send action register');
+    // send action register
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
@@ -34,17 +34,24 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    // get answers
-    print('Send action switchgroup: ${Memory().boxAnswers.toMap()}');
+    // get relevant answers
+    final answersMap = Memory().boxAnswers.toMap();
+    answersMap.removeWhere((_, answer) => !Memory().isAnswerMarked(answer));
+    answersMap
+        .updateAll((_, answer) => answer = Memory().unmarkedAnswer(answer));
+    print(
+        'Send answers: $answersMap (original is ${Memory().boxAnswers.toMap()}');
+
+    // send action switchgroup
     _channel.sink.add(jsonEncode({
       'action': 'switchgroup',
-      'questions': Memory().boxAnswers.toMap(),
+      'questions': answersMap,
       'blockedUsers': Memory().getBlockedUsers()
     }));
   }
 
   void textmessage(String encodedMessage) {
-    print('Send action textmessage');
+    // send action textmessage
     _channel.sink.add(jsonEncode({
       'action': 'textmessage',
       'message': encodedMessage,
@@ -52,7 +59,7 @@ class WebSocketConnection {
   }
 
   void banrequest(String userid, String messageid) {
-    print('Send action banrequest');
+    // send action banrequest
     _channel.sink.add(jsonEncode({
       'action': 'banrequest',
       'bannedid': userid,
@@ -61,7 +68,7 @@ class WebSocketConnection {
   }
 
   void banreply(String banneduserid, String status) {
-    print('Send action banreply');
+    // send action banreply
     _channel.sink.add(jsonEncode({
       'action': 'banreply',
       'bannedid': banneduserid,
@@ -70,12 +77,11 @@ class WebSocketConnection {
   }
 
   void reconnect() {
-    print('Reconnect WebSocket');
+    // replace channel with a new connected one
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 
   void close() {
-    print('Close WebSocket');
     _channel.sink.close();
   }
 }
