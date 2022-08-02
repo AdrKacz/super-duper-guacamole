@@ -1,0 +1,5 @@
+Tu peux maintenant swiper vers la gauche pour changer de groupe !
+
+Correction des bugs que vous nous avez signalé:
+- la barre d'état affichait parfois des utilisateurs qui n'étaient en fait pas présent dans le groupe.
+- certains utilisateurs étaient marqués "connectés" alors qu'ils ne l'étaient pas.

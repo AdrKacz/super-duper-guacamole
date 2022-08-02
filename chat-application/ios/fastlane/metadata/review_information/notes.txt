@@ -1,0 +1,24 @@
+Sur Awa, tu seras dans un petit groupe de conversation. Lorsque tu rentres dans l'application, tu vas être mis en attente le temps qu'Awa te trouve un groupe. Plus il y a de monde sur l'application moins ce temps est long.
+
+Awa t'empêche de n'être que 2 au début sur la conversation. Si tu veux commencer à envoyer des messages, il faudra être au moins trois ! (nous avons aussi installé l'application, il est possible que tu tombes sur des groupes où nous sommes déjà présents)
+
+-- -- -- -- -- -- -- -- --
+-- -- -- -- -- -- -- -- --
+-- -- --- CONTEXT -- -- --
+
+We are not a social media platform: users don't post. Therefore, the content you create is not public to anyone on the platform.
+
+Awa sends you to a small conversation group of three to five users when you join the app. You don't choose your conversation group.
+
+We don't store the conversation's messages, so you won't be able to see the previous messages.
+
+You have multiple options if you don't like someone in your group. You can remove messages, ask the group member to ban a user or leave the group. When you ban a user, you will receive a prompt to remove all the messages from the banned user. When you leave a group, you won't be able to interact with this group, and Awa will assign you to a new group.
+When a group become too small (less than three users), Awa stops to send new users to this group and lets the group die. A group dies when everyone leaves it. So groups change quickly. We expect groups to live no more than twenty-four hours.
+
+Only the users in the group with you will see your messages when you send messages. So you know who will see your content and who will send you content.
+
+Awa doesn't send you in a group at random. Instead, we ask you a few questions to find your perfect new friends.
+
+We expect our users to use our app to find new friends. We offer an experience centred around conversations between small groups of users. We think meeting new friends in 1:1 conversation never works and is often oriented toward a sexual or romantic relationship. Users can only send text and don't have a profile picture to avoid all bias or discrimination.
+
+We hope to create a place where you can meet new friends without judgment and total control over your privacy.

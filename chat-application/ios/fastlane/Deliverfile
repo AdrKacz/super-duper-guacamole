@@ -1,0 +1,11 @@
+# The Deliverfile allows you to store various App Store Connect metadata
+# For more information, check out the docs
+# https://docs.fastlane.tools/actions/deliver/
+
+app_identifier("com.awama.awa.dev")
+submit_for_review(true)
+automatic_release(true)
+reset_ratings(false)
+force(true)
+overwrite_screenshots(true)
+precheck_include_in_app_purchases(false)

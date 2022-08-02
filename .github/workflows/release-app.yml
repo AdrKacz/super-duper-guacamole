@@ -1,0 +1,48 @@
+# This workflow take the latest app an submit it for review (to go in production)
+
+name: Release App
+
+# Controls when the workflow will run
+on:
+  workflow_dispatch:
+  schedule:
+    # every Sunday at 12pm UTC (13pm London)
+    - cron: '0 12 * * 0'
+
+jobs:
+  publish-ios-app:
+    name: Publish iOS App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          working-directory: chat-application/ios
+      
+      - name: Publish app to App Store
+        run: bundle exec fastlane publish
+        env:
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+  publish-android-app:
+    name: Publish Android App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          working-directory: chat-application/android
+      
+      - name: Publish app to App Store
+        run: bundle exec fastlane publish
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.SUPPLY_JSON_KEY_DATA }}

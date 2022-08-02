@@ -1,0 +1,1 @@
+Tu peux maintenant swiper vers la gauche pour changer de groupe !
