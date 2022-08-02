@@ -1,0 +1,35 @@
+# node id must never be "end", it is a reserved key-word
+# answer id must never start with "_", it is used internally for logical expression
+nodes:
+  - id: "1"
+    text: "Question 1"
+    answers:
+      - id: "A"
+        next: "1.A"
+        text: "Answer 1.A"
+      - id: "B"
+        next: "1.AB"
+        text: "Answer 1.B"
+      - id: "C"
+        text: "Answer 1.C"
+  - id: "1.A"
+    text: "Question 1.A"
+    answers:
+      - id: "A"
+        next: "1.AB"
+        text: "Answer 1.A.A"
+      - id: "B"
+        next: "1.AB"
+        text: "Answer 1.A.B"
+      - id: "C"
+        next: "1.AB"
+        text: "Answer 1.A.C"
+  - id: "1.AB"
+    text: "Question 1.AB"
+    answers:
+      - id: "A"
+        text: "Answer 1.AB.A"
+      - id: "B"
+        text: "Answer 1.AB.B"
+      - id: "C"
+        text: "Answer 1.AB.C"
