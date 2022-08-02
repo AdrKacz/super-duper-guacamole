@@ -1,5 +1,9 @@
+# node id must never be "end", it is a reserved key-word
+# answer id must never start with "_", it is used internally for logical expression
+# exactly one node must be marked with "isroot: yes"
 nodes:
   - id: "1"
+    isroot: yes
     text: "Question 1"
     answers:
       - id: "A"
