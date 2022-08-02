@@ -188,8 +188,6 @@ class Questions extends StatefulWidget {
 }
 
 class _QuestionsState extends State<Questions> {
-  bool isConfirmed = false;
-
   List<String> pages = [];
   final PageController controller = PageController();
 
@@ -217,7 +215,7 @@ class _QuestionsState extends State<Questions> {
       itemBuilder: (BuildContext context, int index) {
         String pageId = pages[index];
         if (pageId == 'end') {
-          return const Text('End');
+          return const ConfirmPage();
         }
 
         return Question(
@@ -308,16 +306,17 @@ class Question extends StatelessWidget {
 }
 
 // Confirm
-class Confirm extends StatelessWidget {
-  // https://stackoverflow.com/questions/58883067/flutter-custom-animated-icon for button animation
-  const Confirm({
+class ConfirmPage extends StatefulWidget {
+  const ConfirmPage({
     Key? key,
-    required this.isConfirmed,
-    required this.onPressed,
   }) : super(key: key);
 
-  final bool isConfirmed;
-  final VoidCallback onPressed;
+  @override
+  State<ConfirmPage> createState() => _ConfirmPageState();
+}
+
+class _ConfirmPageState extends State<ConfirmPage> {
+  bool isConfirmed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +324,19 @@ class Confirm extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Center(
         child: ElevatedButton(
-          onPressed: onPressed,
+          onPressed: () {
+            if (isConfirmed) {
+              return;
+            }
+
+            setState(() {
+              isConfirmed = true;
+            });
+
+            Future.delayed(const Duration(milliseconds: 250))
+                .then((value) => {Navigator.pop(context)})
+                .then((value) => {showConfirmDialog(context)});
+          },
           style: isConfirmed
               ? ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(100),
