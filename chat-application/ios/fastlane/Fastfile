@@ -1,0 +1,49 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Publish the latest TestFlight version to the App Store"
+  lane :publish do
+    ensure_env_vars(
+      env_vars: ["APP_STORE_CONNECT_API_KEY_KEY_ID", "APP_STORE_CONNECT_API_KEY_ISSUER_ID", "APP_STORE_CONNECT_API_KEY_KEY"]
+    )
+
+    # set api key
+    app_store_connect_api_key
+
+    # get build number 
+    latest_testflight_build_number(
+      app_identifier: "com.awama.awa.dev",
+    )
+
+    app_store_build_number(
+      app_identifier: "com.awama.awa.dev",
+    )
+
+    if lane_context[SharedValues::LATEST_BUILD_NUMBER] >= lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER]
+      puts "Latest version already in App Store"
+      next
+    end
+    puts "I will upload latest TestFlight version to App Store"
+    deliver(
+      build_number: lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER].to_s,
+      submission_information: {
+        add_id_info_uses_idfa: false
+      },
+    )
+  end
+end

@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
 
-enum Status { idle, switchSent, switchAcknowledge, chatting, other }
+enum Status { idle, switchSent, chatting, other }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -34,8 +34,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // Pointer
   bool _isPointerUp =
       false; // set default to "you touch the screen" to not change page by error
-
-  bool _isChangePageLock = false;
 
   // Messages Actions
   late final Map<String, Function> messageActions;
@@ -271,17 +269,15 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
   }
 
-  void switchGroup({bool useSetState = true}) {
+  void switchGroup() {
+    // NOTE: updating the status trigger setState
+    // THAT SHOULDN'T BE THE CASE
+    // For now, so, no need to setState around switchGroup
+    // remove group locally
+    User().groupId = '';
     _webSocketConnection.switchgroup();
-    if (useSetState) {
-      setState(() {
-        items.remove('fake');
-        status = Status.switchSent;
-      });
-    } else {
-      items.remove('fake');
-      status = Status.switchSent;
-    }
+    items = ['real'];
+    status = Status.switchSent;
   }
 
   // ===== ===== =====
@@ -299,36 +295,34 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   bool messageRegister(data) {
     print('\tRegister with state: ${status.name}');
     // connection made
-    // needUpdate cannot be false because connectionState changed
     connectionStatus = ConnectionStatus.connected;
+
+    // needUpdate cannot be false because connectionState changed
+
     // process unread messages
     for (final unreadMessage in data['unreadData']) {
       processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
     }
 
     final String assignedGroupId = data['group'] ?? '';
-    if (assignedGroupId == '') {
-      print("doesn't have a group yet");
+
+    if (status == Status.switchSent && assignedGroupId == '') {
+      // already waiting for a group
+      return true;
+    }
+
+    if (status != Status.switchSent && assignedGroupId == '') {
       // doesn't have a group yet
       NotificationHandler().init();
-      User().groupId = '';
-      switchGroup(useSetState: false);
+      switchGroup();
       _messages.clear();
 
       return true;
     }
 
-    // the second check is to mitigate an error in the backend
-    // the front-end should not receive a group with no user
-    if (User().groupId == '' && (data['groupUsers'] as List).length < 2) {
-      return true;
-    }
-
     // Below, assignedGroupId is not empty
     status = Status.chatting;
-    if (!items.contains('fake')) {
-      items.add('fake');
-    }
+    items = ['real', 'fake'];
 
     if (assignedGroupId != User().groupId) {
       // doesn't have the correct group
@@ -369,7 +363,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       print('\tLeave group: $groupId');
       User().groupId = '';
       _messages.clear();
-      status = Status.switchAcknowledge;
+      status = Status.switchSent;
     } else {
       User().otherGroupUsers.remove(userId);
     }
@@ -389,7 +383,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         _messages.clear(); // in case we receive join before leave
         status = Status.chatting;
         if (!items.contains('fake')) {
-          items.add('fake');
+          items = ['real', 'fake'];
         }
       } else {
         // new users in group
@@ -455,10 +449,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // Widget lifecycle
 
   void changePage(PageController controller) {
-    if (_isChangePageLock) {
-      return;
-    }
-
     if (!_isPointerUp) {
       // don't change page if you touch the screen
       return;
@@ -471,10 +461,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (controller.page! > 0.5) {
       print('Start Change Page');
-      _isChangePageLock = true;
       //TODO: update the time so it fits the end of the animation
       final a = Future.delayed(const Duration(milliseconds: 600), () {
-        if (_isPointerUp && controller.page! > 0.5) {
+        if (_isPointerUp && controller.page! > 0.95) {
           // need to recheck if user manually move the page during the delay
           print('Change Page');
           // Swith Group
@@ -483,7 +472,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           _reverse();
           controller.jumpToPage(0);
         }
-        _isChangePageLock = false;
       });
     }
   }
