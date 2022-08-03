@@ -16,6 +16,8 @@ workflows:
           - 'chat-application/'
         excludes:
           - '**/*.md'
+          - 'chat-application/ios/fastlane/metadata/'
+          - 'chat-application/android/fastlane/metadata/'
     environment:
       groups:
         - keystore_credentials
