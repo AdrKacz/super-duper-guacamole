@@ -74,7 +74,6 @@ class Memory {
   }
 
   List<String> getBlockedUsers() {
-    print('BlockUser: ${boxBlockedUsers.values.toList()}');
     return boxBlockedUsers.values.toList();
   }
 

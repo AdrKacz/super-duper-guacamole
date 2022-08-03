@@ -27,8 +27,7 @@ AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? retreiveRSAkeyPair() {
       return AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>(
           publicKey, privateKey);
     } catch (e) {
-      // No specified type, handles all
-      print('Something really unknown: $e');
+      // something really unknown, see e
     }
   }
   return null;
