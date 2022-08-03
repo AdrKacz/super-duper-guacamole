@@ -12,6 +12,7 @@
 // id : String - user id
 // questions : Map<String, String>?
 //    question id <String> - answer id <String>
+// discriminatingQuestions : List? - discriminating question id
 // blockedUsers : List<String>?
 //    blockedUser userId
 // isBan : Bool? - is user banned from its old group (false by default)
@@ -85,6 +86,7 @@ ${event.Records[0].Sns.Message}
 
   const id = body.id
   const questions = body.questions ?? {}
+  const discriminatingQuestions = new Set(body.discriminatingQuestions ?? [])
   const blockedUsersSet = new Set(body.blockedUsers ?? [])
   const isBan = body.isBan ?? false
 
@@ -117,7 +119,7 @@ ${event.Records[0].Sns.Message}
   }
 
   const promises = [
-    findGroupToUser(user, blockedUsersSet, questions).then(
+    findGroupToUser(user, blockedUsersSet, questions, discriminatingQuestions).then(
       (newGroup) => (addUserToGroup(user, newGroup))
     ),
     removeUserFromGroup(user, isBan)
@@ -141,23 +143,15 @@ ${event.Records[0].Sns.Message}
  *
  * @param {Set.<string>} [blockedUsersSet] - blocked user ids
  * @param {string[]} [questions] - answers to the questions
+ * * @param {Set.<String>} [discriminatingQuestions] - descriminating question ids
  *
  * @return {Promise<{id: string, users: ?Set.<string>, bannedUsers: ?Set.<string>, isOpen: ?boolean, isWaiting: ?number, questions: ?Object.<string, string>}>}
  *
- * the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
- * We must check that answers indeed have a greater impact on group than order of arrival.
- * If not that means that we are still quite randomly assigning groups.
- *
- * We could add ENV VARIABLE for more fine grained controls.
- * For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
- *
- * We may want to shuffle the order in which we loop through the groups to have different result
- * on each run, for different user
- * (there is NO order in the Query, it is "first found first returned")
- * (however, getting that the query is similar, we could imagine that the processed time will be similar for each item too)
- * (thus, the order being similar too)
+ * user send the answer to its question, along with marker to note discriminating questions
+ * other users in the group must have the exact same answer to discriminating questions
+ * other users in the group will have as many same answers as possible for none discriminating questions
  */
-async function findGroupToUser (user, blockedUsersSet = new Set(), questions = []) {
+async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [], discriminatingQuestions = new Set()) {
   // set default value
   user.group = user.group ?? ''
 
@@ -193,22 +187,19 @@ async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [
       continue
     }
 
-    let similarity = 0
-    // iterate accross the smallest
     const groupQuestions = group.questions ?? {}
-    if (groupQuestions.size < questions.size) {
-      for (const [key, value] of Object.entries(groupQuestions)) {
-        if (questions[key] === value) {
-          similarity += 1
-        }
-      }
-    } else {
-      for (const [key, value] of Object.entries(questions)) {
-        if (groupQuestions[key] === value) {
-          similarity += 1
-        }
+    let similarity = 0
+
+    for (const [question, answer] of Object.entries(questions)) {
+      // check discriminating questions, not involve in similarity
+      if (discriminatingQuestions.has(question) && answer !== groupQuestions[question]) {
+        // group is not valid
+        continue
+      } else {
+        similarity += 1
       }
     }
+
     if (similarity > maximumOfSimilarity) {
       chosenGroup = Object.assign({}, group)
       maximumOfSimilarity = similarity
@@ -217,6 +208,12 @@ async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [
 
   if (chosenGroup !== null) {
     console.log(`chose group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
+    console.log('discriminating question were:')
+    console.log(discriminatingQuestions)
+    console.log('user questions were:')
+    console.log(questions)
+    console.log('group questions were:')
+    console.log(chosenGroup.questions ?? {})
     return chosenGroup
   }
 
