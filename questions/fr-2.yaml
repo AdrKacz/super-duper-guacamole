@@ -1,5 +1,6 @@
 # node id must never be "end", it is a reserved key-word
 # answer id must never start with "_", it is used internally for logical expression
+# start question id with "_" to make it discriminating
 nodes:
   - id: "1"
     text: "Question 1"
