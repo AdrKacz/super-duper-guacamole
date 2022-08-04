@@ -214,7 +214,7 @@ class _QuestionsState extends State<Questions> {
       controller: controller,
       itemBuilder: (BuildContext context, int index) {
         String pageId = pages[index];
-        if (pageId == 'end') {
+        if (pageId == 'end' || !widget.questionTree.containsKey(pageId)) {
           return const ConfirmPage();
         }
 
