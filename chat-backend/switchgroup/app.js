@@ -139,9 +139,9 @@ ${event.Records[0].Sns.Message}
  *
  * @param {Object} user
  * @param {string} user.id - id
- * @param {string} [user.group] - current group id
+ * @param {string?} [user.group] - current group id
  * @param {Set.<string>} [user.blockedUsersSet] - blocked user ids
- * @param {string[]} [user.questions] - answers to the questions
+ * @param {Object} [user.questions] - answers to the questions
  *
  * @return {Promise<{id: string, users: ?Set.<string>, bannedUsers: ?Set.<string>, isOpen: ?boolean, isWaiting: ?number, questions: ?Object.<string, string>}>}
  *
@@ -153,7 +153,8 @@ ${event.Records[0].Sns.Message}
  */
 async function findGroupToUser (user) {
   // set default value
-  user.group = user.group ?? ''
+  user.blockedUsersSet = user.blockedUsersSet ?? new Set()
+  user.questions = user.questions ?? {}
 
   // get available group
   const queryCommand = new QueryCommand({
@@ -179,6 +180,7 @@ async function findGroupToUser (user) {
     console.log('with users')
     console.log(group.users)
     // add blocked users to banned users
+    group.bannedUsers = group.bannedUsers ?? new Set()
     for (const blockedUser of user.blockedUsersSet) {
       group.bannedUsers.add(blockedUser)
     }
@@ -220,8 +222,8 @@ async function findGroupToUser (user) {
     id: uuidv4(),
     isWaiting: 1,
     users: new Set(),
-    bannedUsers: user.blockedUsersSet, // add forbidden users
-    questions: user.questions
+    bannedUsers: new Set(user.blockedUsersSet), // add forbidden users
+    questions: Object.assign({}, user.questions)
   }
 }
 
@@ -459,6 +461,9 @@ async function updateOpenedGroup (user, group) {
 }
 
 async function removeUserFromGroup (user) {
+  // set default value
+  user.isBan = user.isBan ?? false
+
   // Remove user grom its group
   // user : Map
   //    id : String - user id
