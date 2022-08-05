@@ -5,6 +5,7 @@ import 'package:awachat/message.dart';
 
 class Memory {
   late final Box<String> boxUser;
+  late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
   late final LazyBox<Map> lazyBoxGroupUsers;
@@ -24,6 +25,7 @@ class Memory {
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
     boxMessages = await Hive.openBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
+    boxAnswers = await Hive.openBox<String>('answers');
     rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
   }
 
@@ -47,6 +49,7 @@ class Memory {
   Future<void> clear() async {
     await Future.wait([
       boxUser.clear(),
+      boxAnswers.clear(),
       boxMessages.clear(),
       boxBlockedUsers.clear(),
       lazyBoxGroupUsers.clear(),
@@ -71,7 +74,6 @@ class Memory {
   }
 
   List<String> getBlockedUsers() {
-    print('BlockUser: ${boxBlockedUsers.values.toList()}');
     return boxBlockedUsers.values.toList();
   }
 
@@ -113,5 +115,32 @@ class Memory {
     }
 
     return messages;
+  }
+
+  // Helper for boxAnswer (marker to note if last round or note)
+  bool isAnswerMarked(String answer) {
+    return answer.startsWith('_');
+  }
+
+  String? getUnmarkedAnswer(String key) {
+    final String? answer = boxAnswers.get(key);
+    if (answer != null && isAnswerMarked(answer)) {
+      return answer.substring(1);
+    }
+    return answer;
+  }
+
+  String markedAnswer(String answer) {
+    if (isAnswerMarked(answer)) {
+      return answer;
+    }
+    return '_$answer';
+  }
+
+  String unmarkedAnswer(String answer) {
+    if (isAnswerMarked(answer)) {
+      return answer.substring(1);
+    }
+    return answer;
   }
 }

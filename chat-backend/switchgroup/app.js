@@ -84,9 +84,6 @@ ${event.Records[0].Sns.Message}
   const body = JSON.parse(event.Records[0].Sns.Message)
 
   const id = body.id
-  const questions = body.questions ?? {}
-  const blockedUsersSet = new Set(body.blockedUsers ?? [])
-  const isBan = body.isBan ?? false
 
   if (typeof id === 'undefined') {
     throw new Error('id must be defined')
@@ -107,7 +104,6 @@ ${event.Records[0].Sns.Message}
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
   console.log('user:', user)
-  user.group = user.group ?? user.hiddenGroup // if change group while still waiting
 
   if (typeof user === 'undefined') {
     console.log(`user <${id}> doesn't exist`)
@@ -116,11 +112,17 @@ ${event.Records[0].Sns.Message}
     }
   }
 
+  // re-populate user to prepare processing
+  user.group = user.group ?? user.hiddenGroup // if change group while still waiting
+  user.questions = body.questions ?? {}
+  user.blockedUsersSet = new Set(body.blockedUsers ?? [])
+  user.isBan = body.isBan ?? false
+
   const promises = [
-    findGroupToUser(user, blockedUsersSet, questions).then(
+    findGroupToUser(user).then(
       (newGroup) => (addUserToGroup(user, newGroup))
     ),
-    removeUserFromGroup(user, isBan)
+    removeUserFromGroup(user)
   ]
 
   await Promise.allSettled(promises).then(results => (console.log(`main - ${JSON.stringify(results)}`)))
@@ -137,29 +139,22 @@ ${event.Records[0].Sns.Message}
  *
  * @param {Object} user
  * @param {string} user.id - id
- * @param {string} [user.group] - current group id
- *
- * @param {Set.<string>} [blockedUsersSet] - blocked user ids
- * @param {string[]} [questions] - answers to the questions
+ * @param {string?} [user.group] - current group id
+ * @param {Set.<string>} [user.blockedUsersSet] - blocked user ids
+ * @param {Object} [user.questions] - answers to the questions
  *
  * @return {Promise<{id: string, users: ?Set.<string>, bannedUsers: ?Set.<string>, isOpen: ?boolean, isWaiting: ?number, questions: ?Object.<string, string>}>}
  *
- * the logic is as easy as possible but hasn't been statically tested, IT NEEDS TO BE.
- * We must check that answers indeed have a greater impact on group than order of arrival.
- * If not that means that we are still quite randomly assigning groups.
+ * user send the answer to its question, along with marker to note discriminating questions
+ * other users in the group must have the exact same answer to discriminating questions
+ * other users in the group will have as many same answers as possible for none discriminating questions
  *
- * We could add ENV VARIABLE for more fine grained controls.
- * For exemple, we could decide to create a new group, no matter what, if the maximum of similarity is smaller than a given value.
- *
- * We may want to shuffle the order in which we loop through the groups to have different result
- * on each run, for different user
- * (there is NO order in the Query, it is "first found first returned")
- * (however, getting that the query is similar, we could imagine that the processed time will be similar for each item too)
- * (thus, the order being similar too)
+ * discriminating questions ids start with "_"
  */
-async function findGroupToUser (user, blockedUsersSet = new Set(), questions = []) {
+async function findGroupToUser (user) {
   // set default value
-  user.group = user.group ?? ''
+  user.blockedUsersSet = user.blockedUsersSet ?? new Set()
+  user.questions = user.questions ?? {}
 
   // get available group
   const queryCommand = new QueryCommand({
@@ -185,30 +180,28 @@ async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [
     console.log('with users')
     console.log(group.users)
     // add blocked users to banned users
-    for (const blockedUser of blockedUsersSet) {
+    group.bannedUsers = group.bannedUsers ?? new Set()
+    for (const blockedUser of user.blockedUsersSet) {
       group.bannedUsers.add(blockedUser)
     }
+    // default question
+    group.questions = group.questions ?? {}
+    console.log('populated group')
+    console.log(group)
+
     if (!isGroupValid(user, group)) {
       console.log(`group ${group.id} not valid for user ${JSON.stringify(user)}`)
       continue
     }
+    console.log(`group ${group.id} is valid`)
 
     let similarity = 0
-    // iterate accross the smallest
-    const groupQuestions = group.questions ?? {}
-    if (groupQuestions.size < questions.size) {
-      for (const [key, value] of Object.entries(groupQuestions)) {
-        if (questions[key] === value) {
-          similarity += 1
-        }
-      }
-    } else {
-      for (const [key, value] of Object.entries(questions)) {
-        if (groupQuestions[key] === value) {
-          similarity += 1
-        }
+    for (const [question, answer] of Object.entries(user.questions)) {
+      if (answer === group.questions[question]) {
+        similarity += 1
       }
     }
+
     if (similarity > maximumOfSimilarity) {
       chosenGroup = Object.assign({}, group)
       maximumOfSimilarity = similarity
@@ -217,6 +210,10 @@ async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [
 
   if (chosenGroup !== null) {
     console.log(`chose group with similarity of ${maximumOfSimilarity}:\n${JSON.stringify(chosenGroup)}`)
+    console.log('user questions were:')
+    console.log(user.questions)
+    console.log('group questions were:')
+    console.log(chosenGroup.questions)
     return chosenGroup
   }
 
@@ -225,8 +222,8 @@ async function findGroupToUser (user, blockedUsersSet = new Set(), questions = [
     id: uuidv4(),
     isWaiting: 1,
     users: new Set(),
-    bannedUsers: blockedUsersSet, // add forbidden users
-    questions
+    bannedUsers: new Set(user.blockedUsersSet), // add forbidden users
+    questions: Object.assign({}, user.questions)
   }
 }
 
@@ -248,6 +245,23 @@ function isGroupValid (user, group) {
   for (const groupUser of group.users) {
     if (group.bannedUsers.has(groupUser)) {
       console.log(`group ${group.id} has blocked user ${groupUser}`)
+      return false
+    }
+  }
+
+  // Are discriminating questions the same
+  for (const [question, answer] of Object.entries(user.questions)) {
+    // check discriminating questions
+    if (question.startsWith('_') && answer !== group.questions[question]) {
+      // group is not valid
+      return false
+    }
+  }
+
+  for (const [question, answer] of Object.entries(group.questions)) {
+    // check discriminating questions
+    if (question.startsWith('_') && answer !== user.questions[question]) {
+      // group is not valid
       return false
     }
   }
@@ -446,7 +460,10 @@ async function updateOpenedGroup (user, group) {
   return Promise.allSettled(promises).then(results => (console.log(`updateOpenedGroup - ${JSON.stringify(results)}`)))
 }
 
-async function removeUserFromGroup (user, isBan) {
+async function removeUserFromGroup (user) {
+  // set default value
+  user.isBan = user.isBan ?? false
+
   // Remove user grom its group
   // user : Map
   //    id : String - user id
@@ -509,14 +526,14 @@ async function removeUserFromGroup (user, isBan) {
         '#isWaiting': 'isWaiting',
         '#users': 'users'
       }
-      if (isBan) {
+      if (user.isBan) {
         expressionAttributeNames['#bannedUsers'] = 'bannedUsers'
       }
       const updateGroupCommand = new UpdateCommand({
         TableName: GROUPS_TABLE_NAME,
         Key: { id: user.group },
         UpdateExpression: `
-        ${isBan ? 'ADD #bannedUsers :id' : ''}
+        ${user.isBan ? 'ADD #bannedUsers :id' : ''}
         SET #isWaiting = :isWaiting
         DELETE #users :id
         `,

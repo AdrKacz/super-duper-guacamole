@@ -7,29 +7,28 @@ class SwitchGroupPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Center(
-        child: Padding(
+        child: ListView(
+          physics: const ClampingScrollPhysics(),
+          shrinkWrap: true,
           padding: const EdgeInsets.all(24.0),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/images/alien-science.gif'),
-                const SizedBox(
-                  height: 24,
-                ),
-                const Text(
-                  """Je te cherche un groupe.                
-Je t'envoie une notification quand j'ai trouvé.""",
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(
-                  height: 24,
-                ),
-                CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.onPrimary),
-              ],
+          children: [
+            Image.asset('assets/images/alien-science.gif'),
+            const SizedBox(
+              height: 24,
             ),
-          ),
+            const Text(
+              """Je te cherche un groupe.                
+Je t'envoie une notification quand j'ai trouvé.""",
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(
+              height: 24,
+            ),
+            Center(
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.onPrimary),
+            ),
+          ],
         ),
       ),
     );

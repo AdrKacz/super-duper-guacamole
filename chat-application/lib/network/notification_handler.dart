@@ -38,9 +38,7 @@ class NotificationHandler {
       sound: true,
     )
         .then((NotificationSettings settings) {
-      print(
-          '[PushNotificationService] User granted permission: ${settings.authorizationStatus}');
-
+      // user granted permission (see settings.authorizationStatus)
       return FirebaseMessaging.instance.getToken();
     }).then((String? token) {
       if (token == null) {
@@ -52,8 +50,6 @@ class NotificationHandler {
   }
 
   Future<void> putToken(String token) {
-    print('[PushNotificationService - Put Token] Token: <$token>');
-    print('[PushNotificationService - Put Token] Put token to $_httpEndpoint');
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
@@ -67,8 +63,7 @@ class NotificationHandler {
               'publicKey': encodePublicKeyToPem(User().pair.publicKey)
             }))
         .then((http.Response response) {
-      print(
-          '[PushNotificationService - Put Token] Response status: ${response.statusCode}');
+      // response status in response.statusCode
     });
   }
 }

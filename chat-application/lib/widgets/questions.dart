@@ -46,10 +46,7 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                     height: 12,
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      Memory().put('user', 'questions', '');
-                      onConfirmed();
-                    },
+                    onPressed: onConfirmed,
                     style: ElevatedButton.styleFrom(
                       primary: Theme.of(context).colorScheme.secondary,
                       onPrimary: Theme.of(context).colorScheme.onSecondary,
@@ -69,20 +66,6 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
 // ===== ===== =====
 // Questions Loader
 
-Map<String, String> loadSelectedAnswers() {
-  final Map<String, String> selectedAnswers = {};
-  final String? encodedSelectedAnswers = Memory().get('user', 'questions');
-  if (encodedSelectedAnswers != null) {
-    encodedSelectedAnswers.split('::').forEach((element) {
-      List<String> mapEntry = element.split(':');
-      if (mapEntry.length == 2) {
-        selectedAnswers[mapEntry[0]] = mapEntry[1];
-      }
-    });
-  }
-  return selectedAnswers;
-}
-
 class QuestionsLoader extends StatefulWidget {
   const QuestionsLoader({Key? key}) : super(key: key);
 
@@ -91,51 +74,86 @@ class QuestionsLoader extends StatefulWidget {
 }
 
 class _QuestionsLoaderState extends State<QuestionsLoader> {
-  late Future<Map<String, Object>> object;
+  late Future<Map> object;
+
+  Future<Map> readQuestionTree() async {
+    http.Response response = await http.get(Uri.parse(
+        'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/206-entrer-sa-localisation/questions/fr-2.yaml'));
+
+    if (response.body.isEmpty) {
+      return {};
+    }
+
+    final YamlMap yamlMap = loadYaml(response.body);
+
+    if (yamlMap['nodes'] is! YamlList) {
+      return {};
+    }
+
+    final Map questionTree = {};
+
+    String? root;
+
+    for (final Map node in yamlMap['nodes']) {
+      final String? id = node['id'];
+      final String? text = node['text'];
+      final YamlList? answers = node['answers'];
+
+      if (id is! String || text is! String || answers is! YamlList) {
+        continue;
+      }
+
+      root = root ?? id;
+
+      final Map answersMap = {};
+      for (final YamlMap answer in answers) {
+        final String? answerId = answer['id'];
+        final String? answerText = answer['text'];
+        final String? next = answer['next'];
+
+        if (answerId is! String || answerText is! String) {
+          continue;
+        }
+
+        answersMap[answerId] = {
+          'id': answerId,
+          'text': answerText,
+          'next': next,
+        };
+      }
+      if (answersMap.isEmpty) {
+        continue;
+      }
+
+      questionTree[id] = {
+        'id': id,
+        'text': text,
+        'answers': answersMap,
+      };
+    }
+
+    if (questionTree.isEmpty) {
+      return {};
+    }
+
+    return {'questionTree': questionTree, 'root': root};
+  }
 
   @override
   void initState() {
     super.initState();
-    object = http
-        .get(Uri.parse(
-            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr.yaml'))
-        .then((http.Response value) {
-      String body = value.body;
-      final Map<String, String> selectedAnswers = loadSelectedAnswers();
-      final List<Map> questions = [];
-      final YamlMap yaml = loadYaml(body);
-      if (yaml['questions'] is YamlList) {
-        int index = 0;
-        for (final Map question in yaml['questions']) {
-          // verify question is correctly formatted
-          final String? id = question['id'];
-          final String? q = question['question'];
-          final YamlList? answers = question['answers'];
 
-          if (id != null && q != null && answers != null) {
-            final List<Map<String, String>> a = [];
-            for (final element in answers) {
-              // only use correctly formatted answers
-              if (element is YamlMap) {
-                final String? elementId = element['id'];
-                final String? elementAnswer = element['answer'];
-                if (elementId != null && elementAnswer != null) {
-                  a.add({'id': elementId, 'answer': elementAnswer});
-                }
-              }
-            }
-            if (a.isNotEmpty) {
-              // don't add a question if there is no answers associated
-              questions
-                  .add({'id': id, 'index': index, 'question': q, 'answers': a});
-              index += 1;
-            }
-          }
-        }
+    // read question
+    object = readQuestionTree();
+
+    // de-actualise answer (remove "_" marker)
+    for (String key in Memory().boxAnswers.keys) {
+      final String? answer = Memory().boxAnswers.get(key);
+      if (answer == null) {
+        continue;
       }
-
-      return {'selectedAnswers': selectedAnswers, 'questions': questions};
-    });
+      Memory().boxAnswers.put(key, Memory().unmarkedAnswer(answer));
+    }
   }
 
   @override
@@ -146,8 +164,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
             return Questions(
-                loadedSelectedAnswer: snapshot.data['selectedAnswers'],
-                questions: snapshot.data['questions']);
+                questionTree: snapshot.data['questionTree'],
+                root: snapshot.data['root']);
           }
 
           return const Loader();
@@ -159,105 +177,65 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
 // Questions
 class Questions extends StatefulWidget {
-  const Questions(
-      {Key? key, required this.loadedSelectedAnswer, required this.questions})
+  const Questions({Key? key, required this.questionTree, required this.root})
       : super(key: key);
 
-  final Map<String, String> loadedSelectedAnswer;
-  final List<Map> questions;
+  final Map questionTree;
+  final String? root;
 
   @override
   State<Questions> createState() => _QuestionsState();
 }
 
 class _QuestionsState extends State<Questions> {
-  late Map<String, String> selectedAnswers;
-  bool isConfirmed = false;
+  List<String> pages = [];
+  final PageController controller = PageController();
 
-  void saveSelectedAnswers() {
-    Memory().put(
-        'user',
-        'questions',
-        selectedAnswers.entries.map((MapEntry selectedAnswer) {
-          return '${selectedAnswer.key}:${selectedAnswer.value}';
-        }).join('::'));
+  void createNextPage(String pageId, String answerId) {
+    final String? nextPageId =
+        widget.questionTree[pageId]['answers'][answerId]['next'];
+
+    setState(() {
+      pages.add(nextPageId ?? 'end');
+    });
   }
 
   @override
   void initState() {
     super.initState();
-    selectedAnswers = Map.from(widget.loadedSelectedAnswer);
+    pages.add(widget.root ?? 'end');
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: DefaultTabController(
-          length: widget.questions.length + 1,
-          child: Builder(builder: (BuildContext context) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Expanded(
-                  child: TabBarView(
-                    children: List<Widget>.from(widget.questions
-                            .map((e) => (Question(
-                                  question: e,
-                                  selectedAnswer: selectedAnswers[e['id']],
-                                  onNext: () {
-                                    final TabController? controller =
-                                        DefaultTabController.of(context);
-                                    if (controller != null) {
-                                      controller.animateTo(e['index'] + 1);
-                                    }
-                                  },
-                                  onPressed: (String id) {
-                                    print('set $id for ${e['id']}');
+    return PageView.builder(
+      itemCount: pages.length,
+      physics: const NeverScrollableScrollPhysics(parent: PageScrollPhysics()),
+      controller: controller,
+      itemBuilder: (BuildContext context, int index) {
+        String pageId = pages[index];
+        if (pageId == 'end' || !widget.questionTree.containsKey(pageId)) {
+          return const ConfirmPage();
+        }
 
-                                    if (selectedAnswers[e['id']] == id) {
-                                      setState(() {
-                                        selectedAnswers.remove(e['id']);
-                                      });
-                                      return false;
-                                    } else {
-                                      setState(() {
-                                        selectedAnswers[e['id']] = id;
-                                      });
-                                      return true;
-                                    }
-                                  },
-                                )))
-                            .toList()) +
-                        [
-                          Confirm(
-                            onPressed: () {
-                              setState(() {
-                                isConfirmed = true;
-                              });
-                              // store answers
-                              saveSelectedAnswers();
-                              // Memory().put('user', 'questions', 'bonjour');
-                              Future.delayed(const Duration(milliseconds: 250))
-                                  .then((value) => {Navigator.pop(context)})
-                                  .then(
-                                      (value) => {showConfirmDialog(context)});
-                            },
-                            isConfirmed: isConfirmed,
-                          )
-                        ],
-                  ),
-                ),
-                TabPageSelector(
-                  color: Theme.of(context).colorScheme.primary,
-                  selectedColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ],
-            );
-          }),
-        ),
-      ),
+        return Question(
+          question: widget.questionTree[pageId],
+          onPressed: (String answerId) {
+            if (Memory().getUnmarkedAnswer(pageId) == answerId) {
+              Memory().boxAnswers.delete(pageId);
+            } else {
+              Memory().boxAnswers.put(pageId, Memory().markedAnswer(answerId));
+              Future.delayed(const Duration(milliseconds: 250), () {
+                createNextPage(pageId, answerId);
+                controller.nextPage(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut);
+              });
+            }
+            setState(() {});
+          },
+        );
+      },
     );
   }
 }
@@ -267,79 +245,78 @@ class Question extends StatelessWidget {
   const Question({
     Key? key,
     required this.question,
-    this.selectedAnswer,
     required this.onPressed,
-    required this.onNext,
   }) : super(key: key);
 
   final Map question;
-  final String? selectedAnswer;
   final Function onPressed;
-  final VoidCallback onNext;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          Text(
-            question['question'],
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16),
-          ),
-          const Divider(
-            height: 24,
-          ),
-          Expanded(
-            child: ListView(
-              children: List<Widget>.from(question['answers']
-                  .map((e) => (Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: ElevatedButton(
-                          style: e['id'] == selectedAnswer
-                              ? ElevatedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(100),
-                                )
-                              : ElevatedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(100),
-                                  primary:
-                                      Theme.of(context).colorScheme.secondary,
-                                  onPrimary:
-                                      Theme.of(context).colorScheme.onSecondary,
-                                ),
-                          onPressed: () {
-                            if (onPressed(e['id'])) {
-                              Future.delayed(const Duration(milliseconds: 250))
-                                  .then((value) => {onNext()});
-                            }
-                          },
-                          child: Text(
-                            e['answer'],
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )))
-                  .toList()),
+    final String? currentAnswer = Memory().getUnmarkedAnswer(question['id']);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Text(
+              question['text'],
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
             ),
-          )
-        ],
+            const Divider(
+              height: 24,
+            ),
+            Expanded(
+              child: ListView(
+                children: List<Widget>.from(Map.from(question['answers'])
+                    .entries
+                    .map((answer) => (Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: ElevatedButton(
+                            style: answer.value['id'] == currentAnswer
+                                ? ElevatedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(100),
+                                  )
+                                : ElevatedButton.styleFrom(
+                                    minimumSize: const Size.fromHeight(100),
+                                    primary:
+                                        Theme.of(context).colorScheme.secondary,
+                                    onPrimary: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondary,
+                                  ),
+                            onPressed: () {
+                              onPressed(answer.value['id']);
+                            },
+                            child: Text(
+                              answer.value['text'],
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        )))
+                    .toList()),
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 }
 
 // Confirm
-class Confirm extends StatelessWidget {
-  // https://stackoverflow.com/questions/58883067/flutter-custom-animated-icon for button animation
-  const Confirm({
+class ConfirmPage extends StatefulWidget {
+  const ConfirmPage({
     Key? key,
-    required this.isConfirmed,
-    required this.onPressed,
   }) : super(key: key);
 
-  final bool isConfirmed;
-  final VoidCallback onPressed;
+  @override
+  State<ConfirmPage> createState() => _ConfirmPageState();
+}
+
+class _ConfirmPageState extends State<ConfirmPage> {
+  bool isConfirmed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -347,7 +324,19 @@ class Confirm extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Center(
         child: ElevatedButton(
-          onPressed: onPressed,
+          onPressed: () {
+            if (isConfirmed) {
+              return;
+            }
+
+            setState(() {
+              isConfirmed = true;
+            });
+
+            Future.delayed(const Duration(milliseconds: 250))
+                .then((value) => {Navigator.pop(context)})
+                .then((value) => {showConfirmDialog(context)});
+          },
           style: isConfirmed
               ? ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(100),

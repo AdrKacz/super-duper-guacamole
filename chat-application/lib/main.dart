@@ -26,7 +26,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-enum Status { presentation, agreements, main, other }
+enum Status { presentation, agreements, firstTimeQuestions, main, other }
 
 class _MyAppState extends State<MyApp> {
   Status get status {
@@ -63,25 +63,20 @@ class _MyAppState extends State<MyApp> {
               });
             case Status.agreements:
               return Agreements(nextAppStatus: () {
-                status = Status.main;
+                status = Status.firstTimeQuestions;
               });
+            case Status.firstTimeQuestions:
+              return FirstTimeQuestionsLoader(
+                onConfirmed: () {
+                  status = Status.main;
+                },
+              );
             case Status.main:
-              // check user has answers to questions
-              final String? questions = Memory().get('user', 'questions');
-              if (questions == null) {
-                // TODO: use route instead
-                return FirstTimeQuestionsLoader(
-                  onConfirmed: () {
-                    setState(() {});
-                  },
-                );
-              } else {
-                return ChatHandler(goToPresentation: () {
-                  status = Status.presentation;
-                });
-              }
+              return ChatHandler(goToPresentation: () {
+                status = Status.presentation;
+              });
             default:
-              print('Unknown state ${status.name}');
+              // unknown state
               return const Placeholder();
           }
         },

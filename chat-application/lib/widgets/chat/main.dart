@@ -11,7 +11,7 @@ import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/network/web_socket_connection.dart';
-import 'package:awachat/widgets/chat/chat-page.dart';
+import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
@@ -46,7 +46,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   final WebSocketConnection _webSocketConnection = WebSocketConnection();
 
   void listenMessage(message) {
-    print('Receive message: $message');
+    // receive message
     if (processMessage(message)) {
       setState(() {});
     }
@@ -95,7 +95,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     setState(() {
       items = items.reversed.toList();
     });
-    print('items: $items');
   }
 
   // ===== ===== =====
@@ -173,20 +172,19 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     // find message
     types.Message? message = findMessage(messageid);
     if (message == null) {
-      print("Message $messageid wasn't found. Returns.");
+      // message (messageId) wasn't found
       return;
     }
-
-    print('Found message $messageid:\n$message');
+    // found message
 
     HapticFeedback.mediumImpact();
     switch (await banActionOnMessage(context, message)) {
       case 'confirmed':
-        print('Ban confirmed');
+        // ban confirmed
         _webSocketConnection.banreply(message.author.id, 'confirmed');
         break;
       case 'denied':
-        print('Ban denied');
+        // ban denied
         _webSocketConnection.banreply(message.author.id, 'denied');
         break;
       default:
@@ -211,7 +209,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         blockUser(message.author.id);
         break;
       default:
-        print('dismiss');
+      // dismiss
     }
   }
 
@@ -228,7 +226,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   Future<void> loadMessagesFromMemory() async {
     final List<types.Message> loadedMessages = Memory().loadMessages();
-    print('Loaded messages length: ${loadedMessages.length}');
+    // loaded messages (see loadedMessages.length)
     _messages.clear();
     for (final types.Message loadedMessage in loadedMessages) {
       insertMessage(loadedMessage, useHaptic: false);
@@ -293,7 +291,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageRegister(data) {
-    print('\tRegister with state: ${status.name}');
+    // register (see status.name)
     // connection made
     connectionStatus = ConnectionStatus.connected;
 
@@ -326,7 +324,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (assignedGroupId != User().groupId) {
       // doesn't have the correct group
-      print("doesn't have the correct group");
       User().groupId = assignedGroupId;
       _messages.clear();
     }
@@ -360,7 +357,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (userId == User().id) {
       // you're the one to leave the group
-      print('\tLeave group: $groupId');
       User().groupId = '';
       _messages.clear();
       status = Status.switchSent;
@@ -377,7 +373,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (users.remove(User().id) != null) {
       if (newGroupId != User().groupId) {
         // only join if the group to join is not the group we are in
-        print('\tJoin group: $newGroupId');
         User().groupId = newGroupId;
         User().updateOtherUsers(users);
         _messages.clear(); // in case we receive join before leave
@@ -386,8 +381,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           items = ['real', 'fake'];
         }
       } else {
-        // new users in group
-        print('\tGroup users: $users');
+        // new users in group (see users)
         User().updateOtherUsers(users);
       }
     } else {
@@ -398,7 +392,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageTextMessage(data) {
-    print('\tMessage: ${data['message']}');
+    // see message in data['message']
     types.Message? message = messageDecode(data['message']);
     if (message != null) {
       if (!data['_isInnerLoop']) {
@@ -410,19 +404,19 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageBanRequest(data) {
-    print('\tBan request for: ${data['messageid']}');
+    // ban request (see data['messageid'])
     banRequest(context, data['messageid']);
     return false;
   }
 
   bool messageBanReply(data) {
-    print('\tBan reply for: ${data['bannedid']} with status ${data['status']}');
+    // ban reply (see data['bannedid'] and data['status'])
     acknowledgeBan(context, data['status'], data['bannedid']);
     return false;
   }
 
   bool processMessage(message, {bool isInnerLoop = false}) {
-    print('Process Message ${isInnerLoop ? '(in inner loop)' : ''}:\n$message');
+    // process message (see message and isInnerLoop)
     bool needUpdate = true;
     final data = jsonDecode(message);
 
@@ -431,14 +425,14 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (isInnerLoop &&
         ['login', 'logout', 'register', 'leavegroup', 'joingroup']
             .contains(data['action'])) {
-      print('Skip processing (not needed)');
+      // skip processing (not needed)
       return needUpdate;
     }
     if (messageActions.containsKey(data['action'])) {
       needUpdate = messageActions[data['action']]!(data);
     } else {
       needUpdate = false;
-      print("\tAction ${data['action']} not recognised.");
+      // action not recognised (see data['action'])
       status = Status.other;
     }
 
@@ -460,12 +454,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     if (controller.page! > 0.5) {
-      print('Start Change Page');
       //TODO: update the time so it fits the end of the animation
-      final a = Future.delayed(const Duration(milliseconds: 600), () {
+      Future.delayed(const Duration(milliseconds: 600), () {
         if (_isPointerUp && controller.page! > 0.95) {
           // need to recheck if user manually move the page during the delay
-          print('Change Page');
           // Swith Group
           switchGroup();
           // Change Page
@@ -498,7 +490,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print('State: ${status.name} - Connection State: ${connectionStatus.name}');
+    // see status.name and connectionStatus.name
     final PageController controller = PageController();
     if (connectionStatus == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
@@ -514,7 +506,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           widget.goToPresentation();
         },
         resetAccount: () async {
-          print('Reset Account');
+          // reset account
           await NotificationHandler().putToken('');
           User().clear();
           await Memory().clear();
@@ -562,7 +554,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             controller: controller,
             itemBuilder: (BuildContext context, int index) {
               if (index == 0) {
-                print('Build Chat');
+                // build chat
                 return ChatPage(
                     key: Key(items[index]),
                     messages: _messages.values.toList(),
@@ -573,7 +565,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     onRefresh: () async {
                       // TODO: error should re-ask server for current group if any
                       // NOTE: here it tries to infer the correct state of the app
-                      print('Try to restore connection');
+                      // try to restore connection
                       _webSocketConnection.close();
                       _webSocketConnection.reconnect();
                       listenStream();
@@ -589,7 +581,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                       }
                     });
               } else {
-                print('Build Fake Chat');
+                // build fake chat
                 return FakeChat(key: Key(items[index]));
               }
             },
@@ -597,7 +589,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             findChildIndexCallback: (Key key) {
               final ValueKey<String> valueKey = key as ValueKey<String>;
               final String data = valueKey.value;
-              print('Find Key $key, valueKey $valueKey, data $data');
               return items.indexOf(data);
             }),
       ),
@@ -606,7 +597,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState appLifecycleState) {
-    print('App Lifecycle State > $appLifecycleState');
     setState(() {
       _notification = appLifecycleState;
     });
