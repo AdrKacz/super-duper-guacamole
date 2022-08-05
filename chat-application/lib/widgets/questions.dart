@@ -78,7 +78,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
   Future<Map> readQuestionTree() async {
     http.Response response = await http.get(Uri.parse(
-        'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/206-entrer-sa-localisation/questions/fr-2.yaml'));
+        'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr-2.yaml'));
 
     if (response.body.isEmpty) {
       return {};
