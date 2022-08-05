@@ -47,3 +47,8 @@ platform :ios do
     )
   end
 end
+
+
+lane :release do |options|
+  puts "Release to GitHub"
+end
