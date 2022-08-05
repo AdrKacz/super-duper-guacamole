@@ -45,6 +45,10 @@ platform :ios do
         add_id_info_uses_idfa: false
       },
     )
+  
+    # create release
+    puts "I will create GitHub release"
+    release
   end
 end
 
@@ -56,15 +60,14 @@ lane :release do
   pubspec = YAML.load_file("../../pubspec.yaml")
 
   # get release note
-  release_notes = File.open("metadata/fr-FR/release_notes.txt")
-  release_notes_content = release_notes.read
-  release_notes.close
+  release_notes_content = (File.read("metadata/fr-FR/release_notes.txt") rescue "No changelog provided")
   puts "Release to GitHub v.#{pubspec["version"]}\n--- Description ---\n#{release_notes_content}\n--- --- ---"
 
   # create release
-  # set_github_release(
-  #   tag_name: pubspec["version"]
-  #   name: "Awa v.#{pubspec["version"]}"
-  #   description: release_notes_content
-  # )
+  set_github_release(
+    repository_name: "AdrKacz/super-duper-guacamole",
+    tag_name: pubspec["version"],
+    name: "Awa v.#{pubspec["version"]}",
+    description: release_notes_content,
+  )
 end
