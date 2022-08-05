@@ -45,5 +45,29 @@ platform :ios do
         add_id_info_uses_idfa: false
       },
     )
+  
+    # create release
+    puts "I will create GitHub release"
+    release
   end
+end
+
+
+fastlane_require 'yaml'
+
+lane :release do
+  # get pubspec
+  pubspec = YAML.load_file("../../pubspec.yaml")
+
+  # get release note
+  release_notes_content = (File.read("metadata/fr-FR/release_notes.txt") rescue "No changelog provided")
+  puts "Release to GitHub v.#{pubspec["version"]}\n--- Description ---\n#{release_notes_content}\n--- --- ---"
+
+  # create release
+  set_github_release(
+    repository_name: "AdrKacz/super-duper-guacamole",
+    tag_name: pubspec["version"],
+    name: "Awa v.#{pubspec["version"]}",
+    description: release_notes_content,
+  )
 end

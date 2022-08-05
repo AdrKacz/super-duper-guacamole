@@ -29,6 +29,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+          FL_GITHUB_RELEASE_API_TOKEN: ${{ secrets.FL_GITHUB_RELEASE_API_TOKEN }}
   publish-android-app:
     name: Publish Android App
     runs-on: macos-latest
