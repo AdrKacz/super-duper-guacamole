@@ -1,0 +1,12 @@
+{
+  "name": "content-moderation",
+  "version": "1.0.0",
+  "description": "Moderate Content on the platform",
+  "main": "index.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.142.0",
+    "@aws-sdk/lib-dynamodb": "^3.142.0"
+  }
+}
