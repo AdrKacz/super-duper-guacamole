@@ -5,8 +5,19 @@
   "main": "index.js",
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
+  "scripts": {
+    "lint": "eslint . --fix"
+  },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.142.0",
-    "@aws-sdk/lib-dynamodb": "^3.142.0"
+    "@aws-sdk/lib-dynamodb": "^3.142.0",
+    "dotenv": "^16.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.1",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0"
   }
 }
