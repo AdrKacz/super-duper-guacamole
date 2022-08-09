@@ -6,6 +6,7 @@ const {
 } = require('@aws-sdk/lib-dynamodb')
 
 require('dotenv').config()
+const inquirer = require('inquirer')
 
 const {
   AWS_REGION,
@@ -44,10 +45,10 @@ async function banUserFromPlatform ({ id }) {
     TableName: USERS_TABLE_NAME,
     Key: { id },
     UpdateExpression: `
-    SET #isBlocked = :true
+    SET #isBanned = :true
     `,
     ExpressionAttributeNames: {
-      '#isBlocked': 'isBlocked'
+      '#isBanned': 'isBanned'
     },
     ExpressionAttributeValues: {
       ':true': true
@@ -56,7 +57,48 @@ async function banUserFromPlatform ({ id }) {
 
   await dynamoDBDocumentClient.send(updateUserCommand)
 
-  console.log(`user ${id} is updated`)
+  console.log(`user ${id} is updated (banned)`)
+}
+
+async function unbanUserFromPlatform ({ id }) {
+  const getUserCommand = new GetCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id },
+    ProjectionExpression: '#id',
+    ExpressionAttributeNames: {
+      '#id': 'id'
+    }
+  })
+
+  const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
+
+  if (typeof user === 'undefined') {
+    console.log(`user ${id} is undefined`)
+    return
+  }
+
+  const updateUserCommand = new UpdateCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id },
+    UpdateExpression: `
+    REMOVE #isBanned
+    `,
+    ExpressionAttributeNames: {
+      '#isBanned': 'isBanned'
+    }
+  })
+
+  await dynamoDBDocumentClient.send(updateUserCommand)
+
+  console.log(`user ${id} is updated (unbanned)`)
 }
 
 banUserFromPlatform({ id: '8676499d-67d5-46a5-98e7-660f89a0ef31' })
+
+const questions = [
+  {
+    type: 'input',
+    name: 'isBan',
+    message: 'Do you want to ban?'
+  }
+]
