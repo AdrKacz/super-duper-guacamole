@@ -5,12 +5,7 @@ const {
   UpdateCommand
 } = require('@aws-sdk/lib-dynamodb')
 
-const args = require('minimist')(process.argv.slice(2), {
-  string: ['ban', 'unban'],
-  alias: { b: 'ban', u: 'unban' }
-})
-
-require('dotenv').config()
+require('dotenv').config() // skipcq: JS-0260
 
 const {
   AWS_REGION,
@@ -64,6 +59,12 @@ async function banUserFromPlatform ({ id }) {
   console.log(`user ${id} is updated (banned)`)
 }
 
+/**
+ * Remove tag to user to prevent it from using the application
+ *
+ * @param {Object} user
+ * @param {string} user.id
+ */
 async function unbanUserFromPlatform ({ id }) {
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
@@ -103,11 +104,11 @@ async function unbanUserFromPlatform ({ id }) {
  * @param {string|string[]} arg argument to parse
  */
 function parseArg (arg) {
-  arg = Array.isArray(arg) ? arg : [arg]
-  arg = new Set(arg)
-  arg.delete(undefined)
+  const arr = Array.isArray(arg) ? arg : [arg]
+  const set = new Set(arr)
+  set.delete(undefined) // skipcq: JS-0127
 
-  return arg
+  return set
 }
 
 /**
@@ -118,13 +119,20 @@ function parseArg (arg) {
  * @param {string|string[]} args.unban user id to unban
  */
 async function main (args) {
+  const results = []
   for (const id of parseArg(args.ban)) {
-    await banUserFromPlatform({ id })
+    results.push(banUserFromPlatform({ id }))
   }
+  await Promise.all(results)
 
+  results.length = 0
   for (const id of parseArg(args.unban)) {
-    await unbanUserFromPlatform({ id })
+    results.push(unbanUserFromPlatform({ id }))
   }
+  await Promise.all(results)
 }
 
-main(args)
+main(require('minimist')(process.argv.slice(2), {
+  string: ['ban', 'unban'],
+  alias: { b: 'ban', u: 'unban' }
+})) // skipcq: JS-0260)
