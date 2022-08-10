@@ -5,8 +5,12 @@ const {
   UpdateCommand
 } = require('@aws-sdk/lib-dynamodb')
 
+const args = require('minimist')(process.argv.slice(2), {
+  string: ['ban', 'unban'],
+  alias: { b: 'ban', u: 'unban' }
+})
+
 require('dotenv').config()
-const inquirer = require('inquirer')
 
 const {
   AWS_REGION,
@@ -93,12 +97,34 @@ async function unbanUserFromPlatform ({ id }) {
   console.log(`user ${id} is updated (unbanned)`)
 }
 
-banUserFromPlatform({ id: '8676499d-67d5-46a5-98e7-660f89a0ef31' })
+/**
+ * Parse argument to be executed in main
+ *
+ * @param {string|string[]} arg argument to parse
+ */
+function parseArg (arg) {
+  arg = Array.isArray(arg) ? arg : [arg]
+  arg = new Set(arg)
+  arg.delete(undefined)
 
-const questions = [
-  {
-    type: 'input',
-    name: 'isBan',
-    message: 'Do you want to ban?'
+  return arg
+}
+
+/**
+ * Receive command line argument and execute function
+ *
+ * @param {Object} args
+ * @param {string|string[]} args.ban user id to ban
+ * @param {string|string[]} args.unban user id to unban
+ */
+async function main (args) {
+  for (const id of parseArg(args.ban)) {
+    await banUserFromPlatform({ id })
   }
-]
+
+  for (const id of parseArg(args.unban)) {
+    await unbanUserFromPlatform({ id })
+  }
+}
+
+main(args)

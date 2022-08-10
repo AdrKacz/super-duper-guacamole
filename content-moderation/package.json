@@ -6,13 +6,13 @@
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
   "scripts": {
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "main": "node index.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.142.0",
     "@aws-sdk/lib-dynamodb": "^3.142.0",
-    "dotenv": "^16.0.1",
-    "inquirer": "^9.1.0"
+    "dotenv": "^16.0.1"
   },
   "devDependencies": {
     "eslint": "^8.0.1",
