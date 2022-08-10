@@ -1,9 +1,10 @@
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260)
+
 const {
   DynamoDBDocumentClient,
   GetCommand,
   UpdateCommand
-} = require('@aws-sdk/lib-dynamodb')
+} = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260)
 
 require('dotenv').config() // skipcq: JS-0260
 
@@ -132,7 +133,8 @@ async function main (args) {
   await Promise.all(results)
 }
 
+// skipcq: JS-0260
 main(require('minimist')(process.argv.slice(2), {
   string: ['ban', 'unban'],
   alias: { b: 'ban', u: 'unban' }
-})) // skipcq: JS-0260)
+}))
