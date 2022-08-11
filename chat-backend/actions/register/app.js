@@ -64,15 +64,24 @@ exports.handler = async (event) => {
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },
-    ProjectionExpression: '#id, #publicKey',
+    ProjectionExpression: '#id, #publicKey, #isBanned',
     ExpressionAttributeNames: {
       '#id': 'id',
-      '#publicKey': 'publicKey'
+      '#publicKey': 'publicKey',
+      '#isBanned': 'isBanned'
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
   if (typeof user !== 'undefined' && typeof user.publicKey !== 'undefined') {
     publicKey = user.publicKey
+  }
+
+  // verify is not banned
+  if (typeof user.isBanned === 'boolean' && user.isBanned) {
+    return {
+      message: 'user is banned',
+      statusCode: 403
+    }
   }
 
   // verify signature
@@ -83,7 +92,7 @@ exports.handler = async (event) => {
   if (!isVerified) {
     return {
       message: 'signature is not valid',
-      statusCode: 401
+      statusCode: 403
     }
   }
 
