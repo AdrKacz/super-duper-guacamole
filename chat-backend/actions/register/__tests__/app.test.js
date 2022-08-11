@@ -136,6 +136,34 @@ test('it rejects body with old timestamp', async () => {
   })
 })
 
+test('it rejects on banned user', async () => {
+  const { id, signature, timestamp, publicKey } = generateIdentity()
+
+  ddbMock.on(GetCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id }
+  }).resolves({
+    Item: {
+      id,
+      publicKey: generatedKeyPair().publicKey,
+      isBanned: true
+    }
+  })
+
+  const dummyConnectionId = 'dummy-connection-id'
+  const response = await handler({
+    requestContext: {
+      connectionId: dummyConnectionId
+    },
+    body: JSON.stringify({ id, signature, timestamp, publicKey })
+  })
+
+  expect(response).toStrictEqual({
+    message: 'user is banned',
+    statusCode: 403
+  })
+})
+
 test('it rejects on wrong signature', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
@@ -159,7 +187,7 @@ test('it rejects on wrong signature', async () => {
 
   expect(response).toStrictEqual({
     message: 'signature is not valid',
-    statusCode: 401
+    statusCode: 403
   })
 })
 

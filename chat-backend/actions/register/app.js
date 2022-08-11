@@ -72,12 +72,12 @@ exports.handler = async (event) => {
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
-  if (typeof user !== 'undefined' && typeof user.publicKey !== 'undefined') {
+  if (typeof user === 'object' && typeof user.publicKey !== 'undefined') {
     publicKey = user.publicKey
   }
 
   // verify is not banned
-  if (typeof user.isBanned === 'boolean' && user.isBanned) {
+  if (typeof user === 'object' && typeof user.isBanned === 'boolean' && user.isBanned) {
     return {
       message: 'user is banned',
       statusCode: 403
@@ -143,7 +143,7 @@ exports.handler = async (event) => {
 
   // old User is defined
   const promises = []
-  if (typeof oldUser.unreadData !== 'undefined') {
+  if (Array.isArray(oldUser.unreadData)) {
     console.log('Update Message With Unread Data')
 
     message.unreadData = oldUser.unreadData
@@ -157,7 +157,7 @@ exports.handler = async (event) => {
     promises.push(informGroup(id, users))
     console.log('Update Message with Group Information')
     message.group = oldUser.group
-    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId !== 'undefined' }))
+    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId === 'string' }))
   } catch (e) {
     if (e.message === `groupId <${oldUser.group}> is undefined`) {
       console.log('Catch: ', e)
