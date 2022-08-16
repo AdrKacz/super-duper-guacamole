@@ -10,6 +10,8 @@
 # next argument is the next branch to go to
 # if it is not defined, it ends the tree
 # if it is above, it reset the tree up to that node
+# you can define a next answers to automatically skip the previoulsy answered questions
+# nextAnswers CANNOT move up the tree again
 
 # defaults argument values
 defaults:

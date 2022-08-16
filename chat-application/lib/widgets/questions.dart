@@ -104,14 +104,8 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
     // read question
     object = readQuestionTree();
 
-    // de-actualise answer (remove "_" marker)
-    for (String key in Memory().boxAnswers.keys) {
-      final String? answer = Memory().boxAnswers.get(key);
-      if (answer == null) {
-        continue;
-      }
-      Memory().boxAnswers.put(key, Memory().unmarkedAnswer(answer));
-    }
+    // re-init answers
+    Memory().boxAnswers.clear();
   }
 
   @override
@@ -153,44 +147,65 @@ class _QuestionTreeState extends State<QuestionTree> {
         defaultArg;
   }
 
-  void createNextPage(String pageId, String answerId) {
-    final String nextPageId =
-        readArgument('next', pageId, answerId, defaultArg: 'end');
-
-    int indexOfNextPageId = pages.indexOf(nextPageId);
-    if (indexOfNextPageId >= 0) {
-      final pagesLength = pages.length;
-      for (int i = indexOfNextPageId; i < pagesLength; i++) {
-        final lastPageId = pages.removeLast();
-        Memory().boxAnswers.delete(lastPageId);
-      }
-    }
-
-    setState(() {
-      pages.add(nextPageId);
-    });
-  }
-
   void Function(String) createValidateAnswer(String pageId) {
     return (String answerId) {
-      if (Memory().getUnmarkedAnswer(pageId) == answerId) {
+      if (!widget.yaml['nodes'].containsKey(pageId)) {
+        return;
+      }
+
+      if (Memory().boxAnswers.get(pageId) == answerId) {
         // un-select
         Memory().boxAnswers.delete(pageId);
       } else {
         // select
-        final bool isDiscriminating = readArgument(
-            'isDiscriminating', pageId, answerId,
-            defaultArg: false);
+        // answer question (recursive flatten)
+        String? currentPageId = pageId;
+        String? currentAnswerId = answerId;
+        while (currentPageId != null && currentAnswerId != null) {
+          // store answer
+          final bool isDiscriminating = readArgument(
+              'isDiscriminating', currentPageId, currentAnswerId,
+              defaultArg: false);
+          print('isDiscriminating: $isDiscriminating');
 
-        Memory().boxAnswers.put('${isDiscriminating ? '_' : ''}$pageId',
-            Memory().markedAnswer(answerId));
+          Memory().boxAnswers.put(
+              '${isDiscriminating ? '_' : ''}$currentPageId', currentAnswerId);
+
+          // move to next page
+          final String lastPageId = currentPageId;
+          print('lastPageId: $currentPageId');
+          currentPageId = readArgument('next', currentPageId, currentAnswerId);
+          if (currentPageId == null) {
+            continue;
+          }
+          print('currentPageId: $currentPageId');
+
+          print('lastAnswerId: $currentAnswerId');
+          currentAnswerId =
+              readArgument('nextAnswer', lastPageId, currentAnswerId);
+
+          print('currentAnswerId: $currentAnswerId');
+        }
+
+// final int indexOfNextPageId = pages.indexOf(nextPageId);
+//           final int indexOfPageId = pages.indexOf(pageId);
+//           if (indexOfNextPageId >= 0 && indexOfNextPageId < indexOfPageId) {
+//             for (int i = indexOfNextPageId + 1; i <= indexOfPageId; i++) {
+//               Memory().boxAnswers.delete(pages[i]);
+//             }
+//           }
+        // animate to next page
         Future.delayed(const Duration(milliseconds: 250), () {
-          createNextPage(pageId, answerId);
+          // move to next page
+          setState(() {
+            pages.add(currentPageId ?? 'end');
+          });
           controller.nextPage(
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeInOut);
         });
       }
+
       setState(() {});
     };
   }
@@ -238,7 +253,7 @@ class DefaultQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? currentAnswer = Memory().getUnmarkedAnswer(questionId);
+    final String? currentAnswer = Memory().boxAnswers.get(questionId);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -340,11 +355,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
 
 // Confirm Dialog
 void showConfirmDialog(BuildContext context) async {
-  final answersMap = Memory().boxAnswers.toMap();
-  answersMap.removeWhere((_, answer) => !Memory().isAnswerMarked(answer));
-  answersMap.updateAll((_, answer) => answer = Memory().unmarkedAnswer(answer));
-  print(
-      'Send answers: $answersMap (original is ${Memory().boxAnswers.toMap()}');
+  print('Send answers: ${Memory().boxAnswers.toMap()}');
   return await showDialog(
       context: context,
       builder: (BuildContext context) {
