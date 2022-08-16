@@ -1,6 +1,16 @@
-# node id must never be "end", it is a reserved key-word
+# question (node) structure
+# <id>: (must never be "end", it is a reserved key-word)
+#   text: ...
+#   <arguments> (they will overwrite default arguments)
+#    answers:
+#     <id>:
+#       text: ...
+#       <arguments> (they will overwrite questions arguments)
+
+# default argument values
 default:
   isDiscriminating: false
+# root of your tree (first question to ask)
 root: "raison"
 nodes:
   raison:
