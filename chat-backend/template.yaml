@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Runtime: nodejs14.x
+    Runtime: nodejs16.x
     Handler: app.handler
     Environment:
       Variables:
@@ -153,6 +153,27 @@ Resources:
         Fn::Sub:
           arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionRegisterFunction.Arn}/invocations
 
+  ShareProfileRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      RouteKey: shareprofile
+      AuthorizationType: NONE
+      OperationName: ShareProfileRoute
+      Target: !Join
+        - '/'
+        - - 'integrations'
+          - !Ref ShareProfileIntegration
+  ShareProfileIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SimpleChatWebSocket
+      Description: Send Share Profile Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionShareProfileFunction.Arn}/invocations
+
   OnDisconnectRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
@@ -263,6 +284,7 @@ Resources:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
     - RegisterRoute
+    - ShareProfileRoute
     - OnDisconnectRoute
     - SwitchGroupRoute
     - TextMessageRoute
@@ -520,6 +542,43 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${ActionRegisterFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ActionShareProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: actions/share-profile/
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints: 
+          - app.js
+  ActionShareProfilePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - SimpleChatWebSocket
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref ActionShareProfileFunction
+      Principal: apigateway.amazonaws.com
+  ActionShareProfileLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ActionShareProfileFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   ActionOnDisconnectFunction:

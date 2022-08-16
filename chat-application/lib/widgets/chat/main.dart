@@ -502,6 +502,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     return Scaffold(
       drawer: UserDrawer(
+        shareProfile: () {
+          _webSocketConnection.shareprofile();
+        },
         seeIntroduction: () {
           widget.goToPresentation();
         },

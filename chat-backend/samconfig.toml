@@ -1,4 +1,11 @@
 version = 0.1
+
+[default.build.parameters]
+beta_features = true
+          
+[default.sync.parameters]
+beta_features = true
+
 [dev]
 [dev.deploy]
 [dev.deploy.parameters]

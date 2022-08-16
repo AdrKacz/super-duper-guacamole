@@ -33,6 +33,14 @@ class WebSocketConnection {
     }));
   }
 
+  void shareprofile() {
+    print('Share Profile');
+    // send action shareprofile
+    _channel.sink.add(jsonEncode({
+      'action': 'shareprofile',
+    }));
+  }
+
   void switchgroup() {
     // get relevant answers
     final answersMap = Memory().boxAnswers.toMap();
