@@ -169,7 +169,7 @@ class _QuestionTreeState extends State<QuestionTree> {
           print('isDiscriminating: $isDiscriminating');
 
           Memory().boxAnswers.put(
-              '${isDiscriminating ? '_' : ''}$currentPageId', currentAnswerId);
+              currentPageId, '${isDiscriminating ? '_' : ''}$currentAnswerId');
 
           // move to next page
           final String lastPageId = currentPageId;
@@ -253,7 +253,13 @@ class DefaultQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? currentAnswer = Memory().boxAnswers.get(questionId);
+    final String? currentRawAnswer = Memory().boxAnswers.get(questionId);
+    late final String? currentAnswer;
+    if (currentRawAnswer != null && currentRawAnswer.startsWith('_')) {
+      currentAnswer = currentRawAnswer.substring(1);
+    } else {
+      currentAnswer = currentRawAnswer;
+    }
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),
