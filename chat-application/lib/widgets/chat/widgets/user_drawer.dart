@@ -42,7 +42,9 @@ class UserDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const QuestionsLoader(),
+                  builder: (context) => WillPopScope(
+                      child: const QuestionsLoader(),
+                      onWillPop: () async => false),
                 ),
               );
             },
