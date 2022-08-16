@@ -39,7 +39,7 @@ nodes:
       lyon:
         text: "Lyon 🦁"
       autre:
-        next: "rencontre"
+        next: "raison"
         isDiscriminating: false
         text: "Ma ville n'est pas dans la liste 🗺"
   sortie:
