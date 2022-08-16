@@ -21,14 +21,13 @@ root: "raison"
 nodes:
   raison:
     text: "Tu viens ici pour..."
-    isDiscriminating: true
     answers:
       rencontre:
         next: "ville"
+        isDiscriminating: true
         text: "Rencontrer des gens et sortir 🔥"
       chat:
         next: "musique"
-        isDiscriminating: false
         text: "Seulement chatter 🤫"
   ville:
     text: "Dans quelle ville ?"
