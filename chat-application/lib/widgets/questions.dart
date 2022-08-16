@@ -79,7 +79,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
   Future<YamlMap> readQuestionTree() async {
     http.Response response = await http
         .get(Uri.parse(
-            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/227-improve-question-logic-flexibility/questions/fr-2.yaml'))
+            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr-2.yaml'))
         .catchError((e) {
       return http.Response('', 404);
     });
