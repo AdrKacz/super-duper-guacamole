@@ -79,7 +79,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
   Future<YamlMap> readQuestionTree() async {
     http.Response response = await http
         .get(Uri.parse(
-            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr-2.yaml'))
+            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/227-improve-question-logic-flexibility/questions/fr-2.yaml'))
         .catchError((e) {
       return http.Response('', 404);
     });
@@ -154,10 +154,20 @@ class _QuestionTreeState extends State<QuestionTree> {
   }
 
   void createNextPage(String pageId, String answerId) {
-    final String? nextPageId = readArgument('next', pageId, answerId);
+    final String nextPageId =
+        readArgument('next', pageId, answerId, defaultArg: 'end');
+
+    int indexOfNextPageId = pages.indexOf(nextPageId);
+    if (indexOfNextPageId >= 0) {
+      final pagesLength = pages.length;
+      for (int i = indexOfNextPageId; i < pagesLength; i++) {
+        final lastPageId = pages.removeLast();
+        Memory().boxAnswers.delete(lastPageId);
+      }
+    }
 
     setState(() {
-      pages.add(nextPageId ?? 'end');
+      pages.add(nextPageId);
     });
   }
 
@@ -204,6 +214,7 @@ class _QuestionTreeState extends State<QuestionTree> {
         }
 
         return DefaultQuestion(
+          questionId: pageId,
           question: widget.yaml['nodes'][pageId],
           onPressed: createValidateAnswer(pageId),
         );
@@ -216,16 +227,18 @@ class _QuestionTreeState extends State<QuestionTree> {
 class DefaultQuestion extends StatelessWidget {
   const DefaultQuestion({
     Key? key,
+    required this.questionId,
     required this.question,
     required this.onPressed,
   }) : super(key: key);
 
-  final Map question;
+  final String questionId;
+  final YamlMap question;
   final Function onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final String? currentAnswer = Memory().getUnmarkedAnswer(question['id']);
+    final String? currentAnswer = Memory().getUnmarkedAnswer(questionId);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -327,6 +340,11 @@ class _ConfirmPageState extends State<ConfirmPage> {
 
 // Confirm Dialog
 void showConfirmDialog(BuildContext context) async {
+  final answersMap = Memory().boxAnswers.toMap();
+  answersMap.removeWhere((_, answer) => !Memory().isAnswerMarked(answer));
+  answersMap.updateAll((_, answer) => answer = Memory().unmarkedAnswer(answer));
+  print(
+      'Send answers: $answersMap (original is ${Memory().boxAnswers.toMap()}');
   return await showDialog(
       context: context,
       builder: (BuildContext context) {

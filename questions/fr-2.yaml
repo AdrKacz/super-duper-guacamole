@@ -7,6 +7,10 @@
 #       text: ...
 #       <arguments> (they will overwrite questions arguments)
 
+# next argument is the next branch to go to
+# if it is not defined, it ends the tree
+# if it is above, it reset the tree up to that node
+
 # defaults argument values
 defaults:
   isDiscriminating: false
@@ -25,19 +29,17 @@ nodes:
         text: "Seulement chatter 🤫"
   ville:
     text: "Dans quelle ville ?"
+    next: "sortie"
     isDiscriminating: true
     answers:
       paris:
-        next: "sortie"
         text: "Paris 🥐"
       marseille:
-        next: "sortie"
         text: "Marseille ⚓️"
       lyon:
-        next: "sortie"
         text: "Lyon 🦁"
       autre:
-        next: "musique"
+        next: "rencontre"
         isDiscriminating: false
         text: "Ma ville n'est pas dans la liste 🗺"
   sortie:
@@ -49,18 +51,15 @@ nodes:
         text: "Faire un truc dans la semaine 😇"
   musique:
     text: "Ton genre musical favoris..."
+    next: "netflix"
     answers:
       rap:
-        next: "netflix"
         text: "Rap 🎵"
       poprock:
-        next: "netflix"
         text: "Pop/rock 🎸"
       classique:
-        next: "netflix"
         text: "Classique 🎻"
       electro:
-        next: "netflix"
         text: "Electro 🎹"
   netflix:
     text: "T'es plutôt..."
