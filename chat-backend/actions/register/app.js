@@ -72,7 +72,7 @@ exports.handler = async (event) => {
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
-  if (typeof user === 'object' && typeof user.publicKey !== 'undefined') {
+  if (typeof user === 'object' && typeof user.publicKey === 'string') {
     publicKey = user.publicKey
   }
 
