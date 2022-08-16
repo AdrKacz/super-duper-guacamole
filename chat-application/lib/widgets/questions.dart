@@ -110,16 +110,19 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FutureBuilder(
-        future: object,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
-            return QuestionTree(yaml: snapshot.data);
-          }
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        body: FutureBuilder(
+          future: object,
+          builder: (BuildContext context, AsyncSnapshot snapshot) {
+            if (snapshot.hasData) {
+              return QuestionTree(yaml: snapshot.data);
+            }
 
-          return const Loader();
-        },
+            return const Loader();
+          },
+        ),
       ),
     );
   }
@@ -166,34 +169,34 @@ class _QuestionTreeState extends State<QuestionTree> {
           final bool isDiscriminating = readArgument(
               'isDiscriminating', currentPageId, currentAnswerId,
               defaultArg: false);
-          print('isDiscriminating: $isDiscriminating');
 
           Memory().boxAnswers.put(
               currentPageId, '${isDiscriminating ? '_' : ''}$currentAnswerId');
 
           // move to next page
           final String lastPageId = currentPageId;
-          print('lastPageId: $currentPageId');
           currentPageId = readArgument('next', currentPageId, currentAnswerId);
           if (currentPageId == null) {
             continue;
           }
-          print('currentPageId: $currentPageId');
 
-          print('lastAnswerId: $currentAnswerId');
+          // remove answers discriminating if going back
+          for (int i = pages.indexOf(currentPageId) + 1;
+              i >= 0 && i <= pages.indexOf(lastPageId);
+              i++) {
+            Memory().boxAnswers.put(
+                currentPageId,
+                (Memory().boxAnswers.get(pages[i]) ?? '')
+                    .replaceFirst(RegExp(r'^_'), ''));
+          }
+
+          // clear current question
+          Memory().boxAnswers.delete(currentPageId);
+
+          // read automatic answer if any
           currentAnswerId =
               readArgument('nextAnswer', lastPageId, currentAnswerId);
-
-          print('currentAnswerId: $currentAnswerId');
         }
-
-// final int indexOfNextPageId = pages.indexOf(nextPageId);
-//           final int indexOfPageId = pages.indexOf(pageId);
-//           if (indexOfNextPageId >= 0 && indexOfNextPageId < indexOfPageId) {
-//             for (int i = indexOfNextPageId + 1; i <= indexOfPageId; i++) {
-//               Memory().boxAnswers.delete(pages[i]);
-//             }
-//           }
         // animate to next page
         Future.delayed(const Duration(milliseconds: 250), () {
           // move to next page
@@ -253,13 +256,9 @@ class DefaultQuestion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? currentRawAnswer = Memory().boxAnswers.get(questionId);
-    late final String? currentAnswer;
-    if (currentRawAnswer != null && currentRawAnswer.startsWith('_')) {
-      currentAnswer = currentRawAnswer.substring(1);
-    } else {
-      currentAnswer = currentRawAnswer;
-    }
+    final String currentAnswer = (Memory().boxAnswers.get(questionId) ?? '')
+        .replaceFirst(RegExp(r'^_'), '');
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),

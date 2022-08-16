@@ -34,8 +34,6 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    print('Send answers: ${Memory().boxAnswers.toMap()}');
-
     // send action switchgroup
     _channel.sink.add(jsonEncode({
       'action': 'switchgroup',
