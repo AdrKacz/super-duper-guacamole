@@ -7,8 +7,8 @@
 #       text: ...
 #       <arguments> (they will overwrite questions arguments)
 
-# default argument values
-default:
+# defaults argument values
+defaults:
   isDiscriminating: false
 # root of your tree (first question to ask)
 root: "raison"

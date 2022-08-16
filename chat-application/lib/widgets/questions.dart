@@ -74,69 +74,27 @@ class QuestionsLoader extends StatefulWidget {
 }
 
 class _QuestionsLoaderState extends State<QuestionsLoader> {
-  late Future<Map> object;
+  late Future<YamlMap> object;
 
-  Future<Map> readQuestionTree() async {
-    http.Response response = await http.get(Uri.parse(
-        'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr-2.yaml'));
+  Future<YamlMap> readQuestionTree() async {
+    http.Response response = await http
+        .get(Uri.parse(
+            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr-2.yaml'))
+        .catchError((e) {
+      return http.Response('', 404);
+    });
 
     if (response.body.isEmpty) {
-      return {};
+      return YamlMap();
     }
 
-    final YamlMap yamlMap = loadYaml(response.body);
+    final dynamic yamlMap = loadYaml(response.body);
 
-    if (yamlMap['nodes'] is! YamlList) {
-      return {};
+    if (yamlMap is YamlMap) {
+      return yamlMap;
     }
 
-    final Map questionTree = {};
-
-    String? root;
-
-    for (final Map node in yamlMap['nodes']) {
-      final String? id = node['id'];
-      final String? text = node['text'];
-      final YamlList? answers = node['answers'];
-
-      if (id is! String || text is! String || answers is! YamlList) {
-        continue;
-      }
-
-      root = root ?? id;
-
-      final Map answersMap = {};
-      for (final YamlMap answer in answers) {
-        final String? answerId = answer['id'];
-        final String? answerText = answer['text'];
-        final String? next = answer['next'];
-
-        if (answerId is! String || answerText is! String) {
-          continue;
-        }
-
-        answersMap[answerId] = {
-          'id': answerId,
-          'text': answerText,
-          'next': next,
-        };
-      }
-      if (answersMap.isEmpty) {
-        continue;
-      }
-
-      questionTree[id] = {
-        'id': id,
-        'text': text,
-        'answers': answersMap,
-      };
-    }
-
-    if (questionTree.isEmpty) {
-      return {};
-    }
-
-    return {'questionTree': questionTree, 'root': root};
+    return YamlMap();
   }
 
   @override
@@ -163,9 +121,7 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
         future: object,
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.hasData) {
-            return Questions(
-                questionTree: snapshot.data['questionTree'],
-                root: snapshot.data['root']);
+            return QuestionTree(yaml: snapshot.data);
           }
 
           return const Loader();
@@ -175,35 +131,64 @@ class _QuestionsLoaderState extends State<QuestionsLoader> {
   }
 }
 
-// Questions
-class Questions extends StatefulWidget {
-  const Questions({Key? key, required this.questionTree, required this.root})
-      : super(key: key);
+// Question Tree
+class QuestionTree extends StatefulWidget {
+  const QuestionTree({Key? key, required this.yaml}) : super(key: key);
 
-  final Map questionTree;
-  final String? root;
+  final YamlMap yaml;
 
   @override
-  State<Questions> createState() => _QuestionsState();
+  State<QuestionTree> createState() => _QuestionTreeState();
 }
 
-class _QuestionsState extends State<Questions> {
+class _QuestionTreeState extends State<QuestionTree> {
   List<String> pages = [];
   final PageController controller = PageController();
 
+  dynamic readArgument(String arg, String pageId, String answerId,
+      {dynamic defaultArg}) {
+    return widget.yaml['nodes'][pageId]['answers'][answerId][arg] ??
+        widget.yaml['nodes'][pageId][arg] ??
+        widget.yaml['defaults'][arg] ??
+        defaultArg;
+  }
+
   void createNextPage(String pageId, String answerId) {
-    final String? nextPageId =
-        widget.questionTree[pageId]['answers'][answerId]['next'];
+    final String? nextPageId = readArgument('next', pageId, answerId);
 
     setState(() {
       pages.add(nextPageId ?? 'end');
     });
   }
 
+  void Function(String) createValidateAnswer(String pageId) {
+    return (String answerId) {
+      if (Memory().getUnmarkedAnswer(pageId) == answerId) {
+        // un-select
+        Memory().boxAnswers.delete(pageId);
+      } else {
+        // select
+        final bool isDiscriminating = readArgument(
+            'isDiscriminating', pageId, answerId,
+            defaultArg: false);
+
+        Memory().boxAnswers.put('${isDiscriminating ? '_' : ''}$pageId',
+            Memory().markedAnswer(answerId));
+        Future.delayed(const Duration(milliseconds: 250), () {
+          createNextPage(pageId, answerId);
+          controller.nextPage(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut);
+        });
+      }
+      setState(() {});
+    };
+  }
+
   @override
   void initState() {
     super.initState();
-    pages.add(widget.root ?? 'end');
+    pages.add(widget.yaml['root'] ?? 'end');
   }
 
   @override
@@ -214,26 +199,13 @@ class _QuestionsState extends State<Questions> {
       controller: controller,
       itemBuilder: (BuildContext context, int index) {
         String pageId = pages[index];
-        if (pageId == 'end' || !widget.questionTree.containsKey(pageId)) {
+        if (pageId == 'end' || !widget.yaml['nodes'].containsKey(pageId)) {
           return const ConfirmPage();
         }
 
-        return Question(
-          question: widget.questionTree[pageId],
-          onPressed: (String answerId) {
-            if (Memory().getUnmarkedAnswer(pageId) == answerId) {
-              Memory().boxAnswers.delete(pageId);
-            } else {
-              Memory().boxAnswers.put(pageId, Memory().markedAnswer(answerId));
-              Future.delayed(const Duration(milliseconds: 250), () {
-                createNextPage(pageId, answerId);
-                controller.nextPage(
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeInOut);
-              });
-            }
-            setState(() {});
-          },
+        return DefaultQuestion(
+          question: widget.yaml['nodes'][pageId],
+          onPressed: createValidateAnswer(pageId),
         );
       },
     );
@@ -241,8 +213,8 @@ class _QuestionsState extends State<Questions> {
 }
 
 // Question
-class Question extends StatelessWidget {
-  const Question({
+class DefaultQuestion extends StatelessWidget {
+  const DefaultQuestion({
     Key? key,
     required this.question,
     required this.onPressed,
@@ -260,7 +232,7 @@ class Question extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              question['text'],
+              question['text'] ?? '',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16),
             ),
@@ -271,10 +243,10 @@ class Question extends StatelessWidget {
               child: ListView(
                 children: List<Widget>.from(Map.from(question['answers'])
                     .entries
-                    .map((answer) => (Padding(
+                    .map((mapEntry) => (Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: ElevatedButton(
-                            style: answer.value['id'] == currentAnswer
+                            style: mapEntry.key == currentAnswer
                                 ? ElevatedButton.styleFrom(
                                     minimumSize: const Size.fromHeight(100),
                                   )
@@ -287,10 +259,10 @@ class Question extends StatelessWidget {
                                         .onSecondary,
                                   ),
                             onPressed: () {
-                              onPressed(answer.value['id']);
+                              onPressed(mapEntry.key);
                             },
                             child: Text(
-                              answer.value['text'],
+                              mapEntry.value['text'] ?? '',
                               textAlign: TextAlign.center,
                             ),
                           ),
