@@ -1,59 +1,63 @@
 # node id must never be "end", it is a reserved key-word
-# answer id must never start with "_", it is used internally for logical expression
-# start question id with "_" to make it discriminating
+default:
+  isDiscriminating: false
+root: "raison"
 nodes:
-  - id: "_raison"
+  raison:
     text: "Tu viens ici pour..."
+    isDiscriminating: true
     answers:
-      - id: "rencontre"
-        next: "_ville"
+      rencontre:
+        next: "ville"
         text: "Rencontrer des gens et sortir 🔥"
-      - id: "chat"
+      chat:
         next: "musique"
         text: "Seulement chatter 🤫"
-  - id: "_ville"
+  ville:
     text: "Dans quelle ville ?"
+    isDiscriminating: true
     answers:
-      - id: "paris"
+      paris:
         next: "sortie"
         text: "Paris 🥐"
-      - id: "marseille"
+      marseille:
         next: "sortie"
         text: "Marseille ⚓️"
-      - id: "lyon"
+      lyon:
         next: "sortie"
         text: "Lyon 🦁"
-      - id: "autre"
+      autre:
         next: "musique"
+        isDiscriminating: false
         text: "Ma ville n'est pas dans la liste 🗺"
-  - id: "sortie"
+  sortie:
     text: "Tu as envie de..."
     answers:
-      - id: "soir"
+      soir:
         text: "Sortir ce soir 🍻"
-      - id: "semaine"
+      semaine:
         text: "Faire un truc dans la semaine 😇"
-  - id: "musique"
+  musique:
     text: "Ton genre musical favoris..."
     answers:
-      - id: "rap"
+      rap:
         next: "netflix"
         text: "Rap 🎵"
-      - id: "poprock"
+      poprock:
         next: "netflix"
         text: "Pop/rock 🎸"
-      - id: "classique"
+      classique:
         next: "netflix"
         text: "Classique 🎻"
-      - id: "electro"
+      electro:
         next: "netflix"
         text: "Electro 🎹"
-  - id: "netflix"
+  netflix:
     text: "T'es plutôt..."
     answers:
-      - id: "films"
+      films:
         text: "Films 🍿"
-      - id: "series"
+      series:
         text: "Séries 🎥"
-      - id: "animes"
+      animes:
         text: "Animés 🥷"
