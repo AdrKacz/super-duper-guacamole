@@ -357,6 +357,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       return false; // don't do anything
     }
 
+    // Map profile = Memory().boxUserProfiles.get(userId) ?? {};
+    // if (profile == )
+
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -381,6 +384,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     onPressed: () {
                       print('share profile');
                       Navigator.of(context).pop();
+                      _webSocketConnection.shareprofile();
                     },
                     child: const Text('Je partage aussi mon profil !')),
               ]);

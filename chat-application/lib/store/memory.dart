@@ -8,6 +8,7 @@ class Memory {
   late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
+  late final Box<Map> boxUserProfiles;
   late final Box<String> rsaKeyPairBox;
 
   static final Memory _instance = Memory._internal();
@@ -21,6 +22,7 @@ class Memory {
   Future<void> init() async {
     await Hive.initFlutter();
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
+    boxUserProfiles = await Hive.openBox<Map>('userProfiles');
     boxMessages = await Hive.openBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
     boxAnswers = await Hive.openBox<String>('answers');
@@ -50,6 +52,7 @@ class Memory {
       boxAnswers.clear(),
       boxMessages.clear(),
       boxBlockedUsers.clear(),
+      boxUserProfiles.clear(),
       rsaKeyPairBox.clear(),
     ]);
   }
