@@ -1,8 +1,9 @@
-import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/pointycastle/helpers.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/store/memory.dart';
+import 'package:flutter/material.dart';
 
 import 'package:pointycastle/export.dart';
 
@@ -117,5 +118,50 @@ class User {
 
   void setOtherUserHasSeenProfile(String id) {
     updateOtherUserArgument(id, 'hasSeenProfile', true);
+  }
+
+  Future<void> shareProfile(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+    String? type = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return SimpleDialog(
+            children: <Widget>[
+              SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(context, 'camera');
+                },
+                child: const Text('Prendre une photo'),
+              ),
+              SimpleDialogOption(
+                onPressed: () {
+                  Navigator.pop(context, 'gallery');
+                },
+                child: const Text('Choisir une photo'),
+              ),
+            ],
+          );
+        });
+
+    if (type == null) {
+      return;
+    }
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+          source: type == 'camera' ? ImageSource.camera : ImageSource.gallery);
+      print(image);
+    } catch (error) {
+      await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return const AlertDialog(
+              title: Text('Je ne peux pas faire cette action 😔'),
+              content: Text(
+                  'Ouvre les paramètres de ton téléphone et donne moi les autorisations nécessaires.'),
+            );
+          });
+    }
   }
 }

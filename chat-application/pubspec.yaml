@@ -47,6 +47,7 @@ dependencies:
   yaml: ^3.1.0
   pointycastle: ^3.6.0
   asn1lib: ^1.1.0
+  image_picker: ^0.8.5+3
 
 dev_dependencies:
   change_app_package_name: ^1.0.0
