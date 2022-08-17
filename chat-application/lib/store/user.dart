@@ -1,3 +1,4 @@
+import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -109,12 +110,18 @@ class User {
     updateOtherUsers(otherUsers);
   }
 
-  void updateOtherUserStatus(String id, bool isActive) {
+  void updateOtherUserStatus(String id, bool isActive) async {
     if (!otherGroupUsers.containsKey(id)) {
       return;
     }
 
-    Map groupUser = {'id': id, 'isActive': isActive};
+    Map? groupUser = await Memory().lazyBoxGroupUsers.get(id);
+
+    if (groupUser == null) {
+      return;
+    }
+    groupUser['isActive'] = isActive;
+
     otherGroupUsers[id] = groupUser;
     Memory().addGroupUser(id, groupUser);
   }

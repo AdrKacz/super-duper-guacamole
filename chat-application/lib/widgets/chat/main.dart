@@ -347,7 +347,40 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageShareProfile(data) {
-    print('process share profile');
+    final String userId = data['user'];
+
+    if (userId == User().id) {
+      return false; // don't do anything
+    }
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50.0),
+                  child: Image.network(
+                      'https://avatars.dicebear.com/api/bottts/$userId.png'),
+                ),
+              ),
+              content: const Text("Quelqu'un partage son identité !"),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      print("don't care");
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Ok')),
+                TextButton(
+                    onPressed: () {
+                      print('share profile');
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Je partage aussi mon profil !')),
+              ]);
+        });
     return false;
   }
 
