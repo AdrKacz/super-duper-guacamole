@@ -47,6 +47,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   void listenMessage(message) {
     // receive message
+    print('receive message\n$message');
     if (processMessage(message)) {
       setState(() {});
     }
@@ -345,6 +346,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     return true;
   }
 
+  bool messageShareProfile(data) {
+    print('process share profile');
+    return false;
+  }
+
   bool messageLeaveGroup(data) {
     // empty string is stored as undefined serverside
     // (causing a difference when there is not)
@@ -480,6 +486,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       'login': messageLogin,
       'logout': messageLogout,
       'register': messageRegister,
+      'shareprofile': messageShareProfile,
       'leavegroup': messageLeaveGroup,
       'joingroup': messageJoinGroup,
       'textmessage': messageTextMessage,
