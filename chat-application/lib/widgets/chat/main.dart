@@ -339,8 +339,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         };
       }
     }
-    User().overrideOtherUsers(users);
 
+    // overwrite users
+    User().otherGroupUsers.clear();
+    User().updateOtherUsers(users);
+
+    // retrieve messages
     loadMessagesFromMemory();
 
     return true;

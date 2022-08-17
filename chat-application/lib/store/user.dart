@@ -27,7 +27,6 @@ class User {
       // clear messages
       Memory().boxMessages.clear();
       // clear users
-      Memory().lazyBoxGroupUsers.clear();
       otherGroupUsers.clear();
       // reset group
       _groupId = '';
@@ -80,9 +79,6 @@ class User {
     String? memoryGroupId = Memory().get('user', 'groupid');
     if (memoryGroupId != null) {
       _groupId = memoryGroupId;
-
-      // group users
-      otherGroupUsers = await Memory().loadGroupUsers();
     } else {
       _groupId = '';
     }
@@ -98,31 +94,28 @@ class User {
           'isActive': otherUser['isActive'] ?? false,
         };
         otherGroupUsers[otherUser['id']] = groupUser;
-        Memory().addGroupUser(otherUser['id'], groupUser);
       }
     }
   }
 
-  void overrideOtherUsers(Map<String, dynamic> otherUsers) {
-    otherGroupUsers.clear();
-    Memory().clearGroupUser();
-
-    updateOtherUsers(otherUsers);
-  }
-
-  void updateOtherUserStatus(String id, bool isActive) async {
-    if (!otherGroupUsers.containsKey(id)) {
-      return;
-    }
-
-    Map? groupUser = await Memory().lazyBoxGroupUsers.get(id);
-
+  updateOtherUserArgument(String id, String key, dynamic value) {
+    Map? groupUser = otherGroupUsers[id];
     if (groupUser == null) {
       return;
     }
-    groupUser['isActive'] = isActive;
-
+    groupUser[key] = value;
     otherGroupUsers[id] = groupUser;
-    Memory().addGroupUser(id, groupUser);
+  }
+
+  void updateOtherUserStatus(String id, bool isActive) {
+    updateOtherUserArgument(id, 'isActive', isActive);
+  }
+
+  void updateOtherUserProfile(String id, String profile) {
+    updateOtherUserArgument(id, 'profile', profile);
+  }
+
+  void setOtherUserHasSeenProfile(String id) {
+    updateOtherUserArgument(id, 'hasSeenProfile', true);
   }
 }
