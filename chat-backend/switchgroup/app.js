@@ -252,7 +252,7 @@ function isGroupValid (user, group) {
   // Are discriminating questions the same
   for (const [question, answer] of Object.entries(user.questions)) {
     // check discriminating questions
-    if (question.startsWith('_') && answer !== group.questions[question]) {
+    if (answer.startsWith('_') && answer !== group.questions[question]) {
       // group is not valid
       return false
     }
@@ -260,7 +260,7 @@ function isGroupValid (user, group) {
 
   for (const [question, answer] of Object.entries(group.questions)) {
     // check discriminating questions
-    if (question.startsWith('_') && answer !== user.questions[question]) {
+    if (answer.startsWith('_') && answer !== user.questions[question]) {
       // group is not valid
       return false
     }

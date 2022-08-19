@@ -1,59 +1,75 @@
-# node id must never be "end", it is a reserved key-word
-# answer id must never start with "_", it is used internally for logical expression
-# start question id with "_" to make it discriminating
+# question (node) structure
+# <id>: (must never be "end", it is a reserved key-word)
+#   text: ...
+#   <arguments> (they will overwrite default arguments)
+#    answers:
+#     <id>:
+#       text: ...
+#       <arguments> (they will overwrite questions arguments)
+
+# next argument is the next branch to go to
+# if it is not defined, it ends the tree
+# if it is above, it reset the tree up to that node
+# you can define a next answers to automatically skip the previoulsy answered questions
+# nextAnswers CANNOT move up the tree again
+
+# defaults argument values
+defaults:
+  isDiscriminating: false
+# root of your tree (first question to ask)
+root: "raison"
 nodes:
-  - id: "_raison"
+  raison:
     text: "Tu viens ici pour..."
     answers:
-      - id: "rencontre"
-        next: "_ville"
+      rencontre:
+        next: "ville"
+        isDiscriminating: true
         text: "Rencontrer des gens et sortir 🔥"
-      - id: "chat"
+      chat:
         next: "musique"
         text: "Seulement chatter 🤫"
-  - id: "_ville"
+  ville:
     text: "Dans quelle ville ?"
+    next: "sortie"
+    isDiscriminating: true
     answers:
-      - id: "paris"
-        next: "sortie"
+      paris:
         text: "Paris 🥐"
-      - id: "marseille"
-        next: "sortie"
+      marseille:
         text: "Marseille ⚓️"
-      - id: "lyon"
-        next: "sortie"
+      lyon:
         text: "Lyon 🦁"
-      - id: "autre"
-        next: "musique"
+      autre:
+        next: "raison"
+        nextAnswer: "chat"
+        isDiscriminating: false
         text: "Ma ville n'est pas dans la liste 🗺"
-  - id: "sortie"
+  sortie:
     text: "Tu as envie de..."
     answers:
-      - id: "soir"
+      soir:
         text: "Sortir ce soir 🍻"
-      - id: "semaine"
+      semaine:
         text: "Faire un truc dans la semaine 😇"
-  - id: "musique"
+  musique:
     text: "Ton genre musical favoris..."
+    next: "netflix"
     answers:
-      - id: "rap"
-        next: "netflix"
+      rap:
         text: "Rap 🎵"
-      - id: "poprock"
-        next: "netflix"
+      poprock:
         text: "Pop/rock 🎸"
-      - id: "classique"
-        next: "netflix"
+      classique:
         text: "Classique 🎻"
-      - id: "electro"
-        next: "netflix"
+      electro:
         text: "Electro 🎹"
-  - id: "netflix"
+  netflix:
     text: "T'es plutôt..."
     answers:
-      - id: "films"
+      films:
         text: "Films 🍿"
-      - id: "series"
+      series:
         text: "Séries 🎥"
-      - id: "animes"
+      animes:
         text: "Animés 🥷"

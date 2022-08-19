@@ -123,7 +123,7 @@ Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans 
 Future<String?> banActionOnMessage(
     BuildContext context, types.Message message) async {
   if (message.type != types.MessageType.text) {
-    // TODO: can't handle none text messages
+    // TODO: handle others message type
     return null;
   }
 
@@ -158,7 +158,7 @@ Future<String?> banActionOnMessage(
 Future<void> mailToReportMessage(
     List<types.Message> messages, types.Message message) async {
   if (message.type != types.MessageType.text) {
-    // TODO: can't handle none text messages
+    // TODO: handle others message type
     return;
   }
 
