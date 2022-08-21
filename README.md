@@ -2,7 +2,8 @@
 
 [![Codemagic build status](https://api.codemagic.io/apps/6288ca21c7038f014b56b6b0/build-chat-application/status_badge.svg)](https://codemagic.io/apps/6288ca21c7038f014b56b6b0/build-chat-application/latest_build)
 [![DeepSource](https://deepsource.io/gh/AdrKacz/super-duper-guacamole.svg/?label=active+issues&token=DKsgj5xS_AE1GQJhM8vqO1PL)](https://deepsource.io/gh/AdrKacz/super-duper-guacamole/?ref=repository-badge)
-[![.github/workflows/release-app.yml](https://github.com/AdrKacz/super-duper-guacamole/actions/workflows/release-app.yml/badge.svg?event=schedule)](https://github.com/AdrKacz/super-duper-guacamole/actions/workflows/release-app.yml)
+[![Release App](https://github.com/AdrKacz/super-duper-guacamole/actions/workflows/release-app.yml/badge.svg?event=schedule)](https://github.com/AdrKacz/super-duper-guacamole/actions/workflows/release-app.yml)
+[![SAM Pipeline](https://github.com/AdrKacz/super-duper-guacamole/actions/workflows/sam-pipeline.yml/badge.svg)](https://github.com/AdrKacz/super-duper-guacamole/actions/workflows/sam-pipeline.yml)
 
 <details><summary>External services</summary>
 
