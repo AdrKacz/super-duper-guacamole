@@ -1,0 +1,50 @@
+# This workflow take the latest app an submit it for review (to go in production)
+
+name: Verify Code Version
+
+# Controls when the workflow will run
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-ios-app:
+    name: Publish iOS App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          working-directory: chat-application/ios
+      
+      - name: Publish app to App Store
+        working-directory: chat-application/ios
+        run: bundle exec fastlane verify_version
+        env:
+          APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
+          FL_GITHUB_RELEASE_API_TOKEN: ${{ secrets.FL_GITHUB_RELEASE_API_TOKEN }}
+  verify-android-app:
+    name: Publish Android App
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          working-directory: chat-application/android
+      
+      - name: Publish app to App Store
+        working-directory: chat-application/android
+        run: bundle exec fastlane verify_version
+        env:
+          SUPPLY_JSON_KEY_DATA: ${{ secrets.SUPPLY_JSON_KEY_DATA }}

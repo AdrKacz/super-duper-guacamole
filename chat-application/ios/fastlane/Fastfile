@@ -13,6 +13,8 @@
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
 
+fastlane_require 'yaml'
+
 default_platform(:ios)
 
 platform :ios do
@@ -50,10 +52,32 @@ platform :ios do
     puts "I will create GitHub release"
     release
   end
+
+  desc "Verify the version is highter than the latest in the App Store"
+  lane :verify_version do
+    ensure_env_vars(
+      env_vars: ["APP_STORE_CONNECT_API_KEY_KEY_ID", "APP_STORE_CONNECT_API_KEY_ISSUER_ID", "APP_STORE_CONNECT_API_KEY_KEY"]
+    )
+
+    # set api key
+    app_store_connect_api_key
+
+    # get build number 
+    app_store_build_number(
+      app_identifier: "com.awama.awa.dev",
+    )
+
+    # get pubspec
+  pubspec = YAML.load_file("../../pubspec.yaml")
+
+  pubspec_version = pubspec["version"]
+  latest_version = lane_context[SharedValues::LATEST_VERSION]
+
+    if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
+      puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
+    end
+  end
 end
-
-
-fastlane_require 'yaml'
 
 lane :release do
   # get pubspec
