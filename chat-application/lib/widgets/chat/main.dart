@@ -388,7 +388,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     onPressed: () {
                       print('share profile');
                       Navigator.of(context).pop();
-                      _webSocketConnection.shareprofile();
                     },
                     child: const Text('Je partage aussi mon profil !')),
               ]);
@@ -554,9 +553,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     return Scaffold(
       drawer: UserDrawer(
-        shareProfile: () {
-          _webSocketConnection.shareprofile();
-        },
         seeIntroduction: () {
           widget.goToPresentation();
         },

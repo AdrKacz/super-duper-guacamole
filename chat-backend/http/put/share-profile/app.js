@@ -1,15 +1,19 @@
+// TRIGGER
+// HTTP API
+
 // ===== ==== ====
 // IMPORTS
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
-const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient, BatchGetCommand, GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+
+const { createVerify } = require('crypto')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
-  USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN,
@@ -37,16 +41,15 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
   const profile = body.profile
 
-  if (typeof profile === 'undefined') {
-    throw new Error('profile must be defined')
+  if (typeof profile !== 'object') {
+    throw new Error('profile must be an object')
   }
 
-  const user = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
-  user.connectionId = event.requestContext.connectionId
+  const user = await verifyUser(body)
 
-  if (typeof user.id === 'undefined') {
+  if (typeof user.id !== 'string') {
     return {
-      statusCode: 403
+      statusCode: 401
     }
   }
 
@@ -61,7 +64,6 @@ exports.handler = async (event) => {
     }
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
-  console.log(`group: ${group}`)
   if (typeof group === 'undefined') {
     console.log('group not defined')
     throw new Error(`group <${user.group}> is not defined`)
@@ -73,11 +75,10 @@ exports.handler = async (event) => {
   }
 
   // retreive users
-  console.log(`query users: ${Array.from(group.users).filter(id => id !== user.id).map((id) => ({ id }))}`)
   const batchGetOtherUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).filter(id => id !== user.id).map((id) => ({ id })),
+        Keys: Array.from(group.users).map((id) => ({ id })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -87,12 +88,11 @@ exports.handler = async (event) => {
     }
   })
 
-  const otherUsers = await dynamoDBDocumentClient.send(batchGetOtherUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-  console.log(`otherUsers: ${otherUsers}`)
+  const users = await dynamoDBDocumentClient.send(batchGetOtherUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: otherUsers.concat([user]),
+      users: users,
       message: {
         action: 'shareprofile',
         user: user.id,
@@ -127,32 +127,57 @@ exports.handler = async (event) => {
 /**
  * Get user id and group id from connection id
  *
- * @param {string} connectionId
+ * @param {Object} user
+ * @param {string} user.id
+ * @param {Object} user.signature
+ * @param {number} user.timestamp
+ * @param {string} user.publicKey
  */
-async function connectionIdToUserIdAndGroupId (connectionId) {
-  // Get userId and GroupId associated with connectionId
-  // connetionId - String
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': connectionId
-    }
-  })
-  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    }
-    return {}
-  })
+async function verifyUser ({ id, signature, timestamp, publicKey }) {
+  console.log(`signature type: ${typeof signature}`)
 
-  if (typeof user.id === 'undefined') {
+  if (typeof id !== 'string') {
+    throw new Error('id, must be a string')
+  }
+  if (!Array.isArray(signature)) {
+    throw new Error('signature must be an array')
+  }
+  if (typeof timestamp !== 'number') {
+    throw new Error('timestamp must be a number')
+  }
+  if (typeof publicKey !== 'string') {
+    throw new Error('publicKey must be a string')
+  }
+
+  if (Math.abs(Date.now() - timestamp) > 3000) {
+    // prevent repeat attack
     return {}
   }
-  return { id: user.id, group: user.group }
+
+  // user
+  const getUserCommand = new GetCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id },
+    ProjectionExpression: '#id, #publicKey, #group',
+    ExpressionAttributeNames: {
+      '#id': 'id',
+      '#publicKey': 'publicKey',
+      '#group': 'group'
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
+  if (user !== undefined && user.publicKey !== undefined) {
+    publicKey = user.publicKey
+  }
+
+  // verify signature
+  const verifier = createVerify('rsa-sha256')
+  verifier.update(id + timestamp.toString())
+  const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
+  console.log('Is the message verified?', isVerified)
+  if (!isVerified) {
+    return {}
+  }
+
+  return user
 }

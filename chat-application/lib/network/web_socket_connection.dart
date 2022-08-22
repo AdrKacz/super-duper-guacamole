@@ -45,31 +45,6 @@ class WebSocketConnection {
     }));
   }
 
-  void shareprofile() {
-    // get profile
-    final Map? profile = Memory().boxUserProfiles.get(User().id);
-    if (profile == null) {
-      print('No profile to share');
-      return;
-    }
-
-    if (profile['picture'] is! Uint8List) {
-      print('No picture to share');
-      return;
-    }
-
-    final Uint8List picture = profile['picture'];
-
-    print('share profile');
-    // send action shareprofile
-    _add(jsonEncode({
-      'action': 'shareprofile',
-      'profile': {
-        'picture': picture,
-      }
-    }));
-  }
-
   void switchgroup() {
     // send action switchgroup
     _add(jsonEncode({

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -10,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import 'package:pointycastle/export.dart';
+import 'package:http/http.dart' as http;
 
 class User {
   static User _instance = User._internal();
@@ -124,7 +126,7 @@ class User {
     updateOtherUserArgument(id, 'hasSeenProfile', true);
   }
 
-  Future<bool> shareProfile(BuildContext context) async {
+  Future<http.Response?> shareProfile(BuildContext context) async {
     final Map profile = Memory().boxUserProfiles.get(id) ?? {};
 
     final Color primaryColor = Theme.of(context).colorScheme.primary;
@@ -166,11 +168,11 @@ class User {
         });
 
     if (type == null) {
-      return false;
+      return null;
     }
 
     if (type == 'memory') {
-      return true;
+      return HttpConnection().put('share-profile', {'profile': profile});
     }
 
     late final XFile? image;
@@ -200,11 +202,11 @@ class User {
                   ),
                 ]);
           });
-      return false;
+      return null;
     }
 
     if (image == null) {
-      return false;
+      return null;
     }
 
     // crop image
@@ -225,7 +227,7 @@ class User {
         ]);
 
     if (croppedFile == null) {
-      return false;
+      return null;
     }
 
     // save image
@@ -233,6 +235,6 @@ class User {
     profile['picture'] = await croppedFile.readAsBytes();
     await Memory().boxUserProfiles.put(id, profile);
 
-    return true;
+    return HttpConnection().put('share-profile', {'profile': profile});
   }
 }

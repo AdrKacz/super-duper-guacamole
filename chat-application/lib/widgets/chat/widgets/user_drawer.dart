@@ -10,15 +10,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 class UserDrawer extends StatelessWidget {
   const UserDrawer(
-      {Key? key,
-      required this.seeIntroduction,
-      required this.resetAccount,
-      required this.shareProfile})
+      {Key? key, required this.seeIntroduction, required this.resetAccount})
       : super(key: key);
 
   final VoidCallback seeIntroduction;
   final VoidCallback resetAccount;
-  final VoidCallback shareProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +52,7 @@ class UserDrawer extends StatelessWidget {
             title: const Text('Partage ta photo'),
             subtitle: const Text('Seul ton groupe pourra le voir'),
             onTap: () async {
-              if (await User().shareProfile(context)) {
-                shareProfile();
-              }
+              print((await User().shareProfile(context))?.statusCode);
             },
           ),
           const Divider(),
