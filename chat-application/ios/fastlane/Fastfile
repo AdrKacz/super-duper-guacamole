@@ -66,6 +66,7 @@ platform :ios do
     # get build number 
     app_store_build_number(
       app_identifier: "com.awama.awa.dev",
+      live: false,
     )
 
     # get pubspec
@@ -76,6 +77,7 @@ platform :ios do
     
     puts "iOS version"
     puts lane_context[SharedValues::LATEST_VERSION]
+    puts lane_context[SharedValues::LATEST_BUILD_NUMBER]
 
     if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
