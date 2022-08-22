@@ -40,6 +40,16 @@ platform :ios do
       puts "Latest version already in App Store"
       next
     end
+
+    app_store_build_number(
+      app_identifier: "com.awama.awa.dev",
+      live: false
+    )
+    if lane_context[SharedValues::LATEST_BUILD_NUMBER] >= lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER]
+      puts "Latest version already in review"
+      next
+    end
+
     puts "I will upload latest TestFlight version to App Store"
     deliver(
       app_version: lane_context[SharedValues::LATEST_TESTFLIGHT_VERSION].to_s,
@@ -66,7 +76,6 @@ platform :ios do
     # get build number 
     app_store_build_number(
       app_identifier: "com.awama.awa.dev",
-      live: false,
     )
 
     # get pubspec
@@ -75,9 +84,8 @@ platform :ios do
     puts "Pubspec version"
     puts pubspec["version"]
     
-    puts "iOS version"
+    puts "iOS live version"
     puts lane_context[SharedValues::LATEST_VERSION]
-    puts lane_context[SharedValues::LATEST_BUILD_NUMBER]
 
     if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
