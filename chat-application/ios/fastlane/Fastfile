@@ -78,9 +78,9 @@ platform :ios do
 
     if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
+      exit 1
     else
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} and you push #{pubspec["version"]}"
-      exit 1
     end
   end
 end
