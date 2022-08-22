@@ -96,7 +96,7 @@ exports.handler = async (event) => {
       message: {
         action: 'shareprofile',
         user: user.id,
-        profile: profile
+        profile
       }
     })
   })
