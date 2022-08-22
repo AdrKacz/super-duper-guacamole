@@ -37,7 +37,9 @@ exports.handler = async (event) => {
   user.connectionId = event.requestContext.connectionId
 
   if (typeof user.id === 'undefined') {
-    return
+    return {
+      statusCode: 403
+    }
   }
 
   // retreive group
@@ -52,7 +54,7 @@ exports.handler = async (event) => {
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
   console.log(`group: ${group}`)
-  if (group === undefined) {
+  if (typeof group === 'undefined') {
     console.log('group not defined')
     throw new Error(`group <${user.group}> is not defined`)
   }
