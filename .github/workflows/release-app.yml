@@ -5,12 +5,22 @@ name: Release App
 # Controls when the workflow will run
 on:
   workflow_dispatch:
+    inputs:
+      publish_ios:
+        description: 'Do you want to publish for iOS?'
+        default: true
+        type: boolean
+      publish_android:
+        description: 'Do you want to publish for Android?'
+        default: true
+        type: boolean
   schedule:
     # every Sunday at 12pm UTC (13pm London)
     - cron: '0 12 * * 0'
 
 jobs:
   publish-ios-app:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' && inputs.publish_ios
     name: Publish iOS App
     runs-on: macos-latest
     steps:
@@ -32,6 +42,7 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
           FL_GITHUB_RELEASE_API_TOKEN: ${{ secrets.FL_GITHUB_RELEASE_API_TOKEN }}
   publish-android-app:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' && inputs.publish_android
     name: Publish Android App
     runs-on: macos-latest
     steps:
