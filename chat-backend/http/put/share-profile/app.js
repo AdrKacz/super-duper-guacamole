@@ -92,7 +92,7 @@ exports.handler = async (event) => {
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       message: {
         action: 'shareprofile',
         user: user.id,
