@@ -42,6 +42,7 @@ platform :ios do
     end
     puts "I will upload latest TestFlight version to App Store"
     deliver(
+      app_version: lane_context[SharedValues::LATEST_TESTFLIGHT_VERSION].to_s,
       build_number: lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER].to_s,
       submission_information: {
         add_id_info_uses_idfa: false
