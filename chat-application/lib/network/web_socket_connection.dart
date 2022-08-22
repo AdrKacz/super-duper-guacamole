@@ -23,6 +23,8 @@ class WebSocketConnection {
     try {
       _channel.sink.add(data);
     } catch (error) {
+      print('error');
+      print(error);
       close();
     }
   }
@@ -32,6 +34,8 @@ class WebSocketConnection {
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+
+    print('register');
     _add(jsonEncode({
       'action': 'register',
       'id': User().id,
@@ -42,10 +46,27 @@ class WebSocketConnection {
   }
 
   void shareprofile() {
-    print('Share Profile');
+    // get profile
+    final Map? profile = Memory().boxUserProfiles.get(User().id);
+    if (profile == null) {
+      print('No profile to share');
+      return;
+    }
+
+    if (profile['picture'] is! Uint8List) {
+      print('No picture to share');
+      return;
+    }
+
+    final Uint8List picture = profile['picture'];
+
+    print('share profile');
     // send action shareprofile
     _add(jsonEncode({
       'action': 'shareprofile',
+      'profile': {
+        'picture': picture,
+      }
     }));
   }
 
@@ -85,11 +106,13 @@ class WebSocketConnection {
   }
 
   void reconnect() {
+    print('reconnect');
     // replace channel with a new connected one
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 
   void close() {
+    print('close');
     _channel.sink.close();
   }
 }

@@ -24,14 +24,22 @@ const snsClient = new SNSClient({ region: AWS_REGION })
  * Share profile to other group users
  *
  * @param {Object} event
- * @param {string} user.requestContext.connectionId
- * @param {Object} user.body
+ * @param {string} event.requestContext.connectionId
+ * @param {Object} event.body
+ * @param {Object} event.body.profile
  */
 exports.handler = async (event) => {
   console.log(`Receives:
 \tBody:\n${event.body}
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
+
+  const body = JSON.parse(event.body)
+  const profile = body.profile
+
+  if (typeof profile === 'undefined') {
+    throw new Error('profile must be defined')
+  }
 
   const user = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
   user.connectionId = event.requestContext.connectionId
@@ -87,7 +95,8 @@ exports.handler = async (event) => {
       users: otherUsers.concat([user]),
       message: {
         action: 'shareprofile',
-        user: user.id
+        user: user.id,
+        profile: profile
       }
     })
   })

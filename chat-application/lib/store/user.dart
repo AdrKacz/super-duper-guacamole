@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
@@ -122,24 +124,41 @@ class User {
   }
 
   Future<bool> shareProfile(BuildContext context) async {
+    final Map profile = Memory().boxUserProfiles.get(id) ?? {};
+
+    final List<Widget> typeActions = [
+      SimpleDialogOption(
+        onPressed: () {
+          Navigator.pop(context, 'camera');
+        },
+        child: const Text('Prendre une photo'),
+      ),
+      SimpleDialogOption(
+        onPressed: () {
+          Navigator.pop(context, 'gallery');
+        },
+        child: const Text('Choisir une photo'),
+      ),
+    ];
+
+    if (profile['picture'] is Uint8List) {
+      typeActions.insert(
+          0,
+          SimpleDialogOption(
+            onPressed: () {
+              Navigator.pop(context, 'memory');
+            },
+            child: Text('Envoyer la photo déjà enregistrée',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+          ));
+    }
+
     String? type = await showDialog(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
-            children: <Widget>[
-              SimpleDialogOption(
-                onPressed: () {
-                  Navigator.pop(context, 'camera');
-                },
-                child: const Text('Prendre une photo'),
-              ),
-              SimpleDialogOption(
-                onPressed: () {
-                  Navigator.pop(context, 'gallery');
-                },
-                child: const Text('Choisir une photo'),
-              ),
-            ],
+            children: typeActions,
           );
         });
 
@@ -147,10 +166,19 @@ class User {
       return false;
     }
 
+    if (type == 'memory') {
+      return true;
+    }
+
+    late final XFile? image;
     try {
+      // TODO: allow bigger image to be sent (here it is already long and bigger image are not sent)
       final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(
-          source: type == 'camera' ? ImageSource.camera : ImageSource.gallery);
+      image = await picker.pickImage(
+        source: type == 'camera' ? ImageSource.camera : ImageSource.gallery,
+        maxHeight: 128,
+        maxWidth: 128,
+      );
       print(image);
     } catch (error) {
       await showDialog(
@@ -175,6 +203,14 @@ class User {
           });
       return false;
     }
+
+    if (image == null) {
+      return false;
+    }
+
+    // save image
+    profile['picture'] = await image.readAsBytes();
+    Memory().boxUserProfiles.put(id, profile);
 
     return true;
   }

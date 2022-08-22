@@ -1,5 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
@@ -13,6 +15,7 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'widgets/fake_chat.dart';
 
@@ -357,8 +360,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       return false; // don't do anything
     }
 
-    // Map profile = Memory().boxUserProfiles.get(userId) ?? {};
-    // if (profile == )
+    final Map profile = data['profile'];
+
+    final Uint8List picture =
+        Uint8List.fromList(List<int>.from(profile['picture']));
 
     showDialog(
         context: context,
@@ -368,8 +373,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                 backgroundColor: Colors.transparent,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50.0),
-                  child: Image.network(
-                      'https://avatars.dicebear.com/api/bottts/$userId.png'),
+                  child: Image.memory(picture),
                 ),
               ),
               content: const Text("Quelqu'un partage son identité !"),
