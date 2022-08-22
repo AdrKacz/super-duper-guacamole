@@ -68,13 +68,18 @@ platform :ios do
     )
 
     # get pubspec
-  pubspec = YAML.load_file("../../pubspec.yaml")
+    pubspec = YAML.load_file("../../pubspec.yaml")
 
-  pubspec_version = pubspec["version"]
-  latest_version = lane_context[SharedValues::LATEST_VERSION]
+    puts "Pubspec version"
+    puts pubspec["version"]
+    
+    puts "iOS version"
+    puts lane_context[SharedValues::LATEST_VERSION]
 
     if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
+    else
+      puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} and you push #{pubspec["version"]}"
     end
   end
 end
