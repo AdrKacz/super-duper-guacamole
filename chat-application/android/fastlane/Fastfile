@@ -38,7 +38,7 @@ platform :android do
       version_code: alpha_tracks[0],
       track: "alpha",
       track_promote_to: "production",
-      rollout: 1,
+      rollout: "1",
     )
   end
 end
