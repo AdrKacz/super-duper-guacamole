@@ -6,7 +6,7 @@ name: Verify Code Version
 on:
   pull_request:
     branches:
-      - 233-auto-release-not-working
+      - main
 
 jobs:
   verify-ios-app:
