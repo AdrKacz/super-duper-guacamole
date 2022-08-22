@@ -17,7 +17,11 @@ workflows:
         excludes:
           - '**/*.md'
           - 'chat-application/ios/fastlane/'
+          - 'chat-application/ios/Gemfile'
+          - 'chat-application/ios/Gemfile.lock'
           - 'chat-application/android/fastlane/'
+          - 'chat-application/android/Gemfile'
+          - 'chat-application/android/Gemfile.lock'
     environment:
       groups:
         - keystore_credentials
