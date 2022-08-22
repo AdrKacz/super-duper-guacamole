@@ -29,21 +29,3 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
-  verify-android-app:
-    name: Verify Android App
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup fastlane
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
-          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-          working-directory: chat-application/android
-      
-      - name: Verify app version in App Store
-        working-directory: chat-application/android
-        run: bundle exec fastlane verify_version
-        env:
-          SUPPLY_JSON_KEY_DATA: ${{ secrets.SUPPLY_JSON_KEY_DATA }}

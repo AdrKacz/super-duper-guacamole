@@ -39,39 +39,4 @@ platform :android do
       track_promote_to: "production",
     )
   end
-
-  desc "Verify the version is highter than the latest in the Google Play Store"
-  lane :verify_version do
-    ensure_env_vars(
-      env_vars: ["SUPPLY_JSON_KEY_DATA"]
-    )
-
-    alpha_tracks_version_codes = google_play_track_version_codes(
-      track: "production",
-      package_name: "com.awa.ma.dev.app",
-    )
-
-    alpha_tracks_release_names = google_play_track_release_names(
-      track: "production",
-      package_name: "com.awa.ma.dev.app",
-    )
-
-    puts "Version Codes"
-    puts alpha_tracks_version_codes.inspect
-    puts "Release Names"
-    puts alpha_tracks_release_names.inspect
-
-    # get pubspec
-    pubspec = YAML.load_file("../../pubspec.yaml")
-
-    pubspec_version = pubspec["version"]
-    puts "Pubspec version"
-    puts pubspec_version
-
-    # if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
-    #   puts "Latest version is ??? but you try to push #{pubspec["version"]}"
-    # else
-    #   puts "Latest version is ??? and you push #{pubspec["version"]}"
-    # end
-  end
 end
