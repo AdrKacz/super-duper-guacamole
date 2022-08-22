@@ -91,31 +91,4 @@ class Memory {
 
     return messages;
   }
-
-  // Helper for boxAnswer (marker to note if last round or note)
-  bool isAnswerMarked(String answer) {
-    return answer.startsWith('_');
-  }
-
-  String? getUnmarkedAnswer(String key) {
-    final String? answer = boxAnswers.get(key);
-    if (answer != null && isAnswerMarked(answer)) {
-      return answer.substring(1);
-    }
-    return answer;
-  }
-
-  String markedAnswer(String answer) {
-    if (isAnswerMarked(answer)) {
-      return answer;
-    }
-    return '_$answer';
-  }
-
-  String unmarkedAnswer(String answer) {
-    if (isAnswerMarked(answer)) {
-      return answer.substring(1);
-    }
-    return answer;
-  }
 }

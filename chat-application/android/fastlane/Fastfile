@@ -10,8 +10,8 @@
 #     https://docs.fastlane.tools/plugins/available-plugins
 #
 
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
+# Comment the line if you don't want fastlane to automatically update itself
+update_fastlane
 
 default_platform(:android)
 
@@ -36,7 +36,9 @@ platform :android do
     supply(
       package_name: "com.awa.ma.dev.app",
       version_code: alpha_tracks[0],
+      track: "alpha",
       track_promote_to: "production",
+      rollout: "1",
     )
   end
 end

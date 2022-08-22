@@ -495,7 +495,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       return;
     }
 
-    if (controller.page == null) {
+    if (!mounted || controller.page == null) {
       // should not happen, propably an error
       return;
     }

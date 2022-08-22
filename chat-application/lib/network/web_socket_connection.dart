@@ -42,18 +42,10 @@ class WebSocketConnection {
   }
 
   void switchgroup() {
-    // get relevant answers
-    final answersMap = Memory().boxAnswers.toMap();
-    answersMap.removeWhere((_, answer) => !Memory().isAnswerMarked(answer));
-    answersMap
-        .updateAll((_, answer) => answer = Memory().unmarkedAnswer(answer));
-    print(
-        'Send answers: $answersMap (original is ${Memory().boxAnswers.toMap()}');
-
     // send action switchgroup
     _channel.sink.add(jsonEncode({
       'action': 'switchgroup',
-      'questions': answersMap,
+      'questions': Memory().boxAnswers.toMap(),
       'blockedUsers': Memory().getBlockedUsers()
     }));
   }
