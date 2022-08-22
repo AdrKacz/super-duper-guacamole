@@ -10,8 +10,8 @@
 #     https://docs.fastlane.tools/plugins/available-plugins
 #
 
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
+# Comment the line if you don't want fastlane to automatically update itself
+update_fastlane
 
 fastlane_require 'yaml'
 
