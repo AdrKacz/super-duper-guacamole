@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:pointycastle/export.dart';
 
@@ -120,8 +121,7 @@ class User {
     updateOtherUserArgument(id, 'hasSeenProfile', true);
   }
 
-  Future<void> shareProfile(BuildContext context) async {
-    final ImagePicker picker = ImagePicker();
+  Future<bool> shareProfile(BuildContext context) async {
     String? type = await showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -144,7 +144,7 @@ class User {
         });
 
     if (type == null) {
-      return;
+      return false;
     }
 
     try {
@@ -156,12 +156,26 @@ class User {
       await showDialog(
           context: context,
           builder: (BuildContext context) {
-            return const AlertDialog(
-              title: Text('Je ne peux pas faire cette action 😔'),
-              content: Text(
-                  'Ouvre les paramètres de ton téléphone et donne moi les autorisations nécessaires.'),
-            );
+            return AlertDialog(
+                title: const Text('Je ne peux pas faire cette action 😔'),
+                content: const Text(
+                    'Ouvre les paramètres de ton téléphone et donne moi les autorisations nécessaires.'),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Ouvrir les paramètres'),
+                    onPressed: () async {
+                      if (!await openAppSettings()) {
+                        Navigator.pop(
+                          context,
+                        );
+                      }
+                    },
+                  ),
+                ]);
           });
+      return false;
     }
+
+    return true;
   }
 }

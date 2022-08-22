@@ -53,11 +53,12 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.public),
-            title: const Text('Partage ton profil'),
+            title: const Text('Partage ta photo'),
             subtitle: const Text('Seul ton groupe pourra le voir'),
             onTap: () async {
-              await User().shareProfile(context);
-              shareProfile();
+              if (await User().shareProfile(context)) {
+                shareProfile();
+              }
             },
           ),
           const Divider(),
