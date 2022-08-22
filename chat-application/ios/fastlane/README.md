@@ -34,6 +34,14 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Publish the latest TestFlight version to the App Store
 
+### ios verify_version
+
+```sh
+[bundle exec] fastlane ios verify_version
+```
+
+Verify the version is highter than the latest in the App Store
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

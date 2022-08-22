@@ -10,8 +10,10 @@
 #     https://docs.fastlane.tools/plugins/available-plugins
 #
 
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
+# Comment the line if you don't want fastlane to automatically update itself
+update_fastlane
+
+fastlane_require 'yaml'
 
 default_platform(:ios)
 
@@ -38,8 +40,19 @@ platform :ios do
       puts "Latest version already in App Store"
       next
     end
+
+    app_store_build_number(
+      app_identifier: "com.awama.awa.dev",
+      live: false
+    )
+    if lane_context[SharedValues::LATEST_BUILD_NUMBER] >= lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER]
+      puts "Latest version already in review"
+      next
+    end
+
     puts "I will upload latest TestFlight version to App Store"
     deliver(
+      app_version: lane_context[SharedValues::LATEST_TESTFLIGHT_VERSION].to_s,
       build_number: lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER].to_s,
       submission_information: {
         add_id_info_uses_idfa: false
@@ -50,10 +63,38 @@ platform :ios do
     puts "I will create GitHub release"
     release
   end
+
+  desc "Verify the version is highter than the latest in the App Store"
+  lane :verify_version do
+    ensure_env_vars(
+      env_vars: ["APP_STORE_CONNECT_API_KEY_KEY_ID", "APP_STORE_CONNECT_API_KEY_ISSUER_ID", "APP_STORE_CONNECT_API_KEY_KEY"]
+    )
+
+    # set api key
+    app_store_connect_api_key
+
+    # get build number 
+    app_store_build_number(
+      app_identifier: "com.awama.awa.dev",
+    )
+
+    # get pubspec
+    pubspec = YAML.load_file("../../pubspec.yaml")
+
+    puts "Pubspec version"
+    puts pubspec["version"]
+    
+    puts "iOS live version"
+    puts lane_context[SharedValues::LATEST_VERSION]
+
+    if Gem::Version.new(pubspec["version"]) <= Gem::Version.new(lane_context[SharedValues::LATEST_VERSION])
+      puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
+      exit 1
+    else
+      puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} and you push #{pubspec["version"]}"
+    end
+  end
 end
-
-
-fastlane_require 'yaml'
 
 lane :release do
   # get pubspec
