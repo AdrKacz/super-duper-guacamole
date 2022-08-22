@@ -80,6 +80,7 @@ platform :ios do
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} but you try to push #{pubspec["version"]}"
     else
       puts "Latest version is #{lane_context[SharedValues::LATEST_VERSION]} and you push #{pubspec["version"]}"
+      exit 1
     end
   end
 end
