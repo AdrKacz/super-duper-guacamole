@@ -48,7 +48,8 @@ dependencies:
   pointycastle: ^3.6.0
   asn1lib: ^1.1.0
   image_picker: ^0.8.5+3
-  permission_handler: ^10.0.0
+  permission_handler: ^9.2.0
+  image_cropper: ^3.0.0
 
 dev_dependencies:
   change_app_package_name: ^1.0.0

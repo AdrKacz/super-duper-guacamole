@@ -7,6 +7,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image_cropper/image_cropper.dart';
 
 import 'package:pointycastle/export.dart';
 
@@ -126,6 +127,9 @@ class User {
   Future<bool> shareProfile(BuildContext context) async {
     final Map profile = Memory().boxUserProfiles.get(id) ?? {};
 
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
+    final Color onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
+
     final List<Widget> typeActions = [
       SimpleDialogOption(
         onPressed: () {
@@ -149,8 +153,7 @@ class User {
               Navigator.pop(context, 'memory');
             },
             child: Text('Envoyer la photo déjà enregistrée',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.onPrimary)),
+                style: TextStyle(color: onPrimaryColor)),
           ));
     }
 
@@ -175,11 +178,7 @@ class User {
       // TODO: allow bigger image to be sent (here it is already long and bigger image are not sent)
       final ImagePicker picker = ImagePicker();
       image = await picker.pickImage(
-        source: type == 'camera' ? ImageSource.camera : ImageSource.gallery,
-        maxHeight: 128,
-        maxWidth: 128,
-      );
-      print(image);
+          source: type == 'camera' ? ImageSource.camera : ImageSource.gallery);
     } catch (error) {
       await showDialog(
           context: context,
@@ -208,9 +207,31 @@ class User {
       return false;
     }
 
+    // crop image
+    print('crop image');
+    final CroppedFile? croppedFile = await ImageCropper().cropImage(
+        maxHeight: 128,
+        maxWidth: 128,
+        sourcePath: image.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        cropStyle: CropStyle.circle,
+        uiSettings: [
+          AndroidUiSettings(
+              toolbarTitle: '',
+              toolbarColor: primaryColor,
+              toolbarWidgetColor: onPrimaryColor,
+              initAspectRatio: CropAspectRatioPreset.original,
+              lockAspectRatio: false),
+        ]);
+
+    if (croppedFile == null) {
+      return false;
+    }
+
     // save image
-    profile['picture'] = await image.readAsBytes();
-    Memory().boxUserProfiles.put(id, profile);
+    print('save image');
+    profile['picture'] = await croppedFile.readAsBytes();
+    await Memory().boxUserProfiles.put(id, profile);
 
     return true;
   }
