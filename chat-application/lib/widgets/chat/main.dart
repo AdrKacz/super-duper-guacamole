@@ -483,7 +483,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     } else {
       // action not recognised (see data['action'])
       needUpdate = false;
-      if (message.message == 'Internal server error') {
+      // TODO: Handle 'Too Many Requests' too
+      if (data['message'] == 'Internal server error') {
         status = Status.error;
       }
     }
