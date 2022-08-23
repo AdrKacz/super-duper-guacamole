@@ -15,7 +15,6 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 
 import 'widgets/fake_chat.dart';
 
@@ -365,7 +364,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     final Uint8List picture =
         Uint8List.fromList(List<int>.from(profile['picture']));
 
-    showDialog(
+    showDialog<String?>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
@@ -385,13 +384,17 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     },
                     child: const Text('Ok')),
                 TextButton(
-                    onPressed: () {
-                      print('share profile');
-                      Navigator.of(context).pop();
+                    onPressed: () async {
+                      Navigator.of(context).pop('share-profile');
                     },
                     child: const Text('Je partage aussi mon profil !')),
               ]);
-        });
+        }).then((value) {
+      if (value == 'share-profile') {
+        User().shareProfile(context);
+      }
+    });
+
     return false;
   }
 
