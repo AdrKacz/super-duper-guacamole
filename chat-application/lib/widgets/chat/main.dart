@@ -351,7 +351,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   bool messageShareProfile(data) {
-    final String userId = data['user'];
+    final String? userId = data['user'];
+
+    if (userId == null) {
+      return false;
+    }
 
     if (userId == User().id) {
       return false; // don't do anything
@@ -362,6 +366,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     final Uint8List picture =
         Uint8List.fromList(List<int>.from(profile['picture']));
 
+    Memory().boxUserProfiles.put(userId, {'picture': picture});
+
     showDialog<String?>(
         context: context,
         builder: (BuildContext context) {
@@ -370,7 +376,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                 backgroundColor: Colors.transparent,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50.0),
-                  child: Image.memory(picture),
+                  child: User.getUserImage(userId),
                 ),
               ),
               content: const Text("Quelqu'un partage son identité !"),
@@ -381,7 +387,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     },
                     child: const Text('Ok')),
                 TextButton(
-                    onPressed: () async {
+                    onPressed: () {
                       Navigator.of(context).pop('share-profile');
                     },
                     child: const Text('Je partage aussi mon profil !')),
@@ -392,7 +398,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       }
     });
 
-    return false;
+    return true;
   }
 
   bool messageLeaveGroup(data) {
@@ -580,8 +586,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                   padding: const EdgeInsets.all(2),
                   child: CircleAvatar(
                     backgroundColor: Colors.transparent,
-                    backgroundImage: NetworkImage(
-                        'https://avatars.dicebear.com/api/bottts/${User().id}.png'),
+                    backgroundImage: User.getUserImageProvider(User().id),
                   ),
                 ),
               );

@@ -1,3 +1,4 @@
+import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart';
 
@@ -17,8 +18,7 @@ class UsersList extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       backgroundColor: Colors.transparent,
-                      backgroundImage: NetworkImage(
-                          "https://avatars.dicebear.com/api/bottts/${user['id']}.png"),
+                      backgroundImage: User.getUserImageProvider(user['id']),
                     ),
                     Badge(
                         showBadge: user['isActive'],

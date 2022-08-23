@@ -244,4 +244,24 @@ class User {
 
     return HttpConnection().put('share-profile', {'profile': profile});
   }
+
+  static ImageProvider getUserImageProvider(id) {
+    final Map profile = Memory().boxUserProfiles.get(id) ?? {};
+    if (profile['picture'] is Uint8List) {
+      return MemoryImage(profile['picture']);
+    } else {
+      return NetworkImage(
+          'https://avatars.dicebear.com/api/bottts/${User().id}.png');
+    }
+  }
+
+  static Image getUserImage(id) {
+    final Map profile = Memory().boxUserProfiles.get(id) ?? {};
+    if (profile['picture'] is Uint8List) {
+      return Image.memory(profile['picture']);
+    } else {
+      return Image.network(
+          'https://avatars.dicebear.com/api/bottts/${User().id}.png');
+    }
+  }
 }

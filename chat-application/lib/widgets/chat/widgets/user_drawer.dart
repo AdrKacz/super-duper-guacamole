@@ -26,11 +26,7 @@ class UserDrawer extends StatelessWidget {
             child: CircleAvatar(
               backgroundColor: Colors.transparent,
               child: SizedBox(
-                child: ClipOval(
-                  child: Image.network(
-                    'https://avatars.dicebear.com/api/bottts/${User().id}.png',
-                  ),
-                ),
+                child: ClipOval(child: User.getUserImage(User().id)),
               ),
             ),
           ),

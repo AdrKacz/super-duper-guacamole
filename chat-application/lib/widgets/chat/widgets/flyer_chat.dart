@@ -20,6 +20,10 @@ class FlyerChat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chat(
+      // avatarBuilder: (String userId) => CircleAvatar(
+      //   backgroundColor: Colors.transparent,
+      //   backgroundImage: User.getUserImageProvider(userId),
+      // ),
       showUserNames: true,
       showUserAvatars: true,
       isTextMessageTextSelectable: false,
