@@ -17,7 +17,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
 
-enum Status { idle, switchSent, chatting, other }
+enum Status { idle, switchSent, chatting, error }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -78,7 +78,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         return value;
       }
     }
-    return Status.other;
+    return Status.error;
   }
 
   set status(Status newStatus) {
@@ -481,10 +481,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (messageActions.containsKey(data['action'])) {
       needUpdate = messageActions[data['action']]!(data);
     } else {
-      print('status to other with ($isInnerLoop) $message');
-      needUpdate = false;
       // action not recognised (see data['action'])
-      status = Status.other;
+      needUpdate = false;
+      if (message.message == 'Internal server error') {
+        status = Status.error;
+      }
     }
 
     return needUpdate;
