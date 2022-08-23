@@ -35,6 +35,13 @@ class User {
       Memory().boxMessages.clear();
       // clear users
       otherGroupUsers.clear();
+      // clear profile (keep your profile)
+      final Map? profile = Memory().boxUserProfiles.get(this.id);
+      Memory().boxUserProfiles.clear().then((value) {
+        if (profile != null) {
+          Memory().boxUserProfiles.put(this.id, profile);
+        }
+      });
       // reset group
       _groupId = '';
     }
@@ -231,7 +238,7 @@ class User {
     }
 
     // save image
-    print('save image');
+    print('save image at $id');
     profile['picture'] = await croppedFile.readAsBytes();
     await Memory().boxUserProfiles.put(id, profile);
 

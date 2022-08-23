@@ -21,10 +21,10 @@ class WebSocketConnection {
 
   void _add(dynamic data) {
     try {
+      print('send $data');
       _channel.sink.add(data);
     } catch (error) {
-      print('error');
-      print(error);
+      print('error $error');
       close();
     }
   }
@@ -35,7 +35,6 @@ class WebSocketConnection {
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
 
-    print('register');
     _add(jsonEncode({
       'action': 'register',
       'id': User().id,
@@ -81,13 +80,11 @@ class WebSocketConnection {
   }
 
   void reconnect() {
-    print('reconnect');
     // replace channel with a new connected one
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 
   void close() {
-    print('close');
     _channel.sink.close();
   }
 }

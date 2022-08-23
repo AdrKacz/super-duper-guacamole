@@ -1,6 +1,5 @@
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/notification_handler.dart';
@@ -49,7 +48,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   void listenMessage(message) {
     // receive message
-    print('receive message\n$message');
     if (processMessage(message)) {
       setState(() {});
     }
@@ -379,7 +377,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
               actions: [
                 TextButton(
                     onPressed: () {
-                      print("don't care");
                       Navigator.of(context).pop();
                     },
                     child: const Text('Ok')),
@@ -484,6 +481,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (messageActions.containsKey(data['action'])) {
       needUpdate = messageActions[data['action']]!(data);
     } else {
+      print('status to other with ($isInnerLoop) $message');
       needUpdate = false;
       // action not recognised (see data['action'])
       status = Status.other;

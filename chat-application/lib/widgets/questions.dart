@@ -360,7 +360,6 @@ class _ConfirmPageState extends State<ConfirmPage> {
 
 // Confirm Dialog
 void showConfirmDialog(BuildContext context) async {
-  print('Send answers: ${Memory().boxAnswers.toMap()}');
   return await showDialog(
       context: context,
       builder: (BuildContext context) {
