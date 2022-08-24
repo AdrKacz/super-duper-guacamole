@@ -36,6 +36,7 @@ class User {
       // clear users
       otherGroupUsers.clear();
       // clear profile (keep your profile)
+      Memory().boxUser.delete('hasShareProfile');
       final Map? profile = Memory().boxUserProfiles.get(this.id);
       Memory().boxUserProfiles.clear().then((value) {
         if (profile != null) {
@@ -179,6 +180,7 @@ class User {
     }
 
     if (type == 'memory') {
+      Memory().boxUser.put('hasShareProfile', 'true');
       return HttpConnection().put('share-profile', {'profile': profile});
     }
 
@@ -242,10 +244,17 @@ class User {
     profile['picture'] = await croppedFile.readAsBytes();
     await Memory().boxUserProfiles.put(id, profile);
 
+    Memory().boxUser.put('hasShareProfile', 'true');
     return HttpConnection().put('share-profile', {'profile': profile});
   }
 
   static ImageProvider getUserImageProvider(id) {
+    print(
+        'Got Image Provider (for me: ${id == User().id}), ${Memory().boxUser.get('hasShareProfile')}');
+    if (id == User().id && Memory().boxUser.get('hasShareProfile') != 'true') {
+      return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
+    }
+
     final Map profile = Memory().boxUserProfiles.get(id) ?? {};
     if (profile['picture'] is Uint8List) {
       return MemoryImage(profile['picture']);
@@ -255,6 +264,12 @@ class User {
   }
 
   static Image getUserImage(id) {
+    print(
+        'Got Image (for me: ${id == User().id}), ${Memory().boxUser.get('hasShareProfile')}');
+    if (id == User().id && Memory().boxUser.get('hasShareProfile') != 'true') {
+      return Image.network('https://avatars.dicebear.com/api/bottts/$id.png');
+    }
+
     final Map profile = Memory().boxUserProfiles.get(id) ?? {};
     if (profile['picture'] is Uint8List) {
       return Image.memory(profile['picture']);

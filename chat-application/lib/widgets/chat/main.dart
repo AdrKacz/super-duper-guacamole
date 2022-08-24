@@ -394,7 +394,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
               ]);
         }).then((value) {
       if (value == 'share-profile') {
-        User().shareProfile(context);
+        User().shareProfile(context).then((value) => {setState(() {})});
       }
     });
 
@@ -562,6 +562,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     return Scaffold(
       drawer: UserDrawer(
+        update: () {
+          setState(() {});
+        },
         seeIntroduction: () {
           widget.goToPresentation();
         },
