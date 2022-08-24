@@ -1,5 +1,6 @@
 import 'package:awachat/l10n/flyer_l10n.dart';
 import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/chat/widgets/flyer_user_avatar.dart';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -20,10 +21,9 @@ class FlyerChat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chat(
-      // avatarBuilder: (String userId) => CircleAvatar(
-      //   backgroundColor: Colors.transparent,
-      //   backgroundImage: User.getUserImageProvider(userId),
-      // ),
+      avatarBuilder: (String userId) => FlyerUserAvatar(
+        userId: userId,
+      ),
       showUserNames: true,
       showUserAvatars: true,
       isTextMessageTextSelectable: false,
