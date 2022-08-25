@@ -53,7 +53,6 @@ class UserDrawer extends StatelessWidget {
             subtitle: const Text('Seul ton groupe pourra le voir'),
             onTap: () {
               User().shareProfile(context).then((value) => {update()});
-              ;
             },
           ),
           const Divider(),
