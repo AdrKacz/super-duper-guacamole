@@ -217,7 +217,6 @@ class User {
     }
 
     // crop image
-    print('crop image');
     final CroppedFile? croppedFile = await ImageCropper().cropImage(
         maxHeight: 128,
         maxWidth: 128,
@@ -238,7 +237,6 @@ class User {
     }
 
     // save image
-    print('save image at $id');
     profile['picture'] = await croppedFile.readAsBytes();
     await Memory().boxUserProfiles.put(id, profile);
 
@@ -247,8 +245,6 @@ class User {
   }
 
   static ImageProvider getUserImageProvider(id) {
-    print(
-        'Got Image Provider (for me: ${id == User().id}), ${Memory().boxUser.get('hasSharedProfile')}');
     if (id == User().id && Memory().boxUser.get('hasSharedProfile') != 'true') {
       return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
     }
@@ -262,8 +258,6 @@ class User {
   }
 
   static Image getUserImage(id) {
-    print(
-        'Got Image (for me: ${id == User().id}), ${Memory().boxUser.get('hasSharedProfile')}');
     if (id == User().id && Memory().boxUser.get('hasSharedProfile') != 'true') {
       return Image.network('https://avatars.dicebear.com/api/bottts/$id.png');
     }

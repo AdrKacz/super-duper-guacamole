@@ -48,6 +48,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   void listenMessage(message) {
     // receive message
+    print('received message: $message');
     if (processMessage(message)) {
       setState(() {});
     }
@@ -360,40 +361,44 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (users.isNotEmpty) {
       // different users
-      showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: users.length > 1
-              ? const Text('De nouveaux utilisateurs ont rejoins le groupe')
-              : const Text('Un nouvel utilisateur a rejoins le groupe'),
-          content: users.length > 1
-              ? const Text(
-                  'Les nouveaux utilisateurs ne peux pas voir la photo que tu as déjà partagé.')
-              : const Text(
-                  'Le nouvel utilisateur ne peux pas voir la photo que tu as déjà partagé.'),
-          actions: [
-            TextButton(
-              child: const Text('Re-partager mon profil'),
-              onPressed: () {
-                Navigator.of(context).pop('share-profile');
-              },
-            ),
-            TextButton(
-              child: const Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            )
-          ],
-        ),
-      ).then((value) {
-        if (value == 'share-profile') {
-          return User().shareProfile(context);
-        }
-      }).then((value) => {setState(() {})});
+      reShareProfile(users.length > 1);
     }
 
     return true;
+  }
+
+  void reShareProfile(bool moreThanOneNewUsers) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: moreThanOneNewUsers
+            ? const Text('De nouveaux utilisateurs rejoignent le groupe')
+            : const Text('Un nouvel utilisateur rejoins le groupe'),
+        content: moreThanOneNewUsers
+            ? const Text(
+                'Les nouveaux utilisateurs ne peuvent pas voir la photo que tu as déjà partagé.')
+            : const Text(
+                'Le nouvel utilisateur ne peux pas voir la photo que tu as déjà partagé.'),
+        actions: [
+          TextButton(
+            child: const Text('Re-partager ma photo'),
+            onPressed: () {
+              Navigator.of(context).pop('share-profile');
+            },
+          ),
+          TextButton(
+            child: const Text('Ok'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      ),
+    ).then((value) {
+      if (value == 'share-profile') {
+        return User().shareProfile(context);
+      }
+    }).then((value) => {setState(() {})});
   }
 
   bool messageShareProfile(data) {
@@ -484,7 +489,19 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         }
       } else {
         // new users in group (see users)
+        final Map<String, Map> oldUsers = Map.from(User().otherGroupUsers);
         User().updateOtherUsers(users);
+
+        if (Memory().boxUser.get('hasSharedProfile') != 'true') {
+          return true;
+        }
+
+        for (final String userId in oldUsers.keys) {
+          users.remove(userId);
+        }
+        if (users.isNotEmpty) {
+          reShareProfile(users.length > 1);
+        }
       }
     } else {
       // don't do anything (user not concerted, error)
