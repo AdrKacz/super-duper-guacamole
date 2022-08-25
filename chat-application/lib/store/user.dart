@@ -36,7 +36,7 @@ class User {
       // clear users
       otherGroupUsers.clear();
       // clear profile (keep your profile)
-      Memory().boxUser.delete('hasShareProfile');
+      Memory().boxUser.delete('hasSharedProfile');
       final Map? profile = Memory().boxUserProfiles.get(this.id);
       Memory().boxUserProfiles.clear().then((value) {
         if (profile != null) {
@@ -180,7 +180,7 @@ class User {
     }
 
     if (type == 'memory') {
-      Memory().boxUser.put('hasShareProfile', 'true');
+      Memory().boxUser.put('hasSharedProfile', 'true');
       return HttpConnection().put('share-profile', {'profile': profile});
     }
 
@@ -203,9 +203,7 @@ class User {
                     child: const Text('Ouvrir les paramètres'),
                     onPressed: () async {
                       if (!await openAppSettings()) {
-                        Navigator.pop(
-                          context,
-                        );
+                        Navigator.pop(context);
                       }
                     },
                   ),
@@ -244,14 +242,14 @@ class User {
     profile['picture'] = await croppedFile.readAsBytes();
     await Memory().boxUserProfiles.put(id, profile);
 
-    Memory().boxUser.put('hasShareProfile', 'true');
+    Memory().boxUser.put('hasSharedProfile', 'true');
     return HttpConnection().put('share-profile', {'profile': profile});
   }
 
   static ImageProvider getUserImageProvider(id) {
     print(
-        'Got Image Provider (for me: ${id == User().id}), ${Memory().boxUser.get('hasShareProfile')}');
-    if (id == User().id && Memory().boxUser.get('hasShareProfile') != 'true') {
+        'Got Image Provider (for me: ${id == User().id}), ${Memory().boxUser.get('hasSharedProfile')}');
+    if (id == User().id && Memory().boxUser.get('hasSharedProfile') != 'true') {
       return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
     }
 
@@ -265,8 +263,8 @@ class User {
 
   static Image getUserImage(id) {
     print(
-        'Got Image (for me: ${id == User().id}), ${Memory().boxUser.get('hasShareProfile')}');
-    if (id == User().id && Memory().boxUser.get('hasShareProfile') != 'true') {
+        'Got Image (for me: ${id == User().id}), ${Memory().boxUser.get('hasSharedProfile')}');
+    if (id == User().id && Memory().boxUser.get('hasSharedProfile') != 'true') {
       return Image.network('https://avatars.dicebear.com/api/bottts/$id.png');
     }
 
