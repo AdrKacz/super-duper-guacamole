@@ -442,10 +442,19 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                       Navigator.of(context).pop('share-profile');
                     },
                     child: const Text('Je partage aussi mon profil !')),
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop('report');
+                    },
+                    child: Text('Je signale la photo',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSecondary))),
               ]);
         }).then((value) {
       if (value == 'share-profile') {
         User().shareProfile(context).then((value) => {setState(() {})});
+      } else if (value == 'report') {
+        mailToReportPhoto(userId);
       }
     });
 
