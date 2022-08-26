@@ -199,7 +199,11 @@ ${e.toJson()["text"]}
     recipients: ['awachat.app@gmail.com'],
   );
 
-  return FlutterEmailSender.send(email);
+  try {
+    await FlutterEmailSender.send(email);
+  } catch (e) {
+    print('Cannot send email: $e');
+  }
 }
 
 Future<void> mailToReportPhoto(String userId) async {
@@ -233,7 +237,12 @@ Future<void> mailToReportPhoto(String userId) async {
     attachmentPaths: [imageJpg.path],
   );
 
-  await FlutterEmailSender.send(email);
+  try {
+    await FlutterEmailSender.send(email);
+  } catch (e) {
+    print('Cannot send email: $e');
+  }
+
   imageJpg.deleteSync();
 }
 
