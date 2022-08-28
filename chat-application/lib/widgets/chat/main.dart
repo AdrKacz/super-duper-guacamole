@@ -342,8 +342,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     // overwrite users
-    final Map<String, Map> oldUsers = Map.from(User().otherGroupUsers);
-    User().otherGroupUsers.clear();
+    final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
     User().updateOtherUsers(users);
 
     // retrieve messages
@@ -477,7 +476,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       _messages.clear();
       status = Status.switchSent;
     } else {
-      User().otherGroupUsers.remove(userId);
+      Memory().boxGroupUsers.delete(userId);
     }
     return true;
   }
@@ -498,7 +497,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         }
       } else {
         // new users in group (see users)
-        final Map<String, Map> oldUsers = Map.from(User().otherGroupUsers);
+        final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
         User().updateOtherUsers(users);
 
         if (Memory().boxUser.get('hasSharedProfile') != 'true') {
@@ -668,7 +667,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             },
           ),
           centerTitle: true,
-          title: UsersList(users: User().otherGroupUsers.values),
+          title: const UsersList(),
           actions: <Widget>[
             SwitchActionButton(
                 isChatting: status == Status.chatting, onPressed: switchGroup),

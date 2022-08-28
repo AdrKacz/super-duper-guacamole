@@ -4,11 +4,14 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/message.dart';
 
 class Memory {
+  static const String groupUsers = 'groupUsers';
+
   late final Box<String> boxUser;
   late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
   late final Box<Map> boxUserProfiles;
+  late final Box<Map> boxGroupUsers;
   late final Box<String> rsaKeyPairBox;
 
   static final Memory _instance = Memory._internal();
@@ -23,6 +26,7 @@ class Memory {
     await Hive.initFlutter();
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
     boxUserProfiles = await Hive.openBox<Map>('userProfiles');
+    boxGroupUsers = await Hive.openBox<Map>('groupUsers');
     boxMessages = await Hive.openBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
     boxAnswers = await Hive.openBox<String>('answers');
@@ -53,6 +57,7 @@ class Memory {
       boxMessages.clear(),
       boxBlockedUsers.clear(),
       boxUserProfiles.clear(),
+      boxGroupUsers.clear(),
       rsaKeyPairBox.clear(),
     ]);
   }

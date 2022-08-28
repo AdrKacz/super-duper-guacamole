@@ -21,7 +21,6 @@ class User {
 
   // to be moved in a Group class
   late String _groupId;
-  Map<String, Map> otherGroupUsers = {};
 
   String get groupId => _groupId;
   set groupId(String id) {
@@ -34,7 +33,7 @@ class User {
       // clear messages
       Memory().boxMessages.clear();
       // clear users
-      otherGroupUsers.clear();
+      Memory().boxGroupUsers.clear();
       // clear profile (keep your profile)
       Memory().boxUser.delete('hasSharedProfile');
       final Map? profile = Memory().boxUserProfiles.get(this.id);
@@ -108,18 +107,18 @@ class User {
           'id': otherUser['id'],
           'isActive': otherUser['isActive'] ?? false,
         };
-        otherGroupUsers[otherUser['id']] = groupUser;
+        Memory().boxGroupUsers.put(otherUser['id'], groupUser);
       }
     }
   }
 
   updateOtherUserArgument(String id, String key, dynamic value) {
-    Map? groupUser = otherGroupUsers[id];
+    Map? groupUser = Memory().boxGroupUsers.get(id);
     if (groupUser == null) {
       return;
     }
     groupUser[key] = value;
-    otherGroupUsers[id] = groupUser;
+    Memory().boxGroupUsers.put(id, groupUser);
   }
 
   void updateOtherUserStatus(String id, bool isActive) {
