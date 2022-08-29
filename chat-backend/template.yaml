@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
-    Runtime: nodejs14.x
+    Runtime: nodejs16.x
     Handler: app.handler
     Environment:
       Variables:
@@ -489,6 +489,38 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${PutFirebaseTokenFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  HttpPutShareProfileFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/share-profile
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /share-profile
+            Method: PUT
+            RouteSettings:
+              ThrottlingBurstLimit: !Ref ApiThrottlingBurstLimit
+              ThrottlingRateLimit: !Ref ApiThrottlingRateLimit
+  HttpPutShareProfileLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutShareProfileFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
   # ===== ===== =====
   # Action Functions
   ActionRegisterFunction:
@@ -704,7 +736,7 @@ Outputs:
 
   HttpURI:
     Description: "The HTTPS API URI to connect to"
-    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/firebase-token'
+    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

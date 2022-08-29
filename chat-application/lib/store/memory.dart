@@ -4,11 +4,14 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/message.dart';
 
 class Memory {
+  static const String groupUsers = 'groupUsers';
+
   late final Box<String> boxUser;
   late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
-  late final LazyBox<Map> lazyBoxGroupUsers;
+  late final Box<Map> boxUserProfiles;
+  late final Box<Map> boxGroupUsers;
   late final Box<String> rsaKeyPairBox;
 
   static final Memory _instance = Memory._internal();
@@ -21,8 +24,9 @@ class Memory {
 
   Future<void> init() async {
     await Hive.initFlutter();
-    lazyBoxGroupUsers = await Hive.openLazyBox<Map>('groupUsers');
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
+    boxUserProfiles = await Hive.openBox<Map>('userProfiles');
+    boxGroupUsers = await Hive.openBox<Map>('groupUsers');
     boxMessages = await Hive.openBox<String>('messages');
     boxUser = await Hive.openBox<String>('user');
     boxAnswers = await Hive.openBox<String>('answers');
@@ -52,21 +56,10 @@ class Memory {
       boxAnswers.clear(),
       boxMessages.clear(),
       boxBlockedUsers.clear(),
-      lazyBoxGroupUsers.clear(),
+      boxUserProfiles.clear(),
+      boxGroupUsers.clear(),
       rsaKeyPairBox.clear(),
     ]);
-  }
-
-  void addGroupUser(String id, Map user) {
-    lazyBoxGroupUsers.put(id, user);
-  }
-
-  void deleteGroupUser(String id) {
-    lazyBoxGroupUsers.delete(id);
-  }
-
-  void clearGroupUser() {
-    lazyBoxGroupUsers.clear();
   }
 
   void addBlockedUser(String id) {
@@ -75,19 +68,6 @@ class Memory {
 
   List<String> getBlockedUsers() {
     return boxBlockedUsers.values.toList();
-  }
-
-  Future<Map<String, Map>> loadGroupUsers() async {
-    Map<String, Map> groupUsers = {};
-
-    for (final String key in lazyBoxGroupUsers.keys) {
-      Map? groupUser = await lazyBoxGroupUsers.get(key);
-      if (groupUser != null) {
-        groupUsers[groupUser['id']] = groupUser;
-      }
-    }
-
-    return groupUsers;
   }
 
   void addMessage(String? id, String? text) {

@@ -1,12 +1,17 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:math';
 import 'dart:convert';
-
-import 'package:url_launcher/url_launcher.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path/path.dart';
 
 String randomString() {
   final random = Random.secure();
@@ -35,9 +40,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
   if (int.tryParse(data[1]) != null) {
     return types.TextMessage(
       status: status,
-      author: types.User(
-          id: author,
-          imageUrl: 'https://avatars.dicebear.com/api/bottts/$author.png'),
+      author: types.User(id: author),
       createdAt: int.parse(createdAt),
       id: id,
       text: text,
@@ -162,34 +165,85 @@ Future<void> mailToReportMessage(
     return;
   }
 
-  final String mailto = Uri(
-    scheme: 'mailto',
-    path: 'awachat.app@gmail.com',
-    queryParameters: {
-      'subject': 'Signalement',
-      'body': """--- --- ---
-            Ajoute tes remarques ici.
-            --- --- ---
-            
-            L'utilisateur 
-            ${User().id}
-            signale le comportement de 
-            ${message.author.id}
-            Le message signalé est :
-            --- --- ---
-            ${message.toJson()["text"]}
-            --- --- ---
-            
-            Contexte (dix derniers messages) :
-            ${messages.sublist(max(messages.length - 10, 0)).where((types.Message e) => e.type == types.MessageType.text).map((types.Message e) => """(${e.author.id}) ${e.toJson()["text"]}
-            ---
-            """).join("""
-""")}""",
-    },
-  ).toString().replaceAll('+', '%20');
-  if (!await launchUrl(Uri.parse(mailto))) {
-    throw 'Could not launch $mailto';
+  final List<types.Message> contextMessages = messages
+      .where((types.Message e) => e.type == types.MessageType.text)
+      .toList()
+      .sublist(0, min(messages.length, 10));
+
+  final String body = """
+  --- --- ---
+  Ajoute tes remarques ici.
+  --- --- ---
+
+  L'utilisateur
+  ${User().id}
+  signale le comportement de l'utilisateur
+  ${message.author.id}
+
+  Le message signalé est :
+  --- --- ---
+  ${message.toJson()["text"]}
+  --- --- ---
+
+  Contexte (dix derniers messages) :
+  ${contextMessages.map((types.Message e) => '''
+--- --- ---
+(${e.author.id})
+${e.toJson()["text"]}
+''').join('')}
+""";
+
+  final Email email = Email(
+    body: body,
+    subject: 'Signalement',
+    recipients: ['awachat.app@gmail.com'],
+  );
+
+  try {
+    await FlutterEmailSender.send(email);
+  } catch (e) {
+    print('Cannot send email: $e');
   }
+}
+
+Future<void> mailToReportPhoto(String userId) async {
+  final Map profile = Memory().boxUserProfiles.get(userId) ?? {};
+
+  if (profile['picture'] is! Uint8List) {
+    return;
+  }
+
+  Directory documentDirectory = await getApplicationDocumentsDirectory();
+  final File imageJpg =
+      await File(join(documentDirectory.path, 'reported-image.jpg'))
+          .writeAsBytes(profile['picture']);
+
+  final String body = """
+  --- --- ---
+  Ajoute tes remarques ici.
+  --- --- ---
+
+  L'utilisateur
+  ${User().id}
+  signale le comportement de l'utilisateur
+  $userId
+
+  La photo signalé est en pièce jointe.
+""";
+  final Email email = Email(
+    body: body,
+    subject: 'Signalement Photo',
+    recipients: ['awachat.app@gmail.com'],
+    attachmentPaths: [imageJpg.path],
+  );
+
+  try {
+    await FlutterEmailSender.send(email);
+  } catch (e) {
+    print('Cannot send email: $e');
+  }
+
+  imageJpg.deleteSync();
 }
 
 // === === ===

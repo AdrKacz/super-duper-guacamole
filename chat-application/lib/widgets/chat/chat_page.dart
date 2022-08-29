@@ -46,10 +46,11 @@ class ChatPage extends StatelessWidget {
                 onSendPressed: onSendMessage,
                 onMessageLongPress: onReportMessage);
             break;
-          default:
+          case Status.error:
             child = ErrorPage(
               refresh: onRefresh,
             );
+            break;
         }
         switch (connectionStatus) {
           case ConnectionStatus.disconnected:

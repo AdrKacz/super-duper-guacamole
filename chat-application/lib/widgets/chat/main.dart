@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
@@ -16,7 +17,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/fake_chat.dart';
 
-enum Status { idle, switchSent, chatting, other }
+enum Status { idle, switchSent, chatting, error }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -47,6 +48,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   void listenMessage(message) {
     // receive message
+    print('received message: $message');
     if (processMessage(message)) {
       setState(() {});
     }
@@ -77,7 +79,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         return value;
       }
     }
-    return Status.other;
+    return Status.error;
   }
 
   set status(Status newStatus) {
@@ -338,9 +340,125 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         };
       }
     }
-    User().overrideOtherUsers(users);
 
+    // retrieve messages
     loadMessagesFromMemory();
+
+    updateGroupUsers(users);
+
+    return true;
+  }
+
+  void updateGroupUsers(Map<String, dynamic> users) {
+    // update users
+    final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
+    User().updateOtherUsers(users);
+
+    // is profile already shared?
+    if (Memory().boxUser.get('hasSharedProfile') != 'true') {
+      return;
+    }
+
+    // has different users?
+    for (final String userId in oldUsers.keys) {
+      users.remove(userId);
+    }
+
+    if (users.isEmpty) {
+      // different users
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: users.length > 1
+            ? const Text('De nouveaux utilisateurs rejoignent le groupe')
+            : const Text('Un nouvel utilisateur rejoins le groupe'),
+        content: users.length > 1
+            ? const Text(
+                'Les nouveaux utilisateurs ne peuvent pas voir la photo que tu as déjà partagé.')
+            : const Text(
+                'Le nouvel utilisateur ne peux pas voir la photo que tu as déjà partagé.'),
+        actions: [
+          TextButton(
+            child: const Text('Re-partager ma photo'),
+            onPressed: () {
+              Navigator.of(context).pop('share-profile');
+            },
+          ),
+          TextButton(
+            child: const Text('Ok'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          )
+        ],
+      ),
+    ).then((value) {
+      if (value == 'share-profile') {
+        return User().shareProfile(context);
+      }
+    }).then((value) => {setState(() {})});
+  }
+
+  bool messageShareProfile(data) {
+    final String? userId = data['user'];
+
+    if (userId == null) {
+      return false;
+    }
+
+    if (userId == User().id) {
+      return false; // don't do anything
+    }
+
+    final Map profile = data['profile'];
+
+    final Uint8List picture =
+        Uint8List.fromList(List<int>.from(profile['picture']));
+
+    Memory().boxUserProfiles.put(userId, {'picture': picture});
+    User().updateOtherUserArgument(userId, 'receivedProfile', true);
+
+    showDialog<String?>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(50.0),
+                  child: User.getUserImage(userId),
+                ),
+              ),
+              content: const Text("Quelqu'un partage son identité !"),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Ok')),
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop('share-profile');
+                    },
+                    child: const Text('Je partage aussi mon profil !')),
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop('report');
+                    },
+                    child: Text('Je signale la photo',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSecondary))),
+              ]);
+        }).then((value) {
+      if (value == 'share-profile') {
+        User().shareProfile(context).then((value) => {setState(() {})});
+      } else if (value == 'report') {
+        mailToReportPhoto(userId).then((value) => {setState(() {})});
+      }
+    });
 
     return true;
   }
@@ -361,7 +479,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       _messages.clear();
       status = Status.switchSent;
     } else {
-      User().otherGroupUsers.remove(userId);
+      Memory().boxGroupUsers.delete(userId);
     }
     return true;
   }
@@ -370,24 +488,24 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     final String newGroupId = data['groupid'] ?? '';
     final Map<String, dynamic> users =
         Map<String, dynamic>.from(data['users'] ?? {});
-    if (users.remove(User().id) != null) {
-      if (newGroupId != User().groupId) {
-        // only join if the group to join is not the group we are in
-        User().groupId = newGroupId;
-        User().updateOtherUsers(users);
-        _messages.clear(); // in case we receive join before leave
-        status = Status.chatting;
-        if (!items.contains('fake')) {
-          items = ['real', 'fake'];
-        }
-      } else {
-        // new users in group (see users)
-        User().updateOtherUsers(users);
-      }
-    } else {
+
+    if (users.remove(User().id) == null) {
       // don't do anything (user not concerted, error)
       return false;
     }
+
+    if (newGroupId != User().groupId) {
+      // only join if the group to join is not the group we are in
+      User().groupId = newGroupId;
+      User().updateOtherUsers(users);
+      _messages.clear(); // in case we receive join before leave
+      status = Status.chatting;
+      items = ['real', 'fake']; // prepare for swipe
+    } else {
+      // new users in group (see users)
+      updateGroupUsers(users);
+    }
+
     return true;
   }
 
@@ -431,9 +549,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (messageActions.containsKey(data['action'])) {
       needUpdate = messageActions[data['action']]!(data);
     } else {
-      needUpdate = false;
       // action not recognised (see data['action'])
-      status = Status.other;
+      needUpdate = false;
+      // TODO: Handle 'Too Many Requests' too
+      if (data['message'] == 'Internal server error') {
+        status = Status.error;
+      }
     }
 
     return needUpdate;
@@ -480,6 +601,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       'login': messageLogin,
       'logout': messageLogout,
       'register': messageRegister,
+      'shareprofile': messageShareProfile,
       'leavegroup': messageLeaveGroup,
       'joingroup': messageJoinGroup,
       'textmessage': messageTextMessage,
@@ -488,10 +610,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     };
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // see status.name and connectionStatus.name
-    final PageController controller = PageController();
+  void checkConnection() {
     if (connectionStatus == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
       connectionStatus = ConnectionStatus.reconnecting;
@@ -499,9 +618,19 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       listenStream();
       _webSocketConnection.register();
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // see status.name and connectionStatus.name
+    final PageController controller = PageController();
+    checkConnection();
 
     return Scaffold(
       drawer: UserDrawer(
+        update: () {
+          setState(() {});
+        },
         seeIntroduction: () {
           widget.goToPresentation();
         },
@@ -526,15 +655,14 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                   padding: const EdgeInsets.all(2),
                   child: CircleAvatar(
                     backgroundColor: Colors.transparent,
-                    backgroundImage: NetworkImage(
-                        'https://avatars.dicebear.com/api/bottts/${User().id}.png'),
+                    backgroundImage: User.getUserImageProvider(User().id),
                   ),
                 ),
               );
             },
           ),
           centerTitle: true,
-          title: UsersList(users: User().otherGroupUsers.values),
+          title: const UsersList(),
           actions: <Widget>[
             SwitchActionButton(
                 isChatting: status == Status.chatting, onPressed: switchGroup),
@@ -562,23 +690,14 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     connectionStatus: connectionStatus,
                     onSendMessage: sendMessage,
                     onReportMessage: reportMessage,
-                    onRefresh: () async {
-                      // TODO: error should re-ask server for current group if any
-                      // NOTE: here it tries to infer the correct state of the app
-                      // try to restore connection
+                    onRefresh: () {
                       _webSocketConnection.close();
                       _webSocketConnection.reconnect();
                       listenStream();
                       _webSocketConnection.register();
-                      if (User().groupId != '') {
-                        setState(() {
-                          status = Status.chatting;
-                        });
-                      } else {
-                        setState(() {
-                          status = Status.idle;
-                        });
-                      }
+                      setState(() {
+                        status = Status.idle;
+                      });
                     });
               } else {
                 // build fake chat

@@ -10,11 +10,44 @@ import 'package:url_launcher/url_launcher.dart';
 
 class UserDrawer extends StatelessWidget {
   const UserDrawer(
-      {Key? key, required this.seeIntroduction, required this.resetAccount})
+      {Key? key,
+      required this.seeIntroduction,
+      required this.resetAccount,
+      required this.update})
       : super(key: key);
 
   final VoidCallback seeIntroduction;
   final VoidCallback resetAccount;
+  final VoidCallback update;
+
+  Future<String?> showResetDialog(BuildContext context) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Attention'),
+          content: const SingleChildScrollView(
+            child: Text(
+                'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Non'),
+              onPressed: () {
+                Navigator.pop(context, 'nothing');
+              },
+            ),
+            TextButton(
+              child: const Text('Oui'),
+              onPressed: () {
+                Navigator.pop(context, 'confirmed');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +59,7 @@ class UserDrawer extends StatelessWidget {
             child: CircleAvatar(
               backgroundColor: Colors.transparent,
               child: SizedBox(
-                child: ClipOval(
-                  child: Image.network(
-                    'https://avatars.dicebear.com/api/bottts/${User().id}.png',
-                  ),
-                ),
+                child: ClipOval(child: User.getUserImage(User().id)),
               ),
             ),
           ),
@@ -45,6 +74,14 @@ class UserDrawer extends StatelessWidget {
                   builder: (context) => const QuestionsLoader(),
                 ),
               );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.public),
+            title: const Text('Partage ta photo'),
+            subtitle: const Text('Seul ton groupe pourra le voir'),
+            onTap: () {
+              User().shareProfile(context).then((value) => {update()});
             },
           ),
           const Divider(),
@@ -80,31 +117,7 @@ class UserDrawer extends StatelessWidget {
               style: TextStyle(color: Theme.of(context).colorScheme.onError),
             ),
             onTap: () async {
-              switch (await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Attention'),
-                      content: const SingleChildScrollView(
-                        child: Text(
-                            'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
-                      ),
-                      actions: [
-                        TextButton(
-                          child: const Text('Non'),
-                          onPressed: () {
-                            Navigator.pop(context, 'nothing');
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Oui'),
-                          onPressed: () {
-                            Navigator.pop(context, 'confirmed');
-                          },
-                        ),
-                      ],
-                    );
-                  })) {
+              switch (await showResetDialog(context)) {
                 case 'confirmed':
                   Navigator.of(context).pop();
                   resetAccount();

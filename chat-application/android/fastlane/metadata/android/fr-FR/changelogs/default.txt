@@ -1,5 +1,2 @@
 Nouvelles fonctionnalités:
-- tu peux maintenant sélectionner ta ville pour rencontrer des gens autour de toi!
-
-Correction des bugs que vous nous avez signalé:
-- tu ne peux plus être assigné à un groupe vide par erreur.
+- tu peux maintenant partager ta photo à ton groupe !

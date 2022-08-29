@@ -19,12 +19,23 @@ class WebSocketConnection {
     reconnect();
   }
 
+  void _add(dynamic data) {
+    try {
+      print('send $data');
+      _channel.sink.add(data);
+    } catch (error) {
+      print('error $error');
+      close();
+    }
+  }
+
   void register() {
     // send action register
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
-    _channel.sink.add(jsonEncode({
+
+    _add(jsonEncode({
       'action': 'register',
       'id': User().id,
       'signature': signature,
@@ -35,7 +46,7 @@ class WebSocketConnection {
 
   void switchgroup() {
     // send action switchgroup
-    _channel.sink.add(jsonEncode({
+    _add(jsonEncode({
       'action': 'switchgroup',
       'questions': Memory().boxAnswers.toMap(),
       'blockedUsers': Memory().getBlockedUsers()
@@ -44,7 +55,7 @@ class WebSocketConnection {
 
   void textmessage(String encodedMessage) {
     // send action textmessage
-    _channel.sink.add(jsonEncode({
+    _add(jsonEncode({
       'action': 'textmessage',
       'message': encodedMessage,
     }));
@@ -52,7 +63,7 @@ class WebSocketConnection {
 
   void banrequest(String userid, String messageid) {
     // send action banrequest
-    _channel.sink.add(jsonEncode({
+    _add(jsonEncode({
       'action': 'banrequest',
       'bannedid': userid,
       'messageid': messageid,
@@ -61,7 +72,7 @@ class WebSocketConnection {
 
   void banreply(String banneduserid, String status) {
     // send action banreply
-    _channel.sink.add(jsonEncode({
+    _add(jsonEncode({
       'action': 'banreply',
       'bannedid': banneduserid,
       'status': status,
