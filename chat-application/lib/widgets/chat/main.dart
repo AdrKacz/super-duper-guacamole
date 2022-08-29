@@ -419,6 +419,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         Uint8List.fromList(List<int>.from(profile['picture']));
 
     Memory().boxUserProfiles.put(userId, {'picture': picture});
+    User().updateOtherUserArgument(userId, 'receivedProfile', true);
 
     showDialog<String?>(
         context: context,
@@ -455,7 +456,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       if (value == 'share-profile') {
         User().shareProfile(context).then((value) => {setState(() {})});
       } else if (value == 'report') {
-        mailToReportPhoto(userId);
+        mailToReportPhoto(userId).then((value) => {setState(() {})});
       }
     });
 
