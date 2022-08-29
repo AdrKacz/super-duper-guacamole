@@ -166,14 +166,16 @@ async function verifyUser ({ id, signature, timestamp, publicKey }) {
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
-  if (user !== undefined && user.publicKey !== undefined) {
-    publicKey = user.publicKey
+  if (typeof user !== 'object') {
+    // user not found
+    return {}
   }
+  const userPublicKey = user.publicKey ?? publicKey
 
   // verify signature
   const verifier = createVerify('rsa-sha256')
   verifier.update(id + timestamp.toString())
-  const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
+  const isVerified = verifier.verify(userPublicKey, Buffer.from(signature), 'base64')
   console.log('Is the message verified?', isVerified)
   if (!isVerified) {
     return {}
