@@ -168,7 +168,7 @@ Future<void> mailToReportMessage(
   final List<types.Message> contextMessages = messages
       .where((types.Message e) => e.type == types.MessageType.text)
       .toList()
-      .sublist(0, 10);
+      .sublist(0, min(messages.length, 10));
 
   final String body = """
   --- --- ---
