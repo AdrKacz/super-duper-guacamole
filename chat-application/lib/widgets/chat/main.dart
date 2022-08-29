@@ -341,16 +341,22 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       }
     }
 
-    // overwrite users
-    final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
-    User().updateOtherUsers(users);
-
     // retrieve messages
     loadMessagesFromMemory();
 
+    updateGroupUsers(users);
+
+    return true;
+  }
+
+  void updateGroupUsers(Map<String, dynamic> users) {
+    // update users
+    final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
+    User().updateOtherUsers(users);
+
     // is profile already shared?
     if (Memory().boxUser.get('hasSharedProfile') != 'true') {
-      return true;
+      return;
     }
 
     // has different users?
@@ -358,22 +364,18 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       users.remove(userId);
     }
 
-    if (users.isNotEmpty) {
+    if (users.isEmpty) {
       // different users
-      reShareProfile(users.length > 1);
+      return;
     }
 
-    return true;
-  }
-
-  void reShareProfile(bool moreThanOneNewUsers) {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: moreThanOneNewUsers
+        title: users.length > 1
             ? const Text('De nouveaux utilisateurs rejoignent le groupe')
             : const Text('Un nouvel utilisateur rejoins le groupe'),
-        content: moreThanOneNewUsers
+        content: users.length > 1
             ? const Text(
                 'Les nouveaux utilisateurs ne peuvent pas voir la photo que tu as déjà partagé.')
             : const Text(
@@ -485,36 +487,24 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     final String newGroupId = data['groupid'] ?? '';
     final Map<String, dynamic> users =
         Map<String, dynamic>.from(data['users'] ?? {});
-    if (users.remove(User().id) != null) {
-      if (newGroupId != User().groupId) {
-        // only join if the group to join is not the group we are in
-        User().groupId = newGroupId;
-        User().updateOtherUsers(users);
-        _messages.clear(); // in case we receive join before leave
-        status = Status.chatting;
-        if (!items.contains('fake')) {
-          items = ['real', 'fake'];
-        }
-      } else {
-        // new users in group (see users)
-        final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
-        User().updateOtherUsers(users);
 
-        if (Memory().boxUser.get('hasSharedProfile') != 'true') {
-          return true;
-        }
-
-        for (final String userId in oldUsers.keys) {
-          users.remove(userId);
-        }
-        if (users.isNotEmpty) {
-          reShareProfile(users.length > 1);
-        }
-      }
-    } else {
+    if (users.remove(User().id) == null) {
       // don't do anything (user not concerted, error)
       return false;
     }
+
+    if (newGroupId != User().groupId) {
+      // only join if the group to join is not the group we are in
+      User().groupId = newGroupId;
+      User().updateOtherUsers(users);
+      _messages.clear(); // in case we receive join before leave
+      status = Status.chatting;
+      items = ['real', 'fake']; // prepare for swipe
+    } else {
+      // new users in group (see users)
+      updateGroupUsers(users);
+    }
+
     return true;
   }
 
@@ -619,10 +609,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     };
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // see status.name and connectionStatus.name
-    final PageController controller = PageController();
+  void checkConnection() {
     if (connectionStatus == ConnectionStatus.disconnected &&
         (_notification == null || _notification == AppLifecycleState.resumed)) {
       connectionStatus = ConnectionStatus.reconnecting;
@@ -630,6 +617,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       listenStream();
       _webSocketConnection.register();
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // see status.name and connectionStatus.name
+    final PageController controller = PageController();
+    checkConnection();
 
     return Scaffold(
       drawer: UserDrawer(
@@ -695,23 +689,14 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     connectionStatus: connectionStatus,
                     onSendMessage: sendMessage,
                     onReportMessage: reportMessage,
-                    onRefresh: () async {
-                      // TODO: error should re-ask server for current group if any
-                      // NOTE: here it tries to infer the correct state of the app
-                      // try to restore connection
+                    onRefresh: () {
                       _webSocketConnection.close();
                       _webSocketConnection.reconnect();
                       listenStream();
                       _webSocketConnection.register();
-                      if (User().groupId != '') {
-                        setState(() {
-                          status = Status.chatting;
-                        });
-                      } else {
-                        setState(() {
-                          status = Status.idle;
-                        });
-                      }
+                      setState(() {
+                        status = Status.idle;
+                      });
                     });
               } else {
                 // build fake chat

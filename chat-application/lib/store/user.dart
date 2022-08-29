@@ -133,12 +133,57 @@ class User {
     updateOtherUserArgument(id, 'hasSeenProfile', true);
   }
 
-  Future<http.Response?> shareProfile(BuildContext context) async {
-    final Map profile = Memory().boxUserProfiles.get(id) ?? {};
+  Future<XFile?> _pickImage(BuildContext context, String type) async {
+    late final XFile? image;
+    try {
+      // TODO: allow bigger image to be sent (here it is already long and bigger image are not sent)
+      final ImagePicker picker = ImagePicker();
+      image = await picker.pickImage(
+          source: type == 'camera' ? ImageSource.camera : ImageSource.gallery);
+    } catch (error) {
+      await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+                title: const Text('Je ne peux pas faire cette action 😔'),
+                content: const Text(
+                    'Ouvre les paramètres de ton téléphone et donne moi les autorisations nécessaires.'),
+                actions: <Widget>[
+                  TextButton(
+                      child: const Text('Ouvrir les paramètres'),
+                      onPressed: () async {
+                        if (!await openAppSettings()) {
+                          Navigator.pop(context);
+                        }
+                      })
+                ]);
+          });
+      return null;
+    }
 
-    final Color primaryColor = Theme.of(context).colorScheme.primary;
-    final Color onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
+    return image;
+  }
 
+  Future<CroppedFile?> _cropImage(XFile image,
+      {Color? toolbarColor, Color? toolbarWidgetColor}) {
+    return ImageCropper().cropImage(
+        maxHeight: 128,
+        maxWidth: 128,
+        sourcePath: image.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        cropStyle: CropStyle.circle,
+        uiSettings: [
+          AndroidUiSettings(
+              toolbarTitle: '',
+              toolbarColor: toolbarColor,
+              toolbarWidgetColor: toolbarWidgetColor,
+              initAspectRatio: CropAspectRatioPreset.original,
+              lockAspectRatio: false),
+        ]);
+  }
+
+  Future<String?> _getImageType(BuildContext context,
+      {required Map profile, required Color onPrimaryColor}) {
     final List<Widget> typeActions = [
       SimpleDialogOption(
         onPressed: () {
@@ -166,13 +211,23 @@ class User {
           ));
     }
 
-    String? type = await showDialog(
+    return showDialog(
         context: context,
         builder: (BuildContext context) {
           return SimpleDialog(
             children: typeActions,
           );
         });
+  }
+
+  Future<http.Response?> shareProfile(BuildContext context) async {
+    final Map profile = Memory().boxUserProfiles.get(id) ?? {};
+
+    final Color primaryColor = Theme.of(context).colorScheme.primary;
+    final Color onPrimaryColor = Theme.of(context).colorScheme.onPrimary;
+
+    final String? type = await _getImageType(context,
+        profile: profile, onPrimaryColor: onPrimaryColor);
 
     if (type == null) {
       return null;
@@ -183,53 +238,16 @@ class User {
       return HttpConnection().put('share-profile', {'profile': profile});
     }
 
-    late final XFile? image;
-    try {
-      // TODO: allow bigger image to be sent (here it is already long and bigger image are not sent)
-      final ImagePicker picker = ImagePicker();
-      image = await picker.pickImage(
-          source: type == 'camera' ? ImageSource.camera : ImageSource.gallery);
-    } catch (error) {
-      await showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-                title: const Text('Je ne peux pas faire cette action 😔'),
-                content: const Text(
-                    'Ouvre les paramètres de ton téléphone et donne moi les autorisations nécessaires.'),
-                actions: <Widget>[
-                  TextButton(
-                    child: const Text('Ouvrir les paramètres'),
-                    onPressed: () async {
-                      if (!await openAppSettings()) {
-                        Navigator.pop(context);
-                      }
-                    },
-                  ),
-                ]);
-          });
-      return null;
-    }
+    // ignore: use_build_context_synchronously
+    final XFile? image = await _pickImage(context, type);
 
     if (image == null) {
       return null;
     }
 
     // crop image
-    final CroppedFile? croppedFile = await ImageCropper().cropImage(
-        maxHeight: 128,
-        maxWidth: 128,
-        sourcePath: image.path,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        cropStyle: CropStyle.circle,
-        uiSettings: [
-          AndroidUiSettings(
-              toolbarTitle: '',
-              toolbarColor: primaryColor,
-              toolbarWidgetColor: onPrimaryColor,
-              initAspectRatio: CropAspectRatioPreset.original,
-              lockAspectRatio: false),
-        ]);
+    final CroppedFile? croppedFile = await _cropImage(image,
+        toolbarColor: primaryColor, toolbarWidgetColor: onPrimaryColor);
 
     if (croppedFile == null) {
       return null;
@@ -243,29 +261,28 @@ class User {
     return HttpConnection().put('share-profile', {'profile': profile});
   }
 
-  static ImageProvider getUserImageProvider(id) {
+  static T _getUserImageOrImageProvider<T>(id,
+      {required T Function(String) networkImage,
+      required T Function(Uint8List) memoryImage}) {
     if (id == User().id && Memory().boxUser.get('hasSharedProfile') != 'true') {
-      return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
+      return networkImage('https://avatars.dicebear.com/api/bottts/$id.png');
     }
 
     final Map profile = Memory().boxUserProfiles.get(id) ?? {};
     if (profile['picture'] is Uint8List) {
-      return MemoryImage(profile['picture']);
+      return memoryImage(profile['picture']);
     } else {
-      return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
+      return networkImage('https://avatars.dicebear.com/api/bottts/$id.png');
     }
   }
 
-  static Image getUserImage(id) {
-    if (id == User().id && Memory().boxUser.get('hasSharedProfile') != 'true') {
-      return Image.network('https://avatars.dicebear.com/api/bottts/$id.png');
-    }
+  static ImageProvider getUserImageProvider(id) {
+    return _getUserImageOrImageProvider<ImageProvider>(id,
+        networkImage: NetworkImage.new, memoryImage: MemoryImage.new);
+  }
 
-    final Map profile = Memory().boxUserProfiles.get(id) ?? {};
-    if (profile['picture'] is Uint8List) {
-      return Image.memory(profile['picture']);
-    } else {
-      return Image.network('https://avatars.dicebear.com/api/bottts/$id.png');
-    }
+  static Image getUserImage(id) {
+    return _getUserImageOrImageProvider<Image>(id,
+        networkImage: Image.network, memoryImage: Image.memory);
   }
 }

@@ -20,6 +20,35 @@ class UserDrawer extends StatelessWidget {
   final VoidCallback resetAccount;
   final VoidCallback update;
 
+  Future<String?> showResetDialog(BuildContext context) {
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Attention'),
+          content: const SingleChildScrollView(
+            child: Text(
+                'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Non'),
+              onPressed: () {
+                Navigator.pop(context, 'nothing');
+              },
+            ),
+            TextButton(
+              child: const Text('Oui'),
+              onPressed: () {
+                Navigator.pop(context, 'confirmed');
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -88,31 +117,7 @@ class UserDrawer extends StatelessWidget {
               style: TextStyle(color: Theme.of(context).colorScheme.onError),
             ),
             onTap: () async {
-              switch (await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Attention'),
-                      content: const SingleChildScrollView(
-                        child: Text(
-                            'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
-                      ),
-                      actions: [
-                        TextButton(
-                          child: const Text('Non'),
-                          onPressed: () {
-                            Navigator.pop(context, 'nothing');
-                          },
-                        ),
-                        TextButton(
-                          child: const Text('Oui'),
-                          onPressed: () {
-                            Navigator.pop(context, 'confirmed');
-                          },
-                        ),
-                      ],
-                    );
-                  })) {
+              switch (await showResetDialog(context)) {
                 case 'confirmed':
                   Navigator.of(context).pop();
                   resetAccount();
