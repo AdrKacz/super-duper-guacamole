@@ -7,8 +7,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - chat-application/**
 
 jobs:
   verify-ios-app:
