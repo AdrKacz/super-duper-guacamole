@@ -61,7 +61,7 @@ workflows:
           flutter build appbundle --release \
             --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME") + 1)) \
             --dart-define="WEBSOCKET_ENDPOINT=$PRODUCTION_WEBSOCKET_ENDPOINT" \
-            --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
+            --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT" \
             --dart-define="HTTP_ENDPOINT=$PRODUCTION_HTTP_ENDPOINT"
       - name: Set up keychain to be used for codesigning using Codemagic CLI 'keychain' command
         script: |
@@ -89,7 +89,7 @@ workflows:
             --build-number=$(($(app-store-connect get-latest-testflight-build-number "$APP_STORE_ID") + 1)) \
             --export-options-plist=/Users/builder/export_options.plist \
             --dart-define="WEBSOCKET_ENDPOINT=$PRODUCTION_WEBSOCKET_ENDPOINT" \
-            --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT"
+            --dart-define="NOTIFICATION_HTTP_ENDPOINT=$PRODUCTION_NOTIFICATION_HTTP_ENDPOINT" \
             --dart-define="HTTP_ENDPOINT=$PRODUCTION_HTTP_ENDPOINT"
     artifacts:
       - ./build/**/outputs/apk/**/*.apk
