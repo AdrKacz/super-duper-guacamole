@@ -1,2 +1,3 @@
 Nouvelles fonctionnalités:
 - tu peux maintenant partager ta photo à ton groupe !
+- si tu reçois une photo innapropriée, tu peux nous la signaler. Nous bannirons l'émetteur de la plateforme si la photo n'est pas conforme aux règles d'utilisation.
