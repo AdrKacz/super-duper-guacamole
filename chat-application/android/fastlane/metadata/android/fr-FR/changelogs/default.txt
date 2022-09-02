@@ -1,3 +1,3 @@
 Nouvelles fonctionnalités:
 - tu peux enregister une photo de profil !
-- si tu reçois une photo innapropriée, tu peux nous la signaler. Nous bannirons l'émetteur de la plateforme si la photo n'est pas conforme aux règles d'utilisation.
+- si tu reçois une photo de profil innapropriée, tu peux nous la signaler. Nous bannirons l'émetteur de la plateforme si la photo n'est pas conforme aux règles d'utilisation.
