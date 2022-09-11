@@ -41,16 +41,16 @@ platform :ios do
       next
     end
 
-    app_store_build_number(
-      app_identifier: "com.awama.awa.dev",
-      live: false
-    )
-    if lane_context[SharedValues::LATEST_BUILD_NUMBER] >= lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER]
-      puts "Latest version already in review"
-      next
-    end
+    # app_store_build_number(
+    #   app_identifier: "com.awama.awa.dev",
+    #   live: false
+    # )
+    # if lane_context[SharedValues::LATEST_BUILD_NUMBER] >= lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER]
+    #   puts "Latest version already in review"
+    #   next
+    # end
 
-    puts "I will upload latest TestFlight version to App Store"
+    puts "I will upload latest TestFlight version #{lane_context[SharedValues::LATEST_TESTFLIGHT_VERSION]} (#{lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER]}) to App Store"
     deliver(
       app_version: lane_context[SharedValues::LATEST_TESTFLIGHT_VERSION].to_s,
       build_number: lane_context[SharedValues::LATEST_TESTFLIGHT_BUILD_NUMBER].to_s,
