@@ -42,11 +42,11 @@ exports.handler = async (event) => {
   do {
     const scanCommand = new ScanCommand({
       TableName: USERS_TABLE_NAME,
-      ProjectionExpression: '#id, #group, #firebaseToken, #isInactive, #lastConnectionHalfDay',
+      ProjectionExpression: '#id, #groupId, #firebaseToken, #isInactive, #lastConnectionHalfDay',
       FilterExpression: 'attribute_not_exists(#connectionId)', // to retreive only disconnected users
       ExpressionAttributeNames: {
         '#id': 'id',
-        '#group': 'group',
+        '#groupId': 'groupId',
         '#connectionId': 'connectionId',
         '#firebaseToken': 'firebaseToken',
         '#isInactive': 'isInactive',
@@ -63,14 +63,14 @@ exports.handler = async (event) => {
       if (userIsInactive) {
         // the inactive flag is remove at each connection
         // if it is still there the user didn't respond to the warning
-        if (user.group === undefined) {
+        if (user.groupId === undefined) {
           deadUsersWithoutGroup.push(user)
         } else {
           deadUsersWithGroup.push(user)
-          if (deadUsersByGroup[user.group] === undefined) {
-            deadUsersByGroup[user.group] = [user]
+          if (deadUsersByGroup[user.groupId] === undefined) {
+            deadUsersByGroup[user.groupId] = [user]
           } else {
-            deadUsersByGroup[user.group].push(user)
+            deadUsersByGroup[user.groupId].push(user)
           }
         }
         continue // don't deactivate a dead user
@@ -82,7 +82,7 @@ exports.handler = async (event) => {
       if (halfDayDifference > 1) {
         // user inactive: at least 12h without connection
         promises.push(deactivateUser(user).then(() => { console.log(`User ${user.id} deactivated`) }))
-        if (user.group !== undefined) {
+        if (user.groupId !== undefined) {
           deactivatedUsersWithGroup.push(user)
         }
       }
@@ -94,7 +94,7 @@ exports.handler = async (event) => {
   promises.push(killUsers(deadUsersWithoutGroup).then(() => { console.log('Killed users without group') }))
   console.log(`Dead User By Group:\n${JSON.stringify(deadUsersByGroup, null, '\t')}`)
   for (const deadUsers of Object.values(deadUsersByGroup)) {
-    promises.push(killUsers(deadUsers).then(() => { console.log(`Killed users with group ${deadUsers[0].group}`) }))
+    promises.push(killUsers(deadUsers).then(() => { console.log(`Killed users with group ${deadUsers[0].groupId}`) }))
   }
 
   // Warn dead user

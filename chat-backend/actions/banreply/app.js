@@ -68,11 +68,11 @@ exports.handler = async (event) => {
     }
   })
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.groupId === undefined) {
     return
   }
   const id = tempUser.id
-  const groupid = tempUser.group
+  const groupid = tempUser.groupId
 
   const body = JSON.parse(event.body)
 
@@ -88,10 +88,10 @@ exports.handler = async (event) => {
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: [{ id }, { id: bannedid }],
-        ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
+        ProjectionExpression: '#id, #groupId, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
         ExpressionAttributeNames: {
           '#id': 'id',
-          '#group': 'group',
+          '#groupId': 'groupId',
           '#connectionId': 'connectionId',
           '#firebaseToken': 'firebaseToken',
           '#banVotingUsers': 'banVotingUsers',
@@ -122,7 +122,7 @@ exports.handler = async (event) => {
   console.log('group:', group)
 
   // verify both user and their group (must be the same)
-  if (user === undefined || user.connectionId === undefined || user.group === undefined) {
+  if (user === undefined || user.connectionId === undefined || user.groupId === undefined) {
     throw new Error(`user <${id}> is not defined or has no connectionId or had no group`)
   }
 
@@ -131,7 +131,7 @@ exports.handler = async (event) => {
   //   throw new Error(`user <${id}> has connectionId <${user.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
   // }
 
-  if (bannedUser === undefined || bannedUser.group !== user.group || bannedUser.confirmationRequired === undefined) {
+  if (bannedUser === undefined || bannedUser.groupId !== user.groupId || bannedUser.confirmationRequired === undefined) {
     // NOTE: it can happens if banned user is banned but not everyone has voted yet (app not updated)
     // don't throw an error
     // TODO: warn user banned user is not in group anymore
@@ -238,7 +238,7 @@ exports.handler = async (event) => {
         TopicArn: SWITCH_GROUP_TOPIC_ARN,
         Message: JSON.stringify({
           id: bannedid,
-          groupid: bannedUser.group,
+          groupid: bannedUser.groupId,
           isBan: true
         })
       })

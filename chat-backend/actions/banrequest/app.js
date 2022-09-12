@@ -85,11 +85,11 @@ exports.handler = async (event) => {
     }
   })
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+  if (tempUser === undefined || tempUser.id === undefined || tempUser.groupId === undefined) {
     return
   }
   const id = tempUser.id
-  const groupid = tempUser.group
+  const groupid = tempUser.groupId
 
   const body = JSON.parse(event.body)
 
@@ -112,10 +112,10 @@ exports.handler = async (event) => {
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: [{ id }, { id: bannedid }],
-        ProjectionExpression: '#id, #group, #connectionId, #banConfirmedUsers',
+        ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers',
         ExpressionAttributeNames: {
           '#id': 'id',
-          '#group': 'group',
+          '#groupId': 'groupId',
           '#connectionId': 'connectionId',
           '#banConfirmedUsers': 'banConfirmedUsers'
         }
@@ -145,7 +145,7 @@ exports.handler = async (event) => {
   console.log('group:', group)
 
   // verify both user and their group (must be the same)
-  if (user === undefined || user.connectionId === undefined || user.group === undefined) {
+  if (user === undefined || user.connectionId === undefined || user.groupId === undefined) {
     throw new Error(`user <${id}> is not defined or has no connectionId or had no group`)
   }
 
@@ -154,7 +154,7 @@ exports.handler = async (event) => {
   //   throw new Error(`user <${id}> has connectionId <${user.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
   // }
 
-  if (bannedUser === undefined || bannedUser.group !== user.group) {
+  if (bannedUser === undefined || bannedUser.groupId !== user.groupId) {
     // NOTE: it can happens if banned user is banned but not everyone has voted yet (app not updated)
     // Don't throw an error
     // TODO: warn user banned user is not in group anymore

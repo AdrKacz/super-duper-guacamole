@@ -93,10 +93,10 @@ ${event.Records[0].Sns.Message}
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },
-    ProjectionExpression: '#id, #group, #hiddenGroup, #connectionId, #firebaseToken',
+    ProjectionExpression: '#id, #groupId, #hiddenGroup, #connectionId, #firebaseToken',
     ExpressionAttributeNames: {
       '#id': 'id',
-      '#group': 'group',
+      '#groupId': 'groupId',
       '#hiddenGroup': 'hiddenGroup',
       '#connectionId': 'connectionId',
       '#firebaseToken': 'firebaseToken'
@@ -113,7 +113,7 @@ ${event.Records[0].Sns.Message}
   }
 
   // re-populate user to prepare processing
-  user.group = user.group ?? user.hiddenGroup // if change group while still waiting
+  user.groupId = user.groupId ?? user.hiddenGroup // if change group while still waiting
   user.questions = body.questions ?? {}
   user.blockedUsersSet = new Set(body.blockedUsers ?? [])
   user.isBan = body.isBan ?? false
@@ -139,7 +139,7 @@ ${event.Records[0].Sns.Message}
  *
  * @param {Object} user
  * @param {string} user.id - id
- * @param {string?} [user.group] - current group id
+ * @param {string?} [user.groupId] - current group id
  * @param {Set.<string>} [user.blockedUsersSet] - blocked user ids
  * @param {Object} [user.questions] - answers to the questions
  *
@@ -229,7 +229,7 @@ async function findGroupToUser (user) {
 
 function isGroupValid (user, group) {
   // Check this group is valid
-  if (group.id === user.group) {
+  if (group.id === user.groupId) {
     console.log(`group ${group.id} already has ${user.id}`)
     return false
   }
@@ -299,10 +299,10 @@ function addUserToGroup (user, newGroup) {
       Key: { id: user.id },
       UpdateExpression: `
       SET #hiddenGroup = :groupid
-      REMOVE #group, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
+      REMOVE #groupId, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
       `,
       ExpressionAttributeNames: {
-        '#group': 'group',
+        '#groupId': 'groupId',
         '#hiddenGroup': 'hiddenGroup',
         '#unreadData': 'unreadData',
         '#banConfirmedUsers': 'banConfirmedUsers',
@@ -392,11 +392,11 @@ async function updateOpenedGroup (user, group) {
       TableName: USERS_TABLE_NAME,
       Key: { id: earlyUser.id },
       UpdateExpression: `
-        SET #group = :groupid, #hiddenGroup = :groupid
+        SET #groupId = :groupid, #hiddenGroup = :groupid
         REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
         `,
       ExpressionAttributeNames: {
-        '#group': 'group',
+        '#groupId': 'groupId',
         '#hiddenGroup': 'hiddenGroup',
         '#unreadData': 'unreadData',
         '#banConfirmedUsers': 'banConfirmedUsers',
@@ -467,11 +467,11 @@ async function removeUserFromGroup (user) {
   // Remove user grom its group
   // user : Map
   //    id : String - user id
-  //    group : String - user group id
+  //    groupId : String - user group id
   //    connectionId : String - user connection id
   //    firebaseToken : String - user firebase token
   console.log(`remove user ${JSON.stringify(user)}`)
-  if (typeof user.group === 'undefined' || user.group === '') {
+  if (typeof user.groupId === 'undefined' || user.groupId === '') {
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
@@ -484,11 +484,11 @@ async function removeUserFromGroup (user) {
     })
     return snsClient.send(publishSendMessageCommand) // no group so no need to update it, simply warn user
   }
-  console.log(`user is in group ${user.group}, ${typeof user.group}`)
+  console.log(`user is in group ${user.groupId}, ${typeof user.groupId}`)
   // retreive group (needed to count its users)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: user.group },
+    Key: { id: user.groupId },
     ProjectionExpression: '#id, #users, #isWaiting',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -531,7 +531,7 @@ async function removeUserFromGroup (user) {
       }
       const updateGroupCommand = new UpdateCommand({
         TableName: GROUPS_TABLE_NAME,
-        Key: { id: user.group },
+        Key: { id: user.groupId },
         UpdateExpression: `
         ${user.isBan ? 'ADD #bannedUsers :id' : ''}
         SET #isWaiting = :isWaiting
@@ -565,10 +565,10 @@ async function removeUserFromGroup (user) {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
         TableName: GROUPS_TABLE_NAME,
-        Key: { id: user.group }
+        Key: { id: user.groupId }
       })
       promises.push(dynamoDBDocumentClient.send(deleteGroupCommand))
-      console.log(`Delete old group <${user.group}>`)
+      console.log(`Delete old group <${user.groupId}>`)
     }
 
     // send message to group users to notify user has leaved the group (including itself)
@@ -578,7 +578,7 @@ async function removeUserFromGroup (user) {
         users,
         message: {
           action: 'leavegroup',
-          groupid: user.group,
+          groupid: user.groupId,
           id: user.id
         }
       })
