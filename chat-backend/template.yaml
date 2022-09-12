@@ -78,6 +78,9 @@ Resources:
         - 
           AttributeName: "connectionId"
           AttributeType: "S"
+        - 
+          AttributeName: "groupId"
+          AttributeType: "S"
       KeySchema:
         -
           AttributeName: "id"
@@ -91,8 +94,17 @@ Resources:
               KeyType: "HASH"
           Projection:
             NonKeyAttributes:
-              - "group"
+              - "groupId"
             ProjectionType: "INCLUDE"
+        -
+          IndexName: "GroupIdIndex"
+          KeySchema:
+            -
+              AttributeName: "groupId"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
+        
 
   GroupsTable:
     Type: AWS::DynamoDB::Table

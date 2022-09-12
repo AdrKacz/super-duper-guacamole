@@ -23,6 +23,15 @@ yarn deploy --config-env dev
 
 To update log retention time you'll need to delete the stack. If you don't, **SAM** will try to re-create *Log Groups* and will fail because they already exist.
 
+## How to update secondary index
+
+1. Delete the index to update
+2. Deploy the change
+3. Create the index with your changes
+4. Deploy your change
+
+> Don't update anything else, or another index
+
 ---
 
 # AWS SAM
