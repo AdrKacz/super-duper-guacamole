@@ -35,9 +35,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
@@ -45,44 +42,23 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get userid and groupid
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': event.requestContext.connectionId
-    }
-  })
-  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    } else {
-      return undefined
-    }
-  })
+  const user = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+  if (typeof user.id !== 'string' || typeof user.groupId !== 'string') {
     return
   }
-  const id = tempUser.id
-  const groupid = tempUser.group
 
   const body = JSON.parse(event.body)
 
   const message = body.message
-  if (id === undefined || groupid === undefined || message === undefined) {
-    throw new Error('id, groupid, and message must be defined')
+  if (typeof message !== 'object') {
+    throw new Error('message must be qn object')
   }
 
   // retreive group
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupid },
+    Key: { id: user.groupId },
     ProjectionExpression: '#id, #users',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -91,12 +67,12 @@ exports.handler = async (event) => {
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
 
-  if (group === undefined) {
-    throw new Error(`group <${groupid}> is not defined`)
+  if (typeof group !== 'object') {
+    throw new Error(`group <${user.groupId}> is not defined`)
   }
 
-  if (!group.users.has(id)) {
-    throw new Error(`user <${id}> is not in group <${groupid}>`)
+  if (!group.users.has(user.id)) {
+    throw new Error(`user <${user.id}> is not in group <${user.groupId}>`)
   }
 
   // retreive users
@@ -115,11 +91,6 @@ exports.handler = async (event) => {
 
   const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 
-  const user = users.find((u) => (u.id === id))
-  if (user === undefined || user.connectionId !== event.requestContext.connectionId) {
-    throw new Error(`user <${id}> has connectionId <${user?.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
-  }
-
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
@@ -134,7 +105,7 @@ exports.handler = async (event) => {
   const publishSendNotificationCommand = new PublishCommand({
     TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
     Message: JSON.stringify({
-      topic: `group-${groupid}`,
+      topic: `group-${user.groupId}`,
       notification: {
         title: 'Les gens parlent 🎉',
         body: 'Tu es trop loin pour entendre ...'
@@ -150,4 +121,34 @@ exports.handler = async (event) => {
   return {
     statusCode: 200
   }
+}
+
+// ===== ==== ====
+// HELPERS
+async function connectionIdToUserIdAndGroupId (connectionId) {
+  // Get userId and GroupId associated with connectionId
+  // connetionId - String
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': connectionId
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    }
+    return {}
+  })
+
+  if (typeof user.id === 'undefined') {
+    return {}
+  }
+  return { id: user.id, groupId: user.groupId }
 }

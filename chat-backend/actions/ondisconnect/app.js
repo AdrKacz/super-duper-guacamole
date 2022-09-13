@@ -87,15 +87,15 @@ exports.handler = async (event) => {
   })
   const updatePromise = dynamoDBDocumentClient.send(updateUserCommand)
 
-  if (user.group === undefined) {
+  if (typeof user.groupId !== 'string') {
     await updatePromise
     return
   }
 
-  // retreive group (if any)
+  // retrieve group (if any)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: user.group },
+    Key: { id: user.groupId },
     ProjectionExpression: '#id, #users',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -105,7 +105,7 @@ exports.handler = async (event) => {
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
 
   if (group === undefined) {
-    throw new Error(`group <${user.group}> is not defined`)
+    throw new Error(`group <${user.groupId}> is not defined`)
   }
 
   // retreive users

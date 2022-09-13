@@ -24,18 +24,18 @@ exports.removeUsersFromGroup = async (users) => {
   // Remove users grom their group
   // users : List<Map>
   //    id : String - user id
-  //    group : String - user group id
+  //    groupId : String - user group id
 
-  const groupid = users[0].group
+  const groupId = users[0].groupId
 
-  if (groupid === undefined) {
+  if (groupId === undefined) {
     return
   }
 
   // retreive group (needed to count its users)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupid },
+    Key: { id: groupId },
     ProjectionExpression: '#id, #users, #isWaiting',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -77,7 +77,7 @@ exports.removeUsersFromGroup = async (users) => {
 
       const updateGroupCommand = new UpdateCommand({
         TableName: GROUPS_TABLE_NAME,
-        Key: { id: groupid },
+        Key: { id: groupId },
         UpdateExpression: `
           SET #isWaiting = :isWaiting
           DELETE #users :ids
@@ -114,7 +114,7 @@ exports.removeUsersFromGroup = async (users) => {
             users: otherUsers,
             message: {
               action: 'leavegroup',
-              groupid,
+              groupid: groupId,
               id: user.id
             }
           })
@@ -125,10 +125,10 @@ exports.removeUsersFromGroup = async (users) => {
       // delete group
       const deleteGroupCommand = new DeleteCommand({
         TableName: GROUPS_TABLE_NAME,
-        Key: { id: groupid }
+        Key: { id: groupId }
       })
       promises.push(dynamoDBDocumentClient.send(deleteGroupCommand))
-      console.log(`Delete old group <${groupid}>`)
+      console.log(`Delete old group <${groupId}>`)
     }
 
     await Promise.allSettled(promises)

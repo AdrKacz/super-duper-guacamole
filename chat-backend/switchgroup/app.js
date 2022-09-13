@@ -298,7 +298,7 @@ function addUserToGroup (user, newGroup) {
       TableName: USERS_TABLE_NAME,
       Key: { id: user.id },
       UpdateExpression: `
-      SET #hiddenGroup = :groupid
+      SET #hiddenGroup = :groupId
       REMOVE #groupId, #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
       `,
       ExpressionAttributeNames: {
@@ -310,7 +310,7 @@ function addUserToGroup (user, newGroup) {
         '#confirmationRequired': 'confirmationRequired'
       },
       ExpressionAttributeValues: {
-        ':groupid': newGroup.id
+        ':groupId': newGroup.id
       }
     })
     promises.push(dynamoDBDocumentClient.send(updateUserCommand))
@@ -392,7 +392,7 @@ async function updateOpenedGroup (user, group) {
       TableName: USERS_TABLE_NAME,
       Key: { id: earlyUser.id },
       UpdateExpression: `
-        SET #groupId = :groupid, #hiddenGroup = :groupid
+        SET #groupId = :groupId, #hiddenGroup = :groupId
         REMOVE #unreadData, #banConfirmedUsers, #banVotingUsers, #confirmationRequired
         `,
       ExpressionAttributeNames: {
@@ -404,7 +404,7 @@ async function updateOpenedGroup (user, group) {
         '#confirmationRequired': 'confirmationRequired'
       },
       ExpressionAttributeValues: {
-        ':groupid': group.id
+        ':groupId': group.id
       }
     })
     promises.push(dynamoDBDocumentClient.send(updateEarlyUserCommand))

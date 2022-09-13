@@ -152,16 +152,16 @@ exports.handler = async (event) => {
   // Retreive other group users
   try {
     console.log('Get Other Users')
-    const users = await getOtherGroupUsers(id, oldUser.group)
+    const users = await getOtherGroupUsers(id, oldUser.groupId)
     console.log('Inform Other Users')
     promises.push(informGroup(id, users))
     console.log('Update Message with Group Information')
-    message.group = oldUser.group
+    message.group = oldUser.groupId
     message.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId === 'string' }))
   } catch (e) {
-    if (e.message === `groupId <${oldUser.group}> is undefined`) {
+    if (e.message === `groupId <${oldUser.groupId}> is undefined`) {
       console.log('Catch: ', e)
-    } else if (e.message === `group <${oldUser.group}> isn't found`) {
+    } else if (e.message === `group <${oldUser.groupId}> isn't found`) {
       console.log('Catch: ', e)
     } else {
       console.log('Unknown error: ', e)

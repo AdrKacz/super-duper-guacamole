@@ -42,9 +42,9 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  const { id, group } = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
+  const { id, groupId } = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
 
-  if (typeof id === 'undefined') {
+  if (typeof id !== 'string') {
     return
   }
 
@@ -57,7 +57,7 @@ exports.handler = async (event) => {
     TopicArn: SWITCH_GROUP_TOPIC_ARN,
     Message: JSON.stringify({
       id,
-      groupid: group,
+      groupid: groupId,
       connectionId: event.requestContext.connectionId,
       questions,
       blockedUsers
@@ -98,5 +98,5 @@ async function connectionIdToUserIdAndGroupId (connectionId) {
   if (typeof user.id === 'undefined') {
     return {}
   }
-  return { id: user.id, group: user.group }
+  return { id: user.id, groupId: user.groupId }
 }

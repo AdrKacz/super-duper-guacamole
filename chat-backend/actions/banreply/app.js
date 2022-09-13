@@ -37,9 +37,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
@@ -47,7 +44,7 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get userid and groupid
+  // get userId and groupId
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
@@ -72,7 +69,7 @@ exports.handler = async (event) => {
     return
   }
   const id = tempUser.id
-  const groupid = tempUser.groupId
+  const groupId = tempUser.groupId
 
   const body = JSON.parse(event.body)
 
@@ -99,7 +96,7 @@ exports.handler = async (event) => {
         }
       },
       [GROUPS_TABLE_NAME]: {
-        Keys: [{ id: groupid }],
+        Keys: [{ id: groupId }],
         ProjectionExpression: '#users',
         ExpressionAttributeNames: {
           '#users': 'users'
@@ -122,7 +119,7 @@ exports.handler = async (event) => {
   console.log('group:', group)
 
   // verify both user and their group (must be the same)
-  if (user === undefined || user.connectionId === undefined || user.groupId === undefined) {
+  if (typeof user !== 'string' || typeof user.connectionId !== 'string' || typeof user.groupId !== 'string') {
     throw new Error(`user <${id}> is not defined or has no connectionId or had no group`)
   }
 
