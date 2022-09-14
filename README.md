@@ -55,9 +55,25 @@ Markdown|12|35.00|0.00|880
 
 # How to check the app still work after I change the codebase?
 
-## Login
+## Login and Logout
 
-## Logout
+1. Create *user A* and *user B* in the same group
+2. **Verify** *user A* sees *user B* connected (`green dot`) (and vice-versa)
+3. Put *user B* app in the background
+4. **Verify** *user A* sees *user B* disconnected (no `green dot`)
+5. Put *user B* app back in the frontground
+6. **Verify** *user A* sees *user B* connected (`green dot`)
+7. Put *user A* app in the background
+8. Put *user B* app in the background
+9. Put *user A* app back in the frontground
+10. **Verify** *user A* sees *user B* disconnected (no `green dot`)
+11. Put *user B* app back in the frontground
+12. **Verify** *user A* sees *user B* connected (`green dot`)
+13. Put *user A* app in the background
+14. Put *user B* app in the background
+15. Put *user B* app back in the frontground
+16. Put *user A* app back in the frontground
+17. **Verify** *user A* sees *user B* connected (`green dot`)
 
 ## Send text message
 
