@@ -53,3 +53,16 @@ Python|11|22.95|42.63|889
 Markdown|12|35.00|0.00|880
 **SUM:**|**70**|**16.99**|**15.94**|**6840**
 
+# How to check the app still work after I change the codebase?
+
+## Login
+
+## Logout
+
+## Send text message
+
+## Switch group
+
+## Ban user
+
+## Share your profile
