@@ -48,7 +48,7 @@ exports.handler = async (event) => {
   const signature = body.signature
   const timestamp = body.timestamp
   let publicKey = body.publicKey // updated later if it already exists
-  if (typeof id === 'undefined' || typeof signature === 'undefined' || typeof timestamp === 'undefined' || typeof publicKey === 'undefined') {
+  if (typeof id !== 'string' || typeof signature !== 'object' || typeof timestamp !== 'number' || typeof publicKey !== 'string') {
     throw new Error('id, signature, timestamp, and publicKey must be defined')
   }
 
