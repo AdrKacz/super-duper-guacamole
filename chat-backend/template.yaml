@@ -92,6 +92,7 @@ Resources:
           Projection:
             NonKeyAttributes:
               - "group"
+              - "groupId"
             ProjectionType: "INCLUDE"
 
   GroupsTable:
