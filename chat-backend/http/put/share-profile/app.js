@@ -45,9 +45,9 @@ exports.handler = async (event) => {
     throw new Error('profile must be an object')
   }
 
-  const user = await verifyUser(body)
+  const { id, groupId } = await getVerifiedUser(body)
 
-  if (typeof user.id !== 'string') {
+  if (typeof id !== 'string' || typeof groupId !== 'string') {
     return {
       statusCode: 401
     }
@@ -56,7 +56,7 @@ exports.handler = async (event) => {
   // retreive group
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: user.group },
+    Key: { id: groupId },
     ProjectionExpression: '#id, #users',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -66,19 +66,19 @@ exports.handler = async (event) => {
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
   if (typeof group === 'undefined') {
     console.log('group not defined')
-    throw new Error(`group <${user.group}> is not defined`)
+    throw new Error(`group <${groupId}> is not defined`)
   }
 
-  if (!group.users.has(user.id)) {
+  if (!group.users.has(id)) {
     console.log('user not in group')
-    throw new Error(`user <${user.id}> is not in group <${group.id}>`)
+    throw new Error(`user <${id}> is not in group <${groupId}>`)
   }
 
   // retreive users
   const batchGetOtherUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).map((id) => ({ id })),
+        Keys: Array.from(group.users).map((userId) => ({ id: userId })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -95,7 +95,7 @@ exports.handler = async (event) => {
       users,
       message: {
         action: 'shareprofile',
-        user: user.id,
+        user: id,
         profile
       }
     })
@@ -104,7 +104,7 @@ exports.handler = async (event) => {
   const publishSendNotificationCommand = new PublishCommand({
     TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
     Message: JSON.stringify({
-      topic: `group-${group.id}`,
+      topic: `group-${groupId}`,
       notification: {
         title: 'Les masques tombent 🎭',
         body: "Quelqu'un vient de révéler son identité"
@@ -133,7 +133,7 @@ exports.handler = async (event) => {
  * @param {number} user.timestamp
  * @param {string} user.publicKey
  */
-async function verifyUser ({ id, signature, timestamp, publicKey }) {
+async function getVerifiedUser ({ id, signature, timestamp, publicKey }) {
   console.log(`signature type: ${typeof signature}`)
 
   if (typeof id !== 'string') {
@@ -158,11 +158,12 @@ async function verifyUser ({ id, signature, timestamp, publicKey }) {
   const getUserCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },
-    ProjectionExpression: '#id, #publicKey, #group',
+    ProjectionExpression: '#id, #publicKey, #groupId, #group',
     ExpressionAttributeNames: {
       '#id': 'id',
       '#publicKey': 'publicKey',
-      '#group': 'group'
+      '#groupId': 'groupId',
+      '#group': 'group' // for backward compatibility
     }
   })
   const user = await dynamoDBDocumentClient.send(getUserCommand).then((response) => (response.Item))
@@ -181,5 +182,5 @@ async function verifyUser ({ id, signature, timestamp, publicKey }) {
     return {}
   }
 
-  return user
+  return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
 }
