@@ -278,7 +278,7 @@ test('it sends message with unreadData', async () => {
 
 test('it sends login to group users', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
-  const dummyGroup = 'dummy-group'
+  const dummyGroupId = 'dummy-group-id'
 
   ddbMock.on(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
@@ -286,7 +286,7 @@ test('it sends login to group users', async () => {
   }).resolves({
     Attributes: {
       id,
-      group: dummyGroup
+      groupId: dummyGroupId
     }
   })
 
@@ -297,7 +297,7 @@ test('it sends login to group users', async () => {
 
   ddbMock.on(GetCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: dummyGroup }
+    Key: { id: dummyGroupId }
   }).resolves({
     Item: {
       id,
@@ -335,7 +335,7 @@ test('it sends login to group users', async () => {
 
 test('it stops on group not found', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
-  const dummyGroup = 'dummy-group'
+  const dummyGroupId = 'dummy-group-id'
 
   ddbMock.on(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
@@ -343,7 +343,7 @@ test('it stops on group not found', async () => {
   }).resolves({
     Attributes: {
       id,
-      group: dummyGroup
+      groupId: dummyGroupId
     }
   })
 
@@ -387,7 +387,7 @@ test('it stops on undefined group', async () => {
 
 test('it pass on unknown error on get command group', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
-  const dummyGroup = 'dummy-group'
+  const dummyGroupId = 'dummy-group-id'
 
   ddbMock.on(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
@@ -395,13 +395,13 @@ test('it pass on unknown error on get command group', async () => {
   }).resolves({
     Attributes: {
       id,
-      group: dummyGroup
+      groupId: dummyGroupId
     }
   })
 
   ddbMock.on(GetCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: dummyGroup }
+    Key: { id: dummyGroupId }
   }).rejects('unknown error')
 
   const dummyConnectionId = 'dummy-connection-id'
@@ -419,7 +419,7 @@ test('it pass on unknown error on get command group', async () => {
 
 test('it pass if no other user in group', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
-  const dummyGroup = 'dummy-group'
+  const dummyGroupId = 'dummy-group-id'
 
   ddbMock.on(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
@@ -427,13 +427,13 @@ test('it pass if no other user in group', async () => {
   }).resolves({
     Attributes: {
       id,
-      group: dummyGroup
+      groupId: dummyGroupId
     }
   })
 
   ddbMock.on(GetCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: dummyGroup }
+    Key: { id: dummyGroupId }
   }).resolves({
     Item: {
       id,
