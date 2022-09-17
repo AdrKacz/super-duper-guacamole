@@ -132,7 +132,7 @@ exports.handler = async (event) => {
 // ===== ==== ====
 // HELPERS
 async function connectionIdToUserIdAndGroupId (connectionId) {
-  // Get userId and GroupId associated with connectionId
+  // Get id and groupId associated with connectionId
   // connectionId - String
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
