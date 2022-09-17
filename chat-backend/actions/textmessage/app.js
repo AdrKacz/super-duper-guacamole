@@ -80,7 +80,7 @@ exports.handler = async (event) => {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).map((id) => ({ id })),
+        Keys: Array.from(group.users).map((userId) => ({ id: userId })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
