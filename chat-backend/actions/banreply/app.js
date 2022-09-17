@@ -37,9 +37,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
@@ -47,39 +44,19 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get userid and groupid
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': event.requestContext.connectionId
-    }
-  })
-  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    } else {
-      return undefined
-    }
-  })
+  // get id and groupId
+  const { id, groupId } = await getUserFromConnectionId(event.requestContext.connectionId)
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+  if (typeof id === 'undefined' || typeof groupId === 'undefined') {
     return
   }
-  const id = tempUser.id
-  const groupid = tempUser.group
 
   const body = JSON.parse(event.body)
 
-  const bannedid = body.bannedid
+  const bannedId = body.bannedid
   const status = body.status
 
-  if (bannedid === undefined || !['confirmed', 'denied'].includes(status)) {
+  if (typeof bannedId === 'undefined' || !['confirmed', 'denied'].includes(status)) {
     throw new Error("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
   }
 
@@ -87,11 +64,12 @@ exports.handler = async (event) => {
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: [{ id }, { id: bannedid }],
-        ProjectionExpression: '#id, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
+        Keys: [{ id }, { id: bannedId }],
+        ProjectionExpression: '#id, #groupId, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
         ExpressionAttributeNames: {
           '#id': 'id',
-          '#group': 'group',
+          '#groupId': 'groupId',
+          '#group': 'group', // for backward compatibility
           '#connectionId': 'connectionId',
           '#firebaseToken': 'firebaseToken',
           '#banVotingUsers': 'banVotingUsers',
@@ -99,7 +77,7 @@ exports.handler = async (event) => {
         }
       },
       [GROUPS_TABLE_NAME]: {
-        Keys: [{ id: groupid }],
+        Keys: [{ id: groupId }],
         ProjectionExpression: '#users',
         ExpressionAttributeNames: {
           '#users': 'users'
@@ -109,6 +87,8 @@ exports.handler = async (event) => {
   })
 
   const [users, [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
+  // TODO: verify both users exists
+
   let user, bannedUser
   if (users[0].id === id) {
     user = users[0]
@@ -121,21 +101,11 @@ exports.handler = async (event) => {
   console.log('bannedUser:', bannedUser)
   console.log('group:', group)
 
-  // verify both user and their group (must be the same)
-  if (user === undefined || user.connectionId === undefined || user.group === undefined) {
-    throw new Error(`user <${id}> is not defined or has no connectionId or had no group`)
-  }
-
-  // need to verify identify instead
-  // if (user.connectionId !== event.requestContext.connectionId) {
-  //   throw new Error(`user <${id}> has connectionId <${user.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
-  // }
-
-  if (bannedUser === undefined || bannedUser.group !== user.group || bannedUser.confirmationRequired === undefined) {
+  if (groupId !== (bannedUser.groupId ?? bannedUser.group) || typeof bannedUser.confirmationRequired === 'undefined') { // .group for backward compatibility
     // NOTE: it can happens if banned user is banned but not everyone has voted yet (app not updated)
     // don't throw an error
     // TODO: warn user banned user is not in group anymore
-    console.log(`banned user <${bannedid}> is not defined or banned user and user are not in the same group or confirmationRequired is not defined (not in an active ban)`)
+    console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group or confirmationRequired is not defined (not in an active ban)`)
     return {
       statusCode: 403
     }
@@ -147,7 +117,7 @@ exports.handler = async (event) => {
     // NOTE: this situation can happen
     // for example, if you need 2 users to confirm but you send the request to 4
     // once the first 2 have confirm, you can still receive answers
-    console.log(`user <${id}> is not in banVotingUsers (below) of banned user <${bannedid}>`)
+    console.log(`user (${id}) is not in banVotingUsers (below) of banned user (${bannedId})`)
     console.log(banVotingUsers)
     return {
       statusCode: 403
@@ -165,7 +135,7 @@ exports.handler = async (event) => {
   const updateBannedUserCommand = new UpdateCommand({
     ReturnValues: 'ALL_NEW',
     TableName: USERS_TABLE_NAME,
-    Key: { id: bannedid },
+    Key: { id: bannedId },
     UpdateExpression: `
     ${status === 'confirmed' ? 'ADD #banConfirmedUsers :id' : ''}
     DELETE #banVotingUsers :id
@@ -189,7 +159,7 @@ exports.handler = async (event) => {
     // close the vote
     const updateBannedUserCommand = new UpdateCommand({
       TableName: USERS_TABLE_NAME,
-      Key: { id: bannedid },
+      Key: { id: bannedId },
       UpdateExpression: `
       REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
       `,
@@ -204,7 +174,7 @@ exports.handler = async (event) => {
 
     const otherUserIds = []
     for (const groupUserId of group.users) {
-      if (groupUserId !== id && groupUserId !== bannedid) {
+      if (groupUserId !== id && groupUserId !== bannedId) {
         otherUserIds.push({ id: groupUserId })
       }
     }
@@ -215,7 +185,7 @@ exports.handler = async (event) => {
         RequestItems: {
           [USERS_TABLE_NAME]: {
             // user and banned user already requested
-            Keys: Array.from(group.users).filter((userid) => (userid !== bannedid && userid !== id)).map((id) => ({ id })),
+            Keys: Array.from(group.users).filter((userId) => (userId !== bannedId && userId !== id)).map((id) => ({ id })),
             ProjectionExpression: '#id, #connectionId, #firebaseToken',
             ExpressionAttributeNames: {
               '#id': 'id',
@@ -237,8 +207,8 @@ exports.handler = async (event) => {
       const publishSwitchGroupCommand = new PublishCommand({
         TopicArn: SWITCH_GROUP_TOPIC_ARN,
         Message: JSON.stringify({
-          id: bannedid,
-          groupid: bannedUser.group,
+          id: bannedId,
+          groupid: bannedUser.groupId,
           isBan: true
         })
       })
@@ -251,7 +221,7 @@ exports.handler = async (event) => {
           users: otherUsers.concat([user, bannedUser]),
           message: {
             action: 'banreply',
-            bannedid,
+            bannedid: bannedId,
             status: 'confirmed'
           }
         })
@@ -277,7 +247,7 @@ exports.handler = async (event) => {
           users: otherUsers.concat([user]),
           message: {
             action: 'banreply',
-            bannedid,
+            bannedid: bannedId,
             status: 'denied'
           }
         })
@@ -303,4 +273,34 @@ exports.handler = async (event) => {
   return {
     statusCode: 200
   }
+}
+
+// ===== ==== ====
+// HELPERS
+async function getUserFromConnectionId (connectionId) {
+  // Get id and groupId associated with connectionId
+  // connectionId - String
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': connectionId
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    }
+    return {}
+  })
+
+  if (typeof user.id === 'undefined') {
+    return {}
+  }
+  return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
 }

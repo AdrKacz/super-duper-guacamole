@@ -54,9 +54,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, trans
 const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
@@ -64,7 +61,6 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get userid and groupid
   // get id and groupId
   const { id, groupId } = await getUserFromConnectionId(event.requestContext.connectionId)
 
@@ -133,7 +129,7 @@ exports.handler = async (event) => {
     // NOTE: it can happens if banned user is banned but not everyone has voted yet (app not updated)
     // Don't throw an error
     // TODO: warn user banned user is not in group anymore
-    console.log(`user (${id}) and banned user (${bannedUser.id} are not in the same group)`)
+    console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group`)
     return {
       statusCode: 403
     }
