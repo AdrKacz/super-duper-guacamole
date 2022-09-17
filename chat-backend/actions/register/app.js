@@ -119,7 +119,7 @@ exports.handler = async (event) => {
   })
   const oldUser = await dynamoDBDocumentClient.send(updateCommand).then((response) => (response.Attributes))
 
-  const message = {
+  const registerMessage = {
     action: 'register',
     unreadData: []
   }
@@ -132,7 +132,7 @@ exports.handler = async (event) => {
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
         users: [{ id, connectionId: event.requestContext.connectionId }],
-        message
+        message: registerMessage
       })
     })
     await snsClient.send(publishCommand)
@@ -142,38 +142,38 @@ exports.handler = async (event) => {
   }
 
   // old User is defined
+  console.log('Old User')
+  console.log(oldUser)
   const promises = []
+
+  // add unread messages
   if (Array.isArray(oldUser.unreadData)) {
     console.log('Update Message With Unread Data')
 
-    message.unreadData = oldUser.unreadData
+    registerMessage.unreadData = oldUser.unreadData
   }
+
+  // add group
+  registerMessage.groupId = oldUser.groupId ?? oldUser.group // .group for backward compatibility
+  registerMessage.group = registerMessage.groupId // for backward compatibility
 
   // Retreive other group users
   try {
-    console.log('Get Other Users')
-    const users = await getOtherGroupUsers(id, oldUser.group)
-    console.log('Inform Other Users')
+    console.log('Get other users in group')
+    const users = await getOtherGroupUsers(id, registerMessage.groupId)
+    console.log('Inform other users')
     promises.push(informGroup(id, users))
-    console.log('Update Message with Group Information')
-    message.group = oldUser.group
-    message.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId === 'string' }))
+    registerMessage.groupUsers = users.map(({ id: userId, connectionId }) => ({ id: userId, isOnline: typeof connectionId === 'string' }))
   } catch (e) {
-    if (e.message === `groupId <${oldUser.group}> is undefined`) {
-      console.log('Catch: ', e)
-    } else if (e.message === `group <${oldUser.group}> isn't found`) {
-      console.log('Catch: ', e)
-    } else {
-      console.log('Unknown error: ', e)
-    }
+    console.log('Catch: ', e)
   }
-  console.log('Send Message:\n', JSON.stringify(message))
+  console.log('Send Register Message:\n', JSON.stringify(registerMessage))
   // send message
   const publishCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{ id, connectionId: event.requestContext.connectionId }],
-      message
+      message: registerMessage
     })
   })
   promises.push(snsClient.send(publishCommand))
