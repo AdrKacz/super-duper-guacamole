@@ -35,9 +35,6 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log(`Receives:
@@ -45,44 +42,24 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get userid and groupid
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': event.requestContext.connectionId
-    }
-  })
-  const tempUser = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    } else {
-      return undefined
-    }
-  })
+  // get id and groupId
+  const { id, groupId } = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
 
-  if (tempUser === undefined || tempUser.id === undefined || tempUser.group === undefined) {
+  if (typeof id === 'undefined' || typeof groupId === 'undefined') {
     return
   }
-  const id = tempUser.id
-  const groupid = tempUser.group
 
   const body = JSON.parse(event.body)
 
   const message = body.message
-  if (id === undefined || groupid === undefined || message === undefined) {
-    throw new Error('id, groupid, and message must be defined')
+  if (typeof message === 'undefined') {
+    throw new Error('message must be defined')
   }
 
   // retreive group
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupid },
+    Key: { id: groupId },
     ProjectionExpression: '#id, #users',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -92,18 +69,18 @@ exports.handler = async (event) => {
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
 
   if (group === undefined) {
-    throw new Error(`group <${groupid}> is not defined`)
+    throw new Error(`group <${groupId}> is not defined`)
   }
 
   if (!group.users.has(id)) {
-    throw new Error(`user <${id}> is not in group <${groupid}>`)
+    throw new Error(`user <${id}> is not in group <${groupId}>`)
   }
 
   // retreive users
   const batchGetUsersCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).map((id) => ({ id })),
+        Keys: Array.from(group.users).map((userId) => ({ id: userId })),
         ProjectionExpression: '#id, #connectionId',
         ExpressionAttributeNames: {
           '#id': 'id',
@@ -134,7 +111,7 @@ exports.handler = async (event) => {
   const publishSendNotificationCommand = new PublishCommand({
     TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
     Message: JSON.stringify({
-      topic: `group-${groupid}`,
+      topic: `group-${groupId}`,
       notification: {
         title: 'Les gens parlent 🎉',
         body: 'Tu es trop loin pour entendre ...'
@@ -150,4 +127,34 @@ exports.handler = async (event) => {
   return {
     statusCode: 200
   }
+}
+
+// ===== ==== ====
+// HELPERS
+async function connectionIdToUserIdAndGroupId (connectionId) {
+  // Get userId and GroupId associated with connectionId
+  // connectionId - String
+  const queryCommand = new QueryCommand({
+    TableName: USERS_TABLE_NAME,
+    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
+    KeyConditionExpression: '#connectionId = :connectionId',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': connectionId
+    }
+  })
+  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
+    console.log('Query Response:', response)
+    if (response.Count > 0) {
+      return response.Items[0]
+    }
+    return {}
+  })
+
+  if (typeof user.id === 'undefined') {
+    return {}
+  }
+  return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
 }
