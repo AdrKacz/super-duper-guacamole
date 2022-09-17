@@ -45,7 +45,7 @@ exports.handler = async (event) => {
 \tRequest Context connectionId: ${event.requestContext.connectionId}
 `)
 
-  // get connectionId group (with global secondary index)
+  // get groupId from connectionId
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
@@ -66,7 +66,7 @@ exports.handler = async (event) => {
     }
   })
 
-  if (user === undefined || user.id === undefined) {
+  if (typeof user === 'undefined' || typeof user.id === 'undefined') {
     return
   }
   // update user
@@ -87,7 +87,8 @@ exports.handler = async (event) => {
   })
   const updatePromise = dynamoDBDocumentClient.send(updateUserCommand)
 
-  if (user.group === undefined) {
+  const groupId = user.groupId ?? user.group // .group for backward compatibility
+  if (typeof groupId === 'undefined') {
     await updatePromise
     return
   }
@@ -95,7 +96,7 @@ exports.handler = async (event) => {
   // retreive group (if any)
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: user.group },
+    Key: { id: groupId },
     ProjectionExpression: '#id, #users',
     ExpressionAttributeNames: {
       '#id': 'id',
@@ -104,8 +105,8 @@ exports.handler = async (event) => {
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
 
-  if (group === undefined) {
-    throw new Error(`group <${user.group}> is not defined`)
+  if (typeof group === 'undefined') {
+    throw new Error(`group <${groupId}> is not defined`)
   }
 
   // retreive users
