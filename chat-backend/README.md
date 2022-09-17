@@ -16,7 +16,13 @@ Parameter | Value
 *LogRetentionInDays* | **1**
 
 ```
-yarn deploy --config-env dev
+yarn deploy dev
+```
+
+### Delete your stack
+
+```sh
+sam delete --stack-name name-of-your-stack
 ```
 
 ### Note on log retention time
