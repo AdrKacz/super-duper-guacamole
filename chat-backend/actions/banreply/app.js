@@ -311,11 +311,8 @@ async function getUserAndBannedUserAndGroup (id, bannedId, groupId) {
   const [users, [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
   // NOTE: will raise an error if less than two results in users
 
-  let user, bannedUser
-  if (users[0].id === id) {
-    user = users[0]
-    bannedUser = users[1]
-  } else {
+  let [user, bannedUser] = users
+  if (user.id !== id) {
     user = users[1]
     bannedUser = users[0]
   }
