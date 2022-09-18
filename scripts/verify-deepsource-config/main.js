@@ -24,14 +24,17 @@ async function verifyDeepsourceConfig () {
   stdoutArray = stdoutArray.filter((path) => path.endsWith('/package.json'))
   stdoutArray = stdoutArray.map((path) => path.replace('../', ''))
   stdoutArray = stdoutArray.map((path) => path.replace('package.json', ''))
+  stdoutArray.sort()
+
+  const stringStdoutArray = stdoutArray.map((path) => `"${path}"`).join(',\n') + ','
+  console.log('correct set of dependencies:\n', stringStdoutArray, '\n')
 
   const deepSourceConfigToml = fs.readFileSync('../.deepsource.toml', 'utf8')
   const deepSourceConfig = toml.parse(deepSourceConfigToml)
   const javascriptAnalyzer = getJavascriptAnalyzer(deepSourceConfig)
+  javascriptAnalyzer.meta.dependency_file_paths.sort()
 
   if (stdoutArray.toString() !== javascriptAnalyzer.meta.dependency_file_paths.toString()) {
-    const stringStdoutArray = stdoutArray.map((path) => `"${path}"`).join(',\n') + ','
-    console.log('correct set of dependencies:\n', stringStdoutArray, '\n')
     throw new Error("dependency_file_paths doesn't include every dependencies")
   }
 }
