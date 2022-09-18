@@ -6,6 +6,8 @@ name: Chat Backend Test
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
