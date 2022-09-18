@@ -3,33 +3,32 @@ const exec = util.promisify(require('node:child_process').exec)
 const toml = require('toml')
 const fs = require('fs')
 
-
-function getJavascriptAnalyzer() {
-  const deepSourceConfigToml = fs.readFileSync('../.deepsource.toml', 'utf8');
+function getJavascriptAnalyzer () {
+  const deepSourceConfigToml = fs.readFileSync('../.deepsource.toml', 'utf8')
   const deepSourceConfig = toml.parse(deepSourceConfigToml)
   for (const analyzer of deepSourceConfig.analyzers) {
     if (analyzer.name === 'javascript') {
-        return analyzer
+      return analyzer
     }
   }
 
   throw new Error('javascript analyzer not found')
 }
 
-async function verifyDeepsourceConfig() {
+async function verifyDeepsourceConfig () {
   // Find all package.json
-  const { stdout, stderr } = await exec('find .. -name "node_modules" -prune -o -name ".aws-sam" -prune -o -name "package.json"');
-  console.error('stderr:', stderr);
+  const { stdout, stderr } = await exec('find .. -name "node_modules" -prune -o -name ".aws-sam" -prune -o -name "package.json"')
+  console.error('stderr:', stderr)
 
   let stdoutArray = stdout.split('\n')
   stdoutArray = stdoutArray.filter((path) => path.endsWith('/package.json'))
   stdoutArray = stdoutArray.map((path) => path.replace('../', ''))
   stdoutArray = stdoutArray.map((path) => path.replace('package.json', ''))
 
-  const deepSourceConfigToml = fs.readFileSync('../.deepsource.toml', 'utf8');
+  const deepSourceConfigToml = fs.readFileSync('../.deepsource.toml', 'utf8')
   const deepSourceConfig = toml.parse(deepSourceConfigToml)
   const javascriptAnalyzer = getJavascriptAnalyzer(deepSourceConfig)
-  
+
   if (stdoutArray.toString() !== javascriptAnalyzer.meta.dependency_file_paths.toString()) {
     const stringStdoutArray = stdoutArray.map((path) => `"${path}"`).join(',\n') + ','
     console.log('correct set of dependencies:\n', stringStdoutArray, '\n')
