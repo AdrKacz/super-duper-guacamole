@@ -118,119 +118,12 @@ exports.handler = async (event) => {
   const voteConfirmed = updatedBanConfirmerUsers.size >= bannedUser.confirmationRequired
   const voteDenied = updatedBanConfirmerUsers.size + updatedBanVotingUsers.size < bannedUser.confirmationRequired
 
-  if (voteConfirmed || voteDenied) {
-    // close the vote
-    const updateBannedUserCommandCloseVote = new UpdateCommand({
-      TableName: USERS_TABLE_NAME,
-      Key: { id: bannedId },
-      UpdateExpression: `
-      REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
-      `,
-      ExpressionAttributeNames: {
-        '#banVotingUsers': 'banVotingUsers',
-        '#banConfirmedUsers': 'banConfirmedUsers',
-        '#confirmationRequired': 'confirmationRequired'
-      }
-    })
+  if (voteConfirmed) {
+    await closeVote(user, bannedUser, group, true, updatedBanConfirmerUsers.size)
+  }
 
-    const promises = [dynamoDBDocumentClient.send(updateBannedUserCommandCloseVote)]
-
-    const otherUserIds = []
-    for (const groupUserId of group.users) {
-      if (groupUserId !== id && groupUserId !== bannedId) {
-        otherUserIds.push({ id: groupUserId })
-      }
-    }
-    const otherUsers = []
-    if (otherUserIds.length > 0) {
-      // do not fetch if nothing to fetch
-      const batchOtherUsersCommand = new BatchGetCommand({
-        RequestItems: {
-          [USERS_TABLE_NAME]: {
-            // user and banned user already requested
-            Keys: Array.from(group.users).filter((userId) => (userId !== bannedId && userId !== id)).map((userId) => ({ id: userId })),
-            ProjectionExpression: '#id, #connectionId, #firebaseToken',
-            ExpressionAttributeNames: {
-              '#id': 'id',
-              '#connectionId': 'connectionId',
-              '#firebaseToken': 'firebaseToken'
-            }
-          }
-        }
-      })
-      await dynamoDBDocumentClient.send(batchOtherUsersCommand).then((response) => {
-        for (const otherUser of response.Responses[USERS_TABLE_NAME]) {
-          otherUsers.push(otherUser)
-        }
-      })
-    }
-
-    if (voteConfirmed) {
-      console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
-      const publishSwitchGroupCommand = new PublishCommand({
-        TopicArn: SWITCH_GROUP_TOPIC_ARN,
-        Message: JSON.stringify({
-          id: bannedId,
-          groupid: bannedUser.groupId,
-          isBan: true
-        })
-      })
-
-      promises.push(snsClient.send(publishSwitchGroupCommand))
-
-      const publishSendMessageCommand = new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers.concat([user, bannedUser]),
-          message: {
-            action: 'banreply',
-            bannedid: bannedId,
-            status: 'confirmed'
-          }
-        })
-      })
-      promises.push(snsClient.send(publishSendMessageCommand))
-
-      const publishSendNotificationDeniedBanUserCommand = new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: [bannedUser],
-          notification: {
-            title: 'Tu as mal agi ❌',
-            body: "Ton groupe t'a exclu"
-          }
-        })
-      })
-      promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
-    } else {
-      console.log(`Vote denied with ${updatedBanConfirmerUsers.size + updatedBanVotingUsers.size} confirmation at most (${bannedUser.confirmationRequired} needed)`)
-      const publishSendMessageCommand = new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers.concat([user]),
-          message: {
-            action: 'banreply',
-            bannedid: bannedId,
-            status: 'denied'
-          }
-        })
-      })
-      promises.push(snsClient.send(publishSendMessageCommand))
-    }
-
-    const publishSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: otherUsers.concat([user]),
-        notification: {
-          title: 'Le vote est terminé 🗳',
-          body: 'Viens voir le résultat !'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendNotificationCommand))
-
-    await Promise.allSettled(promises)
+  if (voteDenied) {
+    await closeVote(user, bannedUser, group, false, updatedBanConfirmerUsers.size + updatedBanVotingUsers.size)
   }
 
   return {
@@ -321,4 +214,132 @@ async function getUserAndBannedUserAndGroup (id, bannedId, groupId) {
   console.log('group:', group)
 
   return { user, bannedUser, group }
+}
+
+/**
+ * Close the current vote to ban bannedUser
+ *
+ * @param {string} id - user id
+ * @param {string} bannedId - banned user id
+ * @param {string} groupId - group id
+ * @param {string} voteConfirmed - if the vote is confirmed or denied
+ * @param {string} maximumNumberOfConfirmationReceived - number of confirmation received for the vote (or expected maximum number)
+ */
+async function closeVote (user, bannedUser, group, voteConfirmed, maximumNumberOfConfirmationReceived) {
+  // get ids
+  const id = user.id
+  const bannedId = bannedUser.id
+
+  // close the vote
+  const updateBannedUserCommandCloseVote = new UpdateCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id: bannedId },
+    UpdateExpression: `
+    REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
+    `,
+    ExpressionAttributeNames: {
+      '#banVotingUsers': 'banVotingUsers',
+      '#banConfirmedUsers': 'banConfirmedUsers',
+      '#confirmationRequired': 'confirmationRequired'
+    }
+  })
+
+  const promises = [dynamoDBDocumentClient.send(updateBannedUserCommandCloseVote)]
+
+  const otherUserIds = []
+  for (const groupUserId of group.users) {
+    if (groupUserId !== id && groupUserId !== bannedId) {
+      otherUserIds.push({ id: groupUserId })
+    }
+  }
+  const otherUsers = []
+  if (otherUserIds.length > 0) {
+    // do not fetch if nothing to fetch
+    const batchOtherUsersCommand = new BatchGetCommand({
+      RequestItems: {
+        [USERS_TABLE_NAME]: {
+          // user and banned user already requested
+          Keys: Array.from(group.users).filter((userId) => (userId !== bannedId && userId !== id)).map((userId) => ({ id: userId })),
+          ProjectionExpression: '#id, #connectionId, #firebaseToken',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#connectionId': 'connectionId',
+            '#firebaseToken': 'firebaseToken'
+          }
+        }
+      }
+    })
+    await dynamoDBDocumentClient.send(batchOtherUsersCommand).then((response) => {
+      for (const otherUser of response.Responses[USERS_TABLE_NAME]) {
+        otherUsers.push(otherUser)
+      }
+    })
+  }
+
+  if (voteConfirmed) {
+    console.log(`Vote confirmed with ${maximumNumberOfConfirmationReceived} confirmation (${bannedUser.confirmationRequired} needed)`)
+    const publishSwitchGroupCommand = new PublishCommand({
+      TopicArn: SWITCH_GROUP_TOPIC_ARN,
+      Message: JSON.stringify({
+        id: bannedId,
+        groupid: bannedUser.groupId,
+        isBan: true
+      })
+    })
+
+    promises.push(snsClient.send(publishSwitchGroupCommand))
+
+    const publishSendMessageCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: otherUsers.concat([user, bannedUser]),
+        message: {
+          action: 'banreply',
+          bannedid: bannedId,
+          status: 'confirmed'
+        }
+      })
+    })
+    promises.push(snsClient.send(publishSendMessageCommand))
+
+    const publishSendNotificationDeniedBanUserCommand = new PublishCommand({
+      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: [bannedUser],
+        notification: {
+          title: 'Tu as mal agi ❌',
+          body: "Ton groupe t'a exclu"
+        }
+      })
+    })
+    promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
+  } else {
+    console.log(`Vote denied with ${maximumNumberOfConfirmationReceived} confirmation at most (${bannedUser.confirmationRequired} needed)`)
+    const publishSendMessageCommand = new PublishCommand({
+      TopicArn: SEND_MESSAGE_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: otherUsers.concat([user]),
+        message: {
+          action: 'banreply',
+          bannedid: bannedId,
+          status: 'denied'
+        }
+      })
+    })
+    promises.push(snsClient.send(publishSendMessageCommand))
+  }
+
+  const publishSendNotificationCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: otherUsers.concat([user]),
+      notification: {
+        title: 'Le vote est terminé 🗳',
+        body: 'Viens voir le résultat !'
+      }
+    })
+  })
+  promises.push(snsClient.send(publishSendNotificationCommand))
+
+  await Promise.allSettled(promises)
 }
