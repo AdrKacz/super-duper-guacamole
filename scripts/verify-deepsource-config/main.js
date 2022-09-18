@@ -22,7 +22,7 @@ async function verifyDeepsourceConfig () {
 
   let stdoutArray = stdout.split('\n')
   stdoutArray = stdoutArray.filter((path) => path.endsWith('/package.json'))
-  stdoutArray = stdoutArray.map((path) => path.replace(/..\//, ''))
+  stdoutArray = stdoutArray.map((path) => path.replace(/..\//g, ''))
   stdoutArray = stdoutArray.map((path) => path.replace(/package.json/, ''))
   stdoutArray.sort()
 
