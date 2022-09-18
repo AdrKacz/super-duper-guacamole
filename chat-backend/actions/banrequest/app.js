@@ -85,44 +85,8 @@ exports.handler = async (event) => {
     }
   }
 
-  const batchGetUsersCommand = new BatchGetCommand({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: [{ id }, { id: bannedId }],
-        ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#groupId': 'groupId',
-          '#group': 'group', // for backward compatibility
-          '#connectionId': 'connectionId',
-          '#banConfirmedUsers': 'banConfirmedUsers'
-        }
-      },
-      [GROUPS_TABLE_NAME]: {
-        Keys: [{ id: groupId }],
-        ProjectionExpression: '#users',
-        ExpressionAttributeNames: {
-          '#users': 'users'
-        }
-      }
-    }
-  })
-
-  const [users, [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
-  // TODO: verify both users exists
-
-  let user, bannedUser
-  if (users[0].id === id) {
-    user = users[0]
-    bannedUser = users[1]
-  } else {
-    user = users[1]
-    bannedUser = users[0]
-  }
-  console.log('user:', user)
-  console.log('bannedUser:', bannedUser)
-  console.log('bannedUser.banConfirmedUsers:', bannedUser.banConfirmedUsers)
-  console.log('group:', group)
+  // get parties
+  const { bannedUser, group } = await getBannedUserAndGroup(id, bannedId, groupId)
 
   // verify both user in the same group
   if (groupId !== (bannedUser.groupId ?? bannedUser.group)) { // .group for backward compatibility
@@ -180,7 +144,7 @@ exports.handler = async (event) => {
     const batchGetBanNewVotingUsersCommand = new BatchGetCommand({
       RequestItems: {
         [USERS_TABLE_NAME]: {
-          Keys: Array.from(banNewVotingUsers).map((id) => ({ id })),
+          Keys: Array.from(banNewVotingUsers).map((userId) => ({ id: userId })),
           ProjectionExpression: '#id, #connectionId, #firebaseToken',
           ExpressionAttributeNames: {
             '#id': 'id',
@@ -226,9 +190,14 @@ exports.handler = async (event) => {
 
 // ===== ==== ====
 // HELPERS
+/**
+ * Get user from its connectionId
+ *
+ * @param {string} connectionId
+ *
+ * @return {id: string, groupId: string}
+ */
 async function getUserFromConnectionId (connectionId) {
-  // Get id and groupId associated with connectionId
-  // connectionId - String
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
@@ -252,4 +221,46 @@ async function getUserFromConnectionId (connectionId) {
     return {}
   }
   return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
+}
+
+/**
+ * Get all parties of the event (banned user, and group)
+ *
+ * @param {string} bannedId - banned user id
+ * @param {string} groupId - group id
+ *
+ * @return {Promise<{, bannedUser: Object, group: Object}>}
+ */
+async function getBannedUserAndGroup (bannedId, groupId) {
+  const batchGetUsersCommand = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: [{ id: bannedId }],
+        ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#groupId': 'groupId',
+          '#group': 'group', // for backward compatibility
+          '#connectionId': 'connectionId',
+          '#banConfirmedUsers': 'banConfirmedUsers'
+        }
+      },
+      [GROUPS_TABLE_NAME]: {
+        Keys: [{ id: groupId }],
+        ProjectionExpression: '#users',
+        ExpressionAttributeNames: {
+          '#users': 'users'
+        }
+      }
+    }
+  })
+
+  const [[bannedUser], [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
+  // NOTE: will raise an error if less than one result in users
+
+  console.log('bannedUser:', bannedUser)
+  console.log('bannedUser.banConfirmedUsers:', bannedUser.banConfirmedUsers)
+  console.log('group:', group)
+
+  return { bannedUser, group }
 }
