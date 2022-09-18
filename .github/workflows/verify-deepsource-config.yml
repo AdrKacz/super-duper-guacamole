@@ -1,0 +1,22 @@
+# This workflow verify deepsource config is correctly setup
+
+name: Verify DeepSource Dependencies in Config
+
+# Controls when the workflow will run
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-deepsource-config:
+    name: Verify DeepSource config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install modules - Scripts
+        working-directory: ./scripts
+        run: yarn
+      - name: Run Test - Scripts
+        working-directory: ./scripts
+        run: yarn verify-deepsource-config
