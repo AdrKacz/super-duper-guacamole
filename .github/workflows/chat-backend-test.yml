@@ -19,3 +19,5 @@ jobs:
       - name: Run Test - Chat Backend
         working-directory: ./chat-backend
         run: yarn test
+      - name: Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v3

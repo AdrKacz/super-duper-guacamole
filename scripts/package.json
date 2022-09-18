@@ -1,0 +1,13 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "description": "Scripts",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "scripts": {
+    "verify-deepsource-config": "node ./verify-deepsource-config/main.js"
+  },
+  "dependencies": {
+    "toml": "^3.0.0"
+  }
+}
