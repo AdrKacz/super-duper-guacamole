@@ -7,6 +7,7 @@
     "lint": "eslint . --fix",
     "predeploy": "sh ./predeploy.sh $$ sam build",
     "deploy": "sam deploy --config-env",
+    "deploy:force": "sam deploy --no-confirm-changeset --config-env",
     "test": "jest"
   },
   "devDependencies": {

@@ -86,7 +86,7 @@ exports.handler = async (event) => {
   }
 
   // get elements involved
-  const { bannedUser, group } = await getBannedUserAndGroup(id, bannedId, groupId)
+  const { bannedUser, group } = await getBannedUserAndGroup(bannedId, groupId)
 
   // verify both user in the same group
   if (groupId !== (bannedUser.groupId ?? bannedUser.group)) { // .group for backward compatibility
@@ -232,7 +232,8 @@ async function getUserFromConnectionId (connectionId) {
  * @return {Promise<{, bannedUser: Object, group: Object}>}
  */
 async function getBannedUserAndGroup (bannedId, groupId) {
-  const batchGetUsersCommand = new BatchGetCommand({
+  console.log(`Will fetch user (${bannedId}) and group (${groupId})`)
+  const batchGetBannedUserAndGroupCommand = new BatchGetCommand({
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: [{ id: bannedId }],
@@ -255,7 +256,11 @@ async function getBannedUserAndGroup (bannedId, groupId) {
     }
   })
 
-  const [[bannedUser], [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
+  const [[bannedUser], [group]] = await dynamoDBDocumentClient.send(batchGetBannedUserAndGroupCommand).then((response) => {
+    console.log('getBannedUserAndGroup - response:')
+    console.log(response)
+    return [response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]
+  })
   // NOTE: will raise an error if less than one result in users
 
   console.log('bannedUser:', bannedUser)
