@@ -85,7 +85,7 @@ exports.handler = async (event) => {
     }
   }
 
-  // get parties
+  // get elements involved
   const { bannedUser, group } = await getBannedUserAndGroup(id, bannedId, groupId)
 
   // verify both user in the same group

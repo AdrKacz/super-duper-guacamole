@@ -62,7 +62,7 @@ exports.handler = async (event) => {
     throw new Error("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
   }
 
-  // get parties
+  // get elements involved
   const { user, bannedUser, group } = await getUserAndBannedUserAndGroup(id, bannedId, groupId)
 
   const bannedUserGroupId = bannedUser.groupId ?? bannedUser.group // .group for backward compatibility
@@ -120,12 +120,65 @@ exports.handler = async (event) => {
   const voteConfirmed = updatedBanConfirmerUsers.size >= bannedUser.confirmationRequired
   const voteDenied = updatedBanConfirmerUsers.size + updatedBanVotingUsers.size < bannedUser.confirmationRequired
 
-  if (voteConfirmed) {
-    await closeVote(user, bannedUser, group, true, updatedBanConfirmerUsers.size)
-  }
+  if (voteConfirmed || voteDenied) {
+    const promises = []
+    const otherUsers = await getOtherUsers(group, new Set([id, bannedId]))
+    promises.push(closeVote(user, bannedUser, otherUsers))
 
-  if (voteDenied) {
-    await closeVote(user, bannedUser, group, false, updatedBanConfirmerUsers.size + updatedBanVotingUsers.size)
+    if (voteConfirmed) {
+      console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
+      const publishSwitchGroupCommand = new PublishCommand({
+        TopicArn: SWITCH_GROUP_TOPIC_ARN,
+        Message: JSON.stringify({
+          id: bannedId,
+          groupid: bannedUser.groupId,
+          isBan: true
+        })
+      })
+
+      promises.push(snsClient.send(publishSwitchGroupCommand))
+
+      const publishSendMessageCommand = new PublishCommand({
+        TopicArn: SEND_MESSAGE_TOPIC_ARN,
+        Message: JSON.stringify({
+          users: otherUsers.concat([user, bannedUser]),
+          message: {
+            action: 'banreply',
+            bannedid: bannedId,
+            status: 'confirmed'
+          }
+        })
+      })
+      promises.push(snsClient.send(publishSendMessageCommand))
+
+      const publishSendNotificationDeniedBanUserCommand = new PublishCommand({
+        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+        Message: JSON.stringify({
+          users: [bannedUser],
+          notification: {
+            title: 'Tu as mal agi ❌',
+            body: "Ton groupe t'a exclu"
+          }
+        })
+      })
+      promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
+    } else {
+      console.log(`Vote denied with ${updatedBanConfirmerUsers.size + updatedBanVotingUsers.size} confirmation at most (${bannedUser.confirmationRequired} needed)`)
+      const publishSendMessageCommand = new PublishCommand({
+        TopicArn: SEND_MESSAGE_TOPIC_ARN,
+        Message: JSON.stringify({
+          users: otherUsers.concat([user]),
+          message: {
+            action: 'banreply',
+            bannedid: bannedId,
+            status: 'denied'
+          }
+        })
+      })
+      promises.push(snsClient.send(publishSendMessageCommand))
+    }
+
+    await Promise.allSettled(promises)
   }
 
   return {
@@ -223,19 +276,13 @@ async function getUserAndBannedUserAndGroup (id, bannedId, groupId) {
  *
  * @param {string} id - user id
  * @param {string} bannedId - banned user id
- * @param {string} groupId - group id
- * @param {string} voteConfirmed - if the vote is confirmed or denied
- * @param {string} maximumNumberOfConfirmationReceived - number of confirmation received for the vote (or expected maximum number)
+ * @param {Object[]} otherUsers  - other group users
  */
-async function closeVote (user, bannedUser, group, voteConfirmed, maximumNumberOfConfirmationReceived) {
-  // get ids
-  const id = user.id
-  const bannedId = bannedUser.id
-
+async function closeVote (user, bannedUser, otherUsers) {
   // close the vote
   const updateBannedUserCommandCloseVote = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: bannedId },
+    Key: { id: bannedUser.id },
     UpdateExpression: `
     REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
     `,
@@ -246,11 +293,35 @@ async function closeVote (user, bannedUser, group, voteConfirmed, maximumNumberO
     }
   })
 
-  const promises = [dynamoDBDocumentClient.send(updateBannedUserCommandCloseVote)]
+  const publishSendNotificationCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: otherUsers.concat([user]),
+      notification: {
+        title: 'Le vote est terminé 🗳',
+        body: 'Viens voir le résultat !'
+      }
+    })
+  })
 
+  await Promise.allSettled([
+    dynamoDBDocumentClient.send(updateBannedUserCommandCloseVote),
+    snsClient.send(publishSendNotificationCommand)
+  ])
+}
+
+/**
+ * Close the current vote to ban bannedUser
+ *
+ * @param {Object} group - group of the users involved
+ * @param {Set<string>} forbiddenIds - set of user ids to not retrieved
+ *
+ * @return {Promise<{id: string, connectionId: string, firebaseToken: string}[]>}
+ */
+async function getOtherUsers (group, forbiddenIds) {
   const otherUserIds = []
   for (const groupUserId of group.users) {
-    if (groupUserId !== id && groupUserId !== bannedId) {
+    if (!forbiddenIds.has(groupUserId)) {
       otherUserIds.push({ id: groupUserId })
     }
   }
@@ -261,7 +332,7 @@ async function closeVote (user, bannedUser, group, voteConfirmed, maximumNumberO
       RequestItems: {
         [USERS_TABLE_NAME]: {
           // user and banned user already requested
-          Keys: Array.from(group.users).filter((userId) => (userId !== bannedId && userId !== id)).map((userId) => ({ id: userId })),
+          Keys: Array.from(group.users).filter((userId) => !forbiddenIds.has(userId)).map((userId) => ({ id: userId })),
           ProjectionExpression: '#id, #connectionId, #firebaseToken',
           ExpressionAttributeNames: {
             '#id': 'id',
@@ -278,70 +349,5 @@ async function closeVote (user, bannedUser, group, voteConfirmed, maximumNumberO
     })
   }
 
-  if (voteConfirmed) {
-    console.log(`Vote confirmed with ${maximumNumberOfConfirmationReceived} confirmation (${bannedUser.confirmationRequired} needed)`)
-    const publishSwitchGroupCommand = new PublishCommand({
-      TopicArn: SWITCH_GROUP_TOPIC_ARN,
-      Message: JSON.stringify({
-        id: bannedId,
-        groupid: bannedUser.groupId,
-        isBan: true
-      })
-    })
-
-    promises.push(snsClient.send(publishSwitchGroupCommand))
-
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: otherUsers.concat([user, bannedUser]),
-        message: {
-          action: 'banreply',
-          bannedid: bannedId,
-          status: 'confirmed'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
-
-    const publishSendNotificationDeniedBanUserCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: [bannedUser],
-        notification: {
-          title: 'Tu as mal agi ❌',
-          body: "Ton groupe t'a exclu"
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
-  } else {
-    console.log(`Vote denied with ${maximumNumberOfConfirmationReceived} confirmation at most (${bannedUser.confirmationRequired} needed)`)
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: otherUsers.concat([user]),
-        message: {
-          action: 'banreply',
-          bannedid: bannedId,
-          status: 'denied'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
-  }
-
-  const publishSendNotificationCommand = new PublishCommand({
-    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-    Message: JSON.stringify({
-      users: otherUsers.concat([user]),
-      notification: {
-        title: 'Le vote est terminé 🗳',
-        body: 'Viens voir le résultat !'
-      }
-    })
-  })
-  promises.push(snsClient.send(publishSendNotificationCommand))
-
-  await Promise.allSettled(promises)
+  return otherUsers
 }
