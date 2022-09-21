@@ -65,7 +65,10 @@ exports.handler = async (event) => {
   const { id, groupId } = await getUserFromConnectionId(event.requestContext.connectionId)
 
   if (typeof id === 'undefined' || typeof groupId === 'undefined') {
-    return
+    return {
+      message: 'user or group cannot be found',
+      statusCode: 403
+    }
   }
 
   const body = JSON.parse(event.body)

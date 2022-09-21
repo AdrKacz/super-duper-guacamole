@@ -200,6 +200,9 @@ module.exports = {
 
 process.env = Object.assign(process.env, {
   USERS_TABLE_NAME: 'dummy-user-table-name',
+  USERS_CONNECTION_ID_INDEX_NAME: 'dummy-connection-id-index-name',
   GROUPS_TABLE_NAME: 'dummy-group-table-name',
-  SEND_MESSAGE_TOPIC_ARN: 'dummy-send-message-topic-arn'
+  SEND_MESSAGE_TOPIC_ARN: 'dummy-send-message-topic-arn',
+  SEND_NOTIFICATION_TOPIC_ARN: 'dummy-send-notification-topic-arn',
+  AWS_REGION: 'dummy-aws-region'
 })
