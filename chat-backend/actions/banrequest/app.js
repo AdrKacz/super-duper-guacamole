@@ -272,3 +272,6 @@ async function getBannedUserAndGroup (bannedId, groupId) {
 
   return { bannedUser, group }
 }
+
+exports.getUserFromConnectionId = getUserFromConnectionId
+exports.getBannedUserAndGroup = getBannedUserAndGroup

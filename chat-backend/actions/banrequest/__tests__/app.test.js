@@ -1,12 +1,13 @@
 // ===== ==== ====
 // IMPORTS
-const { handler } = require('../app')
+const { getUserFromConnectionId } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
 // ===== ==== ====
 // CONSTANTS
 const {
-  DynamoDBDocumentClient
+  DynamoDBDocumentClient,
+  QueryCommand
 } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient } = require('@aws-sdk/client-sns')
@@ -15,6 +16,8 @@ const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
 const dummyConnectionId = 'dummy-connection-id'
+const dummyUserId = 'dummy-user-id'
+const dummyGroupId = 'dummy-group-id'
 
 const log = jest.spyOn(console, 'log').mockImplementation(() => {})
 
@@ -47,16 +50,31 @@ test('it reads environment variables', () => {
   expect(process.env.AWS_REGION).toBeDefined()
 })
 
-test('it rejects undefined user', async () => {
-  const response = await handler({
-    requestContext: {
-      connectionId: dummyConnectionId
-    },
-    body: JSON.stringify({})
-  })
+describe('getUserFromConnectionId', () => {
+  test.each([
+    { details: 'nothing', items: [], expected: {} },
+    { details: 'empty object', items: [{}], expected: {} },
+    { details: 'two users', items: [{ id: dummyUserId }, { id: `${dummyUserId}-2` }], expected: { id: dummyUserId, groupId: undefined } },
+    { details: 'group defined and groupId not defined', items: [{ id: dummyUserId, group: dummyGroupId }], expected: { id: dummyUserId, groupId: dummyGroupId } },
+    { details: 'group and groupId defined', items: [{ id: dummyUserId, groupId: dummyGroupId, group: `${dummyGroupId}-2` }], expected: { id: dummyUserId, groupId: dummyGroupId } }
+  ])('.fetch $details', async ({ items, expected }) => {
+    ddbMock.on(QueryCommand, {
+      TableName: process.env.USERS_TABLE_NAME,
+      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
+      KeyConditionExpression: '#connectionId = :connectionId',
+      ExpressionAttributeNames: {
+        '#connectionId': 'connectionId'
+      },
+      ExpressionAttributeValues: {
+        ':connectionId': dummyConnectionId
+      }
+    }).resolves({
+      Count: items.length,
+      Items: items
+    })
 
-  expect(response).toStrictEqual({
-    message: 'user or group cannot be found',
-    statusCode: 403
+    const response = await getUserFromConnectionId(dummyConnectionId)
+
+    expect(response).toStrictEqual(expected)
   })
 })

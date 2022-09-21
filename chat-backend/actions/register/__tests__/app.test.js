@@ -198,7 +198,7 @@ test('it rejects on wrong signature', async () => {
   })
 })
 
-test('it register new user', async () => {
+test('it registers new user', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
   const dummyConnectionId = 'dummy-connection-id'
