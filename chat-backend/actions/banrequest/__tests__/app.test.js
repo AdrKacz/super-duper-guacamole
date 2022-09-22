@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { getUserFromConnectionId } = require('../app')
+const { handler, getUserFromConnectionId } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
 // ===== ==== ====
@@ -76,5 +76,95 @@ describe('getUserFromConnectionId', () => {
     const response = await getUserFromConnectionId(dummyConnectionId)
 
     expect(response).toStrictEqual(expected)
+  })
+})
+
+describe('handler', () => {
+  test.each([
+    { details: 'it rejects on undefined user id', user: {} },
+    { details: 'it rejects on undefined group id', user: { id: dummyUserId } }
+  ])('.test $details', async ({ user }) => {
+    ddbMock.on(QueryCommand, {
+      TableName: process.env.USERS_TABLE_NAME,
+      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
+      KeyConditionExpression: '#connectionId = :connectionId',
+      ExpressionAttributeNames: {
+        '#connectionId': 'connectionId'
+      },
+      ExpressionAttributeValues: {
+        ':connectionId': dummyConnectionId
+      }
+    }).resolves({
+      Count: 1,
+      Items: [user]
+    })
+
+    const response = await handler({
+      requestContext: {
+        connectionId: dummyConnectionId
+      },
+      body: JSON.stringify({})
+    })
+
+    expect(response).toStrictEqual({
+      message: 'user or group cannot be found',
+      statusCode: 403
+    })
+  })
+
+  test.each([
+    { details: 'it throws on undefined bannedId', body: { messageid: 'messageId' } },
+    { details: 'it throws on undefined messageId', body: { bannedid: 'bannedId' } }
+  ])('.test $details', async ({ body }) => {
+    ddbMock.on(QueryCommand, {
+      TableName: process.env.USERS_TABLE_NAME,
+      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
+      KeyConditionExpression: '#connectionId = :connectionId',
+      ExpressionAttributeNames: {
+        '#connectionId': 'connectionId'
+      },
+      ExpressionAttributeValues: {
+        ':connectionId': dummyConnectionId
+      }
+    }).resolves({
+      Count: 1,
+      Items: [{ id: dummyUserId, group: dummyGroupId }]
+    })
+
+    await expect(handler({
+      requestContext: {
+        connectionId: dummyConnectionId
+      },
+      body: JSON.stringify(body)
+    })).rejects.toThrow('bannedid and messageid must be defined')
+  })
+
+  test('it rejects if user id and bannedId are the same', async () => {
+    ddbMock.on(QueryCommand, {
+      TableName: process.env.USERS_TABLE_NAME,
+      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
+      KeyConditionExpression: '#connectionId = :connectionId',
+      ExpressionAttributeNames: {
+        '#connectionId': 'connectionId'
+      },
+      ExpressionAttributeValues: {
+        ':connectionId': dummyConnectionId
+      }
+    }).resolves({
+      Count: 1,
+      Items: [{ id: dummyUserId, group: dummyGroupId }]
+    })
+
+    const response = await handler({
+      requestContext: {
+        connectionId: dummyConnectionId
+      },
+      body: JSON.stringify({ bannedid: dummyUserId, messageid: 'messageId' })
+    })
+
+    expect(response).toStrictEqual({
+      message: `user (${dummyUserId}) tried to ban itself`,
+      statusCode: 403
+    })
   })
 })

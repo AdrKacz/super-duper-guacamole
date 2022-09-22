@@ -77,13 +77,14 @@ exports.handler = async (event) => {
   const messageId = body.messageid
 
   if (typeof bannedId === 'undefined' || typeof messageId === 'undefined') {
-    throw new Error('bannedid, and messageid must be defined')
+    throw new Error('bannedid and messageid must be defined')
   }
 
   if (id === bannedId) {
     // cannot ban yourself
-    console.log(`user <${id}> banned itself`)
+    console.log(`user (${id}) tried to ban itself`)
     return {
+      message: `user (${id}) tried to ban itself`,
       statusCode: 403
     }
   }
