@@ -49,6 +49,7 @@ exports.handler = async (event) => {
 
   if (typeof id === 'undefined' || typeof groupId === 'undefined') {
     return {
+      message: 'user or group cannot be found',
       statusCode: 403
     }
   }
@@ -72,6 +73,7 @@ exports.handler = async (event) => {
     // NOTE: you should warn banned user is not in group anymore
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group or confirmationRequired is not defined (not in an active ban)`)
     return {
+      message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group or confirmationRequired is not defined (not in an active ban)`,
       statusCode: 403
     }
   }
@@ -85,6 +87,7 @@ exports.handler = async (event) => {
     console.log(`user (${id}) is not in banVotingUsers (below) of banned user (${bannedId})`)
     console.log(banVotingUsers)
     return {
+      message: `user (${id}) is not in banVotingUsers (below) of banned user (${bannedId})`,
       statusCode: 403
     }
   }

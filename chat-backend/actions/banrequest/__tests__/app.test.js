@@ -274,7 +274,7 @@ describe('handler', () => {
 
     // expect
     expect(response).toStrictEqual({
-      message: `user (${dummyUserId}) and banned user (${bannedUser.id}) are not in the same group`,
+      message: `user (${dummyUserId}) and banned user (${dummyBannedId}) are not in the same group`,
       statusCode: 403
     })
   })
