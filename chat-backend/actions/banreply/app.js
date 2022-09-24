@@ -122,7 +122,7 @@ exports.handler = async (event) => {
 
   if (voteConfirmed || voteDenied) {
     const promises = []
-    const otherUsers = await getOtherUsers(group, new Set([id, bannedId]))
+    const otherUsers = await getGroupUsers(group, new Set([id, bannedId]))
     promises.push(closeVote(user, bannedUser, otherUsers))
 
     if (voteConfirmed) {
@@ -318,7 +318,7 @@ async function closeVote (user, bannedUser, otherUsers) {
  *
  * @return {Promise<{id: string, connectionId: string, firebaseToken: string}[]>}
  */
-async function getOtherUsers (group, forbiddenIds) {
+async function getGroupUsers (group, forbiddenIds) {
   const otherUserIds = []
   for (const groupUserId of group.users) {
     if (!forbiddenIds.has(groupUserId)) {
@@ -355,4 +355,4 @@ async function getOtherUsers (group, forbiddenIds) {
 exports.getUserFromConnectionId = getUserFromConnectionId
 exports.getUserAndBannedUserAndGroup = getUserAndBannedUserAndGroup
 exports.closeVote = closeVote
-exports.getOtherUsers = getOtherUsers
+exports.getGroupUsers = getGroupUsers

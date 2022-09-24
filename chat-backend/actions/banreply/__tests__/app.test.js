@@ -3,7 +3,8 @@
 const {
   getUserFromConnectionId,
   getUserAndBannedUserAndGroup,
-  closeVote
+  closeVote,
+  getGroupUsers
 } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
@@ -151,5 +152,38 @@ describe('closeVote', () => {
         }
       })
     })
+  })
+})
+
+describe('getGroupUsers', () => {
+  test('it returns group users without forbidden users', async () => {
+    ddbMock.on(BatchGetCommand, {
+      RequestItems: {
+        [process.env.USERS_TABLE_NAME]: {
+          // user and banned user already requested
+          Keys: [{ id: 'dummy-other-user-id' }],
+          ProjectionExpression: '#id, #connectionId, #firebaseToken',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#connectionId': 'connectionId',
+            '#firebaseToken': 'firebaseToken'
+          }
+        }
+      }
+    }).resolves({
+      Responses: {
+        [process.env.USERS_TABLE_NAME]: [{ id: 'dummy-other-user-id' }]
+      }
+    })
+    const response = await getGroupUsers({ users: new Set([dummyUserId, 'dummy-other-user-id']) }, new Set([dummyUserId]))
+
+    expect(response).toStrictEqual([{ id: 'dummy-other-user-id' }])
+  })
+
+  test('it returns empty group users when all users are forbidden', async () => {
+    const response = await getGroupUsers({ users: new Set([dummyUserId, 'dummy-other-user-id']) }, new Set([dummyUserId, 'dummy-other-user-id']))
+
+    expect(response).toStrictEqual([])
+    expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
   })
 })
