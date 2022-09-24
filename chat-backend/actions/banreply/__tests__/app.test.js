@@ -2,7 +2,8 @@
 // IMPORTS
 const {
   getUserFromConnectionId,
-  getUserAndBannedUserAndGroup
+  getUserAndBannedUserAndGroup,
+  closeVote
 } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
@@ -11,10 +12,11 @@ const { mockClient } = require('aws-sdk-client-mock')
 const {
   DynamoDBDocumentClient,
   QueryCommand,
-  BatchGetCommand
+  BatchGetCommand,
+  UpdateCommand
 } = require('@aws-sdk/lib-dynamodb')
 
-const { SNSClient } = require('@aws-sdk/client-sns')
+const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
@@ -119,5 +121,35 @@ describe('getUserAndBannedUserAndGroup', () => {
     const response = await getUserAndBannedUserAndGroup(dummyUserId, dummyBannedId, dummyGroupId)
 
     expect(response).toStrictEqual({ user: { id: dummyUserId }, bannedUser: { id: dummyBannedId }, group: { id: dummyGroupId } })
+  })
+})
+
+describe('closeVote', () => {
+  test('it updates banned user and alerts users that the vote ended', async () => {
+    await closeVote({ id: dummyUserId }, { id: dummyBannedId }, [{ id: 'dummy-other-user-id' }])
+
+    expect(ddbMock).toHaveReceivedNthCommandWith(1, UpdateCommand, {
+      TableName: process.env.USERS_TABLE_NAME,
+      Key: { id: dummyBannedId },
+      UpdateExpression: `
+    REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
+    `,
+      ExpressionAttributeNames: {
+        '#banVotingUsers': 'banVotingUsers',
+        '#banConfirmedUsers': 'banConfirmedUsers',
+        '#confirmationRequired': 'confirmationRequired'
+      }
+    })
+
+    expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
+      TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
+      Message: JSON.stringify({
+        users: [{ id: 'dummy-other-user-id' }, { id: dummyUserId }],
+        notification: {
+          title: 'Le vote est terminé 🗳',
+          body: 'Viens voir le résultat !'
+        }
+      })
+    })
   })
 })
