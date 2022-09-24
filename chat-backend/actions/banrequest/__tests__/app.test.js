@@ -26,14 +26,14 @@ const dummyUserId = 'dummy-user-id'
 const dummyBannedId = 'dummy-banned-id'
 const dummyGroupId = 'dummy-group-id'
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {})
+const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
   // set up special env variable
   process.env.CONFIRMATION_REQUIRED_STRING = '3'
-  process.env.CONFIRMATION_REQUIRED = parseInt(process.env.CONFIRMATION_REQUIRED_STRING)
+  process.env.CONFIRMATION_REQUIRED = parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10)
   // reset mocks
   ddbMock.reset()
   snsMock.reset()
@@ -63,7 +63,7 @@ describe('getUserFromConnectionId', () => {
   test.each([
     { details: 'it returns an empty object if no user found', items: [], expected: {} },
     { details: 'it returns an empty object if user has no id', items: [{}], expected: {} },
-    { details: 'it returns the first associated user', items: [{ id: dummyUserId }, { id: `${dummyUserId}-2` }], expected: { id: dummyUserId, groupId: undefined } },
+    { details: 'it returns the first associated user', items: [{ id: dummyUserId }, { id: `${dummyUserId}-2` }], expected: { id: dummyUserId, groupId: undefined } }, // skipcq: JS-0127
     { details: 'it returns user with group attribute if groupId attribute is not defined', items: [{ id: dummyUserId, group: dummyGroupId }], expected: { id: dummyUserId, groupId: dummyGroupId } },
     { details: 'it returns user with groupId attribute over group attribute', items: [{ id: dummyUserId, groupId: dummyGroupId, group: `${dummyGroupId}-2` }], expected: { id: dummyUserId, groupId: dummyGroupId } }
   ])('.test $details', async ({ items, expected }) => {

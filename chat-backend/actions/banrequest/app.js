@@ -114,7 +114,7 @@ exports.handler = async (event) => {
     banNewVotingUsers.delete(banConfirmedUser)
   }
 
-  const confirmationRequired = Math.min(parseInt(process.env.CONFIRMATION_REQUIRED_STRING), group.users.size - 1)
+  const confirmationRequired = Math.min(parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10), group.users.size - 1)
 
   // update banned user
   // await to send message only after ddb has been updated

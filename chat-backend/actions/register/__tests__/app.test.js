@@ -17,7 +17,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {})
+const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // HELPERS
