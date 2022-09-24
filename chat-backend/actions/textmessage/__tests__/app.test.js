@@ -1,7 +1,8 @@
 // ===== ==== ====
 // IMPORTS
 const {
-  getUserFromConnectionId
+  getUserFromConnectionId,
+  handler
 } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
@@ -78,5 +79,40 @@ describe('getUserFromConnectionId', () => {
     const response = await getUserFromConnectionId(dummyConnectionId)
 
     expect(response).toStrictEqual(expected)
+  })
+})
+
+describe('handler', () => {
+  test.each([
+    { details: 'it rejects on undefined user id', user: {} },
+    { details: 'it rejects on undefined group id', user: { id: dummyUserId } }
+  ])('.test $details', async ({ user }) => {
+    // connection id to user
+    ddbMock.on(QueryCommand, {
+      TableName: process.env.USERS_TABLE_NAME,
+      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
+      KeyConditionExpression: '#connectionId = :connectionId',
+      ExpressionAttributeNames: {
+        '#connectionId': 'connectionId'
+      },
+      ExpressionAttributeValues: {
+        ':connectionId': dummyConnectionId
+      }
+    }).resolves({
+      Count: 1,
+      Items: [user]
+    })
+
+    const response = await handler({
+      requestContext: {
+        connectionId: dummyConnectionId
+      },
+      body: JSON.stringify({})
+    })
+
+    expect(response).toStrictEqual({
+      message: 'user or group cannot be found',
+      statusCode: 403
+    })
   })
 })
