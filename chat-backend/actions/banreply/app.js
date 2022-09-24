@@ -105,9 +105,9 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: bannedId },
     UpdateExpression: `
-    ${status === 'confirmed' ? 'ADD #banConfirmedUsers :id' : ''}
-    DELETE #banVotingUsers :id
-    `,
+${status === 'confirmed' ? 'ADD #banConfirmedUsers :id' : ''}
+DELETE #banVotingUsers :id
+`,
     ExpressionAttributeNames: dynamicExpressionAttributeNames,
     ExpressionAttributeValues: {
       ':id': new Set([id])
@@ -287,8 +287,8 @@ async function closeVote (user, bannedUser, otherUsers) {
     TableName: USERS_TABLE_NAME,
     Key: { id: bannedUser.id },
     UpdateExpression: `
-    REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
-    `,
+REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
+`,
     ExpressionAttributeNames: {
       '#banVotingUsers': 'banVotingUsers',
       '#banConfirmedUsers': 'banConfirmedUsers',
