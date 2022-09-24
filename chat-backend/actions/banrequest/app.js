@@ -25,12 +25,10 @@ const {
   USERS_TABLE_NAME,
   USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
-  CONFIRMATION_REQUIRED_STRING,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN,
   AWS_REGION
 } = process.env
-const CONFIRMATION_REQUIRED = parseInt(CONFIRMATION_REQUIRED_STRING)
 
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 
@@ -104,8 +102,6 @@ exports.handler = async (event) => {
     }
   }
 
-  const banConfirmedUsers = bannedUser.banConfirmedUsers ?? new Set()
-
   const banNewVotingUsers = new Set(group.users)
   banNewVotingUsers.delete(bannedId) // banned user is not part of the vote
 
@@ -113,11 +109,12 @@ exports.handler = async (event) => {
   // DO NOT delete users who are voting
   // (if the alert isn't received, the vote will never terminate)
   // TODO: implement a alert queue in the app
+  const banConfirmedUsers = bannedUser.banConfirmedUsers ?? new Set()
   for (const banConfirmedUser of banConfirmedUsers) {
     banNewVotingUsers.delete(banConfirmedUser)
   }
 
-  const confirmationRequired = Math.min(CONFIRMATION_REQUIRED, group.users.size - 1)
+  const confirmationRequired = Math.min(parseInt(process.env.CONFIRMATION_REQUIRED_STRING), group.users.size - 1)
 
   // update banned user
   // await to send message only after ddb has been updated
