@@ -351,3 +351,8 @@ async function getOtherUsers (group, forbiddenIds) {
 
   return otherUsers
 }
+
+exports.getUserFromConnectionId = getUserFromConnectionId
+exports.getUserAndBannedUserAndGroup = getUserAndBannedUserAndGroup
+exports.closeVote = closeVote
+exports.getOtherUsers = getOtherUsers
