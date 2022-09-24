@@ -43,7 +43,7 @@ exports.handler = async (event) => {
 `)
 
   // get id and groupId
-  const { id, groupId } = await connectionIdToUserIdAndGroupId(event.requestContext.connectionId)
+  const { id, groupId } = await getUserFromConnectionId(event.requestContext.connectionId)
 
   if (typeof id === 'undefined' || typeof groupId === 'undefined') {
     return
@@ -131,7 +131,14 @@ exports.handler = async (event) => {
 
 // ===== ==== ====
 // HELPERS
-async function connectionIdToUserIdAndGroupId (connectionId) {
+/**
+ * Get user from its connectionId
+ *
+ * @param {string} connectionId
+ *
+ * @return {id: string, groupId: string}
+ */
+async function getUserFromConnectionId (connectionId) {
   // Get id and groupId associated with connectionId
   // connectionId - String
   const queryCommand = new QueryCommand({
@@ -158,3 +165,5 @@ async function connectionIdToUserIdAndGroupId (connectionId) {
   }
   return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
 }
+
+exports.getUserFromConnectionId = getUserFromConnectionId
