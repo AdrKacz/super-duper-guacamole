@@ -1,13 +1,18 @@
 // ===== ==== ====
 // IMPORTS
-const { handler, getUserFromConnectionId } = require('../app')
+const {
+  handler,
+  getBannedUserAndGroup,
+  getUserFromConnectionId
+} = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   DynamoDBDocumentClient,
-  QueryCommand
+  QueryCommand,
+  BatchGetCommand
 } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient } = require('@aws-sdk/client-sns')
@@ -76,6 +81,43 @@ describe('getUserFromConnectionId', () => {
     const response = await getUserFromConnectionId(dummyConnectionId)
 
     expect(response).toStrictEqual(expected)
+  })
+})
+
+describe('getBannedUserAndGroup', () => {
+  test('it returns banned user and group', async () => {
+    const dummyBannedId = 'dummy-banned-id'
+    ddbMock.on(BatchGetCommand, {
+      RequestItems: {
+        [process.env.USERS_TABLE_NAME]: {
+          Keys: [{ id: dummyBannedId }],
+          ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
+          ExpressionAttributeNames: {
+            '#id': 'id',
+            '#groupId': 'groupId',
+            '#group': 'group', // for backward compatibility
+            '#connectionId': 'connectionId',
+            '#banConfirmedUsers': 'banConfirmedUsers'
+          }
+        },
+        [process.env.GROUPS_TABLE_NAME]: {
+          Keys: [{ id: dummyGroupId }],
+          ProjectionExpression: '#users',
+          ExpressionAttributeNames: {
+            '#users': 'users'
+          }
+        }
+      }
+    }).resolves({
+      Responses: {
+        [process.env.USERS_TABLE_NAME]: [{ id: dummyBannedId }],
+        [process.env.GROUPS_TABLE_NAME]: [{ id: dummyGroupId }]
+      }
+    })
+
+    const response = await getBannedUserAndGroup(dummyBannedId, dummyGroupId)
+
+    expect(response).toStrictEqual({ bannedUser: { id: dummyBannedId }, group: { id: dummyGroupId } })
   })
 })
 
