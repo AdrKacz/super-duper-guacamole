@@ -99,6 +99,7 @@ exports.handler = async (event) => {
     // TODO: warn user banned user is not in group anymore
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group`)
     return {
+      message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group`,
       statusCode: 403
     }
   }
