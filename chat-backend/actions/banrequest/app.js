@@ -94,7 +94,7 @@ exports.handler = async (event) => {
   if (groupId !== (bannedUser.groupId ?? bannedUser.group)) { // .group for backward compatibility
     // NOTE: it can happens if banned user is banned but not everyone has voted yet (app not updated)
     // Don't throw an error
-    // TODO: warn user banned user is not in group anymore
+    // TODO: warn user banned user is not in group anymore, skipcq: JS-0099
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group`)
     return {
       message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group`,
@@ -108,7 +108,7 @@ exports.handler = async (event) => {
   // delete user who have voted and who are voting
   // DO NOT delete users who are voting
   // (if the alert isn't received, the vote will never terminate)
-  // TODO: implement a alert queue in the app
+  // TODO: implement a alert queue in the app, skipcq: JS-0099
   const banConfirmedUsers = bannedUser.banConfirmedUsers ?? new Set()
   for (const banConfirmedUser of banConfirmedUsers) {
     banNewVotingUsers.delete(banConfirmedUser)
