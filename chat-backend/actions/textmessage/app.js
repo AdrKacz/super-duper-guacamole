@@ -59,74 +59,33 @@ exports.handler = async (event) => {
     throw new Error('message must be defined')
   }
 
-  // retreive group
-  const getGroupCommand = new GetCommand({
-    TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupId },
-    ProjectionExpression: '#id, #users',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#users': 'users'
-    }
-  })
-  const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
-
-  if (group === undefined) {
-    throw new Error(`group <${groupId}> is not defined`)
-  }
-
-  if (!group.users.has(id)) {
-    throw new Error(`user <${id}> is not in group <${groupId}>`)
-  }
-
-  // retreive users
-  const batchGetUsersCommand = new BatchGetCommand({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: Array.from(group.users).map((userId) => ({ id: userId })),
-        ProjectionExpression: '#id, #connectionId',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#connectionId': 'connectionId'
-        }
-      }
-    }
+  console.log('handler - call sendMessageToGroup', {
+    groupId,
+    message: {
+      action: 'textmessage',
+      message
+    },
+    notification: {
+      title: 'Les gens parlent 🎉',
+      body: 'Tu es trop loin pour entendre ...'
+    },
+    fetchedUserIds: new Set([id])
   })
 
-  const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
-  const user = users.find((u) => (u.id === id))
-  if (user === undefined || user.connectionId !== event.requestContext.connectionId) {
-    throw new Error(`user <${id}> has connectionId <${user?.connectionId}> but sent request via connectionId <${event.requestContext.connectionId}>`)
-  }
-
-  const publishSendMessageCommand = new PublishCommand({
-    TopicArn: SEND_MESSAGE_TOPIC_ARN,
-    Message: JSON.stringify({
-      users,
-      message: {
-        action: 'textmessage',
-        message
-      }
-    })
+  await sendMessageToGroup({
+    groupId,
+    message: {
+      action: 'textmessage',
+      message
+    },
+    notification: {
+      title: 'Les gens parlent 🎉',
+      body: 'Tu es trop loin pour entendre ...'
+    },
+    fetchedUserIds: new Set([id])
   })
 
-  const publishSendNotificationCommand = new PublishCommand({
-    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-    Message: JSON.stringify({
-      topic: `group-${groupId}`,
-      notification: {
-        title: 'Les gens parlent 🎉',
-        body: 'Tu es trop loin pour entendre ...'
-      }
-    })
-  })
-
-  await Promise.allSettled([
-    snsClient.send(publishSendMessageCommand),
-    snsClient.send(publishSendNotificationCommand)
-  ])
-
+  console.log('handler - return')
   return {
     statusCode: 200
   }
@@ -142,8 +101,6 @@ exports.handler = async (event) => {
  * @return {id: string, groupId: string}
  */
 async function getUserFromConnectionId (connectionId) {
-  // Get id and groupId associated with connectionId
-  // connectionId - String
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
@@ -169,4 +126,111 @@ async function getUserFromConnectionId (connectionId) {
   return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
 }
 
+/**
+ * Get group of users
+ *
+ * @param {string} groupId
+ * @param {Object[]?} fetchedUsers - list of users already fetched
+ * @param {Set<string>?} forbiddenUserIds - don't send message to these users
+ *
+ * @return {Promise<{id: string, connectionId: string}[]>} - list of users just fetched concatenated with users already fetched
+ */
+async function getGroupUsers ({ groupId, fetchedUsers, forbiddenUserIds }) {
+  console.log('getGroupUsers', groupId, fetchedUsers, forbiddenUserIds)
+  // get group user ids
+  const getGroupCommand = new GetCommand({
+    TableName: GROUPS_TABLE_NAME,
+    Key: { id: groupId },
+    ProjectionExpression: '#id, #users',
+    ExpressionAttributeNames: {
+      '#id': 'id',
+      '#users': 'users'
+    }
+  })
+  const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
+
+  if (typeof group === 'undefined') {
+    throw new Error(`group (${groupId}) is not defined`)
+  }
+
+  // define set of users to fetch
+  const fetchedUserIds = new Set([])
+  for (const fetchedUserId of (fetchedUsers ?? [])) {
+    fetchedUserIds.add(fetchedUserId.id)
+  }
+
+  const groupUserIds = []
+  for (const groupUserId of group.users) {
+    if (!(forbiddenUserIds ?? new Set()).has(groupUserId) || !fetchedUserIds.has(groupUserId)) {
+      groupUserIds.push({ id: groupUserId })
+    }
+  }
+
+  if (groupUserIds.length === 0) {
+    throw new Error('cannot send message to no one')
+  }
+
+  // get users
+  const batchGetUsersCommand = new BatchGetCommand({
+    RequestItems: {
+      [USERS_TABLE_NAME]: {
+        Keys: groupUserIds,
+        ProjectionExpression: '#id, #connectionId',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#connectionId': 'connectionId'
+        }
+      }
+    }
+  })
+
+  const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
+
+  console.log('getGroupUsers - return')
+  return users.concat(fetchedUsers ?? [])
+}
+
+/**
+ * Send message to a group of users
+ *
+ * @param {string} groupId
+ * @param {Object} message - message to send
+ * @param {Object?} notification - notification to send if any
+ * @param {Object[]?} fetchedUsers - list of users already fetched
+ * @param {Set<string>?} forbiddenUserIds - don't send message to these users
+ */
+async function sendMessageToGroup ({ groupId, message, notification, fetchedUsers, forbiddenUserIds }) {
+  console.log('sendMessageToGroup', groupId, message, notification, fetchedUsers, forbiddenUserIds)
+  const users = await getGroupUsers({
+    groupId,
+    fetchedUsers,
+    forbiddenUserIds
+  })
+
+  console.log('sendMessageToGroup - create publish commands')
+  const publishSendMessageCommand = new PublishCommand({
+    TopicArn: SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: users,
+      message
+    })
+  })
+
+  const publishSendNotificationCommand = new PublishCommand({
+    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      topic: `group-${groupId}`,
+      notification
+    })
+  })
+
+  console.log('sendMessageToGroup - return')
+  return Promise.allSettled([
+    snsClient.send(publishSendMessageCommand),
+    snsClient.send(publishSendNotificationCommand)
+  ])
+}
+
 exports.getUserFromConnectionId = getUserFromConnectionId
+exports.getGroupUsers = getGroupUsers
+exports.sendMessageToGroup = sendMessageToGroup

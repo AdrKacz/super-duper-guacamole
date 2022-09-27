@@ -314,10 +314,10 @@ REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
 }
 
 /**
- * Close the current vote to ban bannedUser
+ * Get group of users
  *
- * @param {Object} group - group of the users involved
- * @param {Set<string>} forbiddenIds - set of user ids to not retrieved
+ * @param {Object} group
+ * @param {Set<string>} forbiddenIds - don't retrieve these users
  *
  * @return {Promise<{id: string, connectionId: string, firebaseToken: string}[]>}
  */
