@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { PublishCommand } = require('@aws-sdk/client-sns')
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { snsClient } = require('../aws-clients')
 

@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { GetCommand, BatchGetCommand } = require('@aws-sdk/lib-dynamodb')
+const { GetCommand, BatchGetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('../aws-clients')
 
