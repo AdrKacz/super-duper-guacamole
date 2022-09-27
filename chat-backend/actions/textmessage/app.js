@@ -211,7 +211,7 @@ async function sendMessageToGroup ({ groupId, message, notification, fetchedUser
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
-      users: users,
+      users,
       message
     })
   })
