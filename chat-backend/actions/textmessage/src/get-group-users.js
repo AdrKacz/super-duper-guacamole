@@ -21,7 +21,7 @@ const {
  * @return {Promise<{id: string, connectionId: string}[]>} - list of users just fetched concatenated with users already fetched
  */
 exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
-  console.log('getGroupUsers', groupId, fetchedUsers, forbiddenUserIds)
+  console.log('getGroupUsers with', groupId, fetchedUsers, forbiddenUserIds)
   // validate arguments
   if (typeof groupId !== 'string') {
     throw new Error('groupId must be a string')
@@ -58,14 +58,15 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
 
   const groupUserIds = []
   for (const groupUserId of group.users) {
-    const isUserForbidden = forbiddenUserIds ?? new Set().has(groupUserId)
+    const isUserForbidden = (forbiddenUserIds ?? new Set()).has(groupUserId)
     const isUserFetched = fetchedUserIds.has(groupUserId)
+    console.log('DEBUG', groupUserId, {
+      isUserForbidden, isUserFetched
+    })
     if (!isUserForbidden && !isUserFetched) {
       groupUserIds.push({ id: groupUserId })
     }
   }
-
-  console.log('DEBUG getGroupUsers', fetchedUserIds, groupUserIds)
 
   if (groupUserIds.length === 0) {
     // no new user to fetch
@@ -88,6 +89,6 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
 
   const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 
-  console.log('getGroupUsers - return', users.concat(fetchedUsers ?? []))
+  console.log('getGroupUsers returns', users.concat(fetchedUsers ?? []))
   return users.concat(fetchedUsers ?? [])
 }

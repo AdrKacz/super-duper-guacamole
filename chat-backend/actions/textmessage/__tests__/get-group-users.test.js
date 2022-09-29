@@ -16,7 +16,7 @@ const { SNSClient } = require('@aws-sdk/client-sns')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
+// const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // BEFORE EACH
@@ -29,7 +29,7 @@ beforeEach(() => {
   snsMock.resolves({})
 
   // reset console
-  log.mockReset()
+//   log.mockReset()
 })
 
 test('it has environment variables', () => {
@@ -50,12 +50,12 @@ test.each([
   })).rejects.toThrow(expectedError)
 })
 
-test.each([
-  { details: 'all users are already fetched', groupUsers: ['user-a', 'user-b'], fetchedUsers: [{ id: 'user-a' }, { id: 'user-b' }], expected: [{ id: 'user-a' }, { id: 'user-b' }] },
-  { details: 'all users are forbidden', groupUsers: ['user-a', 'user-b'], forbiddenUserIds: ['user-a', 'user-b'], expected: [] },
-  { details: 'all not forbideen user are already fetched', groupUsers: ['user-a', 'user-b'], fetchedUsers: [{ id: 'user-a' }], forbiddenUserIds: ['user-b'], expected: [{ id: 'user-a' }] }
-])(".it doesn't fetch if not needed ($details)", async ({ groupUsers, fetchedUsers, forbiddenUserIds, expected }) => {
-  ddbMock.on(GetCommand, {
+test('it throws error if group is undefined', async () => {
+  await expect(getGroupUsers({
+    groupId: 'group'
+  })).rejects.toThrow('group (group) is not defined')
+
+  expect(ddbMock).toHaveReceivedCommandWith(GetCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group' },
     ProjectionExpression: '#id, #users',
@@ -63,7 +63,15 @@ test.each([
       '#id': 'id',
       '#users': 'users'
     }
-  }).resolves({
+  })
+})
+
+test.each([
+  { details: 'all users are already fetched', groupUsers: ['user-a', 'user-b'], fetchedUsers: [{ id: 'user-a' }, { id: 'user-b' }], expectedUsers: [{ id: 'user-a' }, { id: 'user-b' }] },
+  { details: 'all users are forbidden', groupUsers: ['user-a', 'user-b'], forbiddenUserIds: new Set(['user-a', 'user-b']), expectedUsers: [] },
+  { details: 'all not forbideen user are already fetched', groupUsers: ['user-a', 'user-b'], fetchedUsers: [{ id: 'user-a' }], forbiddenUserIds: new Set(['user-b']), expectedUsers: [{ id: 'user-a' }] }
+])(".it doesn't fetch if not needed ($details)", async ({ groupUsers, fetchedUsers, forbiddenUserIds, expectedUsers }) => {
+  ddbMock.on(GetCommand).resolves({
     Item: {
       id: 'group',
       users: new Set(groupUsers)
@@ -79,9 +87,47 @@ test.each([
   const response = await getGroupUsers({
     groupId: 'group',
     fetchedUsers,
-    forbiddenUserIds: new Set([forbiddenUserIds])
+    forbiddenUserIds
   })
 
   expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
-  expect(response).toEqual(expected)
+  expect(response).toEqual(expectedUsers)
+})
+
+test.each([
+  { details: 'with fetched users', groupUsers: ['user-a', 'user-b'], fetchedUsers: [{ id: 'user-a' }], expectedFetch: [{ id: 'user-b' }], expectedUsers: [{ id: 'user-b' }, { id: 'user-a' }] },
+  { details: 'with forbidden users', groupUsers: ['user-a', 'user-b'], forbiddenUserIds: new Set(['user-a']), expectedFetch: [{ id: 'user-b' }], expectedUsers: [{ id: 'user-b' }] }
+])('.it fetches needed users ($details)', async ({ groupUsers, fetchedUsers, forbiddenUserIds, expectedFetch, expectedUsers }) => {
+  ddbMock.on(GetCommand).resolves({
+    Item: {
+      id: 'group',
+      users: new Set(groupUsers)
+    }
+  })
+
+  ddbMock.on(BatchGetCommand).resolves({
+    Responses: {
+      [process.env.USERS_TABLE_NAME]: expectedFetch
+    }
+  })
+
+  const response = await getGroupUsers({
+    groupId: 'group',
+    fetchedUsers,
+    forbiddenUserIds
+  })
+
+  expect(ddbMock).toHaveReceivedCommandWith(BatchGetCommand, {
+    RequestItems: {
+      [process.env.USERS_TABLE_NAME]: {
+        Keys: expectedFetch,
+        ProjectionExpression: '#id, #connectionId',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#connectionId': 'connectionId'
+        }
+      }
+    }
+  })
+  expect(response).toEqual(expectedUsers)
 })
