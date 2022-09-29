@@ -22,6 +22,18 @@ const {
  */
 exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
   console.log('getGroupUsers', groupId, fetchedUsers, forbiddenUserIds)
+  // validate arguments
+  if (typeof groupId !== 'string') {
+    throw new Error('groupId must be a string')
+  }
+
+  if (typeof fetchedUsers !== 'undefined' && !Array.isArray(fetchedUsers)) {
+    throw new Error('fetchedUsers must be an array')
+  }
+
+  if (typeof forbiddenUserIds !== 'undefined' && !(forbiddenUserIds instanceof Set)) {
+    throw new Error('forbiddenUserIds must be a set')
+  }
   // get group user ids
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -46,13 +58,18 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
 
   const groupUserIds = []
   for (const groupUserId of group.users) {
-    if (!(forbiddenUserIds ?? new Set()).has(groupUserId) || !fetchedUserIds.has(groupUserId)) {
+    const isUserForbidden = forbiddenUserIds ?? new Set().has(groupUserId)
+    const isUserFetched = fetchedUserIds.has(groupUserId)
+    if (!isUserForbidden && !isUserFetched) {
       groupUserIds.push({ id: groupUserId })
     }
   }
 
+  console.log('DEBUG getGroupUsers', fetchedUserIds, groupUserIds)
+
   if (groupUserIds.length === 0) {
-    throw new Error('cannot send message to no one')
+    // no new user to fetch
+    return fetchedUsers ?? []
   }
 
   // get users
@@ -71,6 +88,6 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
 
   const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 
-  console.log('getGroupUsers - return')
+  console.log('getGroupUsers - return', users.concat(fetchedUsers ?? []))
   return users.concat(fetchedUsers ?? [])
 }

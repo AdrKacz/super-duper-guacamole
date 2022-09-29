@@ -43,6 +43,10 @@ module.exports = {
   coverageReporters: [
     'json',
     ['text', { skipFull: true }]
+  ],
+
+  modulePathIgnorePatterns: [
+    '/.aws-sam/'
   ]
 
   // An object that configures minimum threshold enforcement for coverage results
