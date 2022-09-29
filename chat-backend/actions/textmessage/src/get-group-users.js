@@ -60,9 +60,6 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
   for (const groupUserId of group.users) {
     const isUserForbidden = (forbiddenUserIds ?? new Set()).has(groupUserId)
     const isUserFetched = fetchedUserIds.has(groupUserId)
-    console.log('DEBUG', groupUserId, {
-      isUserForbidden, isUserFetched
-    })
     if (!isUserForbidden && !isUserFetched) {
       groupUserIds.push({ id: groupUserId })
     }
