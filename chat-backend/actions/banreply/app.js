@@ -14,7 +14,7 @@
 
 // ===== ==== ====
 // IMPORTS
-const { BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
@@ -23,12 +23,12 @@ const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
 const { getUsers } = require('./src/get-users')
 const { closeVote } = require('./src/close-vote')
+const { getUserAndBannedUserAndGroup } = require('./src/get-user-and-banned-user-and-group')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
-  GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN,
   SWITCH_GROUP_TOPIC_ARN
@@ -54,15 +54,15 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body)
 
-  const bannedId = body.bannedid
+  const bannedUserId = body.bannedid
   const status = body.status
 
-  if (typeof bannedId === 'undefined' || !['confirmed', 'denied'].includes(status)) {
+  if (typeof bannedUserId === 'undefined' || !['confirmed', 'denied'].includes(status)) {
     throw new Error("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
   }
 
   // get elements involved
-  const { user, bannedUser, group } = await getUserAndBannedUserAndGroup(id, bannedId, groupId)
+  const { user, bannedUser, group } = await getUserAndBannedUserAndGroup({ id, bannedUserId, groupId })
 
   const bannedUserGroupId = bannedUser.groupId ?? bannedUser.group // .group for backward compatibility
   if (groupId !== bannedUserGroupId || typeof bannedUser.confirmationRequired === 'undefined') {
@@ -82,10 +82,10 @@ exports.handler = async (event) => {
     // NOTE: this situation can happen
     // for example, if you need 2 users to confirm but you send the request to 4
     // once the first 2 have confirm, you can still receive answers
-    console.log(`user (${id}) is not in banVotingUsers (below) of banned user (${bannedId})`)
+    console.log(`user (${id}) is not in banVotingUsers (below) of banned user (${bannedUserId})`)
     console.log(banVotingUsers)
     return {
-      message: `user (${id}) is not in banVotingUsers (below) of banned user (${bannedId})`,
+      message: `user (${id}) is not in banVotingUsers (below) of banned user (${bannedUserId})`,
       statusCode: 403
     }
   }
@@ -101,7 +101,7 @@ exports.handler = async (event) => {
   const updateBannedUserCommandAddVote = new UpdateCommand({
     ReturnValues: 'ALL_NEW',
     TableName: USERS_TABLE_NAME,
-    Key: { id: bannedId },
+    Key: { id: bannedUserId },
     UpdateExpression: `
 ${status === 'confirmed' ? 'ADD #banConfirmedUsers :id' : ''}
 DELETE #banVotingUsers :id
@@ -123,7 +123,7 @@ DELETE #banVotingUsers :id
 
   if (voteConfirmed || voteDenied) {
     const promises = []
-    const otherUsers = await getUsers({ userIds: group.users, forbiddenUserIds: new Set([id, bannedId]) })
+    const otherUsers = await getUsers({ userIds: group.users, forbiddenUserIds: new Set([id, bannedUserId]) })
     promises.push(closeVote({ user, bannedUser, otherUsers }))
 
     if (voteConfirmed) {
@@ -131,7 +131,7 @@ DELETE #banVotingUsers :id
       const publishSwitchGroupCommand = new PublishCommand({
         TopicArn: SWITCH_GROUP_TOPIC_ARN,
         Message: JSON.stringify({
-          id: bannedId,
+          id: bannedUserId,
           groupid: bannedUser.groupId,
           isBan: true
         })
@@ -145,7 +145,7 @@ DELETE #banVotingUsers :id
           users: otherUsers.concat([user, bannedUser]),
           message: {
             action: 'banreply',
-            bannedid: bannedId,
+            bannedid: bannedUserId,
             status: 'confirmed'
           }
         })
@@ -171,7 +171,7 @@ DELETE #banVotingUsers :id
           users: otherUsers.concat([user]),
           message: {
             action: 'banreply',
-            bannedid: bannedId,
+            bannedid: bannedUserId,
             status: 'denied'
           }
         })
@@ -186,57 +186,3 @@ DELETE #banVotingUsers :id
     statusCode: 200
   }
 }
-
-// ===== ==== ====
-// HELPERS
-/**
- * Get all parties of the event (user, banned user, and group)
- *
- * @param {string} id - user id
- * @param {string} bannedId - banned user id
- * @param {string} groupId - group id
- *
- * @return {Promise<{user: Object, bannedUser: Object, group: Object}>}
- */
-async function getUserAndBannedUserAndGroup (id, bannedId, groupId) {
-  const batchGetUsersCommand = new BatchGetCommand({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: [{ id }, { id: bannedId }],
-        ProjectionExpression: '#id, #groupId, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#groupId': 'groupId',
-          '#group': 'group', // for backward compatibility
-          '#connectionId': 'connectionId',
-          '#firebaseToken': 'firebaseToken',
-          '#banVotingUsers': 'banVotingUsers',
-          '#confirmationRequired': 'confirmationRequired'
-        }
-      },
-      [GROUPS_TABLE_NAME]: {
-        Keys: [{ id: groupId }],
-        ProjectionExpression: '#users',
-        ExpressionAttributeNames: {
-          '#users': 'users'
-        }
-      }
-    }
-  })
-
-  const [users, [group]] = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => ([response.Responses[USERS_TABLE_NAME], response.Responses[GROUPS_TABLE_NAME]]))
-  // NOTE: will raise an error if less than two results in users
-
-  let [user, bannedUser] = users
-  if (user.id !== id) {
-    user = users[1]
-    bannedUser = users[0]
-  }
-  console.log('user:', user)
-  console.log('bannedUser:', bannedUser)
-  console.log('group:', group)
-
-  return { user, bannedUser, group }
-}
-
-exports.getUserAndBannedUserAndGroup = getUserAndBannedUserAndGroup

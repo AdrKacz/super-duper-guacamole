@@ -1,7 +1,6 @@
 // ===== ==== ====
 // IMPORTS
 const {
-  getUserAndBannedUserAndGroup,
   handler
 } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
@@ -50,47 +49,6 @@ test('it reads environment variables', () => {
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
   expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
   expect(process.env.AWS_REGION).toBeDefined()
-})
-
-describe('getUserAndBannedUserAndGroup', () => {
-  test.each([
-    { details: 'user first', users: [{ id: dummyUserId }, { id: dummyBannedId }] },
-    { details: 'banned user first', users: [{ id: dummyBannedId }, { id: dummyUserId }] }
-  ])('it returns user, banned user, and group ($details)', async ({ users }) => {
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyUserId }, { id: dummyBannedId }],
-          ProjectionExpression: '#id, #groupId, #group, #connectionId, #firebaseToken, #banVotingUsers, #confirmationRequired',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#groupId': 'groupId',
-            '#group': 'group', // for backward compatibility
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken',
-            '#banVotingUsers': 'banVotingUsers',
-            '#confirmationRequired': 'confirmationRequired'
-          }
-        },
-        [process.env.GROUPS_TABLE_NAME]: {
-          Keys: [{ id: dummyGroupId }],
-          ProjectionExpression: '#users',
-          ExpressionAttributeNames: {
-            '#users': 'users'
-          }
-        }
-      }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: users,
-        [process.env.GROUPS_TABLE_NAME]: [{ id: dummyGroupId }]
-      }
-    })
-
-    const response = await getUserAndBannedUserAndGroup(dummyUserId, dummyBannedId, dummyGroupId)
-
-    expect(response).toStrictEqual({ user: { id: dummyUserId }, bannedUser: { id: dummyBannedId }, group: { id: dummyGroupId } })
-  })
 })
 
 describe('handler', () => {
