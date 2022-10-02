@@ -63,6 +63,9 @@ test.each([
     message: 'user or group cannot be found',
     statusCode: 403
   })
+
+  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledTimes(1)
+  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledWith(connectionId)
 })
 
 test.each([
@@ -119,6 +122,9 @@ test.each([
     message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group`,
     statusCode: 403
   })
+
+  expect(getBannedUserAndGroupModule.getBannedUserAndGroup).toHaveBeenCalledTimes(1)
+  expect(getBannedUserAndGroupModule.getBannedUserAndGroup).toHaveBeenCalledWith(bannedUser.id, groupId)
 })
 
 test('it updates banned user if no new user in the vote', async () => {

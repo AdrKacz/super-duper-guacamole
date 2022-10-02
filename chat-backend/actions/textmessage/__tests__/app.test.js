@@ -53,9 +53,6 @@ test('it sends message', async () => {
 
   expect(response).toEqual({ statusCode: 200 })
 
-  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledTimes(1)
-  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledWith(connectionId)
-
   expect(sendMessageToGroupModule.sendMessageToGroup).toHaveBeenCalledTimes(1)
   expect(sendMessageToGroupModule.sendMessageToGroup).toHaveBeenCalledWith({
     groupId,
