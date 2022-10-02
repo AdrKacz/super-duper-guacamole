@@ -150,7 +150,7 @@ test('it updates banned user if new user in the vote', async () => {
 
   const bannedUserId = 'banned-user-id'
   getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({
-    bannedUser: { id: bannedUserId, groupId: groupId },
+    bannedUser: { id: bannedUserId, groupId },
     group: { id: groupId, users: new Set([id, bannedUserId]) }
   })
 
