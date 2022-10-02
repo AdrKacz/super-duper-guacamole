@@ -189,7 +189,7 @@ test('it updates banned user if new user in the vote', async () => {
   })
 
   // expect
-  expect(response).toStrictEqual({ statusCode: 200 })
+  expect(response).toEqual({ statusCode: 200 })
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: bannedUserId },

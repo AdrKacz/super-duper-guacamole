@@ -14,27 +14,25 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
-const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+
+const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
+
+const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
+const { getUsers } = require('./src/get-users')
+const { closeVote } = require('./src/close-vote')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
-  USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   SEND_NOTIFICATION_TOPIC_ARN,
-  SWITCH_GROUP_TOPIC_ARN,
-  AWS_REGION
+  SWITCH_GROUP_TOPIC_ARN
 } = process.env
-
-const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
-const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
-
-const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
 // HANDLER
@@ -125,8 +123,8 @@ DELETE #banVotingUsers :id
 
   if (voteConfirmed || voteDenied) {
     const promises = []
-    const otherUsers = await getGroupUsers(group, new Set([id, bannedId]))
-    promises.push(closeVote(user, bannedUser, otherUsers))
+    const otherUsers = await getUsers({ userIds: group.users, forbiddenUserIds: new Set([id, bannedId]) })
+    promises.push(closeVote({ user, bannedUser, otherUsers }))
 
     if (voteConfirmed) {
       console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
@@ -192,39 +190,6 @@ DELETE #banVotingUsers :id
 // ===== ==== ====
 // HELPERS
 /**
- * Get user from its connectionId
- *
- * @param {string} connectionId
- *
- * @return {id: string, groupId: string}
- */
-async function getUserFromConnectionId (connectionId) {
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': connectionId
-    }
-  })
-  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    }
-    return {}
-  })
-
-  if (typeof user.id === 'undefined') {
-    return {}
-  }
-  return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
-}
-
-/**
  * Get all parties of the event (user, banned user, and group)
  *
  * @param {string} id - user id
@@ -274,88 +239,4 @@ async function getUserAndBannedUserAndGroup (id, bannedId, groupId) {
   return { user, bannedUser, group }
 }
 
-/**
- * Close the current vote to ban bannedUser
- *
- * @param {string} id - user id
- * @param {string} bannedId - banned user id
- * @param {Object[]} otherUsers  - other group users
- */
-async function closeVote (user, bannedUser, otherUsers) {
-  // close the vote
-  const updateBannedUserCommandCloseVote = new UpdateCommand({
-    TableName: USERS_TABLE_NAME,
-    Key: { id: bannedUser.id },
-    UpdateExpression: `
-REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
-`,
-    ExpressionAttributeNames: {
-      '#banVotingUsers': 'banVotingUsers',
-      '#banConfirmedUsers': 'banConfirmedUsers',
-      '#confirmationRequired': 'confirmationRequired'
-    }
-  })
-
-  const publishSendNotificationCommand = new PublishCommand({
-    TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-    Message: JSON.stringify({
-      users: otherUsers.concat([user]),
-      notification: {
-        title: 'Le vote est terminé 🗳',
-        body: 'Viens voir le résultat !'
-      }
-    })
-  })
-
-  await Promise.allSettled([
-    dynamoDBDocumentClient.send(updateBannedUserCommandCloseVote),
-    snsClient.send(publishSendNotificationCommand)
-  ])
-}
-
-/**
- * Get group of users
- *
- * @param {Object} group
- * @param {Set<string>} forbiddenIds - don't retrieve these users
- *
- * @return {Promise<{id: string, connectionId: string, firebaseToken: string}[]>}
- */
-async function getGroupUsers (group, forbiddenIds) {
-  const otherUserIds = []
-  for (const groupUserId of group.users) {
-    if (!forbiddenIds.has(groupUserId)) {
-      otherUserIds.push({ id: groupUserId })
-    }
-  }
-  const otherUsers = []
-  if (otherUserIds.length > 0) {
-    // do not fetch if nothing to fetch
-    const batchOtherUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          // user and banned user already requested
-          Keys: Array.from(group.users).filter((userId) => !forbiddenIds.has(userId)).map((userId) => ({ id: userId })),
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    })
-    await dynamoDBDocumentClient.send(batchOtherUsersCommand).then((response) => {
-      for (const otherUser of response.Responses[USERS_TABLE_NAME]) {
-        otherUsers.push(otherUser)
-      }
-    })
-  }
-
-  return otherUsers
-}
-
-exports.getUserFromConnectionId = getUserFromConnectionId
 exports.getUserAndBannedUserAndGroup = getUserAndBannedUserAndGroup
-exports.closeVote = closeVote
-exports.getGroupUsers = getGroupUsers

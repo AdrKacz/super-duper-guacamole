@@ -1,10 +1,7 @@
 // ===== ==== ====
 // IMPORTS
 const {
-  getUserFromConnectionId,
   getUserAndBannedUserAndGroup,
-  closeVote,
-  getGroupUsers,
   handler
 } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
@@ -46,7 +43,6 @@ beforeEach(() => {
 
 // ===== ==== ====
 // TESTS
-
 test('it reads environment variables', () => {
   expect(process.env.USERS_TABLE_NAME).toBeDefined()
   expect(process.env.USERS_CONNECTION_ID_INDEX_NAME).toBeDefined()
@@ -54,35 +50,6 @@ test('it reads environment variables', () => {
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
   expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
   expect(process.env.AWS_REGION).toBeDefined()
-})
-
-describe('getUserFromConnectionId', () => {
-  test.each([
-    { details: 'it returns an empty object if no user found', items: [], expected: {} },
-    { details: 'it returns an empty object if user has no id', items: [{}], expected: {} },
-    { details: 'it returns the first associated user', items: [{ id: dummyUserId }, { id: `${dummyUserId}-2` }], expected: { id: dummyUserId, groupId: undefined } }, // skipcq: JS-0127
-    { details: 'it returns user with group attribute if groupId attribute is not defined', items: [{ id: dummyUserId, group: dummyGroupId }], expected: { id: dummyUserId, groupId: dummyGroupId } },
-    { details: 'it returns user with groupId attribute over group attribute', items: [{ id: dummyUserId, groupId: dummyGroupId, group: `${dummyGroupId}-2` }], expected: { id: dummyUserId, groupId: dummyGroupId } }
-  ])('.test $details', async ({ items, expected }) => {
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: items.length,
-      Items: items
-    })
-
-    const response = await getUserFromConnectionId(dummyConnectionId)
-
-    expect(response).toStrictEqual(expected)
-  })
 })
 
 describe('getUserAndBannedUserAndGroup', () => {
@@ -123,69 +90,6 @@ describe('getUserAndBannedUserAndGroup', () => {
     const response = await getUserAndBannedUserAndGroup(dummyUserId, dummyBannedId, dummyGroupId)
 
     expect(response).toStrictEqual({ user: { id: dummyUserId }, bannedUser: { id: dummyBannedId }, group: { id: dummyGroupId } })
-  })
-})
-
-describe('closeVote', () => {
-  test('it updates banned user and notifies users that the vote ended', async () => {
-    await closeVote({ id: dummyUserId }, { id: dummyBannedId }, [{ id: 'dummy-other-user-id' }])
-
-    expect(ddbMock).toHaveReceivedNthCommandWith(1, UpdateCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      Key: { id: dummyBannedId },
-      UpdateExpression: `
-REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired
-`,
-      ExpressionAttributeNames: {
-        '#banVotingUsers': 'banVotingUsers',
-        '#banConfirmedUsers': 'banConfirmedUsers',
-        '#confirmationRequired': 'confirmationRequired'
-      }
-    })
-
-    expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
-      TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: [{ id: 'dummy-other-user-id' }, { id: dummyUserId }],
-        notification: {
-          title: 'Le vote est terminé 🗳',
-          body: 'Viens voir le résultat !'
-        }
-      })
-    })
-  })
-})
-
-describe('getGroupUsers', () => {
-  test('it returns group users without forbidden users', async () => {
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          // user and banned user already requested
-          Keys: [{ id: 'dummy-other-user-id' }],
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: [{ id: 'dummy-other-user-id' }]
-      }
-    })
-    const response = await getGroupUsers({ users: new Set([dummyUserId, 'dummy-other-user-id']) }, new Set([dummyUserId]))
-
-    expect(response).toStrictEqual([{ id: 'dummy-other-user-id' }])
-  })
-
-  test('it returns empty group users when all users are forbidden', async () => {
-    const response = await getGroupUsers({ users: new Set([dummyUserId, 'dummy-other-user-id']) }, new Set([dummyUserId, 'dummy-other-user-id']))
-
-    expect(response).toStrictEqual([])
-    expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
   })
 })
 

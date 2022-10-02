@@ -63,10 +63,11 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers = [], forbiddenUserIds = 
     RequestItems: {
       [USERS_TABLE_NAME]: {
         Keys: groupUserIds,
-        ProjectionExpression: '#id, #connectionId',
+        ProjectionExpression: '#id, #connectionId, #firebaseToken',
         ExpressionAttributeNames: {
           '#id': 'id',
-          '#connectionId': 'connectionId'
+          '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken'
         }
       }
     }

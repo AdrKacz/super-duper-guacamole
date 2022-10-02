@@ -110,10 +110,11 @@ test.each([
     RequestItems: {
       [process.env.USERS_TABLE_NAME]: {
         Keys: expectedFetch,
-        ProjectionExpression: '#id, #connectionId',
+        ProjectionExpression: '#id, #connectionId, #firebaseToken',
         ExpressionAttributeNames: {
           '#id': 'id',
-          '#connectionId': 'connectionId'
+          '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken'
         }
       }
     }
