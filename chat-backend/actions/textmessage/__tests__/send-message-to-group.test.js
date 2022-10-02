@@ -26,6 +26,8 @@ beforeEach(() => {
   log.mockReset()
 })
 
+// ===== ==== ====
+// TESTS
 test('it has environment variables', () => {
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
   expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()

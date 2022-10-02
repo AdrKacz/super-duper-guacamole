@@ -32,6 +32,8 @@ beforeEach(() => {
   log.mockReset()
 })
 
+// ===== ==== ====
+// TESTS
 test('it has environment variables', () => {
   expect(process.env.USERS_TABLE_NAME).toBeDefined()
   expect(process.env.GROUPS_TABLE_NAME).toBeDefined()
