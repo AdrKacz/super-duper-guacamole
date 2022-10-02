@@ -147,6 +147,21 @@ test('it updates banned user if no new user in the vote', async () => {
 
   // expect
   expect(response).toStrictEqual({ statusCode: 200 })
+
+  expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id: bannedUserId },
+    UpdateExpression: `
+
+SET #confirmationRequired = :confirmationRequired
+`,
+    ExpressionAttributeNames: {
+      '#confirmationRequired': 'confirmationRequired'
+    },
+    ExpressionAttributeValues: {
+      ':confirmationRequired': Math.min(process.env.CONFIRMATION_REQUIRED, 1) // groups.users.size - 1 = 2 - 1
+    }
+  })
 })
 
 test('it updates banned user if new user in the vote', async () => {
@@ -193,9 +208,9 @@ test('it updates banned user if new user in the vote', async () => {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: bannedUserId },
     UpdateExpression: `
-    ADD #banVotingUsers :banNewVotingUsers
-    SET #confirmationRequired = :confirmationRequired
-    `,
+ADD #banVotingUsers :banNewVotingUsers
+SET #confirmationRequired = :confirmationRequired
+`,
     ExpressionAttributeNames: {
       '#confirmationRequired': 'confirmationRequired',
       '#banVotingUsers': 'banVotingUsers'

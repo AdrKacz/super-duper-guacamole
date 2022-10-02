@@ -113,9 +113,9 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: bannedId },
     UpdateExpression: `
-    ${banNewVotingUsers.size > 0 ? 'ADD #banVotingUsers :banNewVotingUsers' : ''}
-    SET #confirmationRequired = :confirmationRequired
-    `,
+${banNewVotingUsers.size > 0 ? 'ADD #banVotingUsers :banNewVotingUsers' : ''}
+SET #confirmationRequired = :confirmationRequired
+`,
     ExpressionAttributeNames: dynamicExpressionAttributeNames,
     ExpressionAttributeValues: dynamicExpressionAttributeValues
   })
