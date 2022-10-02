@@ -1,9 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const {
-  handler,
-  getBannedUserAndGroup
-} = require('../app')
+const { handler } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
 // ===== ==== ====
@@ -56,42 +53,6 @@ test('it reads environment variables', () => {
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
   expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
   expect(process.env.AWS_REGION).toBeDefined()
-})
-
-describe('getBannedUserAndGroup', () => {
-  test('it returns banned user and group', async () => {
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyBannedId }],
-          ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#groupId': 'groupId',
-            '#group': 'group', // for backward compatibility
-            '#connectionId': 'connectionId',
-            '#banConfirmedUsers': 'banConfirmedUsers'
-          }
-        },
-        [process.env.GROUPS_TABLE_NAME]: {
-          Keys: [{ id: dummyGroupId }],
-          ProjectionExpression: '#users',
-          ExpressionAttributeNames: {
-            '#users': 'users'
-          }
-        }
-      }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: [{ id: dummyBannedId }],
-        [process.env.GROUPS_TABLE_NAME]: [{ id: dummyGroupId }]
-      }
-    })
-
-    const response = await getBannedUserAndGroup(dummyBannedId, dummyGroupId)
-
-    expect(response).toStrictEqual({ bannedUser: { id: dummyBannedId }, group: { id: dummyGroupId } })
-  })
 })
 
 describe('handler', () => {
