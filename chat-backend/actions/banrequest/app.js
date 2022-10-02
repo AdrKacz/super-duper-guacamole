@@ -14,42 +14,22 @@
 
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
-const { DynamoDBDocumentClient, BatchGetCommand, UpdateCommand, QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+
+const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
+
+const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
-  USERS_CONNECTION_ID_INDEX_NAME,
   GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
-  SEND_NOTIFICATION_TOPIC_ARN,
-  AWS_REGION
+  SEND_NOTIFICATION_TOPIC_ARN
 } = process.env
-
-const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
-
-const marshallOptions = {
-  // Whether to automatically convert empty strings, blobs, and sets to `null`.
-  convertEmptyValues: true, // false, by default.
-  // Whether to remove undefined values while marshalling.
-  removeUndefinedValues: false, // false, by default.
-  // Whether to convert typeof object to map attribute.
-  convertClassInstanceToMap: false // false, by default.
-}
-
-const unmarshallOptions = {
-  // Whether to return numbers as a string instead of converting them to native JavaScript numbers.
-  wrapNumbers: false // false, by default.
-}
-
-const translateConfig = { marshallOptions, unmarshallOptions }
-const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, translateConfig)
-
-const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
 // HANDLER
@@ -192,39 +172,6 @@ exports.handler = async (event) => {
 
 // ===== ==== ====
 // HELPERS
-/**
- * Get user from its connectionId
- *
- * @param {string} connectionId
- *
- * @return {id: string, groupId: string}
- */
-async function getUserFromConnectionId (connectionId) {
-  const queryCommand = new QueryCommand({
-    TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
-    ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': connectionId
-    }
-  })
-  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    }
-    return {}
-  })
-
-  if (typeof user.id === 'undefined') {
-    return {}
-  }
-  return { id: user.id, groupId: user.groupId ?? user.group } // .group for backward compatibility
-}
-
 /**
  * Get all parties of the event (banned user, and group)
  *
