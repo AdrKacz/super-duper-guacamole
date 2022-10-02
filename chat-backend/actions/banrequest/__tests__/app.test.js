@@ -178,22 +178,8 @@ test('it updates banned user if new user in the vote', async () => {
   // get users
   const firebaseToken = 'firebase-token'
   const connectionId = 'connection-id'
-  ddbMock.on(BatchGetCommand, {
-    RequestItems: {
-      [process.env.USERS_TABLE_NAME]: {
-        Keys: [{ id }],
-        ProjectionExpression: '#id, #connectionId, #firebaseToken',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#connectionId': 'connectionId',
-          '#firebaseToken': 'firebaseToken'
-        }
-      }
-    }
-  }).resolves({
-    Responses: {
-      [process.env.USERS_TABLE_NAME]: [{ id, connectionId, firebaseToken }]
-    }
+  ddbMock.on(BatchGetCommand).resolves({
+    Responses: { [process.env.USERS_TABLE_NAME]: [{ id, connectionId, firebaseToken }] }
   })
 
   // call handler
