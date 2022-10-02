@@ -26,7 +26,7 @@ test.each([
   { details: 'it rejects on undefined message', id: 'id', groupId: 'group-id', errorMessage: 'message must be defined' }
 ])('.test $details', async ({ id, groupId, message, errorMessage }) => {
   const connectionId = 'connectionId'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   await expect(handler({
     requestContext: { connectionId },
@@ -43,7 +43,7 @@ test('it sends message', async () => {
   const connectionId = 'connectionId'
   const message = 'message'
 
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
   sendMessageToGroupModule.sendMessageToGroup.mockResolvedValue(Promise.resolve())
 
   const response = await handler({

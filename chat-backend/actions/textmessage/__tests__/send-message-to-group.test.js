@@ -38,7 +38,7 @@ test('it sends message and notification', async () => {
   const message = { message: 'message' }
   const notification = { message: 'notification' }
   const users = [{ id: 'user-a' }, { id: 'user-b' }, { id: 'user-c' }]
-  getGroupUsersModule.getGroupUsers.mockResolvedValue(users)
+  getGroupUsersModule.getGroupUsers.mockResolvedValue(Promise.resolve(users))
 
   await sendMessageToGroup({
     groupId,

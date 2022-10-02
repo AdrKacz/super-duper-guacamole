@@ -27,6 +27,10 @@ const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: J
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
+  // set custom variable
+  process.env.CONFIRMATION_REQUIRED_STRING = '3'
+  process.env.CONFIRMATION_REQUIRED = parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10)
+
   // reset mocks
   ddbMock.reset()
   snsMock.reset()
@@ -45,13 +49,15 @@ test('it reads environment variables', () => {
   expect(process.env.USERS_TABLE_NAME).toBeDefined()
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
   expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
+  expect(process.env.CONFIRMATION_REQUIRED_STRING).toBeDefined()
+  expect(process.env.CONFIRMATION_REQUIRED).toBeDefined()
 })
 
 test.each([
   { details: 'it rejects on undefined user id', groupId: 'group-id' },
   { details: 'it rejects on undefined group id', id: 'id' }
 ])('.test $details', async ({ id, groupId }) => {
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   const connectionId = 'connectionId'
   const response = await handler({
@@ -74,7 +80,7 @@ test.each([
 ])('.test $details', async ({ messageid, bannedid }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   const connectionId = 'connectionId'
   await expect(handler({
@@ -86,7 +92,7 @@ test.each([
 test('it rejects if user id and banned user id are the same', async () => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   const connectionId = 'connectionId'
   const response = await handler({
@@ -106,9 +112,9 @@ test.each([
 ])('it rejects if banned user and user not in the same group ($details)', async ({ bannedUser }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
-  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({ bannedUser, group: { id: groupId } })
+  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue(Promise.resolve({ bannedUser, group: { id: groupId } }))
 
   // call handler
   const connectionId = 'connectionId'
@@ -130,13 +136,13 @@ test.each([
 test('it updates banned user if no new user in the vote', async () => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   const bannedUserId = 'banned-user-id'
-  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({
+  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue(Promise.resolve({
     bannedUser: { id: bannedUserId, groupId, banConfirmedUsers: new Set([id]) },
     group: { id: groupId, users: new Set([id, bannedUserId]) }
-  })
+  }))
 
   // call handler
   const connectionId = 'connectionId'
@@ -167,13 +173,13 @@ SET #confirmationRequired = :confirmationRequired
 test('it updates banned user if new user in the vote', async () => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   const bannedUserId = 'banned-user-id'
-  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({
+  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue(Promise.resolve({
     bannedUser: { id: bannedUserId, groupId },
     group: { id: groupId, users: new Set([id, bannedUserId]) }
-  })
+  }))
 
   // get users
   const firebaseToken = 'firebase-token'
