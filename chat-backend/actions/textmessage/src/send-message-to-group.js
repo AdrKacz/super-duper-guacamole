@@ -18,7 +18,7 @@ const {
  *
  * @param {string} groupId
  * @param {Object} message - message to send
- * @param {Object?} notification - notification to send if any
+ * @param {Object} notification - notification to send
  * @param {Object[]?} fetchedUsers - list of users already fetched
  * @param {Set<string>?} forbiddenUserIds - don't send message to these users
  */

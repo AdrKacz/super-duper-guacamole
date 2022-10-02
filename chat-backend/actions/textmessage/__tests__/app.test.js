@@ -1,85 +1,72 @@
 // ===== ==== ====
 // IMPORTS
 const { handler } = require('../app')
-const { mockClient } = require('aws-sdk-client-mock')
+const getUserFromConnectionIdModule = require('../src/get-user-from-connection-id')
+const sendMessageToGroupModule = require('../src/send-message-to-group')
 
 // ===== ==== ====
 // CONSTANTS
-const {
-  DynamoDBDocumentClient,
-  QueryCommand
-} = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
-
-const { SNSClient } = require('@aws-sdk/client-sns') // skipcq: JS-0260
-
-const ddbMock = mockClient(DynamoDBDocumentClient)
-const snsMock = mockClient(SNSClient)
-
-const dummyConnectionId = 'dummy-connection-id'
-const dummyUserId = 'dummy-user-id'
+jest.mock('../src/get-user-from-connection-id')
+jest.mock('../src/send-message-to-group')
 
 const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
-  // set up special env variable
-  process.env.CONFIRMATION_REQUIRED_STRING = '3'
-  process.env.CONFIRMATION_REQUIRED = parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10)
-  // reset mocks
-  ddbMock.reset()
-  snsMock.reset()
-
-  ddbMock.resolves({})
-  snsMock.resolves({})
-
   // reset console
   log.mockReset()
 })
 
 // ===== ==== ====
 // TESTS
+test.each([
+  { details: 'it rejects on undefined user id', groupId: 'group-id', message: 'message', errorMessage: 'user or group cannot be found' },
+  { details: 'it rejects on undefined group id', id: 'id', message: 'message', errorMessage: 'user or group cannot be found' },
+  { details: 'it rejects on undefined message', id: 'id', groupId: 'group-id', errorMessage: 'message must be defined' }
+])('.test $details', async ({ id, groupId, message, errorMessage }) => {
+  const connectionId = 'connectionId'
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-test('it reads environment variables', () => {
-  expect(process.env.USERS_TABLE_NAME).toBeDefined()
-  expect(process.env.USERS_CONNECTION_ID_INDEX_NAME).toBeDefined()
-  expect(process.env.GROUPS_TABLE_NAME).toBeDefined()
-  expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
-  expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
-  expect(process.env.AWS_REGION).toBeDefined()
+  await expect(handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ message })
+  })).rejects.toThrow(errorMessage)
+
+  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledTimes(1)
+  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledWith(connectionId)
 })
 
-describe('handler', () => {
-  test.each([
-    { details: 'it rejects on undefined user id', user: {} },
-    { details: 'it rejects on undefined group id', user: { id: dummyUserId } }
-  ])('.test $details', async ({ user }) => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [user]
-    })
+test('it sends message', async () => {
+  const id = 'id'
+  const groupId = 'group-id'
+  const connectionId = 'connectionId'
+  const message = 'message'
 
-    const response = await handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify({})
-    })
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  sendMessageToGroupModule.sendMessageToGroup.mockResolvedValue(Promise.resolve())
 
-    expect(response).toStrictEqual({
-      message: 'user or group cannot be found',
-      statusCode: 403
-    })
+  const response = await handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ message })
+  })
+
+  expect(response).toEqual({ statusCode: 200 })
+
+  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledTimes(1)
+  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledWith(connectionId)
+
+  expect(sendMessageToGroupModule.sendMessageToGroup).toHaveBeenCalledTimes(1)
+  expect(sendMessageToGroupModule.sendMessageToGroup).toHaveBeenCalledWith({
+    groupId,
+    message: {
+      action: 'textmessage',
+      message
+    },
+    notification: {
+      title: 'Les gens parlent 🎉',
+      body: 'Tu es trop loin pour entendre ...'
+    },
+    fetchedUsers: [{ id, groupId, connectionId }]
   })
 })

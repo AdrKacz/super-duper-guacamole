@@ -28,10 +28,7 @@ exports.handler = async (event) => {
   const { id, groupId } = await getUserFromConnectionId(event.requestContext.connectionId)
 
   if (typeof id === 'undefined' || typeof groupId === 'undefined') {
-    return {
-      message: 'user or group cannot be found',
-      statusCode: 403
-    }
+    throw new Error('user or group cannot be found')
   }
 
   const body = JSON.parse(event.body)
@@ -40,19 +37,6 @@ exports.handler = async (event) => {
   if (typeof message === 'undefined') {
     throw new Error('message must be defined')
   }
-
-  console.log('handler - call sendMessageToGroup', {
-    groupId,
-    message: {
-      action: 'textmessage',
-      message
-    },
-    notification: {
-      title: 'Les gens parlent 🎉',
-      body: 'Tu es trop loin pour entendre ...'
-    },
-    fetchedUserIds: new Set([id])
-  })
 
   await sendMessageToGroup({
     groupId,
@@ -64,7 +48,7 @@ exports.handler = async (event) => {
       title: 'Les gens parlent 🎉',
       body: 'Tu es trop loin pour entendre ...'
     },
-    fetchedUserIds: new Set([id])
+    fetchedUsers: [{ id, groupId, connectionId: event.requestContext.connectionId }]
   })
 
   console.log('handler - return')
