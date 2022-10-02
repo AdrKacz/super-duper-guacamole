@@ -1,35 +1,32 @@
 // ===== ==== ====
 // IMPORTS
 const { handler } = require('../app')
+const getUserFromConnectionIdModule = require('../src/get-user-from-connection-id')
+const getBannedUserAndGroupModule = require('../src/get-banned-user-and-group')
+
 const { mockClient } = require('aws-sdk-client-mock')
 
-// ===== ==== ====
-// CONSTANTS
 const {
   DynamoDBDocumentClient,
-  QueryCommand,
   BatchGetCommand,
   UpdateCommand
 } = require('@aws-sdk/lib-dynamodb')
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
+// ===== ==== ====
+// CONSTANTS
+jest.mock('../src/get-user-from-connection-id')
+jest.mock('../src/get-banned-user-and-group')
+
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
-
-const dummyConnectionId = 'dummy-connection-id'
-const dummyUserId = 'dummy-user-id'
-const dummyBannedId = 'dummy-banned-id'
-const dummyGroupId = 'dummy-group-id'
 
 const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
-  // set up special env variable
-  process.env.CONFIRMATION_REQUIRED_STRING = '3'
-  process.env.CONFIRMATION_REQUIRED = parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10)
   // reset mocks
   ddbMock.reset()
   snsMock.reset()
@@ -46,363 +43,193 @@ beforeEach(() => {
 
 test('it reads environment variables', () => {
   expect(process.env.USERS_TABLE_NAME).toBeDefined()
-  expect(process.env.USERS_CONNECTION_ID_INDEX_NAME).toBeDefined()
-  expect(process.env.GROUPS_TABLE_NAME).toBeDefined()
-  expect(process.env.CONFIRMATION_REQUIRED_STRING).toBeDefined()
-  expect(process.env.CONFIRMATION_REQUIRED).toBeDefined()
   expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
   expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
-  expect(process.env.AWS_REGION).toBeDefined()
 })
 
-describe('handler', () => {
-  test.each([
-    { details: 'it rejects on undefined user id', user: {} },
-    { details: 'it rejects on undefined group id', user: { id: dummyUserId } }
-  ])('.test $details', async ({ user }) => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [user]
-    })
+test.each([
+  { details: 'it rejects on undefined user id', groupId: 'group-id' },
+  { details: 'it rejects on undefined group id', id: 'id' }
+])('.test $details', async ({ id, groupId }) => {
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-    const response = await handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify({})
-    })
-
-    expect(response).toStrictEqual({
-      message: 'user or group cannot be found',
-      statusCode: 403
-    })
+  const connectionId = 'connectionId'
+  const response = await handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({})
   })
 
-  test.each([
-    { details: 'it throws on undefined bannedId', body: { messageid: 'messageId' } },
-    { details: 'it throws on undefined messageId', body: { bannedid: 'bannedId' } }
-  ])('.test $details', async ({ body }) => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [{ id: dummyUserId, group: dummyGroupId }]
-    })
+  expect(response).toEqual({
+    message: 'user or group cannot be found',
+    statusCode: 403
+  })
+})
 
-    await expect(handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify(body)
-    })).rejects.toThrow('bannedid and messageid must be defined')
+test.each([
+  { details: 'it throws on undefined bannedId', messageid: 'message-id' },
+  { details: 'it throws on undefined messageId', bannedid: 'banned-id' }
+])('.test $details', async ({ messageid, bannedid }) => {
+  const id = 'id'
+  const groupId = 'group-id'
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+
+  const connectionId = 'connectionId'
+  await expect(handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ messageid, bannedid })
+  })).rejects.toThrow('bannedid and messageid must be defined')
+})
+
+test('it rejects if user id and banned user id are the same', async () => {
+  const id = 'id'
+  const groupId = 'group-id'
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+
+  const connectionId = 'connectionId'
+  const response = await handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ bannedid: id, messageid: 'message-id' })
   })
 
-  test('it rejects if user id and bannedId are the same', async () => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [{ id: dummyUserId, group: dummyGroupId }]
-    })
+  expect(response).toEqual({
+    message: `user (${id}) tried to ban itself`,
+    statusCode: 403
+  })
+})
 
-    const response = await handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify({ bannedid: dummyUserId, messageid: 'messageId' })
-    })
+test.each([
+  { details: 'with groupId', bannedUser: { id: 'banned-user-id', groupId: 'group-id-2' } },
+  { details: 'with group', bannedUser: { id: 'banned-user-id', group: 'group-id-2' } }
+])('it rejects if banned user and user not in the same group ($details)', async ({ bannedUser }) => {
+  const id = 'id'
+  const groupId = 'group-id'
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-    expect(response).toStrictEqual({
-      message: `user (${dummyUserId}) tried to ban itself`,
-      statusCode: 403
-    })
+  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({ bannedUser, group: { id: groupId } })
+
+  // call handler
+  const connectionId = 'connectionId'
+  const response = await handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ bannedid: bannedUser.id, messageid: 'message-id' })
   })
 
-  test.each([
-    { details: 'with groupId', bannedUser: { id: dummyBannedId, groupId: `${dummyGroupId}-2` } },
-    { details: 'with group', bannedUser: { id: dummyBannedId, group: `${dummyGroupId}-2` } }
-  ])('it rejects if banned user and user not in the same group ($details)', async ({ bannedUser }) => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [{ id: dummyUserId, group: dummyGroupId }]
-    })
-    // banned user and group
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyBannedId }],
-          ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#groupId': 'groupId',
-            '#group': 'group', // for backward compatibility
-            '#connectionId': 'connectionId',
-            '#banConfirmedUsers': 'banConfirmedUsers'
-          }
-        },
-        [process.env.GROUPS_TABLE_NAME]: {
-          Keys: [{ id: dummyGroupId }],
-          ProjectionExpression: '#users',
-          ExpressionAttributeNames: {
-            '#users': 'users'
-          }
+  // expect
+  expect(response).toEqual({
+    message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group`,
+    statusCode: 403
+  })
+})
+
+test('it updates banned user if no new user in the vote', async () => {
+  const id = 'id'
+  const groupId = 'group-id'
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+
+  const bannedUserId = 'banned-user-id'
+  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({
+    bannedUser: { id: bannedUserId, groupId, banConfirmedUsers: new Set([id]) },
+    group: { id: groupId, users: new Set([id, bannedUserId]) }
+  })
+
+  // call handler
+  const connectionId = 'connectionId'
+  const response = await handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ bannedid: bannedUserId, messageid: 'message-id' })
+  })
+
+  // expect
+  expect(response).toStrictEqual({ statusCode: 200 })
+})
+
+test('it updates banned user if new user in the vote', async () => {
+  const id = 'id'
+  const groupId = 'group-id'
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+
+  const bannedUserId = 'banned-user-id'
+  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue({
+    bannedUser: { id: bannedUserId, groupId: groupId },
+    group: { id: groupId, users: new Set([id, bannedUserId]) }
+  })
+
+  // get users
+  const firebaseToken = 'firebase-token'
+  const connectionId = 'connection-id'
+  ddbMock.on(BatchGetCommand, {
+    RequestItems: {
+      [process.env.USERS_TABLE_NAME]: {
+        Keys: [{ id }],
+        ProjectionExpression: '#id, #connectionId, #firebaseToken',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken'
         }
       }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: [bannedUser],
-        [process.env.GROUPS_TABLE_NAME]: [{ id: dummyGroupId }]
-      }
-    })
-
-    // call handler
-    const response = await handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify({ bannedid: dummyBannedId, messageid: 'messageId' })
-    })
-
-    // expect
-    expect(response).toStrictEqual({
-      message: `user (${dummyUserId}) and banned user (${dummyBannedId}) are not in the same group`,
-      statusCode: 403
-    })
+    }
+  }).resolves({
+    Responses: {
+      [process.env.USERS_TABLE_NAME]: [{ id, connectionId, firebaseToken }]
+    }
   })
 
-  test('it updates banned user if no new user in the vote', async () => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [{ id: dummyUserId, group: dummyGroupId }]
-    })
-    // banned user and group
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyBannedId }],
-          ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#groupId': 'groupId',
-            '#group': 'group', // for backward compatibility
-            '#connectionId': 'connectionId',
-            '#banConfirmedUsers': 'banConfirmedUsers'
-          }
-        },
-        [process.env.GROUPS_TABLE_NAME]: {
-          Keys: [{ id: dummyGroupId }],
-          ProjectionExpression: '#users',
-          ExpressionAttributeNames: {
-            '#users': 'users'
-          }
-        }
-      }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: [{ id: dummyBannedId, groupId: dummyGroupId, banConfirmedUsers: new Set([dummyUserId]) }],
-        [process.env.GROUPS_TABLE_NAME]: [{ id: dummyGroupId, users: new Set([dummyUserId, dummyBannedId]) }]
-      }
-    })
-
-    // call handler
-    const response = await handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify({ bannedid: dummyBannedId, messageid: 'messageId' })
-    })
-
-    // expect
-    expect(response).toStrictEqual({ statusCode: 200 })
-    expect(ddbMock).toHaveReceivedNthCommandWith(3, UpdateCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      Key: { id: dummyBannedId },
-      UpdateExpression: `
-    
-    SET #confirmationRequired = :confirmationRequired
-    `,
-      ExpressionAttributeNames: {
-        '#confirmationRequired': 'confirmationRequired'
-      },
-      ExpressionAttributeValues: {
-        ':confirmationRequired': Math.min(process.env.CONFIRMATION_REQUIRED, 1) // groups.users.size - 1 = 2 - 1
-      }
-    })
+  // call handler
+  const response = await handler({
+    requestContext: { connectionId },
+    body: JSON.stringify({ bannedid: bannedUserId, messageid: 'message-id' })
   })
 
-  test('it updates banned user if new user in the vote', async () => {
-    // connection id to user
-    ddbMock.on(QueryCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
-      KeyConditionExpression: '#connectionId = :connectionId',
-      ExpressionAttributeNames: {
-        '#connectionId': 'connectionId'
-      },
-      ExpressionAttributeValues: {
-        ':connectionId': dummyConnectionId
-      }
-    }).resolves({
-      Count: 1,
-      Items: [{ id: dummyUserId, group: dummyGroupId }]
-    })
-    // banned user and group
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyBannedId }],
-          ProjectionExpression: '#id, #groupId, #connectionId, #banConfirmedUsers, #group',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#groupId': 'groupId',
-            '#group': 'group', // for backward compatibility
-            '#connectionId': 'connectionId',
-            '#banConfirmedUsers': 'banConfirmedUsers'
-          }
-        },
-        [process.env.GROUPS_TABLE_NAME]: {
-          Keys: [{ id: dummyGroupId }],
-          ProjectionExpression: '#users',
-          ExpressionAttributeNames: {
-            '#users': 'users'
-          }
-        }
-      }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: [{ id: dummyBannedId, groupId: dummyGroupId }],
-        [process.env.GROUPS_TABLE_NAME]: [{ id: dummyGroupId, users: new Set([dummyUserId, dummyBannedId]) }]
-      }
-    })
-    // get users
-    const dummyFirebaseToken = 'dummy-firebase-token'
-    ddbMock.on(BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyUserId }],
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    }).resolves({
-      Responses: {
-        [process.env.USERS_TABLE_NAME]: [{ id: dummyBannedId, connectionId: dummyConnectionId, firebaseToken: dummyFirebaseToken }]
-      }
-    })
-
-    // call handler
-    const response = await handler({
-      requestContext: {
-        connectionId: dummyConnectionId
-      },
-      body: JSON.stringify({ bannedid: dummyBannedId, messageid: 'messageId' })
-    })
-
-    // expect
-    expect(response).toStrictEqual({ statusCode: 200 })
-    expect(ddbMock).toHaveReceivedNthCommandWith(3, UpdateCommand, {
-      TableName: process.env.USERS_TABLE_NAME,
-      Key: { id: dummyBannedId },
-      UpdateExpression: `
+  // expect
+  expect(response).toStrictEqual({ statusCode: 200 })
+  expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id: bannedUserId },
+    UpdateExpression: `
     ADD #banVotingUsers :banNewVotingUsers
     SET #confirmationRequired = :confirmationRequired
     `,
-      ExpressionAttributeNames: {
-        '#confirmationRequired': 'confirmationRequired',
-        '#banVotingUsers': 'banVotingUsers'
-      },
-      ExpressionAttributeValues: {
-        ':confirmationRequired': Math.min(process.env.CONFIRMATION_REQUIRED, 1), // groups.users.size - 1 = 2 - 1
-        ':banNewVotingUsers': new Set([dummyUserId])
-      }
-    })
-    expect(ddbMock).toHaveReceivedNthCommandWith(4, BatchGetCommand, {
-      RequestItems: {
-        [process.env.USERS_TABLE_NAME]: {
-          Keys: [{ id: dummyUserId }],
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
+    ExpressionAttributeNames: {
+      '#confirmationRequired': 'confirmationRequired',
+      '#banVotingUsers': 'banVotingUsers'
+    },
+    ExpressionAttributeValues: {
+      ':confirmationRequired': Math.min(process.env.CONFIRMATION_REQUIRED, 1), // groups.users.size - 1 = 2 - 1
+      ':banNewVotingUsers': new Set([id])
+    }
+  })
+  expect(ddbMock).toHaveReceivedCommandWith(BatchGetCommand, {
+    RequestItems: {
+      [process.env.USERS_TABLE_NAME]: {
+        Keys: [{ id }],
+        ProjectionExpression: '#id, #connectionId, #firebaseToken',
+        ExpressionAttributeNames: {
+          '#id': 'id',
+          '#connectionId': 'connectionId',
+          '#firebaseToken': 'firebaseToken'
         }
       }
+    }
+  })
+  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
+    TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id, connectionId, firebaseToken }],
+      message: {
+        action: 'banrequest',
+        messageid: 'message-id'
+      }
     })
-    expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
-      TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: [{ id: dummyBannedId, connectionId: dummyConnectionId, firebaseToken: dummyFirebaseToken }],
-        message: {
-          action: 'banrequest',
-          messageid: 'messageId'
-        }
-      })
-    })
-    expect(snsMock).toHaveReceivedNthCommandWith(2, PublishCommand, {
-      TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: [{ id: dummyBannedId, connectionId: dummyConnectionId, firebaseToken: dummyFirebaseToken }],
-        notification: {
-          title: "Quelqu'un a mal agi ❌",
-          body: 'Viens donner ton avis !'
-        }
-      })
+  })
+  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
+    TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id, connectionId, firebaseToken }],
+      notification: {
+        title: "Quelqu'un a mal agi ❌",
+        body: 'Viens donner ton avis !'
+      }
     })
   })
 })
