@@ -22,18 +22,10 @@ const {
  */
 exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
   console.log('getGroupUsers with', groupId, fetchedUsers, forbiddenUserIds)
-  // validate arguments
-  if (typeof groupId !== 'string') {
-    throw new Error('groupId must be a string')
-  }
+  // set optional variables
+  const definedFetchedUsers = fetchedUsers ?? []
+  const definedForbiddenUserIds = forbiddenUserIds ?? new Set()
 
-  if (typeof fetchedUsers !== 'undefined' && !Array.isArray(fetchedUsers)) {
-    throw new Error('fetchedUsers must be an array')
-  }
-
-  if (typeof forbiddenUserIds !== 'undefined' && !(forbiddenUserIds instanceof Set)) {
-    throw new Error('forbiddenUserIds must be a set')
-  }
   // get group user ids
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -52,22 +44,22 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
 
   // define set of users to fetch
   const fetchedUserIds = new Set([])
-  for (const fetchedUserId of (fetchedUsers ?? [])) {
+  for (const fetchedUserId of (definedFetchedUsers)) {
     fetchedUserIds.add(fetchedUserId.id)
   }
 
   const groupUserIds = []
   for (const groupUserId of group.users) {
-    const isUserForbidden = (forbiddenUserIds ?? new Set()).has(groupUserId)
+    const isUserForbidden = (definedForbiddenUserIds).has(groupUserId)
     const isUserFetched = fetchedUserIds.has(groupUserId)
-    if (!isUserForbidden && !isUserFetched) {
+    if (!(isUserForbidden || isUserFetched)) {
       groupUserIds.push({ id: groupUserId })
     }
   }
 
   if (groupUserIds.length === 0) {
     // no new user to fetch
-    return fetchedUsers ?? []
+    return definedFetchedUsers
   }
 
   // get users
@@ -86,6 +78,6 @@ exports.getGroupUsers = async ({ groupId, fetchedUsers, forbiddenUserIds }) => {
 
   const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 
-  console.log('getGroupUsers returns', users.concat(fetchedUsers ?? []))
-  return users.concat(fetchedUsers ?? [])
+  console.log('getGroupUsers returns', users.concat(definedFetchedUsers))
+  return users.concat(definedFetchedUsers)
 }

@@ -16,7 +16,7 @@ const { SNSClient } = require('@aws-sdk/client-sns')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-// const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
+const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // BEFORE EACH
@@ -29,25 +29,12 @@ beforeEach(() => {
   snsMock.resolves({})
 
   // reset console
-//   log.mockReset()
+  log.mockReset()
 })
 
 test('it has environment variables', () => {
   expect(process.env.USERS_TABLE_NAME).toBeDefined()
   expect(process.env.GROUPS_TABLE_NAME).toBeDefined()
-})
-
-test.each([
-  { details: 'groupId undefined' },
-  { details: 'groupId not a string', groupId: 123, expectedError: 'groupId must be a string' },
-  { details: 'fetchedUsers not a array', groupId: 'group', fetchedUsers: { a: 1 }, expectedError: 'fetchedUsers must be an array' },
-  { details: 'forbiddenUserIds not a set', groupId: 'group', forbiddenUserIds: { a: 1 }, expectedError: 'forbiddenUserIds must be a set' }
-])('.it throws an error if $details', async ({ groupId, fetchedUsers, forbiddenUserIds, expectedError }) => {
-  await expect(getGroupUsers({
-    groupId,
-    fetchedUsers,
-    forbiddenUserIds
-  })).rejects.toThrow(expectedError)
 })
 
 test('it throws error if group is undefined', async () => {
