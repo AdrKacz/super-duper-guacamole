@@ -4,6 +4,8 @@ const { handler } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 const { generateKeyPairSync, createSign } = require('crypto')
 
+// ===== ==== ====
+// CONSTANTS
 const {
   DynamoDBDocumentClient,
   GetCommand, UpdateCommand,
@@ -14,6 +16,8 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
+
+const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
 // ===== ==== ====
 // HELPERS
@@ -56,13 +60,16 @@ function generateIdentity ({ id, timestamp } = {}) {
 }
 
 // ===== ==== ====
-// BEFORE
+// BEFORE EACH
 beforeEach(() => {
   ddbMock.reset()
   snsMock.reset()
 
   ddbMock.resolves({})
   snsMock.resolves({})
+
+  // reset console
+  log.mockReset()
 })
 
 // ===== ==== ====
@@ -191,7 +198,7 @@ test('it rejects on wrong signature', async () => {
   })
 })
 
-test('it register new user', async () => {
+test('it registers new user', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
   const dummyConnectionId = 'dummy-connection-id'

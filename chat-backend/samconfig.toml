@@ -15,7 +15,7 @@ s3_prefix = "sam-group-development"
 region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"1\" WebSocketThrottlingBurstLimit=\"1\" WebSocketThrottlingRateLimit=\"1\" ApiThrottlingBurstLimit=\"1\" ApiThrottlingRateLimit=\"1\" StageName=\"dev\""
+parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"1\" WebSocketThrottlingBurstLimit=\"3\" WebSocketThrottlingRateLimit=\"3\" ApiThrottlingBurstLimit=\"3\" ApiThrottlingRateLimit=\"3\" StageName=\"dev\""
 image_repositories = []
 
 [prod]
@@ -27,5 +27,5 @@ s3_prefix = "sam-group-production"
 region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"500\" WebSocketThrottlingRateLimit=\"500\" ApiThrottlingBurstLimit=\"500\" ApiThrottlingRateLimit=\"500\" StageName=\"prod\""
+parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"100\" WebSocketThrottlingRateLimit=\"100\" ApiThrottlingBurstLimit=\"100\" ApiThrottlingRateLimit=\"100\" StageName=\"prod\""
 image_repositories = []

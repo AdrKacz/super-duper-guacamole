@@ -43,6 +43,10 @@ module.exports = {
   coverageReporters: [
     'json',
     ['text', { skipFull: true }]
+  ],
+
+  modulePathIgnorePatterns: [
+    '/.aws-sam/'
   ]
 
   // An object that configures minimum threshold enforcement for coverage results
@@ -199,7 +203,11 @@ module.exports = {
 }
 
 process.env = Object.assign(process.env, {
-  USERS_TABLE_NAME: 'dummy-user-table-name',
-  GROUPS_TABLE_NAME: 'dummy-group-table-name',
-  SEND_MESSAGE_TOPIC_ARN: 'dummy-send-message-topic-arn'
+  USERS_TABLE_NAME: 'user-table-name',
+  USERS_CONNECTION_ID_INDEX_NAME: 'connection-id-index-name',
+  GROUPS_TABLE_NAME: 'group-table-name',
+  SEND_MESSAGE_TOPIC_ARN: 'send-message-topic-arn',
+  SEND_NOTIFICATION_TOPIC_ARN: 'send-notification-topic-arn',
+  SWITCH_GROUP_TOPIC_ARN: 'switch-group-topic-arn',
+  AWS_REGION: 'aws-region'
 })
