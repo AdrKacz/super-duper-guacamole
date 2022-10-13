@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ErrorPage extends StatelessWidget {
   const ErrorPage({Key? key, required this.refresh}) : super(key: key);
@@ -19,7 +20,7 @@ class ErrorPage extends StatelessWidget {
                 const SizedBox(
                   height: 24,
                 ),
-                const Text("Oups ! Il y a quelque chose d'anormal.",
+                Text(AppLocalizations.of(context)!.somethingWentWrong,
                     textAlign: TextAlign.center),
                 const SizedBox(
                   height: 24,

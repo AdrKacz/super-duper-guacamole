@@ -9,6 +9,7 @@ import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'package:pointycastle/export.dart';
 import 'package:http/http.dart' as http;
@@ -145,9 +146,8 @@ class User {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-                title: const Text('Je ne peux pas faire cette action 😔'),
-                content: const Text(
-                    'Ouvre les paramètres de ton téléphone et donne moi les autorisations nécessaires.'),
+                title: Text(AppLocalizations.of(context)!.iCannotDoThisAction),
+                content: Text(AppLocalizations.of(context)!.pleaseUpdateSettings),
                 actions: <Widget>[
                   TextButton(
                       child: const Text('Ouvrir les paramètres'),
@@ -189,13 +189,13 @@ class User {
         onPressed: () {
           Navigator.pop(context, 'camera');
         },
-        child: const Text('Prendre une photo'),
+        child: Text(AppLocalizations.of(context)!.takeAPhoto),
       ),
       SimpleDialogOption(
         onPressed: () {
           Navigator.pop(context, 'gallery');
         },
-        child: const Text('Choisir une photo'),
+        child: Text(AppLocalizations.of(context)!.choseAPhoto),
       ),
     ];
 
@@ -206,7 +206,7 @@ class User {
             onPressed: () {
               Navigator.pop(context, 'memory');
             },
-            child: Text('Envoyer la photo déjà enregistrée',
+            child: Text(AppLocalizations.of(context)!.sendSavedPhoto,
                 style: TextStyle(color: onPrimaryColor)),
           ));
     }

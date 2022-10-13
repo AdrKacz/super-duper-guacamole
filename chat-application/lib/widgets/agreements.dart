@@ -1,6 +1,7 @@
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Agreements extends StatelessWidget {
   const Agreements({Key? key, required this.nextAppStatus}) : super(key: key);
@@ -10,8 +11,8 @@ class Agreements extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AgreementsPage(
-      nextText: 'Suivant',
-      checkText: "J'ai pris connaissance de la politique de confidentialité",
+      nextText: AppLocalizations.of(context)!.next,
+      checkText: AppLocalizations.of(context)!.iHaveReadTheConfidentialityPolicy,
       url:
           'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/privacy-policy/fr',
       onNextPressed: () {
@@ -19,9 +20,8 @@ class Agreements extends StatelessWidget {
           context,
           MaterialPageRoute(
               builder: (context) => AgreementsPage(
-                  nextText: "C'est parti !",
-                  checkText:
-                      "J'ai lu et j'accepte les conditions générales d'utilisations",
+                  nextText: AppLocalizations.of(context)!.letsGo,
+                  checkText: AppLocalizations.of(context)!.iReadAndAcceptTheUserConditions,
                   url:
                       'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr',
                   onNextPressed: () {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SwitchActionButton extends StatelessWidget {
   const SwitchActionButton(
@@ -11,7 +12,7 @@ class SwitchActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isChatting) {
       return IconButton(
-          tooltip: 'Changer de groupe',
+          tooltip: AppLocalizations.of(context)!.changeGroup,
           onPressed: onPressed,
           icon: const Icon(Icons.door_front_door_outlined));
     } else {

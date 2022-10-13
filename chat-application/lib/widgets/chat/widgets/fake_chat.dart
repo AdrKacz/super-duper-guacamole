@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FakeChat extends StatelessWidget {
   const FakeChat({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class FakeChat extends StatelessWidget {
             const SizedBox(
               height: 24,
             ),
-            const Text('Continue pour changer de groupe !',
+            Text(AppLocalizations.of(context)!.continueToChangeGroup,
                 textAlign: TextAlign.center),
           ],
         ),

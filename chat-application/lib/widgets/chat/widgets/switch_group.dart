@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SwitchGroupPage extends StatelessWidget {
   const SwitchGroupPage({Key? key}) : super(key: key);
@@ -16,9 +17,7 @@ class SwitchGroupPage extends StatelessWidget {
             const SizedBox(
               height: 24,
             ),
-            const Text(
-              """Je te cherche un groupe.                
-Je t'envoie une notification quand j'ai trouvé.""",
+            Text(AppLocalizations.of(context)!.iMLookingForAFittingGroup,
               textAlign: TextAlign.center,
             ),
             const SizedBox(
