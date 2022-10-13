@@ -4,6 +4,7 @@ import 'package:awachat/widgets/questions.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // ===== ===== =====
 // Drawer
@@ -26,19 +27,18 @@ class UserDrawer extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Attention'),
-          content: const SingleChildScrollView(
-            child: Text(
-                'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
+          content: SingleChildScrollView(
+            child: Text(AppLocalizations.of(context)!.areYouSureYouWantToDeleteYourData),
           ),
           actions: [
             TextButton(
-              child: const Text('Non'),
+              child: Text(AppLocalizations.of(context)!.no),
               onPressed: () {
                 Navigator.pop(context, 'nothing');
               },
             ),
             TextButton(
-              child: const Text('Oui'),
+              child: Text(AppLocalizations.of(context)!.yes),
               onPressed: () {
                 Navigator.pop(context, 'confirmed');
               },
@@ -65,8 +65,8 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.question_mark_rounded),
-            title: const Text('Questions'),
-            subtitle: const Text("Quel est ton état d'esprit ?"),
+            title: Text(AppLocalizations.of(context)!.questions),
+            subtitle: Text(AppLocalizations.of(context)!.whatIsYourMindset),
             onTap: () {
               Navigator.push(
                 context,
@@ -78,8 +78,8 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.public),
-            title: const Text('Partage ta photo'),
-            subtitle: const Text('Seul ton groupe pourra le voir'),
+            title: Text(AppLocalizations.of(context)!.shareYourPhoto),
+            subtitle: Text(AppLocalizations.of(context)!.onlyYourGroupCanSeeIt),
             onTap: () {
               User().shareProfile(context).then((value) => {update()});
             },
@@ -87,14 +87,13 @@ class UserDrawer extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.nature),
-            title: const Text(
-              'Je veux revoir la présentation',
+            title: Text(AppLocalizations.of(context)!.iWantToSeeThePresentationAgain,
             ),
             onTap: seeIntroduction,
           ),
           ListTile(
             leading: const Icon(Icons.copyright),
-            title: const Text('Sources'),
+            title: Text(AppLocalizations.of(context)!.sources),
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => const Credits()));
@@ -102,7 +101,7 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),
-            title: const Text('Nous contacter'),
+            title: Text(AppLocalizations.of(context)!.contactUs),
             onTap: () async {
               if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
                 throw 'Could not launch https://awa-chat.me/contact/';
@@ -112,8 +111,7 @@ class UserDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.delete_forever,
                 color: Theme.of(context).colorScheme.onError),
-            title: Text(
-              'Réinitialiser mon compte',
+            title: Text(AppLocalizations.of(context)!.resetMyAccount,
               style: TextStyle(color: Theme.of(context).colorScheme.onError),
             ),
             onTap: () async {
@@ -156,7 +154,7 @@ class _CreditsState extends State<Credits> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sources'),
+        title: Text(AppLocalizations.of(context)!.sources),
       ),
       body: FutureBuilder(
         future: text,

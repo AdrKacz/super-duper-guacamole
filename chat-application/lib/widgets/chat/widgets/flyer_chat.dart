@@ -1,4 +1,3 @@
-import 'package:awachat/l10n/flyer_l10n.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/widgets/flyer_user_avatar.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,6 @@ class FlyerChat extends StatelessWidget {
       showUserNames: true,
       showUserAvatars: true,
       isTextMessageTextSelectable: false,
-      l10n: const ChatL10nFr(),
       messages: messages,
       onSendPressed: onSendPressed,
       onMessageLongPress: onMessageLongPress,

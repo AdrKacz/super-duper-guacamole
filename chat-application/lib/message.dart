@@ -12,6 +12,7 @@ import 'dart:math';
 import 'dart:convert';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 String randomString() {
   final random = Random.secure();
@@ -65,58 +66,52 @@ Future<String?> reportActionOnMessage(BuildContext context) async {
       context: context,
       builder: (BuildContext context) {
         return SimpleDialog(
-          title: const Text('Que souhaites-tu faire avec ce message ?'),
+          title: Text(AppLocalizations.of(context)!.whatDoYouWantToDoWithThisMessage),
           children: <Widget>[
             SimpleDialogOption(
               onPressed: () {
                 alertInfo(context,
                     argString: 'hasSeenBanInformation',
                     popAction: 'ban',
-                    info: const Text("""Tu vas lancer un vote.
-
-Toutes les personnes présentes, sauf la personne ciblée, pourront accepter ou refuser ta proposition.
-
-Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans un autre groupe."""),
-                    acceptString: 'Ok',
-                    refuseString: 'Ne pas bannir');
+                    info: Text(AppLocalizations.of(context)!.youWillStartAVote),
+                    acceptString: AppLocalizations.of(context)!.ok,
+                    refuseString: AppLocalizations.of(context)!.doNotBan);
               },
-              child: const Text("Bannir la personne qui l'a écrit"),
+              child: Text(AppLocalizations.of(context)!.banWhoeverWroteThisMessage),
             ),
             SimpleDialogOption(
               onPressed: () {
                 Navigator.pop(context, 'report');
               },
-              child: const Text('Signaler le message'),
+              child: Text(AppLocalizations.of(context)!.reportThisMessage),
             ),
             SimpleDialogOption(
               onPressed: () {
                 alertInfo(context,
                     argString: 'hasSeenDeleteInformation',
                     popAction: 'delete',
-                    info: const Text(
-                        'Le message ne sera supprimé que chez toi. Les autres personnes du groupe pourront toujours le voir.'),
-                    acceptString: 'Ok',
-                    refuseString: 'Ne pas supprimer');
+                    info: Text(AppLocalizations.of(context)!.thisMessageWillBeDeletedOnlyForYou),
+                    acceptString: AppLocalizations.of(context)!.ok,
+                    refuseString: AppLocalizations.of(context)!.doNotDelete);
               },
-              child: const Text('Supprimer le message'),
+              child: Text(AppLocalizations.of(context)!.deleteThisMessage),
             ),
             SimpleDialogOption(
               onPressed: () {
                 alertInfo(context,
                     argString: 'hasSeenBlockInformation',
                     popAction: 'block',
-                    info: const Text(
-                        'Tu vas changer de groupe. Tu ne seras plus avec cette personne dans tes prochains groupes.'),
-                    acceptString: 'Ok',
-                    refuseString: 'Ne pas bloquer');
+                    info: Text(AppLocalizations.of(context)!.youWillChangeGroup),
+                    acceptString: AppLocalizations.of(context)!.ok,
+                    refuseString: AppLocalizations.of(context)!.doNotBlock);
               },
-              child: const Text("Bloquer la personne qui l'a écrit"),
+              child: Text(AppLocalizations.of(context)!.blockThePersonWhoWroteIt),
             ),
             SimpleDialogOption(
               onPressed: () {
                 Navigator.pop(context, 'nothing');
               },
-              child: const Text('Rien'),
+              child: Text(AppLocalizations.of(context)!.nothing),
             ),
           ],
         );
@@ -135,20 +130,19 @@ Future<String?> banActionOnMessage(
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-              'Souhaites-tu bannir du groupe la personne qui a écrit ce message ?'),
+          title: Text(AppLocalizations.of(context)!.doYouWantToBanTheOneWhoWroteThisMessage),
           content: SingleChildScrollView(
             child: Text(message.toJson()['text'], textAlign: TextAlign.center),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Non'),
+              child: Text(AppLocalizations.of(context)!.no),
               onPressed: () {
                 Navigator.pop(context, 'denied');
               },
             ),
             TextButton(
-              child: const Text('Oui'),
+              child: Text(AppLocalizations.of(context)!.yes),
               onPressed: () {
                 Navigator.pop(context, 'confirmed');
               },

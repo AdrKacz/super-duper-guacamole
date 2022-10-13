@@ -3,6 +3,7 @@ import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/store/memory.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 // ===== ===== =====
 // First Time Questions Loader
@@ -24,10 +25,7 @@ class FirstTimeQuestionsLoader extends StatelessWidget {
                 children: [
                   Image.asset('assets/images/decision-questions.gif'),
                   const Divider(height: 48),
-                  const Text(
-                      '''Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
-                      
-Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
+                  Text(AppLocalizations.of(context)!.toFindTheRightGroupForYou,
                       textAlign: TextAlign.center),
                   const Divider(height: 48),
                   ElevatedButton(
@@ -40,7 +38,7 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                       );
                       onConfirmed();
                     },
-                    child: const Text('Répondre aux questions'),
+                    child: Text(AppLocalizations.of(context)!.answerTheQuestions),
                   ),
                   const SizedBox(
                     height: 12,
@@ -51,7 +49,7 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                       primary: Theme.of(context).colorScheme.secondary,
                       onPrimary: Theme.of(context).colorScheme.onSecondary,
                     ),
-                    child: const Text('Ne pas répondre'),
+                    child: Text(AppLocalizations.of(context)!.iPreferNotToAnswer),
                   ),
                 ],
               ),
@@ -351,7 +349,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                   primary: Theme.of(context).colorScheme.secondary,
                   onPrimary: Theme.of(context).colorScheme.onSecondary,
                 ),
-          child: const Text('Je valide !'),
+          child: Text(AppLocalizations.of(context)!.validate),
         ),
       ),
     );
@@ -364,13 +362,13 @@ void showConfirmDialog(BuildContext context) async {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-            title: const Text("J'ai bien enregistré tes réponses"),
+            title: Text(AppLocalizations.of(context)!.iSavedYourAnswers),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('Ok'),
+                child: Text(AppLocalizations.of(context)!.ok),
               ),
             ]);
       });

@@ -14,6 +14,7 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'widgets/fake_chat.dart';
 
@@ -107,7 +108,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     String title = '';
     List<Widget> actions = [
       TextButton(
-        child: const Text('Ok'),
+        child: Text(AppLocalizations.of(context)!.ok),
         onPressed: () {
           Navigator.of(context).pop();
         },
@@ -119,7 +120,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text("Tu t'es fait banir de ton groupe"),
+              title: Text(AppLocalizations.of(context)!.youGotBanned),
               actions: actions,
             );
           });
@@ -132,11 +133,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     switch (status) {
       case 'confirmed':
-        title = 'La personne est banie de ton groupe';
+        title = AppLocalizations.of(context)!.thisPersonWasBannedFromYourGroup;
         actions.insert(
             0,
             TextButton(
-              child: const Text('Supprimer tous ses messages'),
+              child: Text(AppLocalizations.of(context)!.removeAllHisMessages),
               onPressed: () {
                 final List<types.Message> messagesToRemove = [];
                 for (final types.Message e in _messages.values) {
@@ -154,7 +155,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
         break;
       case 'denied':
-        title = "La personne n'est pas banie de ton groupe";
+        title = AppLocalizations.of(context)!.thisPersonWasntBanned;
         break;
       default:
         return;
@@ -373,22 +374,20 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: users.length > 1
-            ? const Text('De nouveaux utilisateurs rejoignent le groupe')
-            : const Text('Un nouvel utilisateur rejoins le groupe'),
+            ? Text(AppLocalizations.of(context)!.newUsersHaveJoinedTheGroup)
+            : Text(AppLocalizations.of(context)!.aNewUserJoinedTheGroup),
         content: users.length > 1
-            ? const Text(
-                'Les nouveaux utilisateurs ne peuvent pas voir la photo que tu as déjà partagé.')
-            : const Text(
-                'Le nouvel utilisateur ne peux pas voir la photo que tu as déjà partagé.'),
+            ? Text(AppLocalizations.of(context)!.newUsersCantSeeThePhotoYouShared)
+            : Text(AppLocalizations.of(context)!.theNewUserCantSeeThePhotoYouShared),
         actions: [
           TextButton(
-            child: const Text('Re-partager ma photo'),
+            child: Text(AppLocalizations.of(context)!.shareMyPhotoAgain),
             onPressed: () {
               Navigator.of(context).pop('share-profile');
             },
           ),
           TextButton(
-            child: const Text('Ok'),
+            child: Text(AppLocalizations.of(context)!.ok),
             onPressed: () {
               Navigator.of(context).pop();
             },
@@ -432,23 +431,23 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                   child: User.getUserImage(userId),
                 ),
               ),
-              content: const Text("Quelqu'un partage son identité !"),
+              content: Text(AppLocalizations.of(context)!.someoneSharedHisIdentity),
               actions: [
                 TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Ok')),
+                    child: Text(AppLocalizations.of(context)!.ok)),
                 TextButton(
                     onPressed: () {
                       Navigator.of(context).pop('share-profile');
                     },
-                    child: const Text('Je partage aussi mon profil !')),
+                    child: Text(AppLocalizations.of(context)!.iWantToShareMyProfileToo)),
                 TextButton(
                     onPressed: () {
                       Navigator.of(context).pop('report');
                     },
-                    child: Text('Je signale la photo',
+                    child: Text(AppLocalizations.of(context)!.iReportThePhoto,
                         style: TextStyle(
                             color: Theme.of(context).colorScheme.onSecondary))),
               ]);

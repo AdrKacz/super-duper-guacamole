@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class Presentation extends StatelessWidget {
   const Presentation({Key? key, required this.nextAppStatus}) : super(key: key);
@@ -8,49 +9,40 @@ class Presentation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final slides = <Widget>[
-      const Slide(
-        text: """Salut, je suis Awa.
-        
-Je vais te présenter l'application.""",
+      Slide(
+        text: AppLocalizations.of(context)!.hiImAwa,
         assetPath: 'assets/images/astronaut-suit.gif',
       ),
-      const Slide(
-          text: """Je vais te faire entrer dans un groupe de conversation.
-
-Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
+      Slide(
+          text: AppLocalizations.of(context)!.iWillTakeYouToAGroup,
           assetPath: 'assets/images/chat.gif'),
       CustomSlide(
           assetPath: 'assets/images/outer-space.gif',
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(
-                    text: '''Tu ne seras que dans un groupe à la fois.
-          
-'''),
+                TextSpan(
+                    text: AppLocalizations.of(context)!.youCanBeInOnlyAGroupAtATime),
                 TextSpan(
                     text: 'Swipe',
                     style: TextStyle(
                         color: Theme.of(context).colorScheme.onPrimary,
                         fontWeight: FontWeight.bold)),
-                const TextSpan(text: ' vers la gauche ou touche la '),
+                TextSpan(text: AppLocalizations.of(context)!.toLeftOrTouchHere),
                 const WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
-                const TextSpan(
-                    text:
-                        ' en haut à droite de ton écran pour partir explorer un autre groupe.')
+                  TextSpan(
+                    text:AppLocalizations.of(context)!.onTopRightToExploreAnotherGroup)
               ],
             ),
             textAlign: TextAlign.center,
           )),
-      const Slide(
-          text: """Si un message t'offense, reste appuyé dessus.
-
-Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
+        Slide(
+          text: AppLocalizations.of(context)!.ifYouAreOffendedHoldDownAMessage,
           assetPath: 'assets/images/taken.gif'),
       SlideWithButton(
-        text: 'Hâte de te faire de nouveaux potes ?',
+        text: AppLocalizations.of(context)!.readyToMeetSomeNewFriends,
         assetPath: 'assets/images/launching.gif',
-        buttonText: "C'est parti !",
+        buttonText: AppLocalizations.of(context)!.letsGo,
         onPressed: () {
           nextAppStatus();
         },
