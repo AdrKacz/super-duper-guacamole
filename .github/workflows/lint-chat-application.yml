@@ -1,6 +1,6 @@
-# This is a workflow to check syntax on JavaScript
+# Chat Application Linter
 
-name: Flutter Application Linter
+name: Chat Application Linter
 
 # Controls when the workflow will run
 on:
