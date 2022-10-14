@@ -37,13 +37,13 @@ final applicationTheme = ThemeData(
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      primary: primary,
-      onPrimary: secondary,
+      backgroundColor: primary,
+      foregroundColor: secondary,
     ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
-      primary: primary,
+      foregroundColor: primary,
     ),
   ),
 );

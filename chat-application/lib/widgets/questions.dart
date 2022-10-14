@@ -48,8 +48,9 @@ Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
                   ElevatedButton(
                     onPressed: onConfirmed,
                     style: ElevatedButton.styleFrom(
-                      primary: Theme.of(context).colorScheme.secondary,
-                      onPrimary: Theme.of(context).colorScheme.onSecondary,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
                     ),
                     child: const Text('Ne pas répondre'),
                   ),
@@ -285,9 +286,9 @@ class DefaultQuestion extends StatelessWidget {
                                   )
                                 : ElevatedButton.styleFrom(
                                     minimumSize: const Size.fromHeight(100),
-                                    primary:
+                                    backgroundColor:
                                         Theme.of(context).colorScheme.secondary,
-                                    onPrimary: Theme.of(context)
+                                    foregroundColor: Theme.of(context)
                                         .colorScheme
                                         .onSecondary,
                                   ),
@@ -348,8 +349,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                 )
               : ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(100),
-                  primary: Theme.of(context).colorScheme.secondary,
-                  onPrimary: Theme.of(context).colorScheme.onSecondary,
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
                 ),
           child: const Text('Je valide !'),
         ),
