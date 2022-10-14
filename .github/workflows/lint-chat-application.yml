@@ -1,6 +1,6 @@
 # Chat Application Linter
 
-name: Chat Application Linter
+name: Lint Chat Application
 
 # Controls when the workflow will run
 on:
