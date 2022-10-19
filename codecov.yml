@@ -1,9 +1,16 @@
-coverage:
-  status:
-    project:
-      default:
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - type: project
         target: auto
         threshold: 1%
-    patch:
-      default:
+      - type: patch
         target: 100%
+  individual_flags:
+    - name: chat-backend
+      paths:
+        - chat-backend/
+    - name: chat-application
+      paths:
+        - chat-application/
