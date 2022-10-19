@@ -36,3 +36,7 @@ jobs:
       - name: Chat Application - Run Test
         working-directory: ./chat-application
         run: flutter test --coverage
+      # - name: Chat Application - Upload coverage reports to Codecov with GitHub Action
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     flags: chat-application
