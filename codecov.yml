@@ -16,6 +16,6 @@ flag_management:
     - name: chat-backend
       paths:
         - chat-backend/
-    # - name: chat-application
-    #   paths:
-    #     - chat-application/
+    - name: chat-application
+      paths:
+        - chat-application/
