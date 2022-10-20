@@ -26,7 +26,7 @@ class FlyerChat extends StatelessWidget {
       ),
       showUserNames: true,
       showUserAvatars: true,
-      isTextMessageTextSelectable: false,
+      textMessageOptions: const TextMessageOptions(isTextSelectable: false),
       l10n: const ChatL10nFr(),
       messages: messages,
       onSendPressed: onSendPressed,

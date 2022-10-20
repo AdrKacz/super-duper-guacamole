@@ -12,6 +12,7 @@ class ChatL10nFr extends ChatL10n {
     String fileButtonAccessibilityLabel = 'Fichier',
     String inputPlaceholder = 'Awa',
     String sendButtonAccessibilityLabel = 'Envoyer',
+    String unreadMessagesLabel = 'Message non lu',
   }) : super(
           attachmentButtonAccessibilityLabel:
               attachmentButtonAccessibilityLabel,
@@ -19,5 +20,6 @@ class ChatL10nFr extends ChatL10n {
           fileButtonAccessibilityLabel: fileButtonAccessibilityLabel,
           inputPlaceholder: inputPlaceholder,
           sendButtonAccessibilityLabel: sendButtonAccessibilityLabel,
+          unreadMessagesLabel: unreadMessagesLabel,
         );
 }
