@@ -1,3 +1,6 @@
+/coverage/
+/test/coverage_helper_test.dart
+
 # Miscellaneous
 *.class
 *.log

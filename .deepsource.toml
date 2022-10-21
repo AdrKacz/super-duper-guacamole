@@ -36,13 +36,6 @@ enabled = true
   module_system = "commonjs"
   style_guide = "standard"
 
-[[analyzers]]
-name = "python"
-enabled = true
-
-  [analyzers.meta]
-  runtime_version = "3.x.x"
-
 [[transformers]]
 name = "black"
 enabled = true

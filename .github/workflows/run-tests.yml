@@ -1,0 +1,47 @@
+# This is a workflow to run test on Front End and Back End and upload coverage
+
+name: Run Tests
+
+# Controls when the workflow will run
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  chat-backend-test:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v3
+      - name: Chat Backend- Install modules 
+        working-directory: ./chat-backend
+        run: yarn
+      - name: Chat Backend- Run Test
+        working-directory: ./chat-backend
+        run: yarn test
+      - name: Chat Backend- Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v3
+        with:
+          flags: chat-backend
+  chat-application-test:
+      runs-on: ubuntu-latest
+      steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+      - name: Chat Application - Get Packages
+        working-directory: ./chat-application
+        run: flutter pub get
+      - name: Chat Application - Add All Files In Coverage
+        working-directory: ./chat-application
+        shell: bash
+        run: |
+          sh ../scripts/add-all-files-in-chat-application-coverage/main.sh awachat
+      - name: Chat Application - Run Test
+        working-directory: ./chat-application
+        run: flutter test --coverage
+      - name: Chat Application - Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v3
+        with:
+          flags: chat-application
