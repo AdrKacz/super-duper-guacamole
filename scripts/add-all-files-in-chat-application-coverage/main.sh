@@ -1,3 +1,5 @@
+#! /bin/sh
+
 file=test/coverage_helper_test.dart
 echo "// More details: https://github.com/flutter/flutter/issues/27997"
 {
