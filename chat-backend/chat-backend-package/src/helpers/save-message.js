@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('../clients/aws-clients')
 
