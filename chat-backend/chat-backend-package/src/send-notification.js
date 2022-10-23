@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { messaging } = require('./.clients/firebase-clients')
+const { messaging } = require('./clients/firebase-clients')
 
 // ===== ==== ====
 // EXPORTS

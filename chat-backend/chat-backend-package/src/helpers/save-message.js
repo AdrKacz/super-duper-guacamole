@@ -2,7 +2,7 @@
 // IMPORTS
 const { UpdateCommand } = require('@aws-sdk/lib-dynamodb')
 
-const { dynamoDBDocumentClient } = require('../.clients/aws-clients')
+const { dynamoDBDocumentClient } = require('../clients/aws-clients')
 
 // ===== ==== ====
 // CONSTANTS

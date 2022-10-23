@@ -2,7 +2,7 @@
 // IMPORTS
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb')
 
-const { dynamoDBDocumentClient } = require('./.clients/aws-clients')
+const { dynamoDBDocumentClient } = require('./clients/aws-clients')
 
 const {
   USERS_TABLE_NAME,

@@ -2,8 +2,8 @@
 // IMPORTS
 const { PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi')
 
-const { apiGatewayManagementApiClient } = require('./.clients/aws-clients')
-const { saveMessage } = require('./.helpers/save-message')
+const { apiGatewayManagementApiClient } = require('./clients/aws-clients')
+const { saveMessage } = require('./helpers/save-message')
 
 // ===== ==== ====
 // EXPORTS

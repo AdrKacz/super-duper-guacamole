@@ -5,9 +5,6 @@
   "main": "index.js",
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
-  "devDependencies": {
-    "@types/node": "^18.11.3"
-  },
   "dependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.194.0",
     "@aws-sdk/client-dynamodb": "^3.194.0",
