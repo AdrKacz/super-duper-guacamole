@@ -39,6 +39,10 @@ sh assets/convert.sh 512 image
 
 > **WARNING**: update **minSdkVersion** supported from **flutter.minSdkVersion *16*** to **19** to support `firebase_messaging`
 
+> **WARNING**: update **compileSdkVersion** supported from **flutter.compileSdkVersion *31*** to **33** to support `firebase_messaging`
+
+> **WARNING**: update **targetSdkVersion** supported from **flutter.targetSdkVersion *31*** to **33** to support `firebase_messaging`
+
 ## Change App Package Name
 
 [**Change app package name**](https://pub.dev/packages/change_app_package_name)

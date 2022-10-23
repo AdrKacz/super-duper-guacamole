@@ -33,24 +33,3 @@ AWA lets you explore its code and hope you will enjoy!
 
 **Feel free to open an _ISSUE_ for anything you thing should be improved or fixed.**
 
-# Codebase
-
-<details><summary>CLOC command</summary>
-<p>
-
-```sh
-# macOS: brew install cloc
-$ cloc --config=options.txt .
-```
-</p>
-</details>
-
-Language|files|blank %|comment %|code
-:-------|-------:|-------:|-------:|-------:
-Dart|21|11.57|6.49|2126
-JavaScript|16|18.44|27.23|1741
-YAML|10|6.89|8.22|1204
-Python|11|22.95|42.63|889
-Markdown|12|35.00|0.00|880
-**SUM:**|**70**|**16.99**|**15.94**|**6840**
-
