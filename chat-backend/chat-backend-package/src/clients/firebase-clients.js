@@ -1,7 +1,7 @@
 // ===== ==== ====
 // IMPORTS
-const { initializeApp, cert } = require('firebase-admin/app')
-const { getMessaging } = require('firebase-admin/messaging')
+const { initializeApp, cert } = require('firebase-admin/app') // skipcq: JS-0260
+const { getMessaging } = require('firebase-admin/messaging') // skipcq: JS-0260
 
 const { FIREBASE_SERVICE_ACCOUNT_KEY } = process.env
 

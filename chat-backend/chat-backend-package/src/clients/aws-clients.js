@@ -1,8 +1,8 @@
 // ===== ==== ====
 // IMPORTS
-const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb')
-const { ApiGatewayManagementApiClient } = require('@aws-sdk/client-apigatewaymanagementapi')
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { ApiGatewayManagementApiClient } = require('@aws-sdk/client-apigatewaymanagementapi') // skipcq: JS-0260
 
 const {
   WEB_SOCKET_ENDPOINT,
@@ -12,7 +12,7 @@ const {
 // ===== ==== ====
 // CONSTANTS
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
-const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT)
+const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT) // skipcq: JS-0269
 
 // ===== ==== ====
 // EXPORTS

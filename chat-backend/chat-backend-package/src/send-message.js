@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi')
+const { PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi') // skipcq: JS-0260
 
 const { apiGatewayManagementApiClient } = require('./clients/aws-clients')
 const { saveMessage } = require('./helpers/save-message')
