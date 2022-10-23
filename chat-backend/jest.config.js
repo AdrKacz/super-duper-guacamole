@@ -203,11 +203,12 @@ module.exports = {
 }
 
 process.env = Object.assign(process.env, {
+  AWS_REGION: 'aws-region',
   USERS_TABLE_NAME: 'user-table-name',
   USERS_CONNECTION_ID_INDEX_NAME: 'connection-id-index-name',
   GROUPS_TABLE_NAME: 'group-table-name',
+  WEB_SOCKET_ENDPOINT: 'https://web-socket-endpoint.com',
   SEND_MESSAGE_TOPIC_ARN: 'send-message-topic-arn',
   SEND_NOTIFICATION_TOPIC_ARN: 'send-notification-topic-arn',
-  SWITCH_GROUP_TOPIC_ARN: 'switch-group-topic-arn',
-  AWS_REGION: 'aws-region'
+  SWITCH_GROUP_TOPIC_ARN: 'switch-group-topic-arn'
 })
