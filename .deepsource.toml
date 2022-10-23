@@ -10,7 +10,6 @@ enabled = true
 
   [analyzers.meta]
   dependency_file_paths = [
-    "artillery/",
     "chat-backend/",
     "chat-backend/.dependencies/aws-sdk-api/nodejs/",
     "chat-backend/.dependencies/aws-sdk-ddb/nodejs/",

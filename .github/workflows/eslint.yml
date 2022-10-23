@@ -9,7 +9,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  eslint:
+  eslint-chat-backend:
       runs-on: ubuntu-latest
       steps:
       - uses: actions/checkout@v3
@@ -18,10 +18,4 @@ jobs:
         run: yarn
       - name: Run ESLint - Chat Backend
         working-directory: ./chat-backend
-        run: yarn run eslint .
-      - name: Install modules - Artillery
-        working-directory: ./artillery
-        run: yarn
-      - name: Run ESLint - Artillery
-        working-directory: ./artillery
         run: yarn run eslint .
