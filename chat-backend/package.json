@@ -21,7 +21,8 @@
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.2.0",
-    "jest": "^28.1.1"
+    "jest": "^28.1.1",
+    "firebase-admin": "^11.2.0"
   },
   "license": "SEE LICENSE IN /LICENSE"
 }

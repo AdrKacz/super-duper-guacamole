@@ -23,8 +23,8 @@ beforeEach(() => {
 
   ddbMock.resolves({})
 
-  // reset console
-  log.mockReset()
+  // clear console
+  log.mockClear()
 })
 
 // ===== ==== ====

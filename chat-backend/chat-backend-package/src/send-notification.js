@@ -16,6 +16,10 @@ const { messaging } = require('./clients/firebase-clients')
  * @return {id: string, groupId: string}
  */
 exports.sendNotification = async (users, { title, body }) => {
+  if (!Array.isArray(users)) {
+    throw new Error('users must be an array')
+  }
+
   if (typeof title !== 'string' || typeof body !== 'string') {
     throw new Error('notification.title and notification.body must be strings')
   }

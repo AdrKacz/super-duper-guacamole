@@ -26,8 +26,8 @@ beforeEach(() => {
 
   apiMock.resolves({})
 
-  // reset console
-  log.mockReset()
+  // clear console
+  log.mockClear()
 })
 
 // ===== ==== ====
