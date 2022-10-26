@@ -40,7 +40,7 @@ test.each([
   await expect(sendMessage({ id }, message)).rejects.toThrow(errorMessage)
 })
 
-test('it save message if no connectionId', async () => {
+test('it saves message if no connectionId', async () => {
   await sendMessage({ id: 'id' }, { action: 'action' })
 
   expect(saveMessageModule.saveMessage).toHaveBeenCalledTimes(1)
