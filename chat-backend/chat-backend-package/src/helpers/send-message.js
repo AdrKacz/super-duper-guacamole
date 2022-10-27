@@ -2,13 +2,13 @@
 // IMPORTS
 const { PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi') // skipcq: JS-0260
 
-const { apiGatewayManagementApiClient } = require('./clients/aws-clients')
-const { saveMessage } = require('./helpers/save-message')
+const { apiGatewayManagementApiClient } = require('../clients/aws-clients')
+const { saveMessage } = require('./save-message')
 
 // ===== ==== ====
 // EXPORTS
 /**
- * Get user from its connectionId
+ * Send message to an user via WebSocket
  *
  * @param {Object} user
  * @param {string} user.id
@@ -16,18 +16,14 @@ const { saveMessage } = require('./helpers/save-message')
  * @param {Object} message
  * @param {string} message.action
  */
-exports.sendMessage = async ({ id, connectionId }, message) => {
+exports.sendMessage = async ({ user: { id, connectionId }, message }) => {
   if (typeof id !== 'string') {
     throw new Error('user.id must be a string')
   }
 
-  if (typeof message !== 'object' || typeof message.action !== 'string') {
-    throw new Error('message.action must be a string')
-  }
-
   if (typeof connectionId !== 'string') {
     console.log(`user (${id}) has no connectionId`)
-    saveMessage({ id }, message)
+    saveMessage({ user: { id }, message })
     return
   }
 
@@ -41,6 +37,6 @@ exports.sendMessage = async ({ id, connectionId }, message) => {
     .send(postToConnectionCommand)
     .catch(async (err) => {
       console.log(`error sending message to (${id}, ${connectionId})`, err)
-      await saveMessage({ id }, message)
+      await saveMessage({ user: { id }, message })
     })
 }

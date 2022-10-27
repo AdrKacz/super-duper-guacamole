@@ -11,14 +11,14 @@ const { USERS_TABLE_NAME } = process.env
 // ===== ==== ====
 // EXPORTS
 /**
- * Get user from its connectionId
+ * Save message for an user
  *
  * @param {Object} user
  * @param {string} user.id
  * @param {Object} message
  * @param {string} message.action
  */
-exports.saveMessage = async ({ id }, message) => {
+exports.saveMessage = async ({ user: { id }, message }) => {
   if (typeof id !== 'string') {
     throw new Error('user.id must be a string')
   }

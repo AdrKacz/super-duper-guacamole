@@ -5,7 +5,7 @@ const { messaging } = require('./clients/firebase-clients')
 // ===== ==== ====
 // EXPORTS
 /**
- * Get user from its connectionId
+ * Send notification to a users via Firebase
  *
  * @param {Object[]} users
  * @param {string?} users[].firebaseToken
@@ -15,7 +15,7 @@ const { messaging } = require('./clients/firebase-clients')
  *
  * @return {id: string, groupId: string}
  */
-exports.sendNotification = async (users, { title, body }) => {
+exports.sendNotifications = async ({ users, notification: { title, body } }) => {
   if (!Array.isArray(users)) {
     throw new Error('users must be an array')
   }

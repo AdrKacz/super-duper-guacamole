@@ -16,9 +16,9 @@ const {
  *
  * @param {string} connectionId
  *
- * @return {Promise<{id: string, groupId: string}>}
+ * @return {Promise<User>}
  */
-exports.getUser = async (connectionId) => {
+exports.getUser = async ({ connectionId }) => {
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
