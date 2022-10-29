@@ -28,6 +28,9 @@ beforeEach(() => {
 
 // ===== ==== ====
 // TESTS
+test('it throws error when connectionId is not a string', async () => {
+  await expect(getUser({ connectionId: 1 })).rejects.toThrow('connectionId must be a string')
+})
 test.each([
   { details: 'it returns user', items: [{ id: 'id', groupId: 'group-id' }], expected: { id: 'id', groupId: 'group-id' } },
   { details: 'it returns an empty object if no user found', items: [], expected: {} },

@@ -19,6 +19,10 @@ const {
  * @return {Promise<User>}
  */
 exports.getUser = async ({ connectionId }) => {
+  if (typeof connectionId !== 'string') {
+    throw new Error('connectionId must be a string')
+  }
+
   const queryCommand = new QueryCommand({
     TableName: USERS_TABLE_NAME,
     IndexName: USERS_CONNECTION_ID_INDEX_NAME,
