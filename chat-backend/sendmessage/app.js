@@ -15,10 +15,6 @@
 // message: Map<String,String>
 //      action : String - action performed
 
-// NOTE:
-// could take connectionIds as input to not retrieve it twice
-// need to be linked with userids in case some are undefined or stales
-
 // ===== ==== ====
 // IMPORTS
 const { ApiGatewayManagementApiClient, PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi') // skipcq: JS-0260

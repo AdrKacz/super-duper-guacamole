@@ -21,6 +21,7 @@ enabled = true
     "chat-backend/actions/register/",
     "chat-backend/actions/switchgroup/",
     "chat-backend/actions/textmessage/",
+    "chat-backend/chat-backend-package/",
     "chat-backend/handle-inactive-users/",
     "chat-backend/http/put/share-profile/",
     "chat-backend/put-firebase-token/",
@@ -29,7 +30,7 @@ enabled = true
     "chat-backend/storeunreaddata/",
     "chat-backend/switchgroup/",
     "content-moderation/",
-    "scripts/", 
+    "scripts/",  
   ]
   environment = ["nodejs"]
   module_system = "commonjs"
