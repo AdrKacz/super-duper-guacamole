@@ -9,6 +9,8 @@ Globals:
       Variables:
         USERS_TABLE_NAME: !Ref UsersTable
         GROUPS_TABLE_NAME: !Ref GroupsTable
+        USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+        USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
 
 Description: >
   sam-group
@@ -78,6 +80,9 @@ Resources:
         - 
           AttributeName: "connectionId"
           AttributeType: "S"
+        - 
+          AttributeName: "groupId"
+          AttributeType: "S"
       KeySchema:
         -
           AttributeName: "id"
@@ -93,6 +98,17 @@ Resources:
             NonKeyAttributes:
               - "group"
               - "groupId"
+            ProjectionType: "INCLUDE"
+        -
+          IndexName: "GroupIdIndex"
+          KeySchema:
+            -
+              AttributeName: "groupId"
+              KeyType: "HASH"
+          Projection:
+            NonKeyAttributes:
+              - "connectionId"
+              - "firebaseToken"
             ProjectionType: "INCLUDE"
 
   GroupsTable:
