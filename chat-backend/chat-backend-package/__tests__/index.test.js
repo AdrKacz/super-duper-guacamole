@@ -38,7 +38,7 @@ beforeEach(() => {
 
 // ===== ==== ====
 // TESTS
-test('it has all dependencies', async () => {
+test('it has all dependencies', () => {
   expect(JSON.stringify(indexModule)).toBe(JSON.stringify({
     getGroup: {},
     getUser: {},
