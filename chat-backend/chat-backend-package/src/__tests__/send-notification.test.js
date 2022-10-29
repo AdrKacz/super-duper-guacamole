@@ -1,12 +1,12 @@
 // ===== ==== ====
 // IMPORTS
-const { sendNotification } = require('../src/send-notification')
+const { sendNotifications } = require('../send-notifications')
 
-const firebaseClientsModule = require('../src/clients/firebase-clients')
+const firebaseClientsModule = require('../clients/firebase-clients')
 
 // ===== ==== ====
 // CONSTANTS
-jest.mock('../src/clients/firebase-clients', () => ({
+jest.mock('../clients/firebase-clients', () => ({
   messaging: {
     sendMulticast: jest.fn()
   }
@@ -28,13 +28,13 @@ test.each([
   { details: 'notification.title undefined', users: [], body: 'body', errorMessage: 'notification.title and notification.body must be strings' },
   { details: 'notification.body undefined', users: [], title: 'title', errorMessage: 'notification.title and notification.body must be strings' }
 ])('.test it throws when $details', async ({ users, title, body, errorMessage }) => {
-  await expect(sendNotification(users, { title, body })).rejects.toThrow(errorMessage)
+  await expect(sendNotifications({ users, notification: { title, body } })).rejects.toThrow(errorMessage)
 })
 
 test('it notifies users', async () => {
   firebaseClientsModule.messaging.sendMulticast.mockResolvedValue(Promise.resolve())
 
-  await sendNotification([{ firebaseToken: 'firebaseToken' }], { title: 'title', body: 'body' })
+  await sendNotifications({ users: [{ firebaseToken: 'firebaseToken' }], notification: { title: 'title', body: 'body' } })
 
   expect(firebaseClientsModule.messaging.sendMulticast).toHaveBeenCalledTimes(1)
   expect(firebaseClientsModule.messaging.sendMulticast).toHaveBeenCalledWith({

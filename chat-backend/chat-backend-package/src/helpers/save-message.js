@@ -23,10 +23,6 @@ exports.saveMessage = async ({ user: { id }, message }) => {
     throw new Error('user.id must be a string')
   }
 
-  if (typeof message !== 'object' || typeof message.action !== 'string') {
-    throw new Error('message.action must be a string')
-  }
-
   const updateCommand = new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },

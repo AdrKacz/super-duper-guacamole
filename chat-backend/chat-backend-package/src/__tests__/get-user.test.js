@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { getUser } = require('../src/get-user')
+const { getUser } = require('../get-user')
 const { mockClient } = require('aws-sdk-client-mock')
 
 const {
@@ -51,7 +51,7 @@ test.each([
     Items: items
   })
 
-  const response = await getUser(connectionId)
+  const response = await getUser({ connectionId })
 
   expect(response).toEqual(expected)
 })

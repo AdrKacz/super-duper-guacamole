@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { saveMessage } = require('../src/helpers/save-message')
+const { saveMessage } = require('../save-message')
 const { mockClient } = require('aws-sdk-client-mock')
 
 const {
@@ -28,17 +28,15 @@ beforeEach(() => {
 
 // ===== ==== ====
 // TESTS
-test.each([
-  { details: 'id undefined', message: { action: 'action' }, errorMessage: 'user.id must be a string' },
-  { details: 'message undefined', id: 'id', errorMessage: 'message.action must be a string' },
-  { details: 'message.action undefined', id: 'id', message: {}, errorMessage: 'message.action must be a string' }
-])('.test it throws when $details', async ({ id, message, errorMessage }) => {
-  await expect(saveMessage({ id }, message)).rejects.toThrow(errorMessage)
+test('it throws when id undefined', async () => {
+  await expect(saveMessage({
+    user: {}, message: { action: 'action' }
+  })).rejects.toThrow('user.id must be a string')
 })
 
 test('it saves message', async () => {
   ddbMock.on(UpdateCommand).resolves()
-  await saveMessage({ id: 'id' }, { action: 'action' })
+  await saveMessage({ user: { id: 'id' }, message: { action: 'action' } })
 
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,

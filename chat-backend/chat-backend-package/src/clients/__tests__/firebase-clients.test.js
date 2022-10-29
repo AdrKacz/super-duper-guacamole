@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const firebaseClientsModule = require('../src/clients/firebase-clients')
+const firebaseClientsModule = require('../firebase-clients')
 
 // ===== ==== ====
 // CONSTANTS

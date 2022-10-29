@@ -13,6 +13,10 @@ const { getGroupMetadata } = require('./helpers/get-group-metadata')
  * @return {Promise<{group: Group, users: User[]>}
  */
 exports.getGroupUsers = async ({ groupId }) => {
+  if (typeof groupId !== 'string') {
+    throw new Error('groupId must be a string')
+  }
+
   const [group, users] = Promise.all([
     getGroupMetadata({ groupId }),
     getGroupUsers({ groupId })

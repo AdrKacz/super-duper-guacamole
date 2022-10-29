@@ -1,9 +1,9 @@
 // ===== ==== ====
 // IMPORTS
-const { sendMessage } = require('../src/send-message')
+const { sendMessage } = require('../send-message')
 const { mockClient } = require('aws-sdk-client-mock')
 
-const saveMessageModule = require('../src/helpers/save-message')
+const saveMessageModule = require('../save-message')
 
 const {
   ApiGatewayManagementApiClient,
@@ -14,7 +14,7 @@ const {
 // CONSTANTS
 const apiMock = mockClient(ApiGatewayManagementApiClient)
 
-jest.mock('../src/helpers/save-message')
+jest.mock('../save-message')
 
 const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
@@ -32,25 +32,23 @@ beforeEach(() => {
 
 // ===== ==== ====
 // TESTS
-test.each([
-  { details: 'id undefined', message: { action: 'action' }, errorMessage: 'user.id must be a string' },
-  { details: 'message undefined', id: 'id', errorMessage: 'message.action must be a string' },
-  { details: 'message.action undefined', id: 'id', message: {}, errorMessage: 'message.action must be a string' }
-])('.test it throws when $details', async ({ id, message, errorMessage }) => {
-  await expect(sendMessage({ id }, message)).rejects.toThrow(errorMessage)
+test('it throws when id undefined', async () => {
+  await expect(sendMessage({
+    user: {}, message: { action: 'action' }
+  })).rejects.toThrow('user.id must be a string')
 })
 
 test('it saves message if no connectionId', async () => {
-  await sendMessage({ id: 'id' }, { action: 'action' })
+  await sendMessage({ user: { id: 'id' }, message: { action: 'action' } })
 
   expect(saveMessageModule.saveMessage).toHaveBeenCalledTimes(1)
-  expect(saveMessageModule.saveMessage).toHaveBeenCalledWith({ id: 'id' }, { action: 'action' })
+  expect(saveMessageModule.saveMessage).toHaveBeenCalledWith({ user: { id: 'id' }, message: { action: 'action' } })
 })
 
 test('it posts to connection', async () => {
   apiMock.on(PostToConnectionCommand).resolves()
 
-  await sendMessage({ id: 'id', connectionId: 'connectionId' }, { action: 'action' })
+  await sendMessage({ user: { id: 'id', connectionId: 'connectionId' }, message: { action: 'action' } })
 
   expect(saveMessageModule.saveMessage).toHaveBeenCalledTimes(0)
 
@@ -63,8 +61,8 @@ test('it posts to connection', async () => {
 test('it saves if error while posting to connection', async () => {
   apiMock.on(PostToConnectionCommand).rejects()
 
-  await sendMessage({ id: 'id', connectionId: 'connectionId' }, { action: 'action' })
+  await sendMessage({ user: { id: 'id', connectionId: 'connectionId' }, message: { action: 'action' } })
 
   expect(saveMessageModule.saveMessage).toHaveBeenCalledTimes(1)
-  expect(saveMessageModule.saveMessage).toHaveBeenCalledWith({ id: 'id' }, { action: 'action' })
+  expect(saveMessageModule.saveMessage).toHaveBeenCalledWith({ user: { id: 'id' }, message: { action: 'action' } })
 })
