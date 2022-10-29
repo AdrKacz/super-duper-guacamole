@@ -4,6 +4,7 @@ const { sendMessage } = require('../send-message')
 const { mockClient } = require('aws-sdk-client-mock')
 
 const saveMessageModule = require('../save-message')
+jest.mock('../save-message')
 
 const {
   ApiGatewayManagementApiClient,
@@ -13,8 +14,6 @@ const {
 // ===== ==== ====
 // CONSTANTS
 const apiMock = mockClient(ApiGatewayManagementApiClient)
-
-jest.mock('../save-message')
 
 const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 

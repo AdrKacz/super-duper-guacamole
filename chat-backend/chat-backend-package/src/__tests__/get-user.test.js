@@ -36,7 +36,14 @@ test.each([
 ])('.test $details', async ({ items, expected }) => {
   const connectionId = 'connection-id'
 
-  ddbMock.on(QueryCommand, {
+  ddbMock.on(QueryCommand).resolves({
+    Count: items.length,
+    Items: items
+  })
+
+  const response = await getUser({ connectionId })
+
+  expect(ddbMock).toHaveReceivedCommandWith(QueryCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     IndexName: process.env.USERS_CONNECTION_ID_INDEX_NAME,
     KeyConditionExpression: '#connectionId = :connectionId',
@@ -46,12 +53,6 @@ test.each([
     ExpressionAttributeValues: {
       ':connectionId': connectionId
     }
-  }).resolves({
-    Count: items.length,
-    Items: items
   })
-
-  const response = await getUser({ connectionId })
-
   expect(response).toEqual(expected)
 })
