@@ -12,10 +12,11 @@ const { sendMessage } = require('./helpers/send-message')
  * @param {string?} users[].connectionId
  * @param {Object} message
  * @param {string} message.action
+ * @param {string?} [useSaveMessage=true] - save message if cannot send it
  *
  * @return {id: string, groupId: string}
  */
-exports.sendMessages = async ({ users, message }) => {
+exports.sendMessages = async ({ users, message, useSaveMessage = true }) => {
   if (!Array.isArray(users)) {
     throw new Error('users must be an array')
   }
@@ -25,6 +26,6 @@ exports.sendMessages = async ({ users, message }) => {
   }
 
   await Promise.allSettled(users.map((user) => (
-    sendMessage({ user, message })
+    sendMessage({ user, message, useSaveMessage })
   ))).then((results) => (console.log(results)))
 }

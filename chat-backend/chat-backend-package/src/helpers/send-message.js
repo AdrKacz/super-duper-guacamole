@@ -15,10 +15,15 @@ const { saveMessage } = require('./save-message')
  * @param {string?} user.connectionId
  * @param {Object} message
  * @param {string} message.action
+ * @param {string} useSaveMessage - save message if cannot send it
  */
-exports.sendMessage = async ({ user: { id, connectionId }, message }) => {
+exports.sendMessage = async ({ user: { id, connectionId }, message, useSaveMessage }) => {
   if (typeof id !== 'string') {
     throw new Error('user.id must be a string')
+  }
+
+  if (typeof useSaveMessage !== 'boolean') {
+    throw new Error('useSaveMessage must be a boolean')
   }
 
   if (typeof connectionId !== 'string') {
@@ -37,6 +42,8 @@ exports.sendMessage = async ({ user: { id, connectionId }, message }) => {
     .send(postToConnectionCommand)
     .catch(async (err) => {
       console.log(`error sending message to (${id}, ${connectionId})`, err)
-      await saveMessage({ user: { id }, message })
+      if (useSaveMessage) {
+        await saveMessage({ user: { id }, message })
+      }
     })
 }
