@@ -1,6 +1,6 @@
 // ===== ==== ====
 // EXPORTS
-exports.getGroupUsers = require('./src/get-group-users')
+exports.getGroup = require('./src/get-group')
 exports.getUser = require('./src/get-user')
-exports.sendMessage = require('./src/send-message')
-exports.sendNotification = require('./src/send-notification')
+exports.sendMessages = require('./src/send-messages')
+exports.sendNotifications = require('./src/send-notifications')
