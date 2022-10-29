@@ -15,7 +15,7 @@ const { sendMessage } = require('./helpers/send-message')
  *
  * @return {id: string, groupId: string}
  */
-exports.sendNotifications = async ({ users, message }) => {
+exports.sendMessages = async ({ users, message }) => {
   if (!Array.isArray(users)) {
     throw new Error('users must be an array')
   }
