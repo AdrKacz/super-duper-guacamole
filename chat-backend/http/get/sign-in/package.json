@@ -1,0 +1,12 @@
+{
+  "name": "sign-in",
+  "version": "1.0.0",
+  "description": "Sign user in",
+  "main": "app.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1",
+    "package": "file:../../../chat-backend-package"
+  }
+}
