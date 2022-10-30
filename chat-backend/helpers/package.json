@@ -1,0 +1,11 @@
+{
+  "name": "helpers",
+  "version": "1.0.0",
+  "description": "Helpers function",
+  "main": "index.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "scripts": {
+    "gkp": "node generate-key-pair"
+  }
+}
