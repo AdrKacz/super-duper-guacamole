@@ -4,5 +4,8 @@
   "description": "Send message to other group users",
   "main": "app.js",
   "author": "AdrKacz",
-  "license": "SEE LICENSE IN /LICENSE"
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "package": "file:../../../chat-backend-package"
+  }
 }
