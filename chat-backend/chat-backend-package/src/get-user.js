@@ -1,48 +1,37 @@
 // ===== ==== ====
 // IMPORTS
-const { QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('./clients/aws-clients')
 
-const {
-  USERS_TABLE_NAME,
-  USERS_CONNECTION_ID_INDEX_NAME
-} = process.env
+const { USERS_TABLE_NAME } = process.env
 
 // ===== ==== ====
 // EXPORTS
 /**
- * Get user from its connectionId
+ * Get user from its id
  *
- * @param {string} connectionId
+ * @param {string} id
  *
  * @return {Promise<User>}
  */
-exports.getUser = async ({ connectionId }) => {
-  if (typeof connectionId !== 'string') {
-    throw new Error('connectionId must be a string')
+exports.getUser = async ({ id }) => {
+  if (typeof id !== 'string') {
+    throw new Error('id must be a string')
   }
 
-  const queryCommand = new QueryCommand({
+  const getCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    IndexName: USERS_CONNECTION_ID_INDEX_NAME,
-    KeyConditionExpression: '#connectionId = :connectionId',
+    Key: { id },
+    ProjectionExpression: '#id, #groupId',
     ExpressionAttributeNames: {
-      '#connectionId': 'connectionId'
-    },
-    ExpressionAttributeValues: {
-      ':connectionId': connectionId
+      '#id': 'id',
+      '#groupId': 'groupId'
     }
   })
-  const user = await dynamoDBDocumentClient.send(queryCommand).then((response) => {
-    console.log('Query Response:', response)
-    if (response.Count > 0) {
-      return response.Items[0]
-    }
-    return {}
-  })
+  const user = await dynamoDBDocumentClient.send(getCommand).then((response) => (response.Item))
 
-  if (typeof user.id === 'undefined') {
+  if (typeof user === 'undefined' || typeof user.id === 'undefined') {
     return {}
   }
   return { id: user.id, groupId: user.groupId }
