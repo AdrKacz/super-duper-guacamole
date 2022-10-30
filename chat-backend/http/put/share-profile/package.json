@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "Share profile to other users",
   "main": "src/app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
