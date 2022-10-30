@@ -13,9 +13,9 @@ Globals:
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
 
 Description: >
-  sam-group
+  Awa
 
-  Manage users and their conversation in groups
+  Users, groups
 
 Parameters:
   MinimumGroupSize:
@@ -139,6 +139,82 @@ Resources:
               - "questions"
               - "bannedUsers"
             ProjectionType: "INCLUDE"
+
+  # HTTP API
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Auth:
+        Authorizers:
+          DefaultAuthorizer: OAuth2Authorizer
+          OAuth2Authorizer:
+            JwtConfiguration:
+              issuer: "???"
+              audience:
+                - user
+            IdentitySource: "$request.querystring.param"
+  
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub 'AwaWebSocketApi:${StageName}'
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  WebSocketDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn:
+    - LogInRoute
+    Properties:
+      ApiId: !Ref WebSocketApi
+
+  WebSocketStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: !Ref StageName
+      DeploymentId: !Ref WebSocketDeployment
+      ApiId: !Ref WebSocketApi
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
+        ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
+
+  LogInRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref WebSocketApi
+      RouteKey: login
+      AuthorizationType: NONE
+      Target: !Sub 'integrations/${LogInIntegration}'
+  LogInIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLogInFunction.Arn}/invocations'
+    
+  WebSocketLogInFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: websocket/log-in/
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+
+  WebSocketLogInFunctionPermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - WebSocketApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketLogInFunction
+      Principal: apigateway.amazonaws.com
+
+  WebSocketLogInFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${WebSocketLogInFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+          
 
   # Web Socket
   SimpleChatWebSocket:
