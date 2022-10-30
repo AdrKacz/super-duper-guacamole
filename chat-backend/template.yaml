@@ -144,77 +144,112 @@ Resources:
   HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: !Ref ApiThrottlingBurstLimit
+        ThrottlingRateLimit: !Ref ApiThrottlingRateLimit
       Auth:
+        DefaultAuthorizer: OAuth2Authorizer
         Authorizers:
-          DefaultAuthorizer: OAuth2Authorizer
           OAuth2Authorizer:
             JwtConfiguration:
-              issuer: "???"
+              issuer: "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers/jwks.json"
               audience:
                 - user
             IdentitySource: "$request.querystring.param"
-  
-  # WebSocketApi:
-  #   Type: AWS::ApiGatewayV2::Api
-  #   Properties:
-  #     Name: !Sub 'AwaWebSocketApi:${StageName}'
-  #     ProtocolType: WEBSOCKET
-  #     RouteSelectionExpression: "$request.body.action"
 
-  # WebSocketDeployment:
-  #   Type: AWS::ApiGatewayV2::Deployment
-  #   DependsOn:
-  #   - LogInRoute
-  #   Properties:
-  #     ApiId: !Ref WebSocketApi
+  HttpPutSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/sign-up
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /sign-up
+            Method: PUT
+            Auth:
+              Authorizer: NONE
 
-  # WebSocketStage:
-  #   Type: AWS::ApiGatewayV2::Stage
-  #   Properties:
-  #     StageName: !Ref StageName
-  #     DeploymentId: !Ref WebSocketDeployment
-  #     ApiId: !Ref WebSocketApi
-  #     DefaultRouteSettings:
-  #       ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
-  #       ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
+  HttpPutSignUpLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutSignUpFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
-  # LogInRoute:
+  HttpPutSignInFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/sign-in
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /sign-in
+            Method: PUT
+            Auth:
+              Authorizer: NONE
+
+  HttpPutSignInLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutSignInFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  HttpGetStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/get/status
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /status
+            Method: GET
+            Auth:
+              Authorizer: OAuth2Authorizer
+
+  HttpGetStatusLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpGetStatusFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # HttpGetStatusRoute:
   #   Type: AWS::ApiGatewayV2::Route
   #   Properties:
-  #     ApiId: !Ref WebSocketApi
-  #     RouteKey: login
-  #     AuthorizationType: NONE
-  #     Target: !Sub 'integrations/${LogInIntegration}'
-  # LogInIntegration:
+  #     ApiId: !Ref HttpApi
+  #     RouteKey: GET /status
+  #     Target: !Sub 'integrations/${HttpGetStatusIntegration}'
+      
+  # HttpGetStatusIntegration:
   #   Type: AWS::ApiGatewayV2::Integration
   #   Properties:
-  #     ApiId: !Ref WebSocketApi
+  #     ApiId: !Ref HttpApi
   #     IntegrationType: AWS_PROXY
-  #     IntegrationUri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketLogInFunction.Arn}/invocations'
-    
-  # WebSocketLogInFunction:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     CodeUri: websocket/log-in/
-  #     Policies:
-  #     - DynamoDBCrudPolicy:
-  #         TableName: !Ref UsersTable
-
-  # WebSocketLogInFunctionPermission:
+  #     IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${HttpGetStatusFunction.Arn}/invocations
+      
+  # HttpGetStatusPermission:
   #   Type: AWS::Lambda::Permission
   #   DependsOn:
-  #     - WebSocketApi
+  #     - HttpApi
   #   Properties:
   #     Action: lambda:InvokeFunction
-  #     FunctionName: !Ref WebSocketLogInFunction
+  #     FunctionName: !Ref HttpGetStatusFunction
   #     Principal: apigateway.amazonaws.com
-
-  # WebSocketLogInFunctionLogGroup:
-  #   Type: AWS::Logs::LogGroup
-  #   Properties:
-  #     LogGroupName: !Sub '/aws/lambda/${WebSocketLogInFunction}'
-  #     RetentionInDays: !Ref LogRetentionInDays
-          
 
   # Web Socket
   SimpleChatWebSocket:
@@ -827,9 +862,13 @@ Outputs:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
 
-  HttpURI:
+  HttpURILegacy:
     Description: "The HTTPS API URI to connect to"
     Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
+
+  HttpURI:
+    Description: "The HTTPS API URI to connect to"
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

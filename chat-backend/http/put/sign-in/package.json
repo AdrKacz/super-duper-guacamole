@@ -6,7 +6,6 @@
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
-    "jsonwebtoken": "^8.5.1",
-    "package": "file:../../../chat-backend-package"
+    "jsonwebtoken": "^8.5.1"
   }
 }

@@ -7,8 +7,6 @@ const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb') // skipcq: J
 
 const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { sendMessages } = require('file:../../../chat-backend-package')
-
 const { createVerify } = require('crypto')
 
 const jwt = require('jsonwebtoken')
@@ -132,6 +130,7 @@ exports.handler = async (event) => {
   }
 
   // create token
+  // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
   // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html
   const jwtToken = jwt.sign({ id }, privateKey, {
     algorithm: 'RS256',
@@ -139,15 +138,11 @@ exports.handler = async (event) => {
     expiresIn: 15 * 60,
     notBefore: 0,
     audience: 'user',
-    issuer: '???'
+    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers/jwks.json'
   })
 
-  await sendMessages({
-    users: [{ id, connectionId: event.requestContext.connectionId }],
-    message: {
-      action: 'sign-in',
-      jwtToken
-    },
-    useSaveMessage: false
-  })
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ jwtToken })
+  }
 }
