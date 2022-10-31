@@ -152,10 +152,10 @@ Resources:
         Authorizers:
           OAuth2Authorizer:
             JwtConfiguration:
-              issuer: "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers/jwks.json"
+              issuer: "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers"
               audience:
                 - user
-            IdentitySource: "$request.querystring.param"
+            IdentitySource: "$request.header.Authorization"
 
   HttpPutSignUpFunction:
     Type: AWS::Serverless::Function

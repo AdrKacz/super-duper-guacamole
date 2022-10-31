@@ -134,11 +134,11 @@ exports.handler = async (event) => {
   // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html
   const jwtToken = jwt.sign({ id }, privateKey, {
     algorithm: 'RS256',
-    keyid: 'key',
+    keyid: 'id-01',
     expiresIn: 15 * 60,
     notBefore: 0,
     audience: 'user',
-    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers/jwks.json'
+    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers'
   })
 
   return {
