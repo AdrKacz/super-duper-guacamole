@@ -132,6 +132,7 @@ exports.handler = async (event) => {
   // create token
   // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
   // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html
+  // https://accounts.google.com/.well-known/openid-configuration
   const jwtToken = jwt.sign({ id }, privateKey, {
     algorithm: 'RS256',
     keyid: 'id-01',
