@@ -4,5 +4,9 @@
   "description": "Sign user up",
   "main": "app.js",
   "author": "AdrKacz",
-  "license": "SEE LICENSE IN /LICENSE"
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.199.0",
+    "@aws-sdk/lib-dynamodb": "^3.199.0"
+  }
 }

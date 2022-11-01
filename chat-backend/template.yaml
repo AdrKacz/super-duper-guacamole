@@ -219,8 +219,6 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /status
             Method: GET
-            Auth:
-              Authorizer: OAuth2Authorizer
 
   HttpGetStatusLogGroup:
     Type: AWS::Logs::LogGroup
