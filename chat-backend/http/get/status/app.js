@@ -2,27 +2,26 @@
 
 // ===== ==== ====
 // IMPORTS
-// const { getGroup, getUser } = require('file:../../../chat-backend-package')
+const { getGroup, getUser } = require('chat-backend-package')
 
 /**
  * Get user status
  *
  * @param {Object} event
  */
-exports.handler = async (_event) => {
+exports.handler = async (event) => {
+  const jwt = event.requestContext.authorizer.jwt.claims
+
+  const { id, groupId } = await getUser({ id: jwt.id })
+
+  let group, users
+  if (typeof groupId === 'string') {
+    ({ group, users } = await getGroup({ groupId }))
+  }
+
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: 'test-1234' })
+    body: JSON.stringify({ id, group, users })
   }
-
-  // const testId = '1234' // TODO: use real id provided by Auth
-  // const { id, groupId } = await getUser({ id: testId })
-  // const { group, users } = await getGroup({ groupId })
-
-  // return {
-  //   statusCode: 200,
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ id, group, users })
-  // }
 }

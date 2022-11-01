@@ -6,6 +6,6 @@
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
-    "package": "file:../../../chat-backend-package"
+    "chat-backend-package": "file:../../../chat-backend-package"
   }
 }
