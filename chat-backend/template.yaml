@@ -250,12 +250,12 @@ Resources:
           Properties:
             ApiId: !Ref HttpApi
             Path: /text-message
-            Method: GET
+            Method: POST
 
   HttpPostTextMessageLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${HttpPostMessageFunction}'
+      LogGroupName: !Sub '/aws/lambda/${HttpPostTextMessageFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   # Web Socket

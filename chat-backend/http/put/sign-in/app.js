@@ -113,6 +113,7 @@ exports.handler = async (event) => {
   if (typeof isBanned === 'boolean' && isBanned) {
     return {
       statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'you are banned' })
     }
   }
@@ -125,6 +126,7 @@ exports.handler = async (event) => {
   if (!isVerified) {
     return {
       statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'signature is not valid' })
     }
   }

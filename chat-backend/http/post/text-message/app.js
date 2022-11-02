@@ -7,7 +7,7 @@ const {
   getUser,
   sendMessages,
   sendNotifications
-} = require('file:../../../chat-backend-package')
+} = require('chat-backend-package')
 
 /**
  * Send text message to group users
@@ -16,17 +16,29 @@ const {
  * @param {string} event.message
  */
 exports.handler = async (event) => {
-  if (typeof event.message !== 'string') {
+  const body = JSON.parse(event.body)
+  const message = body.message
+
+  if (typeof message !== 'string') {
     return { statusCode: 400 }
   }
 
   const jwt = event.requestContext.authorizer.jwt.claims
 
   const { id, groupId } = await getUser({ id: jwt.id })
+
+  if (typeof groupId !== 'string') {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you don\'t have a group' })
+    }
+  }
+
   const { group, users } = await getGroup({ groupId })
 
   await Promise.all([
-    sendMessages({ users, message: event.message, useSaveMessage: true }),
+    sendMessages({ users, message, useSaveMessage: true }),
     sendNotifications({
       users,
       notification: {
@@ -39,6 +51,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id, group, users })
+    body: JSON.stringify({ id, group, message })
   }
 }
