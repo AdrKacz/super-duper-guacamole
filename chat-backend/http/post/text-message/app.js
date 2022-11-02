@@ -19,8 +19,10 @@ exports.handler = async (event) => {
   if (typeof event.message !== 'string') {
     return { statusCode: 400 }
   }
-  const testId = '1234' // TODO: use real id provided by Auth
-  const { id, groupId } = await getUser({ id: testId })
+
+  const jwt = event.requestContext.authorizer.jwt.claims
+
+  const { id, groupId } = await getUser({ id: jwt.id })
   const { group, users } = await getGroup({ groupId })
 
   await Promise.all([

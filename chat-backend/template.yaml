@@ -231,6 +231,33 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpGetStatusFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  HttpPostTextMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/post/text-message
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /text-message
+            Method: GET
+
+  HttpPostTextMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPostMessageFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
   # Web Socket
   SimpleChatWebSocket:
     Type: AWS::ApiGatewayV2::Api
