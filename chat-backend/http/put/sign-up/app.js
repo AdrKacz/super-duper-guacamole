@@ -15,6 +15,8 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(
   new DynamoDBClient({ region: AWS_REGION })
 )
 
+// ===== ==== ====
+// EXPORTS
 /**
  * Get user status
  *

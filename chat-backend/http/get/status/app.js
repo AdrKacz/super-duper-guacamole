@@ -4,6 +4,8 @@
 // IMPORTS
 const { getGroup, getUser } = require('chat-backend-package')
 
+// ===== ==== ====
+// EXPORTS
 /**
  * Get user status
  *

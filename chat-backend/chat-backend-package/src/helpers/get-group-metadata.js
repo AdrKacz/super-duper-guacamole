@@ -2,7 +2,7 @@
 // IMPORTS
 const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { dynamoDBDocumentClient } = require('../clients/aws-clients')
+const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
 
 const { GROUPS_TABLE_NAME } = process.env
 

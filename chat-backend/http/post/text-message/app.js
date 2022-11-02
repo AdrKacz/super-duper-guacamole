@@ -9,6 +9,8 @@ const {
   sendNotifications
 } = require('chat-backend-package')
 
+// ===== ==== ====
+// EXPORTS
 /**
  * Send text message to group users
  *
