@@ -2,7 +2,7 @@
 
 // ===== ==== ====
 // IMPORTS
-const { getGroup, getUser } = require('chat-backend-package')
+const { getGroup, getUser } = require('chat-backend-package') // skipcq: JS-0260
 
 // ===== ==== ====
 // EXPORTS

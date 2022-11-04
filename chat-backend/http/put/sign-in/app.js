@@ -9,7 +9,7 @@ const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { createVerify } = require('crypto')
 
-const jwt = require('jsonwebtoken')
+const jwt = require('jsonwebtoken') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS

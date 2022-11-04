@@ -7,7 +7,7 @@ const {
   getUser,
   sendMessages,
   sendNotifications
-} = require('chat-backend-package')
+} = require('chat-backend-package') // skipcq: JS-0260
 
 // ===== ==== ====
 // EXPORTS

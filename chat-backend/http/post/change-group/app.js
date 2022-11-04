@@ -2,18 +2,18 @@
 
 // ===== ==== ====
 // IMPORTS
-const { v4: uuidv4 } = require('uuid')
+const { v4: uuidv4 } = require('uuid') // skipcq: JS-0260
 
-const { QueryCommand } = require('@aws-sdk/client-dynamodb')
-const { UpdateCommand, DeleteCommand, PutCommand } = require('@aws-sdk/lib-dynamodb')
+const { QueryCommand } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { UpdateCommand, DeleteCommand, PutCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 const {
   getGroup,
   getUser,
   sendMessages,
   sendNotifications
-} = require('chat-backend-package')
+} = require('chat-backend-package') // skipcq: JS-0260
 
-const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS

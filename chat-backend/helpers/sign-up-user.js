@@ -1,6 +1,6 @@
 const { readFile } = require('node:fs/promises')
 
-const axios = require('axios')
+const axios = require('axios') // skipcq: JS-0260
 
 function read (path) {
   return readFile(path, 'utf-8', (err, data) => {
