@@ -22,17 +22,12 @@ exports.getUser = async ({ id }) => {
 
   const getCommand = new GetCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id },
-    ProjectionExpression: '#id, #groupId',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#groupId': 'groupId'
-    }
+    Key: { id }
   })
   const user = await dynamoDBDocumentClient.send(getCommand).then((response) => (response.Item))
 
-  if (typeof user === 'undefined' || typeof user.id === 'undefined') {
+  if (typeof user !== 'object' || typeof user.id !== 'string') {
     return {}
   }
-  return { id: user.id, groupId: user.groupId }
+  return user
 }

@@ -19,6 +19,10 @@ exports.handler = async (event) => {
   let group, users
   if (typeof groupId === 'string') {
     ({ group, users } = await getGroup({ groupId }))
+    if (!group.isPublic) {
+      group = { isPublic: false }
+      users = null
+    }
   }
 
   return {
