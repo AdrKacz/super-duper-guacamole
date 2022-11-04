@@ -200,7 +200,7 @@ ADD #groupSize :plusOne`,
         Item: {
           id: newGroupId,
           isPublic: false,
-          bubble: bubble
+          bubble
           // TODO: add block users to banned users
         },
         ConditionExpression: 'attribute_not_exists(id)'
