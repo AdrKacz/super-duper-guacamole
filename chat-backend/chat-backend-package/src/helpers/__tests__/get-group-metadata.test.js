@@ -41,13 +41,8 @@ test('it gets group', async () => {
   expect(ddbMock).toHaveReceivedCommandTimes(GetCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(GetCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: 'group-id' },
-    ProjectionExpression: '#id, #users',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#users': 'users'
-    }
+    Key: { id: 'group-id' }
   })
 
-  expect(JSON.stringify(group)).toBe(JSON.stringify({ id: 'group-id' }))
+  expect(JSON.stringify(group)).toBe(JSON.stringify({ id: 'group-id', isPublic: true }))
 })
