@@ -32,12 +32,12 @@ const jwk = {
 
 console.log('jwk', jwk)
 
-fs.readFile('./jwks.json', (err, data) => {
-  if (err) throw err
+fs.readFile('./jwks.json', (readErr, data) => {
+  if (readErr) throw readErr
   const json = JSON.parse(data)
   json.keys.push(jwk)
-  fs.writeFile('./jwks.json', JSON.stringify(json, null, 2), (err) => {
-    if (err) throw err
+  fs.writeFile('./jwks.json', JSON.stringify(json, null, 2), (writeErr) => {
+    if (writeErr) throw writeErr
     console.log('The "data to append" was appended to file!')
   })
 })

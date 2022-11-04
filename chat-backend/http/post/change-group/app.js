@@ -259,6 +259,8 @@ async function findGroup ({ oldGroupId, bubble, blockedUsers }) {
       }
     }
   }
+
+  return {}
 }
 
 function isGroupValid ({ group, userId, users, blockedUsers }) {

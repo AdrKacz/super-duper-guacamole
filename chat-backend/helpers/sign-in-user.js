@@ -4,6 +4,13 @@ const { readFile } = require('node:fs/promises')
 
 const axios = require('axios') // skipcq: JS-0260
 
+/**
+ * Read file
+ *
+ * @param {string} path
+ *
+ * @return {string}
+ */
 function read (path) {
   return readFile(path, 'utf-8', (err, data) => {
     if (err) throw err
@@ -12,6 +19,9 @@ function read (path) {
   })
 }
 
+/**
+ * Sign in user to Awa
+ */
 async function main () {
   const publicKey = await read('./public.key')
   const privateKey = await read('./private.key')
@@ -35,11 +45,11 @@ async function main () {
     id,
     timestamp,
     signature
-  }).then(function (response) {
+  }).then((response) => {
     console.log('status', response.status)
     console.log('data', response.data)
   })
-    .catch(function (error) {
+    .catch((error) => {
       console.log('code', error.code)
       console.log('status', error.response.status)
       console.log('data', error.response.data)

@@ -16,7 +16,8 @@ exports.handler = async (event) => {
 
   const { id, groupId } = await getUser({ id: jwt.id })
 
-  let group, users
+  let group = null
+  let users = null
   if (typeof groupId === 'string') {
     ({ group, users } = await getGroup({ groupId }))
     if (!group.isPublic) {
