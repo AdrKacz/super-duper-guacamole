@@ -32,9 +32,13 @@ test('it throws on undefined returned group', async () => {
   await expect(getGroupMetadata({ groupId: 'group-id' })).rejects.toThrow('group (group-id) is not defined')
 })
 
-test('it gets group', async () => {
+test.each([
+  { details: 'public', isPublic: true, expected: true },
+  { details: 'private', isPublic: false, expected: false },
+  { details: 'public status not defined', expected: true }
+])('it gets group ($details)', async ({ isPublic, expected }) => {
   ddbMock.on(GetCommand).resolves({
-    Item: { id: 'group-id' }
+    Item: { id: 'group-id', isPublic }
   })
   const group = await getGroupMetadata({ groupId: 'group-id' })
 
@@ -44,5 +48,5 @@ test('it gets group', async () => {
     Key: { id: 'group-id' }
   })
 
-  expect(JSON.stringify(group)).toBe(JSON.stringify({ id: 'group-id', isPublic: true }))
+  expect(JSON.stringify(group)).toBe(JSON.stringify({ id: 'group-id', isPublic: expected }))
 })
