@@ -279,6 +279,8 @@ test('it notifies user if the vote ended with a confirmation', async () => {
 })
 
 test('it notifies user if the vote ended with a denial', async () => {
+  getUsersModule.getUsers.mockResolvedValue(Promise.resolve([]))
+
   const id = 'id'
   const groupId = 'group-id'
   getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))

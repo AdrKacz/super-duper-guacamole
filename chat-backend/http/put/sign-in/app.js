@@ -7,7 +7,7 @@ const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb') // skipcq: J
 
 const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { createVerify } = require('crypto')
+const { createVerify } = require('node:crypto')
 
 const jwt = require('jsonwebtoken') // skipcq: JS-0260
 
@@ -39,13 +39,18 @@ exports.handler = async (event) => {
   const signature = body.signature
 
   if (typeof id !== 'string' || typeof timestamp !== 'number' || typeof signature === 'undefined') {
-    throw new Error('id, timestamp and signature must be defined with correct type')
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'id, timestamp and signature must be defined with correct type' })
+    }
   }
 
   if (Math.abs(Date.now() - timestamp) > 3000) {
     // prevent repeat attack
     return {
       statusCode: 401,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'timestamp is not valid' })
     }
   }
@@ -73,9 +78,11 @@ exports.handler = async (event) => {
   }
 
   // verify signature
-  const verifier = createVerify('rsa-sha256')
-  verifier.update(id + timestamp.toString())
-  const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
+  console.log('signature', signature)
+  const isVerified = createVerify('rsa-sha256')
+    .update(id + timestamp.toString())
+    .verify(publicKey, Buffer.from(signature), 'base64')
+
   console.log('is the message verified?', isVerified)
   if (!isVerified) {
     return {
@@ -100,6 +107,7 @@ exports.handler = async (event) => {
 
   return {
     statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jwtToken })
   }
 }

@@ -8,16 +8,7 @@ jest.mock('chat-backend-package', () => ({
   getGroup: jest.fn()
 }))
 
-// ===== ==== ====
-// CONSTANTS
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // reset console
-  log.mockReset()
-})
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // TESTS

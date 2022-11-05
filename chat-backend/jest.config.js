@@ -47,7 +47,7 @@ module.exports = {
 
   modulePathIgnorePatterns: [
     '/.aws-sam/'
-  ]
+  ],
 
   // An object that configures minimum threshold enforcement for coverage results
   // coverageThreshold: undefined,
@@ -117,7 +117,7 @@ module.exports = {
   // reporters: undefined,
 
   // Automatically reset mock state before every test
-  // resetMocks: false,
+  resetMocks: true
 
   // Reset the module registry before running each individual test
   // resetModules: false,
@@ -209,6 +209,8 @@ process.env = Object.assign(process.env, {
   GROUPS_TABLE_NAME: 'group-table-name',
   WEB_SOCKET_ENDPOINT: 'https://web-socket-endpoint.com',
   FIREBASE_SERVICE_ACCOUNT_KEY: '{}',
+  JWK_PRIVATE_KEY: 'jwk-private-key',
+  AUTHENTICATION_STAGE: 'authentication-stage',
   SEND_MESSAGE_TOPIC_ARN: 'send-message-topic-arn',
   SEND_NOTIFICATION_TOPIC_ARN: 'send-notification-topic-arn',
   SWITCH_GROUP_TOPIC_ARN: 'switch-group-topic-arn',
