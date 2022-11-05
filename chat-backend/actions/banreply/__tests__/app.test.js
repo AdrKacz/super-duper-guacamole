@@ -25,8 +25,6 @@ jest.mock('../src/get-users')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {

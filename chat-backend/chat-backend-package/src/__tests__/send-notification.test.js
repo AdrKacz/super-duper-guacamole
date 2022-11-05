@@ -12,8 +12,6 @@ jest.mock('../clients/firebase-clients', () => ({
   }
 }))
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test.each([

@@ -9,8 +9,6 @@ jest.mock('firebase-admin/messaging', () => ({
   getMessaging: (_) => ('messaging')
 }))
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test('it has messaging', () => {

@@ -8,8 +8,6 @@ const {
   PutCommand
 } = require('@aws-sdk/lib-dynamodb')
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // IMPORTS
 const ddbMock = mockClient(DynamoDBDocumentClient)

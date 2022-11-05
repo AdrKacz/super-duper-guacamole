@@ -19,8 +19,7 @@ const {
   GetCommand
 } = require('@aws-sdk/lib-dynamodb')
 
-jest.spyOn(console, 'log')
-Buffer.from = jest.fn()
+// Buffer.from = jest.fn()
 Date.now = jest.fn()
 
 // ===== ==== ====
@@ -82,7 +81,7 @@ test('it rejects on banned user', async () => {
 
 test('it rejects on bad signature user', async () => {
   Date.now.mockReturnValue(0)
-  Buffer.from.mockReturnValue('buffer')
+  // Buffer.from.mockReturnValue('buffer')
   ddbMock.on(GetCommand).resolves({
     Item: { publicKey: 'public-key' }
   })
@@ -102,7 +101,7 @@ test('it rejects on bad signature user', async () => {
   expect(verifier.update).toHaveBeenCalledTimes(1)
   expect(verifier.update).toHaveBeenCalledWith('id0')
   expect(verifier.verify).toHaveBeenCalledTimes(1)
-  expect(verifier.verify).toHaveBeenCalledWith('public-key', 'buffer', 'base64')
+  expect(verifier.verify).toHaveBeenCalledWith('public-key', Buffer.from('signature'), 'base64')
 
   expect(response.statusCode).toBe(403)
   expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))

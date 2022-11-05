@@ -17,8 +17,6 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // HELPERS
 function generatedKeyPair () {

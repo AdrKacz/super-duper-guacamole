@@ -8,8 +8,6 @@ jest.mock('../helpers/get-group-users')
 const getGroupMetadataModule = require('../helpers/get-group-metadata')
 jest.mock('../helpers/get-group-metadata')
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test('it throws error on none string group id', async () => {

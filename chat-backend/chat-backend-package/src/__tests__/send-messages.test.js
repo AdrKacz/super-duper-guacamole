@@ -5,8 +5,6 @@ const { sendMessages } = require('../send-messages')
 const sendMessageModule = require('../helpers/send-message')
 jest.mock('../helpers/send-message')
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test('it throws error when users is not an array', async () => {

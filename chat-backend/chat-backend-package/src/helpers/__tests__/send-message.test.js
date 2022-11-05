@@ -15,8 +15,6 @@ const {
 // CONSTANTS
 const apiMock = mockClient(ApiGatewayManagementApiClient)
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {

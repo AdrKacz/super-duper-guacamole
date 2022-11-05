@@ -12,8 +12,6 @@ const {
 // CONSTANTS
 const ddbMock = mockClient(DynamoDBDocumentClient)
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {

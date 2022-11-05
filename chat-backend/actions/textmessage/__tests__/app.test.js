@@ -9,8 +9,6 @@ const sendMessageToGroupModule = require('../src/send-message-to-group')
 jest.mock('../src/get-user-from-connection-id')
 jest.mock('../src/send-message-to-group')
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test.each([

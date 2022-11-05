@@ -10,7 +10,8 @@
     "deploy:skip-ci": "sam deploy --config-env",
     "deploy:force": "yarn predeploy && sam deploy --no-confirm-changeset --config-env",
     "deploy:skip-ci:force": "sam deploy --no-confirm-changeset --config-env",
-    "test": "jest"
+    "test": "jest",
+    "test:silent": "jest --silent"
   },
   "devDependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.194.0",

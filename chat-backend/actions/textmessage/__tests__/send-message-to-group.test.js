@@ -12,8 +12,6 @@ const snsMock = mockClient(SNSClient)
 
 jest.mock('../src/get-group-users')
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {

@@ -22,8 +22,6 @@ jest.mock('../src/get-banned-user-and-group')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {

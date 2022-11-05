@@ -8,8 +8,6 @@ jest.mock('chat-backend-package', () => ({
   getGroup: jest.fn()
 }))
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test.each([

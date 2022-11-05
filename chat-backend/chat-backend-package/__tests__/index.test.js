@@ -15,8 +15,6 @@ jest.mock('../src/send-notifications', () => ({
 
 const indexModule = require('../index')
 
-jest.spyOn(console, 'log')
-
 // ===== ==== ====
 // TESTS
 test('it has all dependencies', () => {
