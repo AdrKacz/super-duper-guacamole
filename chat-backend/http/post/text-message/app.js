@@ -22,7 +22,11 @@ exports.handler = async (event) => {
   const message = body.message
 
   if (typeof message !== 'string') {
-    return { statusCode: 400 }
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you didn\'t send a message' })
+    }
   }
 
   const jwt = event.requestContext.authorizer.jwt.claims
@@ -38,6 +42,14 @@ exports.handler = async (event) => {
   }
 
   const { group, users } = await getGroup({ groupId })
+
+  if (!group.isPublic) {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you don\'t have a group yet' })
+    }
+  }
 
   await Promise.all([
     sendMessages({ users, message, useSaveMessage: true }),
