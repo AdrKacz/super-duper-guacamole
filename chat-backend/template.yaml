@@ -67,6 +67,14 @@ Parameters:
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  AuthenticationStage:
+    Type: String
+    Default: 'development'
+    Description: '(Required) The name of the authentication stage of the API. Must refer to a valid jwk. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
   
 Resources:
   # Database
@@ -185,6 +193,10 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/put/sign-in
+      Environment:
+        Variables:
+          JWK_PRIVATE_KEY: !Sub '{{resolve:ssm:jwk_private_key_${AuthenticationStage}:1}}'
+          AUTHENTICATION_STAGE: !Ref AuthenticationStage
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable

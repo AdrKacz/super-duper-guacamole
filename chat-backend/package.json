@@ -7,7 +7,9 @@
     "lint": "eslint . --fix",
     "predeploy": "sh ./predeploy.sh $$ sam build",
     "deploy": "sam deploy --config-env",
+    "deploy:skip-ci": "sam deploy --config-env",
     "deploy:force": "yarn predeploy && sam deploy --no-confirm-changeset --config-env",
+    "deploy:skip-ci:force": "sam deploy --no-confirm-changeset --config-env",
     "test": "jest"
   },
   "devDependencies": {
