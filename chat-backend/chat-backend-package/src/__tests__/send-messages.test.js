@@ -5,16 +5,7 @@ const { sendMessages } = require('../send-messages')
 const sendMessageModule = require('../helpers/send-message')
 jest.mock('../helpers/send-message')
 
-// ===== ==== ====
-// CONSTANTS
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // TESTS

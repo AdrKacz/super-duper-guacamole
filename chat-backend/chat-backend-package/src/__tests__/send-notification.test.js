@@ -12,14 +12,7 @@ jest.mock('../clients/firebase-clients', () => ({
   }
 }))
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // TESTS

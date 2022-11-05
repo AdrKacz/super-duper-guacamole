@@ -47,7 +47,7 @@ module.exports = {
 
   modulePathIgnorePatterns: [
     '/.aws-sam/'
-  ],
+  ]
 
   // An object that configures minimum threshold enforcement for coverage results
   // coverageThreshold: undefined,
@@ -117,7 +117,7 @@ module.exports = {
   // reporters: undefined,
 
   // Automatically reset mock state before every test
-  resetMocks: true
+  // resetMocks: true
 
   // Reset the module registry before running each individual test
   // resetModules: false,

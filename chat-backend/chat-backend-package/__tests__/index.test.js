@@ -14,16 +14,8 @@ jest.mock('../src/send-notifications', () => ({
 }))
 
 const indexModule = require('../index')
-// ===== ==== ====
-// CONSTANTS
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
 
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // TESTS

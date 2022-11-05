@@ -25,7 +25,7 @@ jest.mock('../src/get-users')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // BEFORE EACH
@@ -36,9 +36,6 @@ beforeEach(() => {
 
   ddbMock.resolves({})
   snsMock.resolves({})
-
-  // reset console
-  log.mockReset()
 })
 
 // ===== ==== ====

@@ -8,16 +8,7 @@ jest.mock('../helpers/get-group-users')
 const getGroupMetadataModule = require('../helpers/get-group-metadata')
 jest.mock('../helpers/get-group-metadata')
 
-// ===== ==== ====
-// CONSTANTS
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // TESTS

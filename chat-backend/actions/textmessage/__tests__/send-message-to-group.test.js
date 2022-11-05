@@ -12,7 +12,7 @@ const snsMock = mockClient(SNSClient)
 
 jest.mock('../src/get-group-users')
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // BEFORE EACH
@@ -21,9 +21,6 @@ beforeEach(() => {
   snsMock.reset()
 
   snsMock.resolves({})
-
-  // reset console
-  log.mockReset()
 })
 
 // ===== ==== ====

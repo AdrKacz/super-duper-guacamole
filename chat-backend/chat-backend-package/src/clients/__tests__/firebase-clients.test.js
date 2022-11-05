@@ -9,14 +9,7 @@ jest.mock('firebase-admin/messaging', () => ({
   getMessaging: (_) => ('messaging')
 }))
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
+jest.spyOn(console, 'log')
 
 // ===== ==== ====
 // TESTS
