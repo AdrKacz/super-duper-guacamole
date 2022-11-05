@@ -29,7 +29,11 @@ exports.handler = async (event) => {
   const publicKey = body.publicKey
 
   if (typeof id !== 'string' || typeof publicKey === 'undefined') {
-    throw new Error('id and publicKey must be defined with correct type')
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'id and publicKey must be defined with correct type' })
+    }
   }
 
   const putCommand = new PutCommand({

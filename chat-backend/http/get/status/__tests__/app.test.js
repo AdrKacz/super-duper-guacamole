@@ -19,6 +19,8 @@ beforeEach(() => {
   log.mockReset()
 })
 
+// ===== ==== ====
+// TESTS
 test.each([
   { details: 'without group', id: 'id', expectedId: 'id', expectedGroup: null, expectedUsers: null },
   { details: 'with private group', id: 'id-1', group: { id: 'group-id', isPublic: false }, users: [{ id: 'id-2' }], expectedId: 'id-1', expectedGroup: { isPublic: false }, expectedUsers: null },
