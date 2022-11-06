@@ -44,7 +44,7 @@ exports.findGroup = async ({ currentUser }) => {
 
     // return first valid group
     for (const { id: groupId } of queryItems) {
-      const { group, users } = await getGroup({ groupId })
+      const { group, users } = await getGroup({ groupId }) // skipcq: JS-0032
       console.log('analyse group', group, users)
       if (isGroupValid({ group, users, currentUser })) {
         return { group, users }
