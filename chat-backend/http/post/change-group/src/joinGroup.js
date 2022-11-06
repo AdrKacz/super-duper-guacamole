@@ -69,12 +69,20 @@ const setGroupId = ({ id, groupId }) => (dynamoDBDocumentClient.send(new UpdateC
   ExpressionAttributeValues: { ':groupId': groupId }
 })))
 
-const updateGroup = ({ groupId, isPublic, blockedUsers }) => (dynamoDBDocumentClient.send(new UpdateCommand({
+const updateGroup = ({ groupId, isPublic, blockedUsers }) => {
+  if (blockedUsers.length > 0) {
+    return updateGroupWithBlockedUsers({ groupId, isPublic, blockedUsers })
+  } else {
+    return updateGroupWithoutBlockedUsers({ groupId, isPublic })
+  }
+}
+
+const updateGroupWithBlockedUsers = ({ groupId, isPublic, blockedUsers }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
   UpdateExpression: `
 SET #isPublic :isPublic
-ADD #groupSize :plusOne,${blockedUsers.length > 0 ? ' ,#bannedUsers :blockedUsers' : ''}`,
+ADD #groupSize :plusOne, #bannedUsers :blockedUsers`,
   ExpressionAttributeNames: {
     '#isPublic': 'isPublic',
     '#groupSize': 'groupSize',
@@ -84,6 +92,22 @@ ADD #groupSize :plusOne,${blockedUsers.length > 0 ? ' ,#bannedUsers :blockedUser
     ':isPublic': isPublic,
     ':plusOne': +1,
     ':blockedUsers': new Set(blockedUsers)
+  }
+})))
+
+const updateGroupWithoutBlockedUsers = ({ groupId, isPublic }) => (dynamoDBDocumentClient.send(new UpdateCommand({
+  TableName: GROUPS_TABLE_NAME,
+  Key: { id: groupId },
+  UpdateExpression: `
+SET #isPublic :isPublic
+ADD #groupSize :plusOne`,
+  ExpressionAttributeNames: {
+    '#isPublic': 'isPublic',
+    '#groupSize': 'groupSize'
+  },
+  ExpressionAttributeValues: {
+    ':isPublic': isPublic,
+    ':plusOne': +1
   }
 })))
 
