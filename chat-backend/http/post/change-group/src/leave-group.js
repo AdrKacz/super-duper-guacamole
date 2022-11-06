@@ -1,6 +1,6 @@
 // ===== ==== ====
 // IMPORTS
-const { UpdateCommand, DeleteCommand } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const {
   getGroup,
@@ -31,6 +31,7 @@ exports.leaveGroup = async ({ currentUser }) => {
 
   const usersWithoutCurrentUser = users.filter(({ id }) => (currentUser.id !== id))
   if (group.groupSize - 1 <= 1) {
+    // delete group
     await Promise.all([
       // remove user from group
       dynamoDBDocumentClient.send(new UpdateCommand({
@@ -50,9 +51,9 @@ exports.leaveGroup = async ({ currentUser }) => {
         ExpressionAttributeValues: { ':one': 1 }
       })),
       // warn remaining users
-      sendMessages({ usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),
+      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),
       sendNotifications({
-        usersWithoutCurrentUser,
+        users: usersWithoutCurrentUser,
         notification: {
           title: 'Ton groupe est vide 😔',
           body: 'Reconnecte toi pour demander un nouveau groupe ...'
@@ -61,6 +62,7 @@ exports.leaveGroup = async ({ currentUser }) => {
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
   } else {
+    // update group
     await Promise.all([
       // remove user from group
       dynamoDBDocumentClient.send(new UpdateCommand({
@@ -72,18 +74,18 @@ exports.leaveGroup = async ({ currentUser }) => {
         ExpressionAttributeValues: { ':groupId': currentUser.groupId }
       })),
       // update group
-      new UpdateCommand({
+      dynamoDBDocumentClient.send(new UpdateCommand({
         TableName: GROUPS_TABLE_NAME,
         Key: { id: currentUser.groupId },
         ReturnValues: 'UPDATED_NEW',
         UpdateExpression: 'ADD #groupSize :minusOne',
         ExpressionAttributeNames: { '#groupSize': 'groupSize' },
         ExpressionAttributeValues: { ':minusOne': -1 }
-      }),
+      })),
       // warn remaining users
-      sendMessages({ usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),
+      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),
       sendNotifications({
-        usersWithoutCurrentUser,
+        users: usersWithoutCurrentUser,
         notification: {
           title: 'Le groupe rétrécit 😔',
           body: 'Quelqu\'un a quitté le groupe ...'

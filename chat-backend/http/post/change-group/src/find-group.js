@@ -1,12 +1,12 @@
 // ===== ==== ====
 // IMPORTS
-const { QueryCommand } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
+const { QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { getGroup } = require('chat-backend-package') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
 
-const { isGroupValid } = require('./isGroupValid')
+const { isGroupValid } = require('./is-group-valid')
 
 // ===== ==== ====
 // CONSTANTS
@@ -45,7 +45,7 @@ exports.findGroup = async ({ currentUser }) => {
     // return first valid group
     for (const { id: groupId } of queryItems) {
       const { group, users } = getGroup({ groupId })
-      if (isGroupValid({ group, users, blockedUsers: currentUser.blockedUsers })) {
+      if (isGroupValid({ group, users, currentUser })) {
         return { group, users }
       }
     }

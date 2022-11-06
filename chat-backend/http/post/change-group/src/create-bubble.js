@@ -1,6 +1,6 @@
 // ===== ==== ====
 // EXPORTS
-exports.createBubble = async ({ currentUser }) => {
+exports.createBubble = ({ currentUser }) => {
   if (typeof currentUser.questions !== 'object') {
     return ''
   }

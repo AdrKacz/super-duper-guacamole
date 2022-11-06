@@ -4,11 +4,11 @@
 // IMPORTS
 const { getUser } = require('chat-backend-package') // skipcq: JS-0260
 
-const { findGroup } = require('./src/findGroup')
-const { leaveGroup } = require('./src/leaveGroup')
-const { createGroup } = require('./src/createGroup')
-const { joinGroup } = require('./src/joinGroup')
-const { createBubble } = require('./src/createBubble')
+const { findGroup } = require('./src/find-group')
+const { leaveGroup } = require('./src/leave-group')
+const { createGroup } = require('./src/create-group')
+const { joinGroup } = require('./src/join-group')
+const { createBubble } = require('./src/create-bubble')
 
 // ===== ==== ====
 // EXPORTS
@@ -23,7 +23,7 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
 
   const currentUser = await getUser({ id: jwt.id })
-  currentUser.blockedUsers = new Set(body.blockedUsers)
+  currentUser.blockedUserIds = new Set(body.blockedUserIds)
 
   try {
     await leaveGroup({ currentUser })

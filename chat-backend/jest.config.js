@@ -211,6 +211,7 @@ process.env = Object.assign(process.env, {
   FIREBASE_SERVICE_ACCOUNT_KEY: '{}',
   JWK_PRIVATE_KEY: 'jwk-private-key',
   AUTHENTICATION_STAGE: 'authentication-stage',
+  GROUPS_BUBBLE_INDEX_NAME: 'groups-bubble-index-name',
   SEND_MESSAGE_TOPIC_ARN: 'send-message-topic-arn',
   SEND_NOTIFICATION_TOPIC_ARN: 'send-notification-topic-arn',
   SWITCH_GROUP_TOPIC_ARN: 'switch-group-topic-arn',
