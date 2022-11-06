@@ -29,7 +29,7 @@ exports.handler = async (event) => {
     await leaveGroup({ currentUser })
   } catch (error) {
     return {
-      statusCode: '400',
+      statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: error.message })
     }
