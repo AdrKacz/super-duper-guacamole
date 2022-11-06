@@ -65,13 +65,28 @@ test('it creates group if no group found', async () => {
   })
 
   expect(createBubbleModule.createBubble).toHaveBeenCalledTimes(1)
-  expect(createBubbleModule.createBubble).toHaveBeenCalledWith({ key: 'value' })
+  expect(createBubbleModule.createBubble).toHaveBeenCalledWith({
+    currentUser: {
+      id: 'id',
+      /* NOTE:
+      bubble is not send to the function,
+      jest logs it as it was for an unknown reason,
+      to verify update createBubbleModule.createBubble.mockImplementation(({currentUser}) => {
+        console.log(currentUser)
+        return 'bubble-test'
+      })
+      */
+      bubble: 'bubble',
+      blockedUserIds: new Set(),
+      questions: { key: 'value' }
+    }
+  })
 
   expect(findGroupModule.findGroup).toHaveBeenCalledTimes(1)
-  expect(findGroupModule.findGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', bubble: 'bubble', blockedUserIds: new Set() } })
+  expect(findGroupModule.findGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', bubble: 'bubble', blockedUserIds: new Set(), questions: { key: 'value' } } })
 
   expect(createGroupModule.createGroup).toHaveBeenCalledTimes(1)
-  expect(createGroupModule.createGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', bubble: 'bubble', blockedUserIds: new Set() } })
+  expect(createGroupModule.createGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', bubble: 'bubble', blockedUserIds: new Set(), questions: { key: 'value' } } })
 
   expect(response.statusCode).toBe(200)
   expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
@@ -89,7 +104,7 @@ test('it joins group if group found', async () => {
   })
 
   expect(joinGroupModule.joinGroup).toHaveBeenCalledTimes(1)
-  expect(joinGroupModule.joinGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', bubble: 'bubble', blockedUserIds: new Set() }, group: { id: 'group-id' }, users: [{ id: 'id-1' }] })
+  expect(joinGroupModule.joinGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', bubble: 'bubble', blockedUserIds: new Set(), questions: { key: 'value' } }, group: { id: 'group-id' }, users: [{ id: 'id-1' }] })
 
   expect(createGroupModule.createGroup).toHaveBeenCalledTimes(0)
 

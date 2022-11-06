@@ -31,6 +31,7 @@ exports.leaveGroup = async ({ currentUser }) => {
 
   const usersWithoutCurrentUser = users.filter(({ id }) => (currentUser.id !== id))
   if (group.groupSize - 1 <= 1) {
+    console.log('leave and delete group', group)
     // delete group
     await Promise.all([
       // remove user from group
@@ -62,6 +63,7 @@ exports.leaveGroup = async ({ currentUser }) => {
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
   } else {
+    console.log('leave group', group)
     // update group
     await Promise.all([
       // remove user from group

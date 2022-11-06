@@ -23,7 +23,7 @@ exports.findGroup = async ({ currentUser }) => {
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_BUBBLE_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND groupSize < :five',
+    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :five',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
@@ -34,7 +34,7 @@ exports.findGroup = async ({ currentUser }) => {
     ExpressionAttributeValues: {
       ':bubble': currentUser.bubble,
       ':five': 5,
-      ':oldGroupId': currentUser.groupId
+      ':oldGroupId': currentUser.groupId ?? ''
     }
   }))
 
@@ -44,7 +44,8 @@ exports.findGroup = async ({ currentUser }) => {
 
     // return first valid group
     for (const { id: groupId } of queryItems) {
-      const { group, users } = getGroup({ groupId })
+      const { group, users } = await getGroup({ groupId })
+      console.log('analyse group', group, users)
       if (isGroupValid({ group, users, currentUser })) {
         return { group, users }
       }

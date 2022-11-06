@@ -20,13 +20,14 @@ exports.createGroup = async ({ currentUser }) => {
   const group = {
     id: groupId,
     isPublic: false,
-    bubble: currentUser.bubble
+    bubble: currentUser.bubble,
+    groupSize: 1
   }
 
   if (currentUser.blockedUserIds.size > 0) {
     group.bannedUserIds = currentUser.blockedUserIds
   }
-
+  console.log('create group', group)
   await Promise.all([
     // create groupe
     dynamoDBDocumentClient.send(new PutCommand({
@@ -38,7 +39,7 @@ exports.createGroup = async ({ currentUser }) => {
     dynamoDBDocumentClient.send(new UpdateCommand({
       TableName: USERS_TABLE_NAME,
       Key: { id: currentUser.id },
-      UpdateExpression: 'SET #groupId :groupId',
+      UpdateExpression: 'SET #groupId = :groupId',
       ExpressionAttributeNames: { '#groupId': 'groupId' },
       ExpressionAttributeValues: { ':groupId': groupId }
     }))

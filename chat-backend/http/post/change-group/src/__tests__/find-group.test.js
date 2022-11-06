@@ -47,7 +47,7 @@ test('it returns empty object if no group', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     IndexName: process.env.GROUPS_BUBBLE_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND groupSize < :five',
+    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :five',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
@@ -123,8 +123,28 @@ test('it returns empty object if no valid group', async () => {
 
   sort.mockReturnThis()
 
-  const currentUser = { id: 'id', bubble: 'bubble', groupId: 'group-id', blockedUserIds: new Set() }
+  const currentUser = { id: 'id', bubble: 'bubble', blockedUserIds: new Set() }
   const { group, users } = await findGroup({ currentUser })
+
+  expect(ddbMock).toHaveReceivedCommandTimes(QueryCommand, 1)
+  expect(ddbMock).toHaveReceivedCommandWith(QueryCommand, {
+    TableName: process.env.GROUPS_TABLE_NAME,
+    IndexName: process.env.GROUPS_BUBBLE_INDEX_NAME,
+    Limit: 10,
+    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :five',
+    ProjectionExpression: '#id',
+    FilterExpression: '#id <> :oldGroupId',
+    ExpressionAttributeNames: {
+      '#id': 'id',
+      '#bubble': 'bubble',
+      '#groupSize': 'groupSize'
+    },
+    ExpressionAttributeValues: {
+      ':bubble': 'bubble',
+      ':five': 5,
+      ':oldGroupId': ''
+    }
+  })
 
   expect(group).toBeUndefined()
   expect(users).toBeUndefined()

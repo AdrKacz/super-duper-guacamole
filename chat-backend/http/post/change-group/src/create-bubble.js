@@ -2,7 +2,7 @@
 // EXPORTS
 exports.createBubble = ({ currentUser }) => {
   if (typeof currentUser.questions !== 'object') {
-    return ''
+    return 'void' // The AttributeValue for a key attribute cannot contain an empty string value
   }
 
   const bubbleArray = []

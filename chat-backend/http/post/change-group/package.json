@@ -6,6 +6,8 @@
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.204.0",
+    "@aws-sdk/lib-dynamodb": "^3.204.0",
     "chat-backend-package": "file:../../../chat-backend-package"
   }
 }

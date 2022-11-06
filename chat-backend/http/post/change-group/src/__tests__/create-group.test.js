@@ -54,7 +54,7 @@ test.each([
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
-    UpdateExpression: 'SET #groupId :groupId',
+    UpdateExpression: 'SET #groupId = :groupId',
     ExpressionAttributeNames: { '#groupId': 'groupId' },
     ExpressionAttributeValues: { ':groupId': 'uuidv4' }
   })

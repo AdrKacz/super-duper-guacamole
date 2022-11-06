@@ -38,7 +38,7 @@ test('it handles already public group', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
-    UpdateExpression: 'SET #groupId :groupId',
+    UpdateExpression: 'SET #groupId = :groupId',
     ExpressionAttributeNames: { '#groupId': 'groupId' },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
   })
@@ -46,7 +46,7 @@ test('it handles already public group', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
     UpdateExpression: `
-SET #isPublic :isPublic
+SET #isPublic = :isPublic
 ADD #groupSize :plusOne`,
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
@@ -89,7 +89,7 @@ test('it handles already private group that turns public', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
-    UpdateExpression: 'SET #groupId :groupId',
+    UpdateExpression: 'SET #groupId = :groupId',
     ExpressionAttributeNames: { '#groupId': 'groupId' },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
   })
@@ -97,7 +97,7 @@ test('it handles already private group that turns public', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
     UpdateExpression: `
-SET #isPublic :isPublic
+SET #isPublic = :isPublic
 ADD #groupSize :plusOne`,
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
@@ -132,7 +132,7 @@ test('it handles already private group that keeps private', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
-    UpdateExpression: 'SET #groupId :groupId',
+    UpdateExpression: 'SET #groupId = :groupId',
     ExpressionAttributeNames: { '#groupId': 'groupId' },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
   })
@@ -140,7 +140,7 @@ test('it handles already private group that keeps private', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
     UpdateExpression: `
-SET #isPublic :isPublic
+SET #isPublic = :isPublic
 ADD #groupSize :plusOne`,
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
@@ -167,7 +167,7 @@ test('it handles blocked users', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
-    UpdateExpression: 'SET #groupId :groupId',
+    UpdateExpression: 'SET #groupId = :groupId',
     ExpressionAttributeNames: { '#groupId': 'groupId' },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
   })
@@ -175,7 +175,7 @@ test('it handles blocked users', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
     UpdateExpression: `
-SET #isPublic :isPublic
+SET #isPublic = :isPublic
 ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',

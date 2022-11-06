@@ -7,7 +7,7 @@ const { createBubble } = require('../create-bubble')
 test('it returns empty bubble if not questions', () => {
   const bubble = createBubble({ currentUser: {} })
 
-  expect(bubble).toBe('')
+  expect(bubble).toBe('void')
 })
 
 test.each([

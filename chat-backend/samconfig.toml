@@ -6,18 +6,6 @@ beta_features = true
 [default.sync.parameters]
 beta_features = true
 
-[dev]
-[dev.deploy]
-[dev.deploy.parameters]
-stack_name = "sam-group-development"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
-s3_prefix = "sam-group-development"
-region = "eu-west-3"
-confirm_changeset = true
-capabilities = "CAPABILITY_IAM"
-parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"1\" WebSocketThrottlingBurstLimit=\"3\" WebSocketThrottlingRateLimit=\"3\" ApiThrottlingBurstLimit=\"3\" ApiThrottlingRateLimit=\"3\" StageName=\"dev\" AuthenticationStage=\"development\""
-image_repositories = []
-
 [prod]
 [prod.deploy]
 [prod.deploy.parameters]
@@ -28,4 +16,16 @@ region = "eu-west-3"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"100\" WebSocketThrottlingRateLimit=\"100\" ApiThrottlingBurstLimit=\"100\" ApiThrottlingRateLimit=\"100\" StageName=\"prod\""
+image_repositories = []
+
+[dev-adrien]
+[dev-adrien.deploy]
+[dev-adrien.deploy.parameters]
+stack_name = "dev-adrien"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
+s3_prefix = "dev-adrien"
+region = "eu-west-3"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"1\" WebSocketThrottlingBurstLimit=\"3\" WebSocketThrottlingRateLimit=\"3\" ApiThrottlingBurstLimit=\"3\" ApiThrottlingRateLimit=\"3\" StageName=\"development\" AuthenticationStage=\"development\""
 image_repositories = []

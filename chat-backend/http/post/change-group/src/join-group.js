@@ -20,6 +20,7 @@ const {
 // EXPORTS
 exports.joinGroup = async ({ currentUser, group, users }) => {
   if (group.isPublic) {
+    console.log('join public group', group)
     await Promise.all([
       // add user to group
       setGroupId({ id: currentUser.id, groupId: group.id }),
@@ -39,6 +40,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
   } else if (!group.isPublic && group.groupSize + 1 >= 3) {
+    console.log('join private to public group', group)
     // group big enough to turn public
     await Promise.all([
       // add user to group
@@ -50,6 +52,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
   } else {
+    console.log('join private group', group)
     await Promise.all([
       // add user to group
       setGroupId({ id: currentUser.id, groupId: group.id }),
@@ -72,7 +75,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
 const setGroupId = ({ id, groupId }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: USERS_TABLE_NAME,
   Key: { id },
-  UpdateExpression: 'SET #groupId :groupId',
+  UpdateExpression: 'SET #groupId = :groupId',
   ExpressionAttributeNames: { '#groupId': 'groupId' },
   ExpressionAttributeValues: { ':groupId': groupId }
 })))
@@ -107,7 +110,7 @@ const updateGroupWithBlockedUsers = ({ groupId, isPublic, blockedUserIds }) => (
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
   UpdateExpression: `
-SET #isPublic :isPublic
+SET #isPublic = :isPublic
 ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
   ExpressionAttributeNames: {
     '#isPublic': 'isPublic',
@@ -133,7 +136,7 @@ const updateGroupWithoutBlockedUsers = ({ groupId, isPublic }) => (dynamoDBDocum
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
   UpdateExpression: `
-SET #isPublic :isPublic
+SET #isPublic = :isPublic
 ADD #groupSize :plusOne`,
   ExpressionAttributeNames: {
     '#isPublic': 'isPublic',

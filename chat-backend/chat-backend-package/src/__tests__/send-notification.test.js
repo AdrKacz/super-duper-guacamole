@@ -33,3 +33,11 @@ test('it notifies users', async () => {
     tokens: ['firebaseToken']
   })
 })
+
+test('it doesn\'t sends notification if no users', async () => {
+  firebaseClientsModule.messaging.sendMulticast.mockResolvedValue(Promise.resolve())
+
+  await sendNotifications({ users: [{ id: 'id-1' }], notification: { title: 'title', body: 'body' } })
+
+  expect(firebaseClientsModule.messaging.sendMulticast).toHaveBeenCalledTimes(0)
+})

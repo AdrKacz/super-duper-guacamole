@@ -24,6 +24,7 @@ exports.handler = async (event) => {
 
   const currentUser = await getUser({ id: jwt.id })
   currentUser.blockedUserIds = new Set(body.blockedUserIds)
+  currentUser.questions = body.questions
 
   try {
     await leaveGroup({ currentUser })
@@ -35,9 +36,11 @@ exports.handler = async (event) => {
     }
   }
 
-  currentUser.bubble = createBubble(body.questions)
+  currentUser.bubble = createBubble({ currentUser })
   const { group, users } = await findGroup({ currentUser })
-
+  console.log('group', group)
+  console.log('users', users)
+  console.log('current user', currentUser)
   if (typeof group === 'object') {
     await joinGroup({ currentUser, group, users })
   } else {
