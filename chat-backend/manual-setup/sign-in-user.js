@@ -1,6 +1,6 @@
 const { createSign, createVerify } = require('node:crypto')
 
-const { readFile } = require('node:fs/promises')
+const { readFile } = require('node:fs')
 
 const axios = require('axios') // skipcq: JS-0260
 
@@ -10,58 +10,40 @@ let id = null
 if (argv.length > 2) {
   id = argv[2]
 } else {
-  throw new Error('you must provide one parameter for id (ex: yarn node sign-in-user.js your-id')
+  throw new Error('you must provide one parameter for id (ex: yarn node sign-in-user.js your-id)')
 }
 
-/**
- * Read file
- *
- * @param {string} path
- *
- * @return {Promise<string>}
- */
-function read (path) {
-  return readFile(path, 'utf-8', (err, data) => {
-    if (err) throw err
-    console.log(path, data)
-    return data
-  })
-}
+readFile('./public.key', { encoding: 'utf-8' }, (_err, data) => {
+  const publicKey = data
+  readFile('./private.key', { encoding: 'utf-8' }, (_err, data) => {
+    const privateKey = data
 
-/**
- * Sign in user to Awa
- */
-async function main ({ id }) {
-  const publicKey = await read('./public.key')
-  const privateKey = await read('./private.key')
+    const timestamp = Date.now()
 
-  const timestamp = Date.now()
+    const signature = Buffer.from(createSign('rsa-sha256')
+      .update(id + timestamp.toString())
+      .sign(privateKey, 'base64'), 'base64')
 
-  const signer = createSign('rsa-sha256')
-  signer.update(id + timestamp.toString())
-  const signature = Buffer.from(signer.sign(privateKey, 'base64'), 'base64')
+    console.log('signature', signature)
 
-  console.log('signature', signature)
+    const isVerified = createVerify('rsa-sha256')
+      .update(id + timestamp.toString())
+      .verify(publicKey, Buffer.from(signature), 'base64')
 
-  const verifier = createVerify('rsa-sha256')
-  verifier.update(id + timestamp.toString())
-  const isVerified = verifier.verify(publicKey, Buffer.from(signature), 'base64')
+    console.log('isVerified', isVerified)
 
-  console.log('isVerified', isVerified)
-
-  await axios.put('https://9a1o7mlx6k.execute-api.eu-west-3.amazonaws.com/sign-in', {
-    id,
-    timestamp,
-    signature
-  }).then((response) => {
-    console.log('status', response.status)
-    console.log('data', response.data)
-  })
-    .catch((error) => {
-      console.log('code', error.code)
-      console.log('status', error.response.status)
-      console.log('data', error.response.data)
+    axios.put('https://9a1o7mlx6k.execute-api.eu-west-3.amazonaws.com/sign-in', {
+      id,
+      timestamp,
+      signature
+    }).then((response) => {
+      console.log('status', response.status)
+      console.log('data', response.data)
     })
-}
-
-main({ id })
+      .catch((error) => {
+        console.log('code', error.code)
+        console.log('status', error.response.status)
+        console.log('data', error.response.data)
+      })
+  })
+})

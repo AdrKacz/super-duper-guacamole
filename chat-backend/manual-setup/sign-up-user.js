@@ -1,4 +1,4 @@
-const { readFile } = require('node:fs/promises')
+const { readFile } = require('node:fs')
 
 const axios = require('axios') // skipcq: JS-0260
 
@@ -8,31 +8,13 @@ let id = null
 if (argv.length > 2) {
   id = argv[2]
 } else {
-  throw new Error('you must provide one parameter for id (ex: yarn node sign-up-user.js your-id')
+  throw new Error('you must provide one parameter for id (ex: yarn node sign-up-user.js your-id)')
 }
 
-/**
- * Read file
- *
- * @param {string} path
- *
- * @return {Promise<string>}
- */
-function read (path) {
-  return readFile(path, 'utf-8', (err, data) => {
-    if (err) throw err
-    console.log(path, data)
-    return data
-  })
-}
+readFile('./public.key', { encoding: 'utf-8' }, (_err, data) => {
+  const publicKey = data
 
-/**
- * Sign up user to Awa
- */
-async function main ({ id }) {
-  const publicKey = await read('./public.key')
-
-  await axios.put('https://9a1o7mlx6k.execute-api.eu-west-3.amazonaws.com/sign-up', {
+  axios.put('https://9a1o7mlx6k.execute-api.eu-west-3.amazonaws.com/sign-up', {
     id,
     publicKey
   }).then((response) => {
@@ -41,8 +23,7 @@ async function main ({ id }) {
   })
     .catch((error) => {
       console.log('code', error.code)
-      console.log('data', error.data)
+      console.log('status', error.response.status)
+      console.log('data', error.response.data)
     })
-}
-
-main({ id })
+})

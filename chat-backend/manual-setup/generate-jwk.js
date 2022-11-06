@@ -11,7 +11,7 @@ let kid = null
 if (argv.length > 2) {
   kid = argv[2]
 } else {
-  throw new Error('you must provide one parameter for kid (ex: yarn node generate-jwk.js your-key')
+  throw new Error('you must provide one parameter for kid (ex: yarn node generate-jwk.js your-key)')
 }
 
 const {

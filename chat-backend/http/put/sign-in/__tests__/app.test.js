@@ -19,7 +19,6 @@ const {
   GetCommand
 } = require('@aws-sdk/lib-dynamodb')
 
-// Buffer.from = jest.fn()
 Date.now = jest.fn()
 
 // ===== ==== ====
@@ -81,7 +80,7 @@ test('it rejects on banned user', async () => {
 
 test('it rejects on bad signature user', async () => {
   Date.now.mockReturnValue(0)
-  // Buffer.from.mockReturnValue('buffer')
+
   ddbMock.on(GetCommand).resolves({
     Item: { publicKey: 'public-key' }
   })
@@ -132,7 +131,7 @@ test('it returns jwt', async () => {
     expiresIn: 15 * 60,
     notBefore: 0,
     audience: 'user',
-    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend/helpers'
+    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend'
   })
 
   expect(response.statusCode).toBe(200)
