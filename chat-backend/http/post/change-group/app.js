@@ -8,6 +8,7 @@ const { findGroup } = require('./src/findGroup')
 const { leaveGroup } = require('./src/leaveGroup')
 const { createGroup } = require('./src/createGroup')
 const { joinGroup } = require('./src/joinGroup')
+const { createBubble } = require('./src/createBubble')
 
 // ===== ==== ====
 // EXPORTS
@@ -19,7 +20,11 @@ const { joinGroup } = require('./src/joinGroup')
 exports.handler = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
 
+  const body = JSON.parse(event.body)
+
   const currentUser = await getUser({ id: jwt.id })
+  currentUser.blockedUsers = new Set(body.blockedUsers)
+
   try {
     await leaveGroup({ currentUser })
   } catch (error) {
@@ -30,14 +35,13 @@ exports.handler = async (event) => {
     }
   }
 
-  const bubble = '' // TODO: create bubble from answers
-  const { group, users } = await findGroup({ groupId: currentUser.id, bubble })
+  currentUser.bubble = createBubble(body.questions)
+  const { group, users } = await findGroup({ currentUser })
 
   if (typeof group === 'object') {
     await joinGroup({ currentUser, group, users })
   } else {
-    // create group
-    await createGroup({ currentUser, bubble })
+    await createGroup({ currentUser })
   }
 
   return {

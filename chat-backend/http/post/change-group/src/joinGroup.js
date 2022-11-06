@@ -70,7 +70,7 @@ const setGroupId = ({ id, groupId }) => (dynamoDBDocumentClient.send(new UpdateC
 })))
 
 const updateGroup = ({ groupId, isPublic, blockedUsers }) => {
-  if (Array.isArray(blockedUsers) && blockedUsers.length > 0) {
+  if (blockedUsers.size > 0) {
     return updateGroupWithBlockedUsers({ groupId, isPublic, blockedUsers })
   } else {
     return updateGroupWithoutBlockedUsers({ groupId, isPublic })

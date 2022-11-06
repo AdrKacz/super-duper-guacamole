@@ -17,7 +17,7 @@ const {
 
 // ===== ==== ====
 // EXPORTS
-exports.findGroup = async ({ oldGroupId, bubble, blockedUsers }) => {
+exports.findGroup = async ({ currentUser }) => {
   // look for existing group
   const { Count: queryCount, Items: queryItems } = await dynamoDBDocumentClient.send(new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
@@ -25,16 +25,16 @@ exports.findGroup = async ({ oldGroupId, bubble, blockedUsers }) => {
     Limit: 10,
     KeyConditionExpression: '#bubble = :bubble AND groupSize < :five',
     ProjectionExpression: '#id',
-    FilterExpression: '#id <> :groupId',
+    FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
       '#id': 'id',
       '#bubble': 'bubble',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
-      ':bubble': bubble,
+      ':bubble': currentUser.bubble,
       ':five': 5,
-      ':oldGroupId': oldGroupId
+      ':oldGroupId': currentUser.groupId
     }
   }))
 
@@ -45,7 +45,7 @@ exports.findGroup = async ({ oldGroupId, bubble, blockedUsers }) => {
     // return first valid group
     for (const { id: groupId } of queryItems) {
       const { group, users } = getGroup({ groupId })
-      if (isGroupValid({ group, users, blockedUsers })) {
+      if (isGroupValid({ group, users, blockedUsers: currentUser.blockedUsers })) {
         return { group, users }
       }
     }

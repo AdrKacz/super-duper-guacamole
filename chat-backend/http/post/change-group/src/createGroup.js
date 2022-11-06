@@ -15,16 +15,16 @@ const {
 
 // ===== ==== ====
 // EXPORTS
-exports.createGroup = async ({ currentUser, bubble }) => {
+exports.createGroup = async ({ currentUser }) => {
   const groupId = uuidv4()
   const group = {
     id: groupId,
     isPublic: false,
-    bubble
+    bubble: currentUser.bubble
   }
 
-  if (Array.isArray(currentUser.bannedUser) && currentUser.bannedUser.length > 0) {
-    group.blockedUsers = new Set(currentUser.bannedUser)
+  if (currentUser.blockedUsers.size > 0) {
+    group.bannedUser = currentUser.blockedUsers
   }
 
   await Promise.all([
