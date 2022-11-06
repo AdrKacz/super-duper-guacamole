@@ -1,7 +1,7 @@
 {
-  "name": "helpers",
+  "name": "manual-setup",
   "version": "1.0.0",
-  "description": "Helpers function",
+  "description": "Contains elements to manually setup an user and create backend authentication keys",
   "main": "index.js",
   "author": "AdrKacz",
   "license": "SEE LICENSE IN /LICENSE",
