@@ -16,17 +16,22 @@ const {
 // ===== ==== ====
 // EXPORTS
 exports.createGroup = async ({ currentUser, bubble }) => {
-  const newGroupId = uuidv4()
+  const groupId = uuidv4()
+  const group = {
+    id: groupId,
+    isPublic: false,
+    bubble
+  }
+
+  if (Array.isArray(currentUser.bannedUser) && currentUser.bannedUser.length > 0) {
+    group.blockedUsers = new Set(currentUser.bannedUser)
+  }
+
   await Promise.all([
     // create groupe
     dynamoDBDocumentClient.send(new PutCommand({
       TableName: GROUPS_TABLE_NAME,
-      Item: {
-        id: newGroupId,
-        isPublic: false,
-        bubble,
-        blockedUsers: new Set(currentUser.bannedUser)
-      },
+      Item: group,
       ConditionExpression: 'attribute_not_exists(id)'
     })),
     // add user to group
@@ -35,7 +40,7 @@ exports.createGroup = async ({ currentUser, bubble }) => {
       Key: { id: currentUser.id },
       UpdateExpression: 'SET #groupId :groupId',
       ExpressionAttributeNames: { '#groupId': 'groupId' },
-      ExpressionAttributeValues: { ':groupId': newGroupId }
+      ExpressionAttributeValues: { ':groupId': groupId }
     }))
   ]).then((results) => (console.log(results)))
     .catch((error) => (console.error(error)))
