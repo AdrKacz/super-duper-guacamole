@@ -11,9 +11,7 @@ if (argv.length > 2) {
   throw new Error('you must provide one parameter for id (ex: yarn node sign-up-user.js your-id)')
 }
 
-readFile('./public.key', { encoding: 'utf-8' }, (_err, data) => {
-  const publicKey = data
-
+readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {
   axios.put('https://9a1o7mlx6k.execute-api.eu-west-3.amazonaws.com/sign-up', {
     id,
     publicKey

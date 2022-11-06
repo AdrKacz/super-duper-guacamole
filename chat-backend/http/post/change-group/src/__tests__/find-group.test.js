@@ -78,9 +78,9 @@ test('it returns valid group', async () => {
   isGroupValidModule.isGroupValid.mockImplementation(({ group }) => {
     if (group.id === 'group-id-2') {
       return true
-    } else {
-      return false
     }
+
+    return false
   })
 
   chatBackendPackageModule.getGroup.mockImplementation(({ groupId }) => ({

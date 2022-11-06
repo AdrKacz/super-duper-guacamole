@@ -61,6 +61,14 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
 
 // ===== ==== ====
 // HELPERS
+/**
+ * Add group id to user
+ *
+ * @param {string} id
+ * @param {string} groupId
+ *
+ * @return {Promise}
+ */
 const setGroupId = ({ id, groupId }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: USERS_TABLE_NAME,
   Key: { id },
@@ -69,14 +77,32 @@ const setGroupId = ({ id, groupId }) => (dynamoDBDocumentClient.send(new UpdateC
   ExpressionAttributeValues: { ':groupId': groupId }
 })))
 
+/**
+ * Update group isPublic, groupSize, and bannedUserIds
+ *
+ * @param {string} groupId
+ * @param {boolean} isPublic
+ * @param {Set} blockedUserIds
+ *
+ * @return {Promise}
+ */
 const updateGroup = ({ groupId, isPublic, blockedUserIds }) => {
   if (blockedUserIds.size > 0) {
     return updateGroupWithBlockedUsers({ groupId, isPublic, blockedUserIds })
-  } else {
-    return updateGroupWithoutBlockedUsers({ groupId, isPublic })
   }
+
+  return updateGroupWithoutBlockedUsers({ groupId, isPublic })
 }
 
+/**
+ * Update group isPublic, groupSize, and bannedUserIds
+ *
+ * @param {string} groupId
+ * @param {boolean} isPublic
+ * @param {Set} blockedUserIds
+ *
+ * @return {Promise}
+ */
 const updateGroupWithBlockedUsers = ({ groupId, isPublic, blockedUserIds }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
@@ -95,6 +121,14 @@ ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
   }
 })))
 
+/**
+ * Update group isPublic and groupSize
+ *
+ * @param {string} groupId
+ * @param {boolean} isPublic
+ *
+ * @return {Promise}
+ */
 const updateGroupWithoutBlockedUsers = ({ groupId, isPublic }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
@@ -111,6 +145,13 @@ ADD #groupSize :plusOne`,
   }
 })))
 
+/**
+ * Warn new users they joined a group
+ *
+ * @param {object[]} users
+ *
+ * @return {Promise}
+ */
 const warnNewUsers = ({ users }) => (Promise.all([
   sendMessages({ users, message: { action: 'status-update' }, useSaveMessage: false }),
   sendNotifications({

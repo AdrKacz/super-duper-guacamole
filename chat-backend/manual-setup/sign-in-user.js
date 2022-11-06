@@ -13,11 +13,8 @@ if (argv.length > 2) {
   throw new Error('you must provide one parameter for id (ex: yarn node sign-in-user.js your-id)')
 }
 
-readFile('./public.key', { encoding: 'utf-8' }, (_err, data) => {
-  const publicKey = data
-  readFile('./private.key', { encoding: 'utf-8' }, (_err, data) => {
-    const privateKey = data
-
+readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {
+  readFile('./private.key', { encoding: 'utf-8' }, (_privateKeyErr, privateKey) => {
     const timestamp = Date.now()
 
     const signature = Buffer.from(createSign('rsa-sha256')
