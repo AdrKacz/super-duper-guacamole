@@ -14,9 +14,9 @@
                 "--dart-define",
                 "WEBSOCKET_ENDPOINT=wss://0aafhqjx7a.execute-api.eu-west-3.amazonaws.com/dev",
                 "--dart-define",
-                "NOTIFICATION_HTTP_ENDPOINT=https://1s9dtt6o3c.execute-api.eu-west-3.amazonaws.com/firebase-token",
+                "HTTP_ENDPOINT=https://gfskxtf7o3.execute-api.eu-west-3.amazonaws.com",
                 "--dart-define",
-                "HTTP_ENDPOINT=https://1s9dtt6o3c.execute-api.eu-west-3.amazonaws.com/",
+                "LEGACY_HTTP_ENDPOINT=https://ttvtsnl18k.execute-api.eu-west-3.amazonaws.com",
             ]
         },
         {
