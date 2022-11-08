@@ -52,7 +52,7 @@ types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
 }
 
 String messageEncode(types.PartialText partialText) {
-  final String author = User().id;
+  final String author = User().id!.toString();
   final int createdAt = DateTime.now().millisecondsSinceEpoch;
   final String id = randomString();
   final String text = partialText.text;

@@ -16,8 +16,9 @@ import 'package:http/http.dart' as http;
 class User {
   static User _instance = User._internal();
 
-  late String id;
-  late AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair;
+  String? get id => Memory().boxUser.get('id');
+  AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? get keyPair =>
+      retreiveRSAkeyPair();
 
   // to be moved in a Group class
   late String _groupId;
@@ -70,23 +71,18 @@ class User {
 
   Future<void> init() async {
     // user
-    String? storedId = Memory().get('user', 'id');
-    AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? storedPair =
-        retreiveRSAkeyPair();
-
-    if (storedId == null || storedPair == null) {
+    if (id == null) {
       // clear memory
       await Memory().clear();
 
-      // create user
-      storedId = const Uuid().v4();
-      Memory().put('user', 'id', storedId);
-
-      storedPair = generateRSAkeyPair(exampleSecureRandom());
-      storeRSAkeyPair(storedPair);
+      Memory().boxUser.put('id', const Uuid().v4());
+      storeRSAkeyPair(generateRSAkeyPair(exampleSecureRandom()));
     }
-    id = storedId;
-    pair = storedPair;
+
+    if (!(await HttpConnection().signUp())) {
+      print('You can\'t sign up');
+    }
+    await HttpConnection().signIn();
 
     // TODO: move to a group class
     // group

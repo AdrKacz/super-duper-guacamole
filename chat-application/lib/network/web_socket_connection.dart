@@ -32,15 +32,17 @@ class WebSocketConnection {
   void register() {
     // send action register
     int timestamp = DateTime.now().millisecondsSinceEpoch;
-    Uint8List signature = rsaSign(User().pair.privateKey,
-        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+    Uint8List signature = rsaSign(
+        User().keyPair!.privateKey,
+        Uint8List.fromList(
+            (User().id!.toString() + timestamp.toString()).codeUnits));
 
     _add(jsonEncode({
       'action': 'register',
-      'id': User().id,
+      'id': User().id!.toString(),
       'signature': signature,
       'timestamp': timestamp,
-      'publicKey': encodePublicKeyToPem(User().pair.publicKey)
+      'publicKey': encodePublicKeyToPem(User().keyPair!.publicKey)
     }));
   }
 
