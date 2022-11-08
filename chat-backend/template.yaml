@@ -12,6 +12,8 @@ Globals:
         USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
         GROUPS_BUBBLE_INDEX_NAME: "BubbleIndex"
+        MINIMUM_GROUP_SIZE: !Ref MinimumGroupSize
+        MAXIMUM_GROUP_SIZE: !Ref MaximumGroupSize
 
 
 Description: >

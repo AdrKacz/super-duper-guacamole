@@ -12,7 +12,8 @@ const { isGroupValid } = require('./is-group-valid')
 // CONSTANTS
 const {
   GROUPS_TABLE_NAME,
-  GROUPS_BUBBLE_INDEX_NAME
+  GROUPS_BUBBLE_INDEX_NAME,
+  MAXIMUM_GROUP_SIZE
 } = process.env
 
 // ===== ==== ====
@@ -23,7 +24,7 @@ exports.findGroup = async ({ currentUser }) => {
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_BUBBLE_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :five',
+    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :maximumGroupSize',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
@@ -33,7 +34,7 @@ exports.findGroup = async ({ currentUser }) => {
     },
     ExpressionAttributeValues: {
       ':bubble': currentUser.bubble,
-      ':five': 5,
+      ':maximumGroupSize': MAXIMUM_GROUP_SIZE,
       ':oldGroupId': currentUser.groupId ?? ''
     }
   }))

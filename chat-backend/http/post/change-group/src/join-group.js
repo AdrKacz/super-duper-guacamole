@@ -13,7 +13,8 @@ const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
-  GROUPS_TABLE_NAME
+  GROUPS_TABLE_NAME,
+  MINIMUM_GROUP_SIZE
 } = process.env
 
 // ===== ==== ====
@@ -39,7 +40,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
       })
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
-  } else if (!group.isPublic && group.groupSize + 1 >= 3) {
+  } else if (!group.isPublic && group.groupSize + 1 >= MINIMUM_GROUP_SIZE) {
     console.log('join private to public group', group)
     // group big enough to turn public
     await Promise.all([

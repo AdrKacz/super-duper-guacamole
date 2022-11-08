@@ -47,7 +47,7 @@ test('it returns empty object if no group', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     IndexName: process.env.GROUPS_BUBBLE_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :five',
+    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :maximumGroupSize',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
@@ -57,7 +57,7 @@ test('it returns empty object if no group', async () => {
     },
     ExpressionAttributeValues: {
       ':bubble': 'bubble',
-      ':five': 5,
+      ':maximumGroupSize': process.env.MAXIMUM_GROUP_SIZE,
       ':oldGroupId': 'group-id'
     }
   })
@@ -131,7 +131,7 @@ test('it returns empty object if no valid group', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     IndexName: process.env.GROUPS_BUBBLE_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :five',
+    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :maximumGroupSize',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
@@ -141,7 +141,7 @@ test('it returns empty object if no valid group', async () => {
     },
     ExpressionAttributeValues: {
       ':bubble': 'bubble',
-      ':five': 5,
+      ':maximumGroupSize': process.env.MAXIMUM_GROUP_SIZE,
       ':oldGroupId': ''
     }
   })
