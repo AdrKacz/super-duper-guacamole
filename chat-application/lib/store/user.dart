@@ -235,7 +235,7 @@ class User {
 
     if (type == 'memory') {
       Memory().boxUser.put('hasSharedProfile', 'true');
-      return HttpConnection().put('share-profile', {'profile': profile});
+      return HttpConnection().legacyPut('share-profile', {'profile': profile});
     }
 
     // ignore: use_build_context_synchronously
@@ -258,7 +258,7 @@ class User {
     await Memory().boxUserProfiles.put(id, profile);
 
     Memory().boxUser.put('hasSharedProfile', 'true');
-    return HttpConnection().put('share-profile', {'profile': profile});
+    return HttpConnection().legacyPut('share-profile', {'profile': profile});
   }
 
   static T _getUserImageOrImageProvider<T>(id,

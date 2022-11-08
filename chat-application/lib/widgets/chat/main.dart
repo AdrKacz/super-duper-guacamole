@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'package:awachat/message.dart';
+import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
@@ -635,7 +636,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         },
         resetAccount: () async {
           // reset account
-          await NotificationHandler().putToken('');
+          await HttpConnection().legacyPut('firebase-token', {'token': ''});
           User().clear();
           await Memory().clear();
           await User().init();
