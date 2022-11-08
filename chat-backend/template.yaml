@@ -134,12 +134,6 @@ Resources:
         - 
           AttributeName: "isWaiting"
           AttributeType: "N"
-        - 
-          AttributeName: "bubble"
-          AttributeType: "S"
-        - 
-          AttributeName: "groupSize"
-          AttributeType: "N"
       KeySchema:
         -
           AttributeName: "id"
@@ -156,19 +150,6 @@ Resources:
               - "users"
               - "questions"
               - "bannedUsers"
-            ProjectionType: "INCLUDE"
-        -
-          IndexName: "BubbleIndex"
-          KeySchema:
-            -
-              AttributeName: "bubble"
-              KeyType: "HASH"
-            -
-              AttributeName: "groupSize"
-              KeyType: "RANGE"
-          Projection:
-            NonKeyAttributes:
-              - "groupSize"
             ProjectionType: "INCLUDE"
 
   # HTTP API
