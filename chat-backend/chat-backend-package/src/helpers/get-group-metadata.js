@@ -2,7 +2,7 @@
 // IMPORTS
 const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { dynamoDBDocumentClient } = require('../clients/aws-clients')
+const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
 
 const { GROUPS_TABLE_NAME } = process.env
 
@@ -20,19 +20,15 @@ exports.getGroupMetadata = async ({ groupId }) => {
 
   const getGroupCommand = new GetCommand({
     TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupId },
-    ProjectionExpression: '#id, #users',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#users': 'users'
-    }
+    Key: { id: groupId }
   })
   const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
 
-  if (typeof group === 'undefined') {
+  if (typeof group !== 'object') {
     throw new Error(`group (${groupId}) is not defined`)
   }
 
+  group.isPublic = typeof group.isPublic === 'boolean' ? group.isPublic : true
   console.log('group', group)
 
   return group

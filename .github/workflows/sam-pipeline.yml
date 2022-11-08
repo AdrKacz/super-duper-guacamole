@@ -12,7 +12,7 @@ on:
         default: 'dev'
         type: choice
         options:
-          - dev
+          - dev-adrien
           - prod
   push:
     branches:

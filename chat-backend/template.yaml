@@ -11,11 +11,15 @@ Globals:
         GROUPS_TABLE_NAME: !Ref GroupsTable
         USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
+        GROUPS_BUBBLE_INDEX_NAME: "BubbleIndex"
+        MINIMUM_GROUP_SIZE: !Ref MinimumGroupSize
+        MAXIMUM_GROUP_SIZE: !Ref MaximumGroupSize
+
 
 Description: >
-  sam-group
+  Awa
 
-  Manage users and their conversation in groups
+  Users, groups
 
 Parameters:
   MinimumGroupSize:
@@ -62,6 +66,14 @@ Parameters:
     Type: String
     Default: 'development'
     Description: '(Required) The name of the stage of the API. Minimum 3 characters.'
+    MinLength: 3
+    MaxLength: 50
+    AllowedPattern: ^[A-Za-z_]+$
+    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+  AuthenticationStage:
+    Type: String
+    Default: 'development'
+    Description: '(Required) The name of the authentication stage of the API. Must refer to a valid jwk. Minimum 3 characters.'
     MinLength: 3
     MaxLength: 50
     AllowedPattern: ^[A-Za-z_]+$
@@ -122,6 +134,12 @@ Resources:
         - 
           AttributeName: "isWaiting"
           AttributeType: "N"
+        - 
+          AttributeName: "bubble"
+          AttributeType: "S"
+        - 
+          AttributeName: "groupSize"
+          AttributeType: "N"
       KeySchema:
         -
           AttributeName: "id"
@@ -139,6 +157,167 @@ Resources:
               - "questions"
               - "bannedUsers"
             ProjectionType: "INCLUDE"
+        -
+          IndexName: "BubbleIndex"
+          KeySchema:
+            -
+              AttributeName: "bubble"
+              KeyType: "HASH"
+            -
+              AttributeName: "groupSize"
+              KeyType: "RANGE"
+          Projection:
+            NonKeyAttributes:
+              - "groupSize"
+            ProjectionType: "INCLUDE"
+
+  # HTTP API
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: !Ref ApiThrottlingBurstLimit
+        ThrottlingRateLimit: !Ref ApiThrottlingRateLimit
+      Auth:
+        DefaultAuthorizer: OAuth2Authorizer
+        Authorizers:
+          OAuth2Authorizer:
+            JwtConfiguration:
+              issuer: "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend"
+              audience:
+                - user
+            IdentitySource: "$request.header.Authorization"
+
+  HttpPutSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/sign-up
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /sign-up
+            Method: PUT
+            Auth:
+              Authorizer: NONE
+
+  HttpPutSignUpLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutSignUpFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  HttpPutSignInFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/sign-in
+      Environment:
+        Variables:
+          JWK_PRIVATE_KEY: !Sub '{{resolve:ssm:jwk_private_key_${AuthenticationStage}:1}}'
+          AUTHENTICATION_STAGE: !Ref AuthenticationStage
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /sign-in
+            Method: PUT
+            Auth:
+              Authorizer: NONE
+
+  HttpPutSignInLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutSignInFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  HttpGetStatusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/get/status
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /status
+            Method: GET
+
+  HttpGetStatusLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpGetStatusFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  HttpPostTextMessageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/post/text-message
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /text-message
+            Method: POST
+
+  HttpPostTextMessageLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPostTextMessageFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  HttpPostChangeGroupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/post/change-group
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /change-group
+            Method: POST
+
+  HttpPostChangeGroupLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPostChangeGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
 
   # Web Socket
   SimpleChatWebSocket:
@@ -751,9 +930,13 @@ Outputs:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
 
-  HttpURI:
+  HttpURILegacy:
     Description: "The HTTPS API URI to connect to"
     Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
+
+  HttpURI:
+    Description: "The HTTPS API URI to connect to"
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"

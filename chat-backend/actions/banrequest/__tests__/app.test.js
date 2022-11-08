@@ -22,8 +22,6 @@ jest.mock('../src/get-banned-user-and-group')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -37,9 +35,6 @@ beforeEach(() => {
 
   ddbMock.resolves({})
   snsMock.resolves({})
-
-  // reset console
-  log.mockReset()
 })
 
 // ===== ==== ====

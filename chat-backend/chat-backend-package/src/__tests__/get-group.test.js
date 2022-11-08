@@ -9,17 +9,6 @@ const getGroupMetadataModule = require('../helpers/get-group-metadata')
 jest.mock('../helpers/get-group-metadata')
 
 // ===== ==== ====
-// CONSTANTS
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
-
-// ===== ==== ====
 // TESTS
 test('it throws error on none string group id', async () => {
   await expect(getGroup({ groupId: 1 })).rejects.toThrow('groupId must be a string')

@@ -1,5 +1,5 @@
 {
-  "name": "package",
+  "name": "chat-backend-package",
   "version": "1.0.0",
   "description": "Package with common function use in the backend",
   "main": "index.js",

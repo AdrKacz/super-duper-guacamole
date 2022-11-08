@@ -12,8 +12,6 @@ const {
 // CONSTANTS
 const ddbMock = mockClient(DynamoDBDocumentClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -21,9 +19,6 @@ beforeEach(() => {
   ddbMock.reset()
 
   ddbMock.resolves({})
-
-  // reset console
-  log.mockReset()
 })
 
 // ===== ==== ====

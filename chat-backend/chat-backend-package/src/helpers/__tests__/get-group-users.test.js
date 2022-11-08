@@ -12,8 +12,6 @@ const {
 // CONSTANTS
 const ddbMock = mockClient(DynamoDBDocumentClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -21,9 +19,6 @@ beforeEach(() => {
   ddbMock.reset()
 
   ddbMock.resolves({})
-
-  // clear console
-  log.mockClear()
 })
 
 // ===== ==== ====
@@ -49,7 +44,7 @@ test('it fetches group users', async () => {
     ExpressionAttributeValues: {
       ':groupId': 'group-id'
     },
-    Limit: 5 // to replace with env variable MAXIMUM_NUMBER_OF_USERS_PER_GROUP
+    Limit: process.env.MAXIMUM_GROUP_SIZE
   })
   expect(JSON.stringify(users)).toBe(JSON.stringify([{ id: 'id-1' }, { id: 'id-2' }]))
 })

@@ -1,0 +1,13 @@
+{
+  "name": "change-group",
+  "version": "1.0.0",
+  "description": "Leave group and join a new one",
+  "main": "app.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.204.0",
+    "@aws-sdk/lib-dynamodb": "^3.204.0",
+    "chat-backend-package": "file:../../../chat-backend-package"
+  }
+}

@@ -25,8 +25,6 @@ jest.mock('../src/get-users')
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -36,9 +34,6 @@ beforeEach(() => {
 
   ddbMock.resolves({})
   snsMock.resolves({})
-
-  // reset console
-  log.mockReset()
 })
 
 // ===== ==== ====
@@ -279,6 +274,8 @@ test('it notifies user if the vote ended with a confirmation', async () => {
 })
 
 test('it notifies user if the vote ended with a denial', async () => {
+  getUsersModule.getUsers.mockResolvedValue(Promise.resolve([]))
+
   const id = 'id'
   const groupId = 'group-id'
   getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))

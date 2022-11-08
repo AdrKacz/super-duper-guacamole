@@ -15,8 +15,6 @@ const {
 // CONSTANTS
 const apiMock = mockClient(ApiGatewayManagementApiClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -24,9 +22,6 @@ beforeEach(() => {
   apiMock.reset()
 
   apiMock.resolves({})
-
-  // clear console
-  log.mockClear()
 })
 
 // ===== ==== ====

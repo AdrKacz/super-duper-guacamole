@@ -23,14 +23,20 @@ enabled = true
     "chat-backend/actions/textmessage/",
     "chat-backend/chat-backend-package/",
     "chat-backend/handle-inactive-users/",
+    "chat-backend/http/get/status/",
+    "chat-backend/http/post/change-group/",
+    "chat-backend/http/post/text-message/",
     "chat-backend/http/put/share-profile/",
+    "chat-backend/http/put/sign-in/",
+    "chat-backend/http/put/sign-up/",
+    "chat-backend/manual-setup/",
     "chat-backend/put-firebase-token/",
     "chat-backend/sendmessage/",
     "chat-backend/sendnotification/",
     "chat-backend/storeunreaddata/",
     "chat-backend/switchgroup/",
     "content-moderation/",
-    "scripts/",  
+    "scripts/",
   ]
   environment = ["nodejs"]
   module_system = "commonjs"

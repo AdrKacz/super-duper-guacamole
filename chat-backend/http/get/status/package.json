@@ -1,0 +1,11 @@
+{
+  "name": "get-status",
+  "version": "1.0.0",
+  "description": "get user status",
+  "main": "app.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "chat-backend-package": "file:../../../chat-backend-package"
+  }
+}

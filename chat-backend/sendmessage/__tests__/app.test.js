@@ -16,8 +16,6 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 const apiMock = mockClient(ApiGatewayManagementApiClient)
 const snsMock = mockClient(SNSClient)
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -27,9 +25,6 @@ beforeEach(() => {
 
   apiMock.resolves({})
   snsMock.reset()
-
-  // clear console
-  log.mockClear()
 })
 
 // ===== ==== ====

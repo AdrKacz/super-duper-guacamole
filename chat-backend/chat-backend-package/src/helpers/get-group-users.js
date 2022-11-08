@@ -2,11 +2,12 @@
 // IMPORTS
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { dynamoDBDocumentClient } = require('../clients/aws-clients')
+const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
 
 const {
   USERS_TABLE_NAME,
-  USERS_GROUP_ID_INDEX_NAME
+  USERS_GROUP_ID_INDEX_NAME,
+  MAXIMUM_GROUP_SIZE
 } = process.env
 
 // ===== ==== ====
@@ -31,7 +32,7 @@ exports.getGroupUsers = async ({ groupId }) => {
     ExpressionAttributeValues: {
       ':groupId': groupId
     },
-    Limit: 5 // to replace with env variable MAXIMUM_NUMBER_OF_USERS_PER_GROUP
+    Limit: MAXIMUM_GROUP_SIZE
   })
 
   const users = await dynamoDBDocumentClient.send(queryCommand).then((response) => (response.Items))

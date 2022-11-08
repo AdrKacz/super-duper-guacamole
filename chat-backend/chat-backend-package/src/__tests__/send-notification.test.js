@@ -12,15 +12,6 @@ jest.mock('../clients/firebase-clients', () => ({
   }
 }))
 
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
-
 // ===== ==== ====
 // TESTS
 test.each([
@@ -41,4 +32,12 @@ test('it notifies users', async () => {
     notification: { title: 'title', body: 'body' },
     tokens: ['firebaseToken']
   })
+})
+
+test('it doesn\'t sends notification if no users', async () => {
+  firebaseClientsModule.messaging.sendMulticast.mockResolvedValue(Promise.resolve())
+
+  await sendNotifications({ users: [{ id: 'id-1' }], notification: { title: 'title', body: 'body' } })
+
+  expect(firebaseClientsModule.messaging.sendMulticast).toHaveBeenCalledTimes(0)
 })

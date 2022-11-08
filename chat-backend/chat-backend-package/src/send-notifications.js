@@ -34,5 +34,7 @@ exports.sendNotifications = async ({ users, notification: { title, body } }) => 
 
   console.log('send notification:\n', message)
 
-  await messaging.sendMulticast(message)
+  if (tokens.length > 0) {
+    await messaging.sendMulticast(message)
+  }
 }

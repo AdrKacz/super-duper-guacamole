@@ -6,17 +6,6 @@ const sendMessageModule = require('../helpers/send-message')
 jest.mock('../helpers/send-message')
 
 // ===== ==== ====
-// CONSTANTS
-const log = jest.spyOn(console, 'log').mockImplementation(() => {}) // skipcq: JS-0057
-
-// ===== ==== ====
-// BEFORE EACH
-beforeEach(() => {
-  // clear console
-  log.mockClear()
-})
-
-// ===== ==== ====
 // TESTS
 test('it throws error when users is not an array', async () => {
   await expect(sendMessages({ users: {}, message: { action: 'action' } })).rejects.toThrow('users must be an array')

@@ -1,0 +1,13 @@
+{
+  "name": "sign-in",
+  "version": "1.0.0",
+  "description": "Sign user in",
+  "main": "app.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.199.0",
+    "@aws-sdk/lib-dynamodb": "^3.199.0",
+    "jsonwebtoken": "^8.5.1"
+  }
+}
