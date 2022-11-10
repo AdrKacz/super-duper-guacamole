@@ -15,7 +15,6 @@ Globals:
         MINIMUM_GROUP_SIZE: !Ref MinimumGroupSize
         MAXIMUM_GROUP_SIZE: !Ref MaximumGroupSize
 
-
 Description: >
   Awa
 
@@ -183,7 +182,7 @@ Resources:
         Authorizers:
           OAuth2Authorizer:
             JwtConfiguration:
-              issuer: "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend"
+              issuer: "https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/chat-backend"
               audience:
                 - user
             IdentitySource: "$request.header.Authorization"
@@ -251,6 +250,12 @@ Resources:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
@@ -278,6 +283,12 @@ Resources:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
@@ -305,6 +316,12 @@ Resources:
           TableName: !Ref UsersTable
       - DynamoDBCrudPolicy:
           TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi

@@ -131,7 +131,7 @@ test('it returns jwt', async () => {
     expiresIn: 15 * 60,
     notBefore: 0,
     audience: 'user',
-    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/298-create-an-http-api-to-receive-command/chat-backend'
+    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/chat-backend'
   })
 
   expect(response.statusCode).toBe(200)
