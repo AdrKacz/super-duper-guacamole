@@ -265,9 +265,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (message != null) {
       insertMessage(message);
       setState(() {});
-      HttpConnection().post(path: 'text-message', body: {
-        'message': {'action': 'textmessage', 'message': encodedMessage}
-      });
+      HttpConnection()
+          .post(path: 'text-message', body: {'message': encodedMessage});
     }
   }
 

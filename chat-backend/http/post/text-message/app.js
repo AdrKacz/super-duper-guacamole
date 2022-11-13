@@ -21,7 +21,7 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
   const message = body.message
 
-  if (typeof message !== 'object') {
+  if (typeof message !== 'string') {
     return {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
@@ -52,7 +52,7 @@ exports.handler = async (event) => {
   }
 
   await Promise.all([
-    sendMessages({ users, message, useSaveMessage: true }),
+    sendMessages({ users, message: { action: 'textmessage', message }, useSaveMessage: true }),
     sendNotifications({
       users,
       notification: {
