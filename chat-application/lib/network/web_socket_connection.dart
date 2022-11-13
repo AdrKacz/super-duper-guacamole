@@ -53,14 +53,6 @@ class WebSocketConnection {
     }));
   }
 
-  void textmessage(String encodedMessage) {
-    // send action textmessage
-    _add(jsonEncode({
-      'action': 'textmessage',
-      'message': encodedMessage,
-    }));
-  }
-
   void banrequest(String userid, String messageid) {
     // send action banrequest
     _add(jsonEncode({

@@ -14,8 +14,9 @@ const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws
 const {
   USERS_TABLE_NAME,
   GROUPS_TABLE_NAME,
-  MINIMUM_GROUP_SIZE
+  MINIMUM_GROUP_SIZE: MINIMUM_GROUP_SIZE_STRING
 } = process.env
+const MINIMUM_GROUP_SIZE = parseInt(MINIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS

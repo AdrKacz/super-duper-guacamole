@@ -15,6 +15,18 @@ For help getting started with Flutter, view our
 [online documentation](https://flutter.dev/docs), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+# Network connections
+
+## Send a HTTP request
+
+[![](https://mermaid.ink/img/pako:eNqFkD1vAjEMhv-K5RkkKnXKgITEcO10Ehd1yWIlBqJyzjVxBor4781xYmGpJ-t5_frrhj4FRoOFfyqL532kU6bRCbTYeU0ZLFABWzgvsKes0ceJRKGbpW4Yetj1H4tsYb3dQmcgzx2LLrR7UGvgffNmwApVPaccfzm8uEo8CUR5cX1-DTCkb5Z_ZjRsZ1qmJIWd4ApHziPF0E68zWUO9cwjOzQtDXykelGHTu6ttC2VDlfxaDRXXmGdAunzI2iOdCl8_wM3hF3h?type=png)](https://mermaid.live/edit#pako:eNqFkD1vAjEMhv-K5RkkKnXKgITEcO10Ehd1yWIlBqJyzjVxBor4781xYmGpJ-t5_frrhj4FRoOFfyqL532kU6bRCbTYeU0ZLFABWzgvsKes0ceJRKGbpW4Yetj1H4tsYb3dQmcgzx2LLrR7UGvgffNmwApVPaccfzm8uEo8CUR5cX1-DTCkb5Z_ZjRsZ1qmJIWd4ApHziPF0E68zWUO9cwjOzQtDXykelGHTu6ttC2VDlfxaDRXXmGdAunzI2iOdCl8_wM3hF3h)
+
+## Connect to WebSocket
+
+[![](https://mermaid.ink/img/pako:eNp1kD9rAzEMxb-KEB1TaCGTh4NAh2ung5zx4kW1lcQkJ6f-MzQh3z0-rqFDqSbxfnp6SFd00TMqzPxVWRy_BdonmqxAq4FSCS6cSQoYoAyGP7fRHbksfONKTKBnojOnv6Z-Rv04DrAZ3hes4bkDo-DJRRF2P5tMUzvQCtYvrwq0UC2HmMKF_a-rg15BDnuBIIvaP1wfZoQxHln-y8AVTpwmCr7dep2nLJYDT2xRtdbzjuqpWLRya6MtPW6_xaEqqfIK69lTebwG1Y5OmW93HFdh0Q?type=png)](https://mermaid.live/edit#pako:eNp1kD9rAzEMxb-KEB1TaCGTh4NAh2ung5zx4kW1lcQkJ6f-MzQh3z0-rqFDqSbxfnp6SFd00TMqzPxVWRy_BdonmqxAq4FSCS6cSQoYoAyGP7fRHbksfONKTKBnojOnv6Z-Rv04DrAZ3hes4bkDo-DJRRF2P5tMUzvQCtYvrwq0UC2HmMKF_a-rg15BDnuBIIvaP1wfZoQxHln-y8AVTpwmCr7dep2nLJYDT2xRtdbzjuqpWLRya6MtPW6_xaEqqfIK69lTebwG1Y5OmW93HFdh0Q)
+
+## Set up HTTP and WebSocket connections
+
 ## Add assets
 
 ### From SVG

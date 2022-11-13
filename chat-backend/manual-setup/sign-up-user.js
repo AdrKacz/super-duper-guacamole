@@ -12,7 +12,7 @@ if (argv.length > 2) {
 }
 
 readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {
-  axios.put('https://gfskxtf7o3.execute-api.eu-west-3.amazonaws.com/sign-up', {
+  axios.put('https://d1834iic8b.execute-api.eu-west-3.amazonaws.com/sign-up', {
     id,
     publicKey
   }).then((response) => {

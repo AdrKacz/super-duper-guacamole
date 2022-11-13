@@ -96,7 +96,7 @@ class User {
     } else {
       _groupId = '';
     }
-    // user with id, _groupid and otherGroupUsers
+    await HttpConnection().signUp();
   }
 
   // Group method

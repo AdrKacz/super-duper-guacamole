@@ -13,8 +13,9 @@ const { isGroupValid } = require('./is-group-valid')
 const {
   GROUPS_TABLE_NAME,
   GROUPS_BUBBLE_INDEX_NAME,
-  MAXIMUM_GROUP_SIZE
+  MAXIMUM_GROUP_SIZE: MAXIMUM_GROUP_SIZE_STRING
 } = process.env
+const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS

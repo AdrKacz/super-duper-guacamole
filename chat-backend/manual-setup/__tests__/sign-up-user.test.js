@@ -38,7 +38,7 @@ test('it sends request', () => {
   expect(fs.readFile).toHaveBeenCalledWith('./public.key', { encoding: 'utf-8' }, expect.any(Function))
 
   expect(axios.put).toHaveBeenCalledTimes(1)
-  expect(axios.put).toHaveBeenCalledWith('https://gfskxtf7o3.execute-api.eu-west-3.amazonaws.com/sign-up', {
+  expect(axios.put).toHaveBeenCalledWith('https://d1834iic8b.execute-api.eu-west-3.amazonaws.com/sign-up', {
     id: 'your-id',
     publicKey: 'public-key'
   })

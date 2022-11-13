@@ -29,7 +29,7 @@ readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {
 
     console.log('isVerified', isVerified)
 
-    axios.put('https://gfskxtf7o3.execute-api.eu-west-3.amazonaws.com/sign-in', {
+    axios.put('https://d1834iic8b.execute-api.eu-west-3.amazonaws.com/sign-in', {
       id,
       timestamp,
       signature

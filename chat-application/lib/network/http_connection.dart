@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:awachat/pointycastle/helpers.dart';
@@ -49,6 +50,7 @@ class HttpConnection {
   }
 
   Future<void> signIn() async {
+    print('you signing in');
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
         Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
@@ -56,55 +58,75 @@ class HttpConnection {
     final http.Response response = await http.put(
         Uri.parse('$_httpEndpoint/sign-in'),
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          HttpHeaders.contentTypeHeader: 'application/json',
         },
         body: jsonEncode(
             {'id': User().id, 'timestamp': timestamp, 'signature': signature}));
 
     if (response.statusCode == 200) {
-      String jwtToken = jsonDecode(response.body)['jwtToken'];
-      print('Received jwtToken $jwtToken');
-      Memory().boxUser.put('jwtToken', jwtToken);
+      Memory().boxUser.put('jwtToken', jsonDecode(response.body)['jwtToken']);
     } else {
       print('You can\'t sign in');
     }
   }
 
-  Future<http.Response> get({required String path, int n = 0}) async {
-    final http.Response response =
-        await http.get(Uri.parse('$_httpEndpoint/$path'), headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization':
-          'Bearer ${Memory().boxUser.get('jwtToken', defaultValue: '')}'
-    });
-
-    if (response.statusCode == 200 || n >= 3) {
-      return response;
-    } else {
-      await signIn();
-      return get(path: path, n: n + 1);
+  Future<Map?> get({required String path, int n = 0}) async {
+    try {
+      final http.Response response =
+          await http.get(Uri.parse('$_httpEndpoint/$path'), headers: {
+        HttpHeaders.authorizationHeader:
+            'Bearer ${Memory().boxUser.get('jwtToken', defaultValue: '')}'
+      });
+      if (response.statusCode == 401) {
+        throw 'Unauthorized';
+      } else {
+        print(response.body);
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('$e');
+      // Incorrect headers from AWS on 401
+      // See https://github.com/dart-lang/sdk/issues/46442
+      if (n < 3) {
+        print('re-sign');
+        await signIn();
+        return get(path: path, n: n + 1);
+      } else {
+        print('return null');
+        return null;
+      }
     }
   }
 
-  Future<http.Response> post(
+  Future<Map?> post(
       {required String path, required Map body, int n = 0}) async {
-    final http.Response response =
-        await http.put(Uri.parse('$_httpEndpoint/$path'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-              'Authorization':
-                  'Bearer ${Memory().boxUser.get('jwtToken', defaultValue: '')}'
-            },
-            body: jsonEncode(body));
-
-    if (response.statusCode == 200 || n >= 3) {
-      return response;
-    } else {
-      await signIn();
-      return post(path: path, body: body, n: n + 1);
+    try {
+      final http.Response response = await http.post(
+          Uri.parse('$_httpEndpoint/$path'),
+          body: jsonEncode(body),
+          headers: {
+            HttpHeaders.contentTypeHeader: 'application/json',
+            HttpHeaders.authorizationHeader:
+                'Bearer ${Memory().boxUser.get('jwtToken', defaultValue: '')}'
+          });
+      if (response.statusCode == 401) {
+        throw 'Unauthorized';
+      } else {
+        print(response.body);
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      print('$e');
+      // Incorrect headers from AWS on 401
+      // See https://github.com/dart-lang/sdk/issues/46442
+      if (n < 3) {
+        print('re-sign');
+        await signIn();
+        return post(path: path, body: body, n: n + 1);
+      } else {
+        print('return null');
+        return null;
+      }
     }
   }
 }

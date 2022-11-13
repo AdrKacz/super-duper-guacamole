@@ -7,8 +7,9 @@ const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
 const {
   USERS_TABLE_NAME,
   USERS_GROUP_ID_INDEX_NAME,
-  MAXIMUM_GROUP_SIZE
+  MAXIMUM_GROUP_SIZE: MAXIMUM_GROUP_SIZE_STRING
 } = process.env
+const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS

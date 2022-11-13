@@ -76,7 +76,7 @@ test('it sends request', () => {
   expect(verifier.verify).toHaveBeenCalledWith('public-key', Buffer.from('signature', 'base64'), 'base64')
 
   expect(axios.put).toHaveBeenCalledTimes(1)
-  expect(axios.put).toHaveBeenCalledWith('https://gfskxtf7o3.execute-api.eu-west-3.amazonaws.com/sign-in', {
+  expect(axios.put).toHaveBeenCalledWith('https://d1834iic8b.execute-api.eu-west-3.amazonaws.com/sign-in', {
     id: 'your-id',
     timestamp: 0,
     signature: Buffer.from('signature', 'base64')

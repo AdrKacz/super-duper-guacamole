@@ -21,7 +21,7 @@ exports.handler = async (event) => {
   const body = JSON.parse(event.body)
   const message = body.message
 
-  if (typeof message !== 'string') {
+  if (typeof message !== 'object') {
     return {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },

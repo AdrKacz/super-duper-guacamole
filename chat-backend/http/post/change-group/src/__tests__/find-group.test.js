@@ -57,7 +57,7 @@ test('it returns empty object if no group', async () => {
     },
     ExpressionAttributeValues: {
       ':bubble': 'bubble',
-      ':maximumGroupSize': process.env.MAXIMUM_GROUP_SIZE,
+      ':maximumGroupSize': parseInt(process.env.MAXIMUM_GROUP_SIZE, 10),
       ':oldGroupId': 'group-id'
     }
   })
@@ -141,7 +141,7 @@ test('it returns empty object if no valid group', async () => {
     },
     ExpressionAttributeValues: {
       ':bubble': 'bubble',
-      ':maximumGroupSize': process.env.MAXIMUM_GROUP_SIZE,
+      ':maximumGroupSize': parseInt(process.env.MAXIMUM_GROUP_SIZE, 10),
       ':oldGroupId': ''
     }
   })
