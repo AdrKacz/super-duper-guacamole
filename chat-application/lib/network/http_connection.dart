@@ -23,7 +23,7 @@ class HttpConnection {
   Future<http.Response> legacyPut(String path, Map body) {
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
-        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+        Uint8List.fromList((User().id! + timestamp.toString()).codeUnits));
 
     body['id'] = User().id;
     body['signature'] = signature;
@@ -53,7 +53,7 @@ class HttpConnection {
     print('you signing in');
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
-        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+        Uint8List.fromList((User().id! + timestamp.toString()).codeUnits));
 
     final http.Response response = await http.put(
         Uri.parse('$_httpEndpoint/sign-in'),
@@ -70,7 +70,8 @@ class HttpConnection {
     }
   }
 
-  Future<Map?> get({required String path, int n = 0}) async {
+  Future<Map> get({required String path, int n = 0}) async {
+    print('GET /$path');
     try {
       final http.Response response =
           await http.get(Uri.parse('$_httpEndpoint/$path'), headers: {
@@ -80,11 +81,11 @@ class HttpConnection {
       if (response.statusCode == 401) {
         throw 'Unauthorized';
       } else {
-        print(response.body);
+        print('$path: ${response.body}');
         return jsonDecode(response.body);
       }
     } catch (e) {
-      print('$e');
+      print('$path: $e');
       // Incorrect headers from AWS on 401
       // See https://github.com/dart-lang/sdk/issues/46442
       if (n < 3) {
@@ -93,13 +94,13 @@ class HttpConnection {
         return get(path: path, n: n + 1);
       } else {
         print('return null');
-        return null;
+        return {}; // TODO: display error on screen to force re-sign up/in manually
       }
     }
   }
 
-  Future<Map?> post(
-      {required String path, required Map body, int n = 0}) async {
+  Future<Map> post({required String path, required Map body, int n = 0}) async {
+    print('POST /$path');
     try {
       final http.Response response = await http.post(
           Uri.parse('$_httpEndpoint/$path'),
@@ -112,11 +113,11 @@ class HttpConnection {
       if (response.statusCode == 401) {
         throw 'Unauthorized';
       } else {
-        print(response.body);
+        print('$path: ${response.body}');
         return jsonDecode(response.body);
       }
     } catch (e) {
-      print('$e');
+      print('$path: $e');
       // Incorrect headers from AWS on 401
       // See https://github.com/dart-lang/sdk/issues/46442
       if (n < 3) {
@@ -125,7 +126,7 @@ class HttpConnection {
         return post(path: path, body: body, n: n + 1);
       } else {
         print('return null');
-        return null;
+        return {}; // TODO: display error on screen to force re-sign up/in manually
       }
     }
   }

@@ -25,7 +25,7 @@ class Agreements extends StatelessWidget {
                   url:
                       'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr',
                   onNextPressed: () {
-                    Memory().put('user', 'hasSignedAgreements', 'true');
+                    Memory().boxUser.put('hasSignedAgreements', 'true');
                     Navigator.popUntil(context, ModalRoute.withName('/'));
                     nextAppStatus();
                   })),

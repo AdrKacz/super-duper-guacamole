@@ -4,7 +4,6 @@ import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -16,46 +15,19 @@ import 'package:http/http.dart' as http;
 class User {
   static User _instance = User._internal();
 
-  late String id;
   late AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair;
 
-  // to be moved in a Group class
-  late String _groupId;
+  String? get id => Memory().boxUser.get('id');
+  bool get hasId => Memory().boxUser.containsKey('id');
 
-  String get groupId => _groupId;
-  set groupId(String id) {
-    // reset
-    if (_groupId != '') {
-      // reset group
-      // unsubscribe
-      FirebaseMessaging.instance
-          .unsubscribeFromTopic('group-${User().groupId}');
-      // clear messages
-      Memory().boxMessages.clear();
-      // clear users
-      Memory().boxGroupUsers.clear();
-      // clear profile (keep your profile)
-      Memory().boxUser.delete('hasSharedProfile');
-      final Map? profile = Memory().boxUserProfiles.get(this.id);
-      Memory().boxUserProfiles.clear().then((value) {
-        if (profile != null) {
-          Memory().boxUserProfiles.put(this.id, profile);
-        }
-      });
-      // reset group
-      _groupId = '';
-    }
+  String? get groupId => Memory().boxUser.get('groupId');
+  bool get hasGroup => Memory().boxUser.containsKey('groupId');
 
-    // set
-    if (id != '') {
-      // set group (subscribe)
-      FirebaseMessaging.instance.subscribeToTopic('group-$id');
-      Memory().put('user', 'groupid', id);
-      _groupId = id;
-    }
+  void updateGroupId(String groupId) async {
+    await resetGroup();
+
+    Memory().boxUser.put('groupId', groupId);
   }
-
-  bool get hasGroup => _groupId != '';
 
   factory User() {
     return _instance;
@@ -63,56 +35,58 @@ class User {
 
   User._internal();
 
-  void clear() {
-    groupId = '';
-    _instance = User._internal();
+  Future<void> resetUser() async {
+    await Memory().boxUser.delete('id');
+    await init();
   }
 
   Future<void> init() async {
-    // user
-    String? storedId = Memory().get('user', 'id');
     AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? storedPair =
         retreiveRSAkeyPair();
 
-    if (storedId == null || storedPair == null) {
+    if (!Memory().boxUser.containsKey('id') || storedPair == null) {
       // clear memory
       await Memory().clear();
 
       // create user
-      storedId = const Uuid().v4();
-      Memory().put('user', 'id', storedId);
+      Memory().boxUser.put('id', const Uuid().v4());
 
       storedPair = generateRSAkeyPair(exampleSecureRandom());
       storeRSAkeyPair(storedPair);
     }
-    id = storedId;
     pair = storedPair;
 
-    // TODO: move to a group class
-    // group
-    String? memoryGroupId = Memory().get('user', 'groupid');
-    if (memoryGroupId != null) {
-      _groupId = memoryGroupId;
-    } else {
-      _groupId = '';
-    }
     await HttpConnection().signUp();
+    await HttpConnection().signIn();
   }
 
-  // Group method
-  void updateOtherUsers(Map<String, dynamic> otherUsers) {
-    for (final Map otherUser in otherUsers.values) {
-      if (otherUser['id'] != null) {
-        Map groupUser = {
-          'id': otherUser['id'],
-          'isActive': otherUser['isActive'] ?? false,
-        };
-        Memory().boxGroupUsers.put(otherUser['id'], groupUser);
-      }
+  Future<void> resetGroup() async {
+    // clear messages
+    Memory().boxMessages.clear();
+    // clear users
+    Memory().boxGroupUsers.clear();
+    // clear profile (keep your profile)
+    Memory().boxUser.delete('hasSharedProfile');
+    final Map? profile = Memory().boxUserProfiles.get(id);
+
+    await Memory()
+        .boxUserProfiles
+        .clear(); // need to await to not be sure you repopulate on something new
+
+    if (profile != null) {
+      Memory().boxUserProfiles.put(id, profile);
     }
+
+    await Memory().boxUser.delete('groupId');
   }
 
-  updateOtherUserArgument(String id, String key, dynamic value) {
+  Future<void> updateGroupUsers(
+      Map<String, Map<dynamic, dynamic>> groupUsers) async {
+    await Memory().boxGroupUsers.clear();
+    Memory().boxGroupUsers.putAll(groupUsers);
+  }
+
+  void updateGroupUserArgument(String id, String key, dynamic value) {
     Map? groupUser = Memory().boxGroupUsers.get(id);
     if (groupUser == null) {
       return;
@@ -121,16 +95,16 @@ class User {
     Memory().boxGroupUsers.put(id, groupUser);
   }
 
-  void updateOtherUserStatus(String id, bool isActive) {
-    updateOtherUserArgument(id, 'isActive', isActive);
+  void updateGroupUserStatus(String id, bool isConnected) {
+    updateGroupUserArgument(id, 'isConnected', isConnected);
   }
 
-  void updateOtherUserProfile(String id, String profile) {
-    updateOtherUserArgument(id, 'profile', profile);
+  void updateGroupUserProfile(String id, String profile) {
+    updateGroupUserArgument(id, 'profile', profile);
   }
 
-  void setOtherUserHasSeenProfile(String id) {
-    updateOtherUserArgument(id, 'hasSeenProfile', true);
+  void setGroupUserHasSeenProfile(String id) {
+    updateGroupUserArgument(id, 'hasSeenProfile', true);
   }
 
   Future<XFile?> _pickImage(BuildContext context, String type) async {

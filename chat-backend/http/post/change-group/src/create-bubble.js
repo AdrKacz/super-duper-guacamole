@@ -1,10 +1,6 @@
 // ===== ==== ====
 // EXPORTS
-exports.createBubble = ({ currentUser }) => {
-  if (typeof currentUser.questions !== 'object') {
-    return 'void' // The AttributeValue for a key attribute cannot contain an empty string value
-  }
-
+exports.createBubble = ({ currentUser = { questions: {} } }) => {
   const bubbleArray = []
   for (const [question, answer] of Object.entries(currentUser.questions)) {
     if (answer.startsWith('_')) {
@@ -12,5 +8,9 @@ exports.createBubble = ({ currentUser }) => {
     }
   }
 
-  return bubbleArray.join('::')
+  if (bubbleArray.length === 0) {
+    return 'void' // The AttributeValue for a key attribute cannot contain an empty string value
+  } else {
+    return bubbleArray.join('::')
+  }
 }

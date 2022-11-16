@@ -30,7 +30,7 @@ exports.leaveGroup = async ({ currentUser }) => {
   }
 
   const usersWithoutCurrentUser = users.filter(({ id }) => (currentUser.id !== id))
-  if (group.groupSize - 1 <= 1) {
+  if (usersWithoutCurrentUser.length <= 1) {
     console.log('leave and delete group', group)
     // delete group
     await Promise.all([
@@ -80,9 +80,9 @@ exports.leaveGroup = async ({ currentUser }) => {
         TableName: GROUPS_TABLE_NAME,
         Key: { id: currentUser.groupId },
         ReturnValues: 'UPDATED_NEW',
-        UpdateExpression: 'ADD #groupSize :minusOne',
+        UpdateExpression: 'SET #groupSize = :groupSize',
         ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-        ExpressionAttributeValues: { ':minusOne': -1 }
+        ExpressionAttributeValues: { ':groupSize': usersWithoutCurrentUser.length }
       })),
       // warn remaining users
       sendMessages({ users: usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),

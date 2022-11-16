@@ -18,6 +18,10 @@ const { createBubble } = require('./src/create-bubble')
    * @param {Object} event
    */
 exports.handler = async (event) => {
+  console.log(`Receives:
+Body:
+${event.body}`)
+
   const jwt = event.requestContext.authorizer.jwt.claims
 
   const body = JSON.parse(event.body)

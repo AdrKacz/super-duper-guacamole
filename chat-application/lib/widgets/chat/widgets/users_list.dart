@@ -13,6 +13,7 @@ class UsersList extends StatelessWidget {
         valueListenable: Hive.box<Map>(Memory.groupUsers).listenable(),
         builder: (BuildContext context, Box box, widget) {
           final Map users = box.toMap();
+          users.remove(User().id);
           if (users.isNotEmpty) {
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -26,7 +27,7 @@ class UsersList extends StatelessWidget {
                                 User.getUserImageProvider(user['id']),
                           ),
                           Badge(
-                              showBadge: user['isActive'],
+                              showBadge: user['isConnected'] ?? false,
                               badgeColor:
                                   Theme.of(context).colorScheme.tertiary,
                               position: BadgePosition.bottomEnd(),

@@ -14,7 +14,7 @@ void main() async {
 
   await Memory().init();
   await User().init();
-  await NotificationHandler().init();
+  NotificationHandler().init();
 
   runApp(const MyApp());
 }
@@ -31,7 +31,7 @@ enum Status { presentation, agreements, firstTimeQuestions, main, other }
 class _MyAppState extends State<MyApp> {
   Status get status {
     String statusName =
-        Memory().get('user', 'appStatus') ?? Status.presentation.name;
+        Memory().boxUser.get('appStatus') ?? Status.presentation.name;
     for (final Status value in Status.values) {
       if (statusName == value.name) {
         return value;
@@ -41,14 +41,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   set status(Status newStatus) {
-    Memory().put('user', 'appStatus', newStatus.name);
+    Memory().boxUser.put('appStatus', newStatus.name);
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     if (status == Status.agreements &&
-        Memory().get('user', 'hasSignedAgreements') == 'true') {
+        Memory().boxUser.get('hasSignedAgreements') == 'true') {
       status = Status.main;
     }
     return MaterialApp(

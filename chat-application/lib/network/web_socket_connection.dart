@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:awachat/store/memory.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -15,8 +14,7 @@ class WebSocketConnection {
   Stream<dynamic> get stream => _channel.stream;
 
   WebSocketConnection() {
-    // init websocket
-    reconnect();
+    connect();
   }
 
   void _add(dynamic data) {
@@ -33,7 +31,7 @@ class WebSocketConnection {
     // send action register
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     Uint8List signature = rsaSign(User().pair.privateKey,
-        Uint8List.fromList((User().id + timestamp.toString()).codeUnits));
+        Uint8List.fromList((User().id! + timestamp.toString()).codeUnits));
 
     _add(jsonEncode({
       'action': 'register',
@@ -41,15 +39,6 @@ class WebSocketConnection {
       'signature': signature,
       'timestamp': timestamp,
       'publicKey': encodePublicKeyToPem(User().pair.publicKey)
-    }));
-  }
-
-  void switchgroup() {
-    // send action switchgroup
-    _add(jsonEncode({
-      'action': 'switchgroup',
-      'questions': Memory().boxAnswers.toMap(),
-      'blockedUsers': Memory().getBlockedUsers()
     }));
   }
 
@@ -71,8 +60,7 @@ class WebSocketConnection {
     }));
   }
 
-  void reconnect() {
-    // replace channel with a new connected one
+  void connect() {
     _channel = WebSocketChannel.connect(Uri.parse(_websocketEndpoint));
   }
 

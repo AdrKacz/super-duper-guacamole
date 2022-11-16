@@ -18,6 +18,10 @@ const {
  * @param {string} event.message
  */
 exports.handler = async (event) => {
+  console.log(`Receives:
+Body:
+${event.body}`)
+
   const body = JSON.parse(event.body)
   const message = body.message
 

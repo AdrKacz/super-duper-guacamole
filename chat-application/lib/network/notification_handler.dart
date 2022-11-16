@@ -18,9 +18,7 @@ class NotificationHandler {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // don't use await to not block main thread
-    FirebaseMessaging.instance
-        .requestPermission(
+    await FirebaseMessaging.instance.requestPermission(
       alert: true,
       announcement: false,
       badge: true,
@@ -28,16 +26,12 @@ class NotificationHandler {
       criticalAlert: false,
       provisional: false,
       sound: true,
-    )
-        .then((NotificationSettings settings) {
-      // user granted permission (see settings.authorizationStatus)
-      return FirebaseMessaging.instance.getToken();
-    }).then((String? token) async {
-      if (token == null) {
-        return null;
-      } else {
-        await HttpConnection().legacyPut('firebase-token', {'token': token});
-      }
-    });
+    );
+
+    final String? token = await FirebaseMessaging.instance.getToken();
+
+    if (token != null) {
+      await HttpConnection().legacyPut('firebase-token', {'token': token});
+    }
   }
 }

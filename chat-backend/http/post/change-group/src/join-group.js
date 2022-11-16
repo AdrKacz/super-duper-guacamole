@@ -27,7 +27,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
       // add user to group
       setGroupId({ id: currentUser.id, groupId: group.id }),
       // increase group size and update banned users
-      updateGroup({ groupId: group.id, isPublic: true, blockedUserIds: currentUser.blockedUserIds }),
+      updateGroup({ groupId: group.id, groupSize: users.length + 1, isPublic: true, blockedUserIds: currentUser.blockedUserIds }),
       // warn new user
       warnNewUsers({ users: [currentUser] }),
       // warn other users
@@ -41,14 +41,14 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
       })
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
-  } else if (!group.isPublic && group.groupSize + 1 >= MINIMUM_GROUP_SIZE) {
+  } else if (!group.isPublic && users.length + 1 >= MINIMUM_GROUP_SIZE) {
     console.log('join private to public group', group)
     // group big enough to turn public
     await Promise.all([
       // add user to group
       setGroupId({ id: currentUser.id, groupId: group.id }),
       // update group size and turn group public and update banned users
-      updateGroup({ groupId: group.id, isPublic: true, blockedUserIds: currentUser.blockedUserIds }),
+      updateGroup({ groupId: group.id, groupSize: users.length + 1, isPublic: true, blockedUserIds: currentUser.blockedUserIds }),
       // warn new users
       warnNewUsers({ users: users.concat([currentUser]) })
     ]).then((results) => (console.log(results)))
@@ -59,7 +59,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
       // add user to group
       setGroupId({ id: currentUser.id, groupId: group.id }),
       // increase group size and update banned users
-      updateGroup({ groupId: group.id, isPublic: false, blockedUserIds: currentUser.blockedUserIds })
+      updateGroup({ groupId: group.id, groupSize: users.length + 1, isPublic: false, blockedUserIds: currentUser.blockedUserIds })
     ])
   }
 }
@@ -91,12 +91,12 @@ const setGroupId = ({ id, groupId }) => (dynamoDBDocumentClient.send(new UpdateC
  *
  * @return {Promise}
  */
-const updateGroup = ({ groupId, isPublic, blockedUserIds }) => {
+const updateGroup = ({ groupId, groupSize, isPublic, blockedUserIds }) => {
   if (blockedUserIds.size > 0) {
-    return updateGroupWithBlockedUsers({ groupId, isPublic, blockedUserIds })
+    return updateGroupWithBlockedUsers({ groupId, groupSize, isPublic, blockedUserIds })
   }
 
-  return updateGroupWithoutBlockedUsers({ groupId, isPublic })
+  return updateGroupWithoutBlockedUsers({ groupId, groupSize, isPublic })
 }
 
 /**
@@ -108,12 +108,12 @@ const updateGroup = ({ groupId, isPublic, blockedUserIds }) => {
  *
  * @return {Promise}
  */
-const updateGroupWithBlockedUsers = ({ groupId, isPublic, blockedUserIds }) => (dynamoDBDocumentClient.send(new UpdateCommand({
+const updateGroupWithBlockedUsers = ({ groupId, groupSize, isPublic, blockedUserIds }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
   UpdateExpression: `
-SET #isPublic = :isPublic
-ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
+SET #isPublic = :isPublic, #groupSize = :groupSize
+ADD #bannedUserIds :blockedUserIds`,
   ExpressionAttributeNames: {
     '#isPublic': 'isPublic',
     '#groupSize': 'groupSize',
@@ -121,7 +121,7 @@ ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
   },
   ExpressionAttributeValues: {
     ':isPublic': isPublic,
-    ':plusOne': +1,
+    ':groupSize': groupSize,
     ':blockedUserIds': new Set(blockedUserIds)
   }
 })))
@@ -134,19 +134,17 @@ ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
  *
  * @return {Promise}
  */
-const updateGroupWithoutBlockedUsers = ({ groupId, isPublic }) => (dynamoDBDocumentClient.send(new UpdateCommand({
+const updateGroupWithoutBlockedUsers = ({ groupId, groupSize, isPublic }) => (dynamoDBDocumentClient.send(new UpdateCommand({
   TableName: GROUPS_TABLE_NAME,
   Key: { id: groupId },
-  UpdateExpression: `
-SET #isPublic = :isPublic
-ADD #groupSize :plusOne`,
+  UpdateExpression: 'SET #isPublic = :isPublic, #groupSize = :groupSize',
   ExpressionAttributeNames: {
     '#isPublic': 'isPublic',
     '#groupSize': 'groupSize'
   },
   ExpressionAttributeValues: {
     ':isPublic': isPublic,
-    ':plusOne': +1
+    ':groupSize': groupSize
   }
 })))
 
