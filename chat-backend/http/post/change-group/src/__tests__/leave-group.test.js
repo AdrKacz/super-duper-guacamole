@@ -70,9 +70,9 @@ test('it updates group if more than one user remaining', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
     ReturnValues: 'UPDATED_NEW',
-    UpdateExpression: 'ADD #groupSize :minusOne',
+    UpdateExpression: 'SET #groupSize = :groupSize',
     ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-    ExpressionAttributeValues: { ':minusOne': -1 }
+    ExpressionAttributeValues: { ':groupSize': 2 }
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)

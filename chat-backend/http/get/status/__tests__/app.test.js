@@ -13,7 +13,7 @@ jest.mock('chat-backend-package', () => ({
 test.each([
   { details: 'without group', id: 'id', expectedId: 'id', expectedGroup: null, expectedUsers: null },
   { details: 'with private group', id: 'id-1', group: { id: 'group-id', isPublic: false }, users: [{ id: 'id-2' }], expectedId: 'id-1', expectedGroup: { isPublic: false }, expectedUsers: null },
-  { details: 'with public group', id: 'id-1', group: { id: 'group-id', isPublic: true }, users: [{ id: 'id-2' }], expectedId: 'id-1', expectedGroup: { id: 'group-id', isPublic: true }, expectedUsers: [{ id: 'id-2' }] }
+  { details: 'with public group', id: 'id-1', group: { id: 'group-id', isPublic: true }, users: [{ id: 'id-2' }], expectedId: 'id-1', expectedGroup: { id: 'group-id', isPublic: true }, expectedUsers: [{ id: 'id-2', isConnected: false }] }
 ])('it returns user status ($details)', async ({ id, group, users, expectedId, expectedGroup, expectedUsers }) => {
   chatBackendPackageModule.getUser.mockResolvedValue({ id, groupId: group?.id })
   chatBackendPackageModule.getGroup.mockResolvedValue({ group, users })
