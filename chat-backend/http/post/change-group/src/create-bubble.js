@@ -10,7 +10,6 @@ exports.createBubble = ({ currentUser = { questions: {} } }) => {
 
   if (bubbleArray.length === 0) {
     return 'void' // The AttributeValue for a key attribute cannot contain an empty string value
-  } else {
-    return bubbleArray.join('::')
   }
+  return bubbleArray.join('::')
 }

@@ -23,9 +23,9 @@ exports.handler = async (event) => {
       group = { isPublic: false }
       users = null
     } else {
-      users = users.map(({ id, connectionId }) => ({
-        id,
-        isConnected: typeof connectionId === 'string'
+      users = users.map((user) => ({
+        id: user.id,
+        isConnected: typeof user.connectionId === 'string'
       }))
     }
   }
