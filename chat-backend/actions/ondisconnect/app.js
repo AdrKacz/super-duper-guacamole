@@ -18,8 +18,10 @@
 
 // ===== ==== ====
 // IMPORTS
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
-const { DynamoDBDocumentClient, BatchGetCommand, GetCommand, QueryCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { DynamoDBDocumentClient, QueryCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
@@ -28,7 +30,6 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: 
 const {
   USERS_TABLE_NAME,
   USERS_CONNECTION_ID_INDEX_NAME,
-  GROUPS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
   AWS_REGION
 } = process.env
@@ -93,41 +94,11 @@ exports.handler = async (event) => {
     return
   }
 
-  // retreive group (if any)
-  const getGroupCommand = new GetCommand({
-    TableName: GROUPS_TABLE_NAME,
-    Key: { id: groupId },
-    ProjectionExpression: '#id, #users',
-    ExpressionAttributeNames: {
-      '#id': 'id',
-      '#users': 'users'
-    }
-  })
-  const group = await dynamoDBDocumentClient.send(getGroupCommand).then((response) => (response.Item))
-
-  if (typeof group === 'undefined') {
-    throw new Error(`group <${groupId}> is not defined`)
-  }
-
-  // retreive users
-  const otherUserIds = Array.from(group.users).filter((id) => (id !== user.id))
-  if (otherUserIds.length === 0) {
+  const { group: { isPublic }, users } = await getGroup({ groupId })
+  if (!isPublic) {
+    await updatePromise
     return
   }
-  const batchGetUsersCommand = new BatchGetCommand({
-    RequestItems: {
-      [USERS_TABLE_NAME]: {
-        Keys: otherUserIds.map((id) => ({ id })),
-        ProjectionExpression: '#id, #connectionId',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#connectionId': 'connectionId'
-        }
-      }
-    }
-  })
-
-  const users = await dynamoDBDocumentClient.send(batchGetUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
 
   const publishSendMessageCommand = new PublishCommand({
     TopicArn: SEND_MESSAGE_TOPIC_ARN,
