@@ -280,7 +280,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     for (final groupUser in userStatus['users']) {
       groupUsers[groupUser['id']] = {
         'id': groupUser['id'],
-        'isConnected': groupUser['isOnline']
+        'isConnected': groupUser['isConnected']
       };
     }
     updateGroupUsers(groupUsers);
