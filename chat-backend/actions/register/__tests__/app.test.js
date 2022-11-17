@@ -4,17 +4,23 @@ const { handler } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 const { generateKeyPairSync, createSign } = require('crypto')
 
-// ===== ==== ====
-// CONSTANTS
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
+
 const {
-  DynamoDBDocumentClient,
-  GetCommand, UpdateCommand,
-  BatchGetCommand
+  GetCommand,
+  UpdateCommand
 } = require('@aws-sdk/lib-dynamodb')
 
+const getGroupModule = require('chat-backend-package/src/get-group')
+jest.mock('chat-backend-package/src/get-group', () => ({
+  getGroup: jest.fn()
+}))
+
+// ===== ==== ====
+// CONSTANTS
 const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 
-const ddbMock = mockClient(DynamoDBDocumentClient)
+const ddbMock = mockClient(dynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
 
 // ===== ==== ====
@@ -196,17 +202,15 @@ test('it rejects on wrong signature', async () => {
 test('it registers new user', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
 
-  const dummyConnectionId = 'dummy-connection-id'
-
   await handler({
     requestContext: {
-      connectionId: dummyConnectionId
+      connectionId: 'connection-id'
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
   expect(ddbMock).toHaveReceivedCommandTimes(GetCommand, 1)
-  expect(ddbMock).toHaveReceivedNthCommandWith(2, UpdateCommand, {
+  expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     ReturnValues: 'ALL_OLD',
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id },
@@ -221,17 +225,17 @@ test('it registers new user', async () => {
       '#unreadData': 'unreadData'
     },
     ExpressionAttributeValues: {
-      ':connectionId': dummyConnectionId,
+      ':connectionId': 'connection-id',
       ':publicKey': publicKey,
       ':false': false
     }
   })
 
-  expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
+  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
     TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{
-        id, connectionId: dummyConnectionId
+        id, connectionId: 'connection-id'
       }],
       message: {
         action: 'register',
@@ -297,22 +301,9 @@ test('it sends login to group users', async () => {
     { id: 'dummy-user-id-02', connectionId: 'dummy-connection-02' }
   ]
 
-  ddbMock.on(GetCommand, {
-    TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: dummyGroupId }
-  }).resolves({
-    Item: {
-      id,
-      users: new Set(dummyOtherGroupUsers.map(({ id }) => (id)))
-    }
-  })
-
-  ddbMock.on(BatchGetCommand, {
-
-  }).resolves({
-    Responses: {
-      [process.env.USERS_TABLE_NAME]: dummyOtherGroupUsers
-    }
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: dummyGroupId, isPublic: true },
+    users: dummyOtherGroupUsers
   })
 
   const dummyConnectionId = 'dummy-connection-id'
@@ -322,6 +313,8 @@ test('it sends login to group users', async () => {
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
+
+  expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: dummyGroupId })
 
   expect(snsMock).toHaveReceivedNthCommandWith(1, PublishCommand, {
     TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
@@ -335,7 +328,7 @@ test('it sends login to group users', async () => {
   })
 })
 
-test('it stops on group not found', async () => {
+test('it doesn\'t alert private group', async () => {
   const { id, signature, timestamp, publicKey } = generateIdentity()
   const dummyGroupId = 'dummy-group-id'
 
@@ -349,16 +342,19 @@ test('it stops on group not found', async () => {
     }
   })
 
-  const dummyConnectionId = 'dummy-connection-id'
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: dummyGroupId, isPublic: false },
+    users: [{ id: 'id-1' }]
+  })
 
   await handler({
     requestContext: {
-      connectionId: dummyConnectionId
+      connectionId: 'connection-id'
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
-  expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
+  expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: dummyGroupId })
   expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })
 
@@ -374,16 +370,14 @@ test('it stops on undefined group', async () => {
     }
   })
 
-  const dummyConnectionId = 'dummy-connection-id'
-
   await handler({
     requestContext: {
-      connectionId: dummyConnectionId
+      connectionId: 'connection-id'
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
-  expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(0)
   expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })
 
@@ -401,21 +395,21 @@ test('it pass on unknown error on get command group', async () => {
     }
   })
 
+  getGroupModule.getGroup.mockRejectedValue(new Error('unknown error'))
+
   ddbMock.on(GetCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: dummyGroupId }
   }).rejects('unknown error')
 
-  const dummyConnectionId = 'dummy-connection-id'
-
   await handler({
     requestContext: {
-      connectionId: dummyConnectionId
+      connectionId: 'connection-id'
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
-  expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
   expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })
 
@@ -433,25 +427,18 @@ test('it pass if no other user in group', async () => {
     }
   })
 
-  ddbMock.on(GetCommand, {
-    TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: dummyGroupId }
-  }).resolves({
-    Item: {
-      id,
-      users: []
-    }
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: dummyGroupId, isPublic: false },
+    users: []
   })
-
-  const dummyConnectionId = 'dummy-connection-id'
 
   await handler({
     requestContext: {
-      connectionId: dummyConnectionId
+      connectionId: 'connection-id'
     },
     body: JSON.stringify({ id, signature, timestamp, publicKey })
   })
 
-  expect(ddbMock).toHaveReceivedCommandTimes(BatchGetCommand, 0)
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
   expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 1)
 })

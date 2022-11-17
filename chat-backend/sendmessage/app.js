@@ -32,11 +32,7 @@ const {
 const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT)
 const apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
   region: AWS_REGION,
-  endpoint: {
-    protocol: 'https', // webSocketEndpointUrl.protocol = 'wss' doesn't work
-    hostname: webSocketEndpointUrl.hostname,
-    path: webSocketEndpointUrl.pathname
-  }
+  endpoint: `https://${webSocketEndpointUrl.hostname}${webSocketEndpointUrl.pathname}`
 })
 
 const snsClient = new SNSClient({ region: AWS_REGION })
