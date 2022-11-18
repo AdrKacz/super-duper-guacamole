@@ -3,10 +3,14 @@
 const { handler } = require('../app')
 const getUserFromConnectionIdModule = require('../src/get-user-from-connection-id')
 const closeVoteModule = require('../src/close-vote')
-const getUserAndBannedUserAndGroupModule = require('../src/get-user-and-banned-user-and-group')
-const getUsersModule = require('../src/get-users')
+const getUserAndBannedUserModule = require('../src/get-user-and-banned-user')
 
 const { mockClient } = require('aws-sdk-client-mock')
+
+const getGroupModule = require('chat-backend-package/src/get-group')
+jest.mock('chat-backend-package/src/get-group', () => ({
+  getGroup: jest.fn()
+}))
 
 const {
   DynamoDBDocumentClient,
@@ -19,8 +23,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 // CONSTANTS
 jest.mock('../src/get-user-from-connection-id')
 jest.mock('../src/close-vote')
-jest.mock('../src/get-user-and-banned-user-and-group')
-jest.mock('../src/get-users')
+jest.mock('../src/get-user-and-banned-user')
 
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
@@ -73,11 +76,10 @@ test.each([
 ])('.test $details', async ({ body }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-  const connectionId = 'connectionId'
   await expect(handler({
-    requestContext: { connectionId },
+    requestContext: { connectionId: 'connection-id' },
     body: JSON.stringify(body)
   })).rejects.toThrow("bannedid must be defined, and status must be either 'confirmed' or 'denied'")
 })
@@ -89,18 +91,21 @@ test.each([
 ])('it rejects if $details', async ({ bannedUser }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-  getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup.mockResolvedValue(Promise.resolve({
+  getUserAndBannedUserModule.getUserAndBannedUser.mockResolvedValue({
     user: { id, groupId },
-    bannedUser,
-    group: { id: groupId }
-  }))
+    bannedUser
+  })
+
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: []
+  })
 
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { connectionId: 'connection-id' },
     body: JSON.stringify({ bannedid: bannedUser.id, status: 'confirmed' })
   })
 
@@ -110,8 +115,8 @@ test.each([
     statusCode: 403
   })
 
-  expect(getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup).toHaveBeenCalledTimes(1)
-  expect(getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup).toHaveBeenCalledWith({ id, bannedUserId: bannedUser.id, groupId })
+  expect(getUserAndBannedUserModule.getUserAndBannedUser).toHaveBeenCalledTimes(1)
+  expect(getUserAndBannedUserModule.getUserAndBannedUser).toHaveBeenCalledWith({ id, bannedUserId: bannedUser.id })
 })
 
 test.each([
@@ -120,18 +125,21 @@ test.each([
 ])('it rejects if user is not in banned user set of voting users ($details)', async ({ bannedUser }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-  getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup.mockResolvedValue(Promise.resolve({
+  getUserAndBannedUserModule.getUserAndBannedUser.mockResolvedValue({
     user: { id, groupId },
-    bannedUser,
-    group: { id: groupId }
-  }))
+    bannedUser
+  })
+
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: []
+  })
 
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { connectionId: 'connection-id' },
     body: JSON.stringify({ bannedid: bannedUser.id, status: 'confirmed' })
   })
 
@@ -148,23 +156,26 @@ test.each([
 ])('it updates banned user (status confirmed) ($details)', async ({ updatedBannedUser, confirmationRequired }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
   const bannedUserId = 'banned-user-id'
-  getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup.mockResolvedValue(Promise.resolve({
+  getUserAndBannedUserModule.getUserAndBannedUser.mockResolvedValue({
     user: { id, groupId },
-    bannedUser: { id: bannedUserId, groupId, confirmationRequired, banVotingUsers: new Set([id]) },
-    group: { id: groupId }
-  }))
+    bannedUser: { id: bannedUserId, groupId, confirmationRequired, banVotingUsers: new Set([id]) }
+  })
 
   ddbMock.on(UpdateCommand).resolves({
     Attributes: updatedBannedUser
   })
 
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: []
+  })
+
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { connectionId: 'connection-id' },
     body: JSON.stringify({ bannedid: bannedUserId, status: 'confirmed' })
   })
 
@@ -196,14 +207,18 @@ DELETE #banVotingUsers :id
 test('it notifies user if the vote ended with a confirmation', async () => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
   const bannedUserId = 'banned-user-id'
-  getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup.mockResolvedValue(Promise.resolve({
+  getUserAndBannedUserModule.getUserAndBannedUser.mockResolvedValue({
     user: { id, groupId },
-    bannedUser: { id: bannedUserId, groupId, confirmationRequired: 1, banVotingUsers: new Set([id]) },
-    group: { id: groupId, users: new Set([id, bannedUserId]) }
-  }))
+    bannedUser: { id: bannedUserId, groupId, confirmationRequired: 1, banVotingUsers: new Set([id]) }
+  })
+
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: [{ id }, { id: bannedUserId }]
+  })
 
   ddbMock.on(UpdateCommand).resolves({
     Attributes: {
@@ -211,24 +226,15 @@ test('it notifies user if the vote ended with a confirmation', async () => {
     }
   })
 
-  getUsersModule.getUsers.mockResolvedValue(Promise.resolve([]))
-
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { connectionId: 'connection-id' },
     body: JSON.stringify({ bannedid: bannedUserId, status: 'confirmed' })
   })
 
   // expect
   expect(response).toEqual({
     statusCode: 200
-  })
-
-  expect(getUsersModule.getUsers).toHaveBeenCalledTimes(1)
-  expect(getUsersModule.getUsers).toHaveBeenCalledWith({
-    userIds: new Set([id, bannedUserId]),
-    forbiddenUserIds: new Set([id, bannedUserId])
   })
 
   expect(closeVoteModule.closeVote).toHaveBeenCalledTimes(1)
@@ -239,7 +245,6 @@ test('it notifies user if the vote ended with a confirmation', async () => {
   })
 
   expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 3)
-
   expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
     TopicArn: process.env.SWITCH_GROUP_TOPIC_ARN,
     Message: JSON.stringify({
@@ -274,26 +279,26 @@ test('it notifies user if the vote ended with a confirmation', async () => {
 })
 
 test('it notifies user if the vote ended with a denial', async () => {
-  getUsersModule.getUsers.mockResolvedValue(Promise.resolve([]))
-
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
   const bannedUserId = 'banned-user-id'
-  getUserAndBannedUserAndGroupModule.getUserAndBannedUserAndGroup.mockResolvedValue(Promise.resolve({
+  getUserAndBannedUserModule.getUserAndBannedUser.mockResolvedValue({
     user: { id, groupId },
-    bannedUser: { id: bannedUserId, groupId, confirmationRequired: 1, banVotingUsers: new Set([id]) },
-    group: { id: groupId, users: new Set([id, bannedUserId]) }
-  }))
+    bannedUser: { id: bannedUserId, groupId, confirmationRequired: 1, banVotingUsers: new Set([id]) }
+  })
 
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: [{ id }, { id: bannedUserId }]
+  })
   // update banned user
   ddbMock.on(UpdateCommand).resolves({ Attributes: {} }) // no banVotingUsers and no banConfirmedUsers and confirmationRequired 1 implies voteDenied
 
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { connectionId: 'connection-id' },
     body: JSON.stringify({ bannedid: bannedUserId, status: 'denied' })
   })
 

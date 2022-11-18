@@ -14,14 +14,16 @@
 
 // ===== ==== ====
 // IMPORTS
-const { BatchGetCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
 const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
-const { getBannedUserAndGroup } = require('./src/get-banned-user-and-group')
+const { getBannedUser } = require('./src/get-banned-user')
 
 // ===== ==== ====
 // CONSTANTS
@@ -68,7 +70,7 @@ exports.handler = async (event) => {
   }
 
   // get elements involved
-  const { bannedUser, group } = await getBannedUserAndGroup(bannedId, groupId)
+  const { bannedUser } = await getBannedUser(bannedId)
 
   // verify both user in the same group
   if (groupId !== (bannedUser.groupId ?? bannedUser.group)) { // .group for backward compatibility
@@ -82,7 +84,9 @@ exports.handler = async (event) => {
     }
   }
 
-  const banNewVotingUsers = new Set(group.users)
+  const { users } = await getGroup({ groupId })
+
+  const banNewVotingUsers = new Set(users.map(({ id }) => (id)))
   banNewVotingUsers.delete(bannedId) // banned user is not part of the vote
 
   // delete user who have voted and who are voting
@@ -94,7 +98,7 @@ exports.handler = async (event) => {
     banNewVotingUsers.delete(banConfirmedUser)
   }
 
-  const confirmationRequired = Math.min(parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10), group.users.size - 1)
+  const confirmationRequired = Math.min(parseInt(process.env.CONFIRMATION_REQUIRED_STRING, 10), users.length - 1)
 
   // update banned user
   // await to send message only after ddb has been updated
@@ -123,25 +127,10 @@ SET #confirmationRequired = :confirmationRequired
   const promises = [dynamoDBDocumentClient.send(updateBannedUserCommand)]
 
   if (banNewVotingUsers.size > 0) {
-    const batchGetBanNewVotingUsersCommand = new BatchGetCommand({
-      RequestItems: {
-        [USERS_TABLE_NAME]: {
-          Keys: Array.from(banNewVotingUsers).map((userId) => ({ id: userId })),
-          ProjectionExpression: '#id, #connectionId, #firebaseToken',
-          ExpressionAttributeNames: {
-            '#id': 'id',
-            '#connectionId': 'connectionId',
-            '#firebaseToken': 'firebaseToken'
-          }
-        }
-      }
-    })
-    const users = await dynamoDBDocumentClient.send(batchGetBanNewVotingUsersCommand).then((response) => (response.Responses[USERS_TABLE_NAME]))
-
     const publishSendMessageCommand = new PublishCommand({
       TopicArn: SEND_MESSAGE_TOPIC_ARN,
       Message: JSON.stringify({
-        users,
+        users: users.filter(({ id }) => banNewVotingUsers.has(id)),
         message: {
           action: 'banrequest',
           messageid: messageId
@@ -153,7 +142,7 @@ SET #confirmationRequired = :confirmationRequired
     const publishSendNotificationCommand = new PublishCommand({
       TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
       Message: JSON.stringify({
-        users,
+        users: users.filter(({ id }) => banNewVotingUsers.has(id)),
         notification: {
           title: "Quelqu'un a mal agi ❌",
           body: 'Viens donner ton avis !'

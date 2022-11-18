@@ -14,6 +14,8 @@
 
 // ===== ==== ====
 // IMPORTS
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+
 const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
@@ -21,9 +23,8 @@ const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
 const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
-const { getUsers } = require('./src/get-users')
 const { closeVote } = require('./src/close-vote')
-const { getUserAndBannedUserAndGroup } = require('./src/get-user-and-banned-user-and-group')
+const { getUserAndBannedUser } = require('./src/get-user-and-banned-user')
 
 // ===== ==== ====
 // CONSTANTS
@@ -62,7 +63,8 @@ exports.handler = async (event) => {
   }
 
   // get elements involved
-  const { user, bannedUser, group } = await getUserAndBannedUserAndGroup({ id, bannedUserId, groupId })
+  const { user, bannedUser } = await getUserAndBannedUser({ id, bannedUserId })
+  const { users } = await getGroup({ groupId })
 
   const bannedUserGroupId = bannedUser.groupId ?? bannedUser.group // .group for backward compatibility
   if (groupId !== bannedUserGroupId || typeof bannedUser.confirmationRequired === 'undefined') {
@@ -123,7 +125,7 @@ DELETE #banVotingUsers :id
 
   if (voteConfirmed || voteDenied) {
     const promises = []
-    const otherUsers = await getUsers({ userIds: group.users, forbiddenUserIds: new Set([id, bannedUserId]) })
+    const otherUsers = users.filter(({ id: userId }) => (userId !== id && userId !== bannedUserId))
     promises.push(closeVote({ user, bannedUser, otherUsers }))
 
     if (voteConfirmed) {

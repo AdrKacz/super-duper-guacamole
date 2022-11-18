@@ -2,13 +2,17 @@
 // IMPORTS
 const { handler } = require('../app')
 const getUserFromConnectionIdModule = require('../src/get-user-from-connection-id')
-const getBannedUserAndGroupModule = require('../src/get-banned-user-and-group')
+const getBannedUserModule = require('../src/get-banned-user')
 
 const { mockClient } = require('aws-sdk-client-mock')
 
+const getGroupModule = require('chat-backend-package/src/get-group')
+jest.mock('chat-backend-package/src/get-group', () => ({
+  getGroup: jest.fn()
+}))
+
 const {
   DynamoDBDocumentClient,
-  BatchGetCommand,
   UpdateCommand
 } = require('@aws-sdk/lib-dynamodb')
 
@@ -17,7 +21,7 @@ const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
 // ===== ==== ====
 // CONSTANTS
 jest.mock('../src/get-user-from-connection-id')
-jest.mock('../src/get-banned-user-and-group')
+jest.mock('../src/get-banned-user')
 
 const ddbMock = mockClient(DynamoDBDocumentClient)
 const snsMock = mockClient(SNSClient)
@@ -107,9 +111,9 @@ test.each([
 ])('it rejects if banned user and user not in the same group ($details)', async ({ bannedUser }) => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
-  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue(Promise.resolve({ bannedUser, group: { id: groupId } }))
+  getBannedUserModule.getBannedUser.mockResolvedValue({ bannedUser })
 
   // call handler
   const connectionId = 'connectionId'
@@ -124,20 +128,24 @@ test.each([
     statusCode: 403
   })
 
-  expect(getBannedUserAndGroupModule.getBannedUserAndGroup).toHaveBeenCalledTimes(1)
-  expect(getBannedUserAndGroupModule.getBannedUserAndGroup).toHaveBeenCalledWith(bannedUser.id, groupId)
+  expect(getBannedUserModule.getBannedUser).toHaveBeenCalledTimes(1)
+  expect(getBannedUserModule.getBannedUser).toHaveBeenCalledWith(bannedUser.id)
 })
 
 test('it updates banned user if no new user in the vote', async () => {
   const id = 'id'
   const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
 
   const bannedUserId = 'banned-user-id'
-  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue(Promise.resolve({
-    bannedUser: { id: bannedUserId, groupId, banConfirmedUsers: new Set([id]) },
-    group: { id: groupId, users: new Set([id, bannedUserId]) }
-  }))
+  getBannedUserModule.getBannedUser.mockResolvedValue({
+    bannedUser: { id: bannedUserId, groupId, banConfirmedUsers: new Set([id]) }
+  })
+
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: [{ id }, { id: bannedUserId }]
+  })
 
   // call handler
   const connectionId = 'connectionId'
@@ -171,16 +179,16 @@ test('it updates banned user if new user in the vote', async () => {
   getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
 
   const bannedUserId = 'banned-user-id'
-  getBannedUserAndGroupModule.getBannedUserAndGroup.mockResolvedValue(Promise.resolve({
-    bannedUser: { id: bannedUserId, groupId },
-    group: { id: groupId, users: new Set([id, bannedUserId]) }
-  }))
+  getBannedUserModule.getBannedUser.mockResolvedValue({
+    bannedUser: { id: bannedUserId, groupId }
+  })
 
   // get users
   const firebaseToken = 'firebase-token'
   const connectionId = 'connection-id'
-  ddbMock.on(BatchGetCommand).resolves({
-    Responses: { [process.env.USERS_TABLE_NAME]: [{ id, connectionId, firebaseToken }] }
+  getGroupModule.getGroup.mockResolvedValue({
+    group: { id: groupId, isPublic: true },
+    users: [{ id, connectionId, firebaseToken }, { id: bannedUserId }]
   })
 
   // call handler
@@ -207,19 +215,7 @@ SET #confirmationRequired = :confirmationRequired
       ':banNewVotingUsers': new Set([id])
     }
   })
-  expect(ddbMock).toHaveReceivedCommandWith(BatchGetCommand, {
-    RequestItems: {
-      [process.env.USERS_TABLE_NAME]: {
-        Keys: [{ id }],
-        ProjectionExpression: '#id, #connectionId, #firebaseToken',
-        ExpressionAttributeNames: {
-          '#id': 'id',
-          '#connectionId': 'connectionId',
-          '#firebaseToken': 'firebaseToken'
-        }
-      }
-    }
-  })
+
   expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
     TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
