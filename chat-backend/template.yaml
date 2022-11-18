@@ -643,42 +643,6 @@ Resources:
       RetentionInDays: !Ref LogRetentionInDays
 
   # ===== ===== =====
-  # Schedule Functions
-  HandleInactiveUsersFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: handle-inactive-users/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          MINIMUM_GROUP_SIZE_STRING: !Ref MinimumGroupSize
-          MAXIMUM_GROUP_SIZE_STRING: !Ref MaximumGroupSize
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-      Events:
-        ScheduleEvent:
-          Type: Schedule
-          Properties:
-            Schedule: 'cron(0 16 * * ? *)' # Run at 6:00 pm (UTC+2 - Paris) every day
-            Enabled: true
-  HandleInactiveUsersLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${HandleInactiveUsersFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  # ===== ===== =====
   # API Functions
   PutFirebaseTokenFunction:
     Type: AWS::Serverless::Function
