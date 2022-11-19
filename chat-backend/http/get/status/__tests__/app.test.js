@@ -2,10 +2,18 @@
 // IMPORTS
 const { handler } = require('../app')
 
-const chatBackendPackageModule = require('chat-backend-package')
-jest.mock('chat-backend-package', () => ({
-  getUser: jest.fn(),
+const { mockClient } = require('aws-sdk-client-mock')
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
+const ddbMock = mockClient(dynamoDBDocumentClient)
+
+const getGroupModule = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+jest.mock('chat-backend-package/src/get-group', () => ({
   getGroup: jest.fn()
+}))
+
+const getUserModule = require('chat-backend-package/src/get-user') // skipcq: JS-0260
+jest.mock('chat-backend-package/src/get-user', () => ({
+  getUser: jest.fn()
 }))
 
 // ===== ==== ====
@@ -15,21 +23,21 @@ test.each([
   { details: 'with private group', id: 'id-1', group: { id: 'group-id', isPublic: false }, users: [{ id: 'id-2' }], expectedId: 'id-1', expectedGroup: { isPublic: false }, expectedUsers: null },
   { details: 'with public group', id: 'id-1', group: { id: 'group-id', isPublic: true }, users: [{ id: 'id-2' }], expectedId: 'id-1', expectedGroup: { id: 'group-id', isPublic: true }, expectedUsers: [{ id: 'id-2', isConnected: false }] }
 ])('it returns user status ($details)', async ({ id, group, users, expectedId, expectedGroup, expectedUsers }) => {
-  chatBackendPackageModule.getUser.mockResolvedValue({ id, groupId: group?.id })
-  chatBackendPackageModule.getGroup.mockResolvedValue({ group, users })
+  getUserModule.getUser.mockResolvedValue({ id, groupId: group?.id })
+  getGroupModule.getGroup.mockResolvedValue({ group, users })
 
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id } } } }
   })
 
-  expect(chatBackendPackageModule.getUser).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.getUser).toHaveBeenCalledWith({ id })
+  expect(getUserModule.getUser).toHaveBeenCalledTimes(1)
+  expect(getUserModule.getUser).toHaveBeenCalledWith({ id })
 
   if (typeof group === 'object') {
-    expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(1)
-    expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: group.id })
+    expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
+    expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: group.id })
   } else {
-    expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(0)
+    expect(getGroupModule.getGroup).toHaveBeenCalledTimes(0)
   }
 
   expect(response.statusCode).toBe(200)

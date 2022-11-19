@@ -18,21 +18,23 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb') // skipcq: JS-0260
 const { DynamoDBDocumentClient, QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+const jwt = require('jsonwebtoken') // skipcq: JS-0260
+
+const axios = require('axios').default
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
   USERS_CONNECTION_ID_INDEX_NAME,
-  SWITCH_GROUP_TOPIC_ARN,
-  AWS_REGION
+  AWS_REGION,
+  JWK_PRIVATE_KEY,
+  AUTHENTICATION_STAGE,
+  HTTP_API_URL
 } = process.env
 
 const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
-
-const snsClient = new SNSClient({ region: AWS_REGION })
 
 // ===== ==== ====
 // HANDLER
@@ -52,18 +54,26 @@ exports.handler = async (event) => {
   const questions = body.questions
   const blockedUsers = body.blockedUsers
 
-  // switch group
-  const publishSwithGroupCommand = new PublishCommand({
-    TopicArn: SWITCH_GROUP_TOPIC_ARN,
-    Message: JSON.stringify({
-      id,
-      connectionId: event.requestContext.connectionId,
-      questions,
-      blockedUsers
-    })
+  // temp, to have same logic in old web socket api and http api
+  const jwtToken = jwt.sign({ id }, JWK_PRIVATE_KEY, {
+    algorithm: 'RS256',
+    keyid: AUTHENTICATION_STAGE,
+    expiresIn: 15 * 60,
+    notBefore: 0,
+    audience: 'user',
+    issuer: 'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/chat-backend'
   })
 
-  await snsClient.send(publishSwithGroupCommand)
+  const response = await axios.post(`${HTTP_API_URL}/change-group`, {
+    questions,
+    blockedUsers
+  }, {
+    headers: {
+      Authorization: `Bearer ${jwtToken}`
+    }
+  })
+
+  console.log(response)
 
   return {
     statusCode: 200

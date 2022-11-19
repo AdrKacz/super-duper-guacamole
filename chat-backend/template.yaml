@@ -243,21 +243,11 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/get/status
-      Environment:
-        Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
@@ -476,13 +466,6 @@ Resources:
   # Deployment
   Deployment:
     Type: AWS::ApiGatewayV2::Deployment
-    DependsOn:
-    - RegisterRoute
-    - OnDisconnectRoute
-    - SwitchGroupRoute
-    - TextMessageRoute
-    - BanRequestRoute
-    - BanReplyRoute
     Properties:
       ApiId: !Ref SimpleChatWebSocket
   Stage:
@@ -526,9 +509,6 @@ Resources:
   SendMessageSNSTopic:
     Type: AWS::SNS::Topic
   
-  SwitchGroupSNSTopic:
-    Type: AWS::SNS::Topic
-
   SendNotificationSNSTopic:
     Type: AWS::SNS::Topic
 
@@ -566,40 +546,6 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  SwitchGroupFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: switchgroup/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-          MINIMUM_GROUP_SIZE_STRING: !Ref MinimumGroupSize
-          MAXIMUM_GROUP_SIZE_STRING: !Ref MaximumGroupSize
-          GROUPS_WAINTING_ID_INDEX_NAME: "IsWaitingIndex"
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref SwitchGroupSNSTopic
-  SwitchGroupLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   SendNotificationFunction:
@@ -721,8 +667,6 @@ Resources:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
   ActionRegisterPermission:
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ActionRegisterFunction
@@ -753,8 +697,6 @@ Resources:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
   ActionOnDisconnectPermission:
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ActionOnDisconnectFunction
@@ -774,17 +716,15 @@ Resources:
         - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
-          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
+          HTTP_API_URL: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
           USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+          JWK_PRIVATE_KEY: !Sub '{{resolve:ssm:jwk_private_key_${AuthenticationStage}:1}}'
+          AUTHENTICATION_STAGE: !Ref AuthenticationStage
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
   ActionSwitchGroupPermission:
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ActionSwitchGroupFunction
@@ -818,8 +758,6 @@ Resources:
           TopicName: !GetAtt SendNotificationSNSTopic.TopicName
   ActionTextMessagePermission:
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ActionTextMessageFunction
@@ -854,8 +792,6 @@ Resources:
           TopicName: !GetAtt SendNotificationSNSTopic.TopicName
   ActionBanRequestPermission:
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ActionBanRequestFunction
@@ -877,7 +813,6 @@ Resources:
         Variables:
           SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
           SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
           USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
       Policies:
       - DynamoDBCrudPolicy:
@@ -888,12 +823,8 @@ Resources:
           TopicName: !GetAtt SendMessageSNSTopic.TopicName
       - SNSPublishMessagePolicy:
           TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
   ActionBanReplyPermission:
     Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
     Properties:
       Action: lambda:InvokeFunction
       FunctionName: !Ref ActionBanReplyFunction

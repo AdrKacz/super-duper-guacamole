@@ -56,11 +56,4 @@ class Memory {
   List<String> getBlockedUsers() {
     return boxBlockedUsers.values.toList();
   }
-
-  void deleteMessage(String? id) {
-    if (id == null) {
-      return;
-    }
-    boxMessages.delete(id);
-  }
 }

@@ -168,17 +168,18 @@ Future<String?> banActionOnMessage(
       });
 }
 
-Future<void> mailToReportMessage(
-    List<types.Message> messages, types.Message message) async {
+Future<void> mailToReportMessage(types.Message message) async {
   if (message.type != types.MessageType.text) {
     // TODO: handle others message type
     return;
   }
 
-  final List<types.Message> contextMessages = messages
-      .where((types.Message e) => e.type == types.MessageType.text)
+  final List<types.TextMessage> contextMessages = Memory()
+      .boxMessages
+      .values
+      .map((String e) => (decodeMessage(e)))
       .toList()
-      .sublist(0, min(messages.length, 10));
+      .sublist(0, min(Memory().boxMessages.length, 10));
 
   final String body = """
   --- --- ---

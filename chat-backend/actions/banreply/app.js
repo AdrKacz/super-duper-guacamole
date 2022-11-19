@@ -14,6 +14,7 @@
 
 // ===== ==== ====
 // IMPORTS
+
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 
 const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
@@ -25,14 +26,14 @@ const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
 const { closeVote } = require('./src/close-vote')
 const { getUserAndBannedUser } = require('./src/get-user-and-banned-user')
+const { leaveGroup } = require('./src/leave-group')
 
 // ===== ==== ====
 // CONSTANTS
 const {
   USERS_TABLE_NAME,
   SEND_MESSAGE_TOPIC_ARN,
-  SEND_NOTIFICATION_TOPIC_ARN,
-  SWITCH_GROUP_TOPIC_ARN
+  SEND_NOTIFICATION_TOPIC_ARN
 } = process.env
 
 // ===== ==== ====
@@ -130,16 +131,7 @@ DELETE #banVotingUsers :id
 
     if (voteConfirmed) {
       console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
-      const publishSwitchGroupCommand = new PublishCommand({
-        TopicArn: SWITCH_GROUP_TOPIC_ARN,
-        Message: JSON.stringify({
-          id: bannedUserId,
-          groupid: bannedUser.groupId,
-          isBan: true
-        })
-      })
-
-      promises.push(snsClient.send(publishSwitchGroupCommand))
+      promises.push(leaveGroup({ currentUser: bannedUser }))
 
       const publishSendMessageCommand = new PublishCommand({
         TopicArn: SEND_MESSAGE_TOPIC_ARN,

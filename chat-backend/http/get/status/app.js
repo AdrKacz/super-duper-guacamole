@@ -2,7 +2,15 @@
 
 // ===== ==== ====
 // IMPORTS
-const { getGroup, getUser } = require('chat-backend-package') // skipcq: JS-0260
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
+
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
+
+// ===== ==== ====
+// CONSTANTS
+const { USERS_TABLE_NAME } = process.env
 
 // ===== ==== ====
 // EXPORTS
@@ -18,15 +26,34 @@ exports.handler = async (event) => {
   let group = null
   let users = null
   if (typeof groupId === 'string') {
-    ({ group, users } = await getGroup({ groupId }))
-    if (!group.isPublic) {
-      group = { isPublic: false }
-      users = null
-    } else {
-      users = users.map((user) => ({
-        id: user.id,
-        isConnected: typeof user.connectionId === 'string'
-      }))
+    try {
+      ({ group, users } = await getGroup({ groupId }))
+
+      if (!group.isPublic) {
+        group = { isPublic: false }
+        users = null
+      } else {
+        users = users.map((user) => ({
+          id: user.id,
+          isConnected: typeof user.connectionId === 'string'
+        }))
+      }
+    } catch (error) {
+      console.log(error)
+      if (error.message === `group (${groupId}) is not defined`) {
+        await dynamoDBDocumentClient.send(new UpdateCommand({
+          TableName: USERS_TABLE_NAME,
+          Key: { id },
+          ConditionExpression: '#groupId = :groupId',
+          UpdateExpression: 'REMOVE #groupId',
+          ExpressionAttributeNames: { '#groupId': 'groupId' },
+          ExpressionAttributeValues: { ':groupId': groupId }
+        }))
+        group = null
+        users = null
+      } else {
+        throw error
+      }
     }
   }
 

@@ -59,11 +59,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   // ===== ===== =====
-  // Chat Messages
-  final SplayTreeMap<int, types.Message> _messages = SplayTreeMap(
-      (key1, key2) => key2 - key1); // createdAt is the (sorting) key
-
-  // ===== ===== =====
   // Status
   Status status = Status.idle;
 
@@ -72,12 +67,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // ===== ===== =====
   // Change Group Swipe
   List<String> items = <String>['real'];
-
-  void _reverse() {
-    setState(() {
-      items = items.reversed.toList();
-    });
-  }
 
   // ===== ===== =====
   // Actions
@@ -118,15 +107,15 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             TextButton(
               child: const Text('Supprimer tous ses messages'),
               onPressed: () {
-                final List<types.Message> messagesToRemove = [];
-                for (final types.Message e in _messages.values) {
-                  if (e.author.id == banneduserid) {
-                    messagesToRemove.add(e);
+                final List<String> messageKeysToDelete = [];
+                for (final String k in Memory().boxMessages.keys) {
+                  final types.TextMessage m =
+                      decodeMessage(Memory().boxMessages.get(k)!);
+                  if (m.author.id == banneduserid) {
+                    messageKeysToDelete.add(k);
                   }
                 }
-                for (final types.Message e in messagesToRemove) {
-                  deleteMessage(e);
-                }
+                Memory().boxMessages.deleteAll(messageKeysToDelete);
 
                 Navigator.of(context).pop();
               },
@@ -182,10 +171,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         _webSocketConnection.banrequest(message.author.id, message.id);
         break;
       case 'report':
-        await mailToReportMessage(_messages.values.toList(), message);
+        await mailToReportMessage(message);
         break;
       case 'delete':
-        deleteMessage(message);
+        Memory().boxMessages.delete(message.createdAt);
         break;
       case 'block':
         blockUser(message.author.id);
@@ -198,21 +187,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // ===== ===== =====
   // Helpers
   types.Message? findMessage(String messageid) {
-    for (final types.Message message in _messages.values) {
-      if (message.id == messageid) {
-        return message;
+    for (final String e in Memory().boxMessages.values) {
+      final types.Message m = decodeMessage(e);
+      if (m.id == messageid) {
+        return m;
       }
     }
     return null;
-  }
-
-  void deleteMessage(types.Message message) {
-    // remove the message locally
-    setState(() {
-      _messages.remove(message);
-    });
-    // remove the message in memory
-    Memory().deleteMessage(message.id);
   }
 
   void blockUser(String userId) {
@@ -273,7 +254,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     if (userStatus['group']['id'] != User().groupId) {
       // doesn't have the correct group
       User().updateGroupId(userStatus['group']['id']);
-      _messages.clear();
     }
 
     final Map<String, Map<dynamic, dynamic>> groupUsers = {};

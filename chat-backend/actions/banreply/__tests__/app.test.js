@@ -244,16 +244,7 @@ test('it notifies user if the vote ended with a confirmation', async () => {
     otherUsers: []
   })
 
-  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 3)
-  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
-    TopicArn: process.env.SWITCH_GROUP_TOPIC_ARN,
-    Message: JSON.stringify({
-      id: bannedUserId,
-      groupid: groupId,
-      isBan: true
-    })
-  })
-
+  expect(snsMock).toHaveReceivedCommandTimes(PublishCommand, 4)
   expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
     TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
     Message: JSON.stringify({
@@ -267,12 +258,33 @@ test('it notifies user if the vote ended with a confirmation', async () => {
   })
 
   expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
+    TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id }, { id: bannedUserId }],
+      message: {
+        action: 'status-update'
+      }
+    })
+  })
+
+  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
     TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
     Message: JSON.stringify({
       users: [{ id: bannedUserId, groupId, confirmationRequired: 1, banVotingUsers: new Set([]) }],
       notification: {
         title: 'Tu as mal agi ❌',
         body: "Ton groupe t'a exclu"
+      }
+    })
+  })
+
+  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
+    TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
+    Message: JSON.stringify({
+      users: [{ id }],
+      notification: {
+        title: 'Ton groupe est vide 😔',
+        body: 'Reconnecte toi pour demander un nouveau groupe ...'
       }
     })
   })
