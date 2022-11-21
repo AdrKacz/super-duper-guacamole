@@ -7,10 +7,12 @@ const axios = require('axios') // skipcq: JS-0260
 const { argv } = require('node:process')
 
 let id = null
-if (argv.length > 2) {
-  id = argv[2]
+let url = null
+if (argv.length > 3) {
+  url = argv[2]
+  id = argv[3]
 } else {
-  throw new Error('you must provide one parameter for id (ex: yarn node sign-in-user.js your-id)')
+  throw new Error('you must provide one parameter for url and one for id (ex: yarn node sign-in-user.js your-url your-id)')
 }
 
 readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {
@@ -29,7 +31,7 @@ readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {
 
     console.log('isVerified', isVerified)
 
-    axios.put('https://d1834iic8b.execute-api.eu-west-3.amazonaws.com/sign-in', {
+    axios.put(`${url}/sign-in`, {
       id,
       timestamp,
       signature

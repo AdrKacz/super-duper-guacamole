@@ -414,6 +414,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: websocket/authorizer/
+      Environment:
+        Variables:
+          AUTHENTICATION_STAGE: !Ref AuthenticationStage
   WebSocketApiAuthorizerFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:

@@ -9,7 +9,7 @@ const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { createVerify } = require('node:crypto')
 
-const jwt = require('jsonwebtoken') // skipcq: JS-0260
+const sign = require('jsonwebtoken/sign') // skipcq: JS-0260
 
 // ===== ==== ====
 // CONSTANTS
@@ -96,7 +96,7 @@ exports.handler = async (event) => {
   // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
   // https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-jwt-authorizer.html
   // https://accounts.google.com/.well-known/openid-configuration
-  const jwtToken = jwt.sign({ id }, JWK_PRIVATE_KEY, {
+  const jwt = sign({ id }, JWK_PRIVATE_KEY, {
     algorithm: 'RS256',
     keyid: AUTHENTICATION_STAGE,
     expiresIn: 15 * 60,
@@ -108,6 +108,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jwtToken })
+    body: JSON.stringify({ jwt })
   }
 }
