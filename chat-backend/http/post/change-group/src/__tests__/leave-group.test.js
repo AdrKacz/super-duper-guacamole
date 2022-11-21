@@ -76,7 +76,7 @@ test('it updates group if more than one user remaining', async () => {
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }, { id: 'id-2' }], message: { action: 'status-update' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }, { id: 'id-2' }], message: { action: 'update-status' }, useSaveMessage: false })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({
@@ -116,7 +116,7 @@ test('it deletes group if less than two user remaining', async () => {
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }], message: { action: 'status-update' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }], message: { action: 'update-status' }, useSaveMessage: false })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({

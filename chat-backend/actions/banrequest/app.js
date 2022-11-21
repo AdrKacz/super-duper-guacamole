@@ -132,7 +132,7 @@ SET #confirmationRequired = :confirmationRequired
       Message: JSON.stringify({
         users: users.filter(({ id }) => banNewVotingUsers.has(id)),
         message: {
-          action: 'banrequest',
+          action: 'ban-request',
           messageid: messageId
         }
       })

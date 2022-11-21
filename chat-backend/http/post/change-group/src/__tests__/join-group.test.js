@@ -57,8 +57,8 @@ test('it handles already public group', async () => {
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(2)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [currentUser], message: { action: 'status-update' }, useSaveMessage: false })
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users, message: { action: 'status-update' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [currentUser], message: { action: 'update-status' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users, message: { action: 'update-status' }, useSaveMessage: false })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(2)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({
@@ -106,7 +106,7 @@ test('it handles already private group that turns public', async () => {
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: users.concat([currentUser]), message: { action: 'status-update' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: users.concat([currentUser]), message: { action: 'update-status' }, useSaveMessage: false })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({

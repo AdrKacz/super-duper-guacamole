@@ -1,10 +1,11 @@
 {
-  "name": "actiontextmessage",
+  "name": "on-connect",
   "version": "1.0.0",
-  "description": "Receive text message from Awa",
+  "description": "",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "AdrKacz"
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE"
 }

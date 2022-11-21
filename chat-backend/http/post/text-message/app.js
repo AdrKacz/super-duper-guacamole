@@ -56,7 +56,7 @@ ${event.body}`)
   }
 
   await Promise.all([
-    sendMessages({ users, message: { action: 'textmessage', message }, useSaveMessage: true }),
+    sendMessages({ users, message: { action: 'text-message', message }, useSaveMessage: true }),
     sendNotifications({
       users,
       notification: {

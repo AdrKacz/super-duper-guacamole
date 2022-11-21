@@ -31,7 +31,7 @@ exports.joinGroup = async ({ currentUser, group, users }) => {
       // warn new user
       warnNewUsers({ users: [currentUser] }),
       // warn other users
-      sendMessages({ users, message: { action: 'status-update' }, useSaveMessage: false }),
+      sendMessages({ users, message: { action: 'update-status' }, useSaveMessage: false }),
       sendNotifications({
         users,
         notification: {
@@ -156,7 +156,7 @@ const updateGroupWithoutBlockedUsers = ({ groupId, groupSize, isPublic }) => (dy
  * @return {Promise}
  */
 const warnNewUsers = ({ users }) => (Promise.all([
-  sendMessages({ users, message: { action: 'status-update' }, useSaveMessage: false }),
+  sendMessages({ users, message: { action: 'update-status' }, useSaveMessage: false }),
   sendNotifications({
     users,
     notification: {

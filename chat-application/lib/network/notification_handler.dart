@@ -31,7 +31,8 @@ class NotificationHandler {
     final String? token = await FirebaseMessaging.instance.getToken();
 
     if (token != null) {
-      await HttpConnection().legacyPut('firebase-token', {'token': token});
+      await HttpConnection()
+          .put(path: 'firebase-token', body: {'token': token});
     }
   }
 }

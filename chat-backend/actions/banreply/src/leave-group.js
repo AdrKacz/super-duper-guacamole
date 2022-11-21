@@ -59,7 +59,7 @@ exports.leaveGroup = async ({ currentUser }) => {
         Message: JSON.stringify({
           users,
           message: {
-            action: 'status-update'
+            action: 'update-status'
           }
         })
       })),
@@ -103,7 +103,7 @@ exports.leaveGroup = async ({ currentUser }) => {
         Message: JSON.stringify({
           users: usersWithoutCurrentUser,
           message: {
-            action: 'status-update'
+            action: 'update-status'
           }
         })
       })),

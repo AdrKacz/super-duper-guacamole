@@ -65,7 +65,7 @@ test('it sends message to group', async () => {
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-2' }], message: { action: 'textmessage', message: 'message' }, useSaveMessage: true })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-2' }], message: { action: 'text-message', message: 'message' }, useSaveMessage: true })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({

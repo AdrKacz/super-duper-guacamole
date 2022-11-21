@@ -250,7 +250,7 @@ test('it notifies user if the vote ended with a confirmation', async () => {
     Message: JSON.stringify({
       users: [{ id, groupId }, { id: bannedUserId, groupId, confirmationRequired: 1, banVotingUsers: new Set([]) }],
       message: {
-        action: 'banreply',
+        action: 'ban-reply',
         bannedid: bannedUserId,
         status: 'confirmed'
       }
@@ -262,7 +262,7 @@ test('it notifies user if the vote ended with a confirmation', async () => {
     Message: JSON.stringify({
       users: [{ id }, { id: bannedUserId }],
       message: {
-        action: 'status-update'
+        action: 'update-status'
       }
     })
   })
@@ -342,7 +342,7 @@ DELETE #banVotingUsers :id
     Message: JSON.stringify({
       users: [{ id, groupId }],
       message: {
-        action: 'banreply',
+        action: 'ban-reply',
         bannedid: bannedUserId,
         status: 'denied'
       }

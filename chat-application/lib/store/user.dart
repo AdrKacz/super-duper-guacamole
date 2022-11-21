@@ -36,6 +36,7 @@ class User {
   User._internal();
 
   Future<void> resetUser() async {
+    // TODO: call a delete user function
     await Memory().boxUser.delete('id');
     await init();
   }
@@ -194,7 +195,7 @@ class User {
         });
   }
 
-  Future<http.Response?> shareProfile(BuildContext context) async {
+  Future<void> shareProfile(BuildContext context) async {
     final Map profile = Memory().boxUserProfiles.get(id) ?? {};
 
     final Color primaryColor = Theme.of(context).colorScheme.primary;
@@ -204,19 +205,20 @@ class User {
         profile: profile, onPrimaryColor: onPrimaryColor);
 
     if (type == null) {
-      return null;
+      return;
     }
 
     if (type == 'memory') {
       Memory().boxUser.put('hasSharedProfile', 'true');
-      return HttpConnection().legacyPut('share-profile', {'profile': profile});
+      await HttpConnection()
+          .put(path: 'share-profile', body: {'profile': profile});
     }
 
     // ignore: use_build_context_synchronously
     final XFile? image = await _pickImage(context, type);
 
     if (image == null) {
-      return null;
+      return;
     }
 
     // crop image
@@ -224,7 +226,7 @@ class User {
         toolbarColor: primaryColor, toolbarWidgetColor: onPrimaryColor);
 
     if (croppedFile == null) {
-      return null;
+      return;
     }
 
     // save image
@@ -232,7 +234,8 @@ class User {
     await Memory().boxUserProfiles.put(id, profile);
 
     Memory().boxUser.put('hasSharedProfile', 'true');
-    return HttpConnection().legacyPut('share-profile', {'profile': profile});
+    await HttpConnection()
+        .put(path: 'share-profile', body: {'profile': profile});
   }
 
   static T _getUserImageOrImageProvider<T>(id,

@@ -52,7 +52,7 @@ exports.leaveGroup = async ({ currentUser }) => {
         ExpressionAttributeValues: { ':one': 1 }
       })),
       // warn remaining users
-      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),
+      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'update-status' }, useSaveMessage: false }),
       sendNotifications({
         users: usersWithoutCurrentUser,
         notification: {
@@ -85,7 +85,7 @@ exports.leaveGroup = async ({ currentUser }) => {
         ExpressionAttributeValues: { ':groupSize': usersWithoutCurrentUser.length }
       })),
       // warn remaining users
-      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'status-update' }, useSaveMessage: false }),
+      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'update-status' }, useSaveMessage: false }),
       sendNotifications({
         users: usersWithoutCurrentUser,
         notification: {

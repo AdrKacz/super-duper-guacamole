@@ -138,7 +138,7 @@ DELETE #banVotingUsers :id
         Message: JSON.stringify({
           users: otherUsers.concat([user, bannedUser]),
           message: {
-            action: 'banreply',
+            action: 'ban-reply',
             bannedid: bannedUserId,
             status: 'confirmed'
           }
@@ -164,7 +164,7 @@ DELETE #banVotingUsers :id
         Message: JSON.stringify({
           users: otherUsers.concat([user]),
           message: {
-            action: 'banreply',
+            action: 'ban-reply',
             bannedid: bannedUserId,
             status: 'denied'
           }

@@ -431,29 +431,27 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           updateStatus(unreadData: data['unreadData']);
         }
         break;
-      case 'leavegroup':
-      case 'joingroup':
-      case 'status-update':
+      case 'update-status':
         updateStatus();
         break;
-      case 'textmessage':
+      case 'text-message':
         messageTextMessage(data);
         break;
-      case 'shareprofile':
+      case 'share-profile':
         messageShareProfile(data);
         break;
-      case 'banrequest':
+      case 'ban-request':
         messageBanRequest(data);
         break;
-      case 'banreply':
+      case 'ban-reply':
         messageBanReply(data);
         break;
-      case 'login':
+      case 'connect':
         if (!isUnreadData) {
           messageLogin(data);
         }
         break;
-      case 'logout':
+      case 'disconnect':
         if (!isUnreadData) {
           messageLogout(data);
         }
@@ -494,7 +492,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           resetAccount: () async {
             // reset account
             widget.goToPresentation();
-            await HttpConnection().legacyPut('firebase-token', {'token': ''});
+            await HttpConnection()
+                .put(path: 'firebase-token', body: {'token': ''});
             await User().resetUser();
             NotificationHandler().init();
           },

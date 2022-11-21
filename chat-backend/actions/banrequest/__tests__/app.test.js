@@ -221,7 +221,7 @@ SET #confirmationRequired = :confirmationRequired
     Message: JSON.stringify({
       users: [{ id, connectionId, firebaseToken }],
       message: {
-        action: 'banrequest',
+        action: 'ban-request',
         messageid: 'message-id'
       }
     })
