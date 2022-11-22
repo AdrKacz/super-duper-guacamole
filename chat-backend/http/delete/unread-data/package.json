@@ -1,5 +1,5 @@
 {
-  "name": "on-connect",
+  "name": "unread-data",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -10,6 +10,6 @@
   "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
     "@aws-sdk/lib-dynamodb": "^3.215.0",
-    "chat-backend-package": "file:../../chat-backend-package"
+    "chat-backend-package": "file:../../../chat-backend-package"
   }
 }

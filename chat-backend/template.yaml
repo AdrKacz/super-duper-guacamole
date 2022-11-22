@@ -434,6 +434,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: websocket/on-connect/
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
   WebSocketOnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:

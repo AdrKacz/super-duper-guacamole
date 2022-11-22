@@ -1,5 +1,3 @@
-// TRIGGER: HTTP API
-
 // ===== ==== ====
 // IMPORTS
 const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
