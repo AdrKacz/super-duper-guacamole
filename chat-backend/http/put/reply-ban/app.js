@@ -16,6 +16,7 @@
 // IMPORTS
 
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
 
 const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
@@ -23,7 +24,6 @@ const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
 
-const { getUserFromConnectionId } = require('./src/get-user-from-connection-id')
 const { closeVote } = require('./src/close-vote')
 const { getUserAndBannedUser } = require('./src/get-user-and-banned-user')
 const { leaveGroup } = require('./src/leave-group')
@@ -39,17 +39,14 @@ const {
 // ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
-  console.log(`Receives:
-\tBody:\n${event.body}
-\tRequest Context connectionId: ${event.requestContext.connectionId}
-`)
+  console.log('Received event:', JSON.stringify(event, null, 2))
 
-  // get id and groupId
-  const { id, groupId } = await getUserFromConnectionId(event.requestContext.connectionId)
+  const jwt = event.requestContext.authorizer.jwt.claims
+  const { id, groupId } = await getUser({ id: jwt.id })
 
-  if (typeof id === 'undefined' || typeof groupId === 'undefined') {
+  if (typeof groupId !== 'string') {
     return {
-      message: 'user or group cannot be found',
+      message: 'you don\'t have a group',
       statusCode: 403
     }
   }

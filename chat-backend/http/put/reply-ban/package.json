@@ -1,5 +1,5 @@
 {
-  "name": "actionbanreply",
+  "name": "reply-ban",
   "version": "1.0.0",
   "description": "Reply to a ban request",
   "main": "app.js",
@@ -8,6 +8,9 @@
   },
   "author": "AdrKacz",
   "dependencies": {
-    "chat-backend-package": "file:../../chat-backend-package"
+    "@aws-sdk/client-dynamodb": "^3.216.0",
+    "@aws-sdk/client-sns": "^3.216.0",
+    "@aws-sdk/lib-dynamodb": "^3.216.0",
+    "chat-backend-package": "file:../../../chat-backend-package"
   }
 }

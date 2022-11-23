@@ -153,13 +153,17 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     switch (await banActionOnMessage(context, message)) {
       case 'confirmed':
         // ban confirmed
-        // TODO _webSocketConnection.banreply
-        // _webSocketConnection.banreply(message.author.id, 'confirmed');
+        HttpConnection().put(path: 'reply-ban', body: {
+          'bannedid': message.author.id,
+          'status': 'confirmed',
+        });
         break;
       case 'denied':
         // ban denied
-        // TODO _webSocketConnection.banreply
-        // _webSocketConnection.banreply(message.author.id, 'denied');
+        HttpConnection().put(path: 'reply-ban', body: {
+          'bannedid': message.author.id,
+          'status': 'denied',
+        });
         break;
       default:
         throw Exception('Ban action not in ["confirmed", "denied"]');
@@ -171,8 +175,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     HapticFeedback.mediumImpact();
     switch (await reportActionOnMessage(context)) {
       case 'ban':
-        // TODO _webSocketConnection.banrequest
-        // _webSocketConnection.banrequest(message.author.id, message.id);
+        HttpConnection().put(path: 'request-ban', body: {
+          'bannedid': message.author.id,
+          'messageid': message.id,
+        });
         break;
       case 'report':
         await mailToReportMessage(message);

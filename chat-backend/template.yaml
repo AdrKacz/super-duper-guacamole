@@ -432,6 +432,69 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutShareProfileFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # PUT /request-ban
+  HttpPutRequestBanFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/request-ban
+      Environment:
+        Variables:
+          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired 
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /request-ban
+            Method: PUT
+
+  HttpPutRequestBanLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutRequestBanFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # PUT /reply-ban
+  HttpPutReplyBanFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/put/reply-ban
+      Environment:
+        Variables:
+          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - SNSPublishMessagePolicy:
+          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /reply-ban
+            Method: PUT
+
+  HttpPutReplyBanLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutReplyBanFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
   ##### ##### #####
   ##### Web Socket
   ##### ##### #####
