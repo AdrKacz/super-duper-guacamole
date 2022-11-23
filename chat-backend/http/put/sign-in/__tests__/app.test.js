@@ -136,5 +136,5 @@ test('it returns jwt', async () => {
 
   expect(response.statusCode).toBe(200)
   expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
-  expect(response.body).toBe(JSON.stringify({ jwtToken: 'jwt-token' }))
+  expect(response.body).toBe(JSON.stringify({ jwt: 'jwt-token' }))
 })

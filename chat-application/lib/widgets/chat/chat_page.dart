@@ -42,6 +42,7 @@ class ChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('status ${status.name}, connection status ${connectionStatus.name}');
     return Builder(
       builder: (BuildContext context) {
         late Widget child;

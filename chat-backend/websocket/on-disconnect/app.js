@@ -73,15 +73,15 @@ exports.handler = async (event) => {
     TableName: USERS_TABLE_NAME,
     Key: { id: user.id },
     UpdateExpression: `
-    SET #lastConnectionHalfDay = :lastConnectionHalfDay
+    SET #lastDeconnectionDay = :lastDeconnectionDay
     REMOVE #connectionId
     `,
     ExpressionAttributeNames: {
-      '#lastConnectionHalfDay': 'lastConnectionHalfDay',
+      '#lastDeconnectionDay': 'lastDeconnectionDay',
       '#connectionId': 'connectionId'
     },
     ExpressionAttributeValues: {
-      ':lastConnectionHalfDay': ((ts) => (ts - (ts % 43200000)))(Date.now()) // timestamp rounded to 12pm or 12am
+      ':lastDeconnectionDay': (new Date()).toLocaleDateString('fr-FR', { weekday: 'short', year: 'numeric', month: 'long', day: '2-digit' })
     }
   })
   const updatePromise = dynamoDBDocumentClient.send(updateUserCommand)
@@ -103,7 +103,7 @@ exports.handler = async (event) => {
     Message: JSON.stringify({
       users,
       message: {
-        action: 'logout',
+        action: 'disconnect',
         id: user.id
       }
     })

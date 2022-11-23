@@ -58,7 +58,7 @@ ${event.body}`)
   await Promise.all([
     sendMessages({ users, message: { action: 'text-message', message }, useSaveMessage: true }),
     sendNotifications({
-      users,
+      users: users.filter(({ id: userId }) => (userId !== id)),
       notification: {
         title: 'Les gens parlent 🎉',
         body: 'Tu es trop loin pour entendre ...'

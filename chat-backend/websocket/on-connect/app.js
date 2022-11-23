@@ -27,25 +27,33 @@ exports.handler = async (event) => {
     ExpressionAttributeValues: { ':connectionId': connectionId }
   }))
 
-  const { group: { isPublic }, users } = await getGroup({ groupId })
-  if (isPublic) {
-    await Promise.all([
-      sendMessages({
-        users: users.filter(({ id: userId }) => (userId !== id)),
-        message: {
-          action: 'connect',
-          id
-        },
-        useSaveMessage: false
-      }),
-      sendNotifications({
-        users: users.filter(({ id: userId }) => (userId !== id)),
-        notification: {
-          titile: 'Quelqu\'un se connecte !',
-          body: 'Viens discuter 💬'
-        }
-      })
-    ])
+  if (typeof groupId === 'string') {
+    try {
+      const { group: { isPublic }, users } = await getGroup({ groupId })
+      if (isPublic) {
+        await Promise.allSettled([
+          sendMessages({
+            users: users.filter(({ id: userId }) => (userId !== id)),
+            message: {
+              action: 'connect',
+              id
+            },
+            useSaveMessage: false
+          }),
+          sendNotifications({
+            users: users.filter(({ id: userId }) => (userId !== id)),
+            notification: {
+              title: 'Quelqu\'un se connecte !',
+              body: 'Viens discuter 💬'
+            }
+          })
+        ]).then((results) => (console.log(results)))
+      }
+    } catch (error) {
+      if (error.message !== `group (${groupId}) is not defined`) {
+        throw error
+      }
+    }
   }
 
   return {

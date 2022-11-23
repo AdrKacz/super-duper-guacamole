@@ -11,6 +11,6 @@ exports.handler = async (event) => {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: jwt.id, unreadData })
+    body: JSON.stringify({ id: jwt.id, unreadData: unreadData ?? [] })
   }
 }

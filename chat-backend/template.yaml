@@ -192,7 +192,7 @@ Resources:
               audience:
                 - user
             IdentitySource: "$request.header.Authorization"
-
+  # Sign up
   HttpPutSignUpFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -216,6 +216,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutSignUpFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # Sign in
   HttpPutSignInFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -243,6 +244,28 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutSignInFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # DELETE /unread-data
+  HttpDeleteUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/delete/unread-data
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /unread-data
+            Method: DELETE
+  HttpDeleteUnreadDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpDeleteUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # GET /status
   HttpGetStatusFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -259,13 +282,34 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /status
             Method: GET
-
   HttpGetStatusLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${HttpGetStatusFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # GET /unread-data
+  HttpGetUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/get/unread-data
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /unread-data
+            Method: GET
+  HttpGetUnreadDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpGetUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # POST /text-message
   HttpPostTextMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -299,6 +343,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPostTextMessageFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # POST /change-group
   HttpPostChangeGroupFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -332,6 +377,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPostChangeGroupFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # PUT /firebase-token
   HttpPutFirebaseTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -355,6 +401,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutFirebaseTokenFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # PUT /share-profile
   HttpPutShareProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -434,9 +481,21 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: websocket/on-connect/
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${WebSocketStage}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
   WebSocketOnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:

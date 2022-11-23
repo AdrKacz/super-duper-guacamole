@@ -23,7 +23,17 @@ exports.leaveGroup = async ({ currentUser }) => {
   if (typeof currentUser.groupId !== 'string') {
     return
   }
-  const { group, users } = await getGroup({ groupId: currentUser.groupId })
+  // handle 'group (f8830129-fc8f-4d0e-b43c-ee27ec982234) is not defined'
+  let group = null
+  let users = null
+  try {
+    ({ group, users } = await getGroup({ groupId: currentUser.groupId }))
+  } catch (error) {
+    if (error.message !== `group (${currentUser.groupId}) is not defined`) {
+      return
+    }
+    throw error
+  }
 
   if (!group.isPublic) {
     throw new Error('you cannot change group yet')
@@ -46,10 +56,9 @@ exports.leaveGroup = async ({ currentUser }) => {
       // delete group
       dynamoDBDocumentClient.send(new DeleteCommand({
         TableName: GROUPS_TABLE_NAME,
-        Key: { id: currentUser.groupId },
-        ConditionExpression: '#groupSize <= :one',
-        ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-        ExpressionAttributeValues: { ':one': 1 }
+        Key: { id: currentUser.groupId }
+        // NOTE: what condition expression would be appropriate here?
+        // to not delete group if there are still users (are new incoming users)
       })),
       // warn remaining users
       sendMessages({ users: usersWithoutCurrentUser, message: { action: 'update-status' }, useSaveMessage: false }),

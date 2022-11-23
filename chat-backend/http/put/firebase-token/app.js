@@ -66,6 +66,8 @@ exports.handler = async (event) => {
   await dynamoDBDocumentClient.send(updateCommand)
 
   return {
-    statusCode: 200
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: jwt.id })
   }
 }
