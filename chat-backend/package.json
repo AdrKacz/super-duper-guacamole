@@ -12,7 +12,9 @@
     "deploy:skip-ci:force": "sam deploy --no-confirm-changeset --config-env",
     "test": "jest",
     "test:silent": "jest --silent",
-    "upgrade:all": "sh ./scripts/upgrade/upgrade.sh"
+    "install:all": "sh ./scripts/install/install.sh",
+    "upgrade:all": "sh ./scripts/upgrade/upgrade.sh",
+    "local:api": "sam local start-api -t ./template.yaml --warm-containers LAZY --debug --config-env"
   },
   "devDependencies": {
     "@aws-sdk/client-apigatewaymanagementapi": "^3.194.0",

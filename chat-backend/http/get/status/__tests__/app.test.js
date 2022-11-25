@@ -4,7 +4,8 @@ const { handler } = require('../app')
 
 const { mockClient } = require('aws-sdk-client-mock')
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
-const ddbMock = mockClient(dynamoDBDocumentClient)
+// const ddbMock = mockClient(dynamoDBDocumentClient)
+mockClient(dynamoDBDocumentClient)
 
 const getGroupModule = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 jest.mock('chat-backend-package/src/get-group', () => ({

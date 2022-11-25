@@ -1,37 +1,16 @@
-// DEPENDENCIES
-// aws-sdk-ddb
-// aws-sdk-sns
-
-// TRIGGER
-// API GATEWAY WEB SOCKET
-
-// ===== ==== ====
-// EVENT
-// Send a ban request
-// event.body
-// bannedid : String - banned user id
-// messageid : String - message id being banned for (to be removed)
-
 // ===== ==== ====
 // IMPORTS
-const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
-const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
-
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
 const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
-
-const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
+const { sendMessages } = require('chat-backend-package/src/send-messages') // skipcq: JS-0260
+const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 
 const { getBannedUser } = require('./src/get-banned-user')
 
-// ===== ==== ====
-// CONSTANTS
-const {
-  USERS_TABLE_NAME,
-  SEND_MESSAGE_TOPIC_ARN,
-  SEND_NOTIFICATION_TOPIC_ARN
-} = process.env
+const { USERS_TABLE_NAME } = process.env
 
 // ===== ==== ====
 // HANDLER
@@ -124,29 +103,22 @@ SET #confirmationRequired = :confirmationRequired
   const promises = [dynamoDBDocumentClient.send(updateBannedUserCommand)]
 
   if (banNewVotingUsers.size > 0) {
-    const publishSendMessageCommand = new PublishCommand({
-      TopicArn: SEND_MESSAGE_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: users.filter(({ id }) => banNewVotingUsers.has(id)),
-        message: {
-          action: 'ban-request',
-          messageid: messageId
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendMessageCommand))
+    promises.push(sendMessages({
+      users: users.filter(({ id }) => banNewVotingUsers.has(id)),
+      message: {
+        action: 'ban-request',
+        messageid: messageId
+      },
+      useSaveMessage: true
+    }))
 
-    const publishSendNotificationCommand = new PublishCommand({
-      TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-      Message: JSON.stringify({
-        users: users.filter(({ id }) => banNewVotingUsers.has(id)),
-        notification: {
-          title: "Quelqu'un a mal agi ❌",
-          body: 'Viens donner ton avis !'
-        }
-      })
-    })
-    promises.push(snsClient.send(publishSendNotificationCommand))
+    promises.push(sendNotifications({
+      users: users.filter(({ id }) => banNewVotingUsers.has(id)),
+      notification: {
+        title: "Quelqu'un a mal agi ❌",
+        body: 'Viens donner ton avis !'
+      }
+    }))
   }
 
   await Promise.allSettled(promises)

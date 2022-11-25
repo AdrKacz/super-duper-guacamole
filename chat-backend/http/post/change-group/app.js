@@ -2,10 +2,10 @@
 
 // ===== ==== ====
 // IMPORTS
-const { getUser } = require('chat-backend-package') // skipcq: JS-0260
+const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
+const { leaveGroup } = require('chat-backend-package/src/leave-group') // skipcq: JS-0260
 
 const { findGroup } = require('./src/find-group')
-const { leaveGroup } = require('./src/leave-group')
 const { createGroup } = require('./src/create-group')
 const { joinGroup } = require('./src/join-group')
 const { createBubble } = require('./src/create-bubble')

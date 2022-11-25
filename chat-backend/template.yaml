@@ -316,7 +316,7 @@ Resources:
       CodeUri: http/post/text-message
       Environment:
         Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${WebSocketStage}'
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
@@ -350,7 +350,7 @@ Resources:
       CodeUri: http/post/change-group
       Environment:
         Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${WebSocketStage}'
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
@@ -382,8 +382,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/put/firebase-token/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
@@ -408,21 +406,24 @@ Resources:
       CodeUri: http/put/share-profile
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /share-profile
             Method: PUT
 
@@ -439,22 +440,25 @@ Resources:
       CodeUri: http/put/request-ban
       Environment:
         Variables:
-          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired 
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /request-ban
             Method: PUT
 
@@ -471,21 +475,24 @@ Resources:
       CodeUri: http/put/reply-ban
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /reply-ban
             Method: PUT
 
@@ -546,7 +553,7 @@ Resources:
       CodeUri: websocket/on-connect/
       Environment:
         Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${WebSocketStage}'
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
@@ -596,20 +603,20 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: websocket/on-disconnect/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
   WebSocketOnDisconnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
@@ -645,7 +652,8 @@ Resources:
   WebSocketDeployment:
     Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-     - WebSocketOnDisconnectRoute
+      - WebSocketOnConnectRoute
+      - WebSocketOnDisconnectRoute
     Properties:
       ApiId: !Ref WebSocketApi
   WebSocketStage:
@@ -657,109 +665,6 @@ Resources:
       DefaultRouteSettings:
         ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
         ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
-
-  # Layers Functions
-  AWSSDKApiLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/aws-sdk-api
-      RetentionPolicy: Delete 
-  
-  AWSSDKDdbLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/aws-sdk-ddb
-      RetentionPolicy: Delete 
-
-  AWSSDKSnsLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/aws-sdk-sns
-      RetentionPolicy: Delete 
-
-  FirebaseAdminLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/firebase-admin
-      RetentionPolicy: Delete 
-
-  # Backend Functions
-  SendMessageSNSTopic:
-    Type: AWS::SNS::Topic
-  SendMessageFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: sendmessage/
-      Layers:
-        - !Ref AWSSDKApiLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${WebSocketStage}'
-          STORE_UNREAD_DATA_TOPIC_ARN: !Ref StoreUnreadDataSNSTopic
-      Policies:
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt StoreUnreadDataSNSTopic.TopicName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref SendMessageSNSTopic
-  SendMessageLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  SendNotificationSNSTopic:
-    Type: AWS::SNS::Topic
-  SendNotificationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: sendnotification/
-      Layers:
-        - !Ref FirebaseAdminLayerVersion
-      Environment:
-        Variables:
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref SendNotificationSNSTopic
-  SendNotificationLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  StoreUnreadDataSNSTopic:
-    Type: AWS::SNS::Topic
-  StoreUnreadDataFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: storeunreaddata/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref StoreUnreadDataSNSTopic
-  StoreUnreadDataLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
 
 Outputs:
   UsersTableArn:

@@ -8,8 +8,6 @@
   },
   "author": "AdrKacz",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.216.0",
-    "@aws-sdk/client-sns": "^3.216.0",
     "@aws-sdk/lib-dynamodb": "^3.216.0",
     "chat-backend-package": "file:../../../chat-backend-package"
   }

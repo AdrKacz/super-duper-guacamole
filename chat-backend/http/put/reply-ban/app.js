@@ -14,27 +14,19 @@
 
 // ===== ==== ====
 // IMPORTS
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
-
-const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
-
-const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
-
-const { dynamoDBDocumentClient, snsClient } = require('./aws-clients')
+const { sendMessages } = require('chat-backend-package/src/send-messages') // skipcq: JS-0260
+const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
+const { leaveGroup } = require('chat-backend-package/src/leave-group') // skipcq: JS-0260
 
 const { closeVote } = require('./src/close-vote')
 const { getUserAndBannedUser } = require('./src/get-user-and-banned-user')
-const { leaveGroup } = require('./src/leave-group')
 
-// ===== ==== ====
-// CONSTANTS
-const {
-  USERS_TABLE_NAME,
-  SEND_MESSAGE_TOPIC_ARN,
-  SEND_NOTIFICATION_TOPIC_ARN
-} = process.env
+const { USERS_TABLE_NAME } = process.env
 
 // ===== ==== ====
 // HANDLER
@@ -130,44 +122,34 @@ DELETE #banVotingUsers :id
       console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
       promises.push(leaveGroup({ currentUser: bannedUser }))
 
-      const publishSendMessageCommand = new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers.concat([user, bannedUser]),
-          message: {
-            action: 'ban-reply',
-            bannedid: bannedUserId,
-            status: 'confirmed'
-          }
-        })
-      })
-      promises.push(snsClient.send(publishSendMessageCommand))
+      promises.push(sendMessages({
+        users: otherUsers.concat([user, bannedUser]),
+        message: {
+          action: 'ban-reply',
+          bannedid: bannedUserId,
+          status: 'confirmed'
+        },
+        useSaveMessage: true
+      }))
 
-      const publishSendNotificationDeniedBanUserCommand = new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: [bannedUser],
-          notification: {
-            title: 'Tu as mal agi ❌',
-            body: "Ton groupe t'a exclu"
-          }
-        })
-      })
-      promises.push(snsClient.send(publishSendNotificationDeniedBanUserCommand))
+      promises.push(sendNotifications({
+        users: [bannedUser],
+        notification: {
+          title: 'Tu as mal agi ❌',
+          body: "Ton groupe t'a exclu"
+        }
+      }))
     } else {
       console.log(`Vote denied with ${updatedBanConfirmerUsers.size + updatedBanVotingUsers.size} confirmation at most (${bannedUser.confirmationRequired} needed)`)
-      const publishSendMessageCommand = new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: otherUsers.concat([user]),
-          message: {
-            action: 'ban-reply',
-            bannedid: bannedUserId,
-            status: 'denied'
-          }
-        })
-      })
-      promises.push(snsClient.send(publishSendMessageCommand))
+      promises.push(sendMessages({
+        users: otherUsers.concat([user]),
+        message: {
+          action: 'ban-reply',
+          bannedid: bannedUserId,
+          status: 'denied'
+        },
+        useSaveMessage: true
+      }))
     }
 
     await Promise.allSettled(promises)

@@ -1,22 +1,15 @@
 // ===== ==== ====
 // IMPORTS
+const { dynamoDBDocumentClient } = require('./clients/aws/dynamo-db-client') // skipcq: JS-0260
 const { UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { PublishCommand } = require('@aws-sdk/client-sns') // skipcq: JS-0260
+const { getGroup } = require('./get-group') // skipcq: JS-0260
+const { sendMessages } = require('./send-messages') // skipcq: JS-0260
+const { sendNotifications } = require('./send-notifications') // skipcq: JS-0260
 
-const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
-
-const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
-
-const { snsClient } = require('../aws-clients')
-
-// ===== ==== ====
-// CONSTANTS
 const {
   USERS_TABLE_NAME,
-  GROUPS_TABLE_NAME,
-  SEND_MESSAGE_TOPIC_ARN,
-  SEND_NOTIFICATION_TOPIC_ARN
+  GROUPS_TABLE_NAME
 } = process.env
 
 // ===== ==== ====
@@ -25,7 +18,17 @@ exports.leaveGroup = async ({ currentUser }) => {
   if (typeof currentUser.groupId !== 'string') {
     return
   }
-  const { group, users } = await getGroup({ groupId: currentUser.groupId })
+  // handle 'group (f8830129-fc8f-4d0e-b43c-ee27ec982234) is not defined'
+  let group = null
+  let users = null
+  try {
+    ({ group, users } = await getGroup({ groupId: currentUser.groupId }))
+  } catch (error) {
+    if (error.message !== `group (${currentUser.groupId}) is not defined`) {
+      return
+    }
+    throw error
+  }
 
   if (!group.isPublic) {
     throw new Error('you cannot change group yet')
@@ -48,31 +51,19 @@ exports.leaveGroup = async ({ currentUser }) => {
       // delete group
       dynamoDBDocumentClient.send(new DeleteCommand({
         TableName: GROUPS_TABLE_NAME,
-        Key: { id: currentUser.groupId },
-        ConditionExpression: '#groupSize <= :one',
-        ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-        ExpressionAttributeValues: { ':one': 1 }
+        Key: { id: currentUser.groupId }
+        // NOTE: what condition expression would be appropriate here?
+        // to not delete group if there are still users (are new incoming users)
       })),
       // warn remaining users
-      snsClient.send(new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users,
-          message: {
-            action: 'update-status'
-          }
-        })
-      })),
-      snsClient.send(new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: usersWithoutCurrentUser,
-          notification: {
-            title: 'Ton groupe est vide 😔',
-            body: 'Reconnecte toi pour demander un nouveau groupe ...'
-          }
-        })
-      }))
+      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'update-status' }, useSaveMessage: false }),
+      sendNotifications({
+        users: usersWithoutCurrentUser,
+        notification: {
+          title: 'Ton groupe est vide 😔',
+          body: 'Reconnecte toi pour demander un nouveau groupe ...'
+        }
+      })
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
   } else {
@@ -98,25 +89,14 @@ exports.leaveGroup = async ({ currentUser }) => {
         ExpressionAttributeValues: { ':groupSize': usersWithoutCurrentUser.length }
       })),
       // warn remaining users
-      snsClient.send(new PublishCommand({
-        TopicArn: SEND_MESSAGE_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: usersWithoutCurrentUser,
-          message: {
-            action: 'update-status'
-          }
-        })
-      })),
-      snsClient.send(new PublishCommand({
-        TopicArn: SEND_NOTIFICATION_TOPIC_ARN,
-        Message: JSON.stringify({
-          users: usersWithoutCurrentUser,
-          notification: {
-            title: 'Le groupe rétrécit 😔',
-            body: 'Quelqu\'un a quitté le groupe ...'
-          }
-        })
-      }))
+      sendMessages({ users: usersWithoutCurrentUser, message: { action: 'update-status' }, useSaveMessage: false }),
+      sendNotifications({
+        users: usersWithoutCurrentUser,
+        notification: {
+          title: 'Le groupe rétrécit 😔',
+          body: 'Quelqu\'un a quitté le groupe ...'
+        }
+      })
     ]).then((results) => (console.log(results)))
       .catch((error) => (console.error(error)))
   }
