@@ -26,7 +26,7 @@ exports.handler = async (event) => {
   // update user
   await dynamoDBDocumentClient.send(new UpdateCommand({
     TableName: USERS_TABLE_NAME,
-    Key: { id: id },
+    Key: { id },
     UpdateExpression: 'REMOVE #connectionId',
     ConditionExpression: '#connectionId = :connectionId',
     ExpressionAttributeNames: { '#connectionId': 'connectionId' },
