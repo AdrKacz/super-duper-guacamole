@@ -4,8 +4,9 @@ const { handler } = require('../app')
 
 const { mockClient } = require('aws-sdk-client-mock')
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
-// const ddbMock = mockClient(dynamoDBDocumentClient)
-mockClient(dynamoDBDocumentClient)
+const ddbMock = mockClient(dynamoDBDocumentClient)
+
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const getGroupModule = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 jest.mock('chat-backend-package/src/get-group', () => ({
@@ -44,4 +45,33 @@ test.each([
   expect(response.statusCode).toBe(200)
   expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
   expect(response.body).toBe(JSON.stringify({ id: expectedId, group: expectedGroup, users: expectedUsers }))
+})
+
+test('it updates group if not defined', async () => {
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
+  getGroupModule.getGroup.mockRejectedValue(new Error('group (group-id) is not defined'))
+
+  const response = await handler({
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } }
+  })
+
+  expect(response.statusCode).toBe(200)
+
+  expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
+    TableName: process.env.USERS_TABLE_NAME,
+    Key: { id: 'id' },
+    ConditionExpression: '#groupId = :groupId',
+    UpdateExpression: 'REMOVE #groupId',
+    ExpressionAttributeNames: { '#groupId': 'groupId' },
+    ExpressionAttributeValues: { ':groupId': 'group-id' }
+  })
+})
+
+test('it throws error', async () => {
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
+  getGroupModule.getGroup.mockRejectedValue(new Error('unknown error'))
+
+  await expect(
+    handler({ requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } } })
+  ).rejects.toThrow('unknown error')
 })

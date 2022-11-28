@@ -51,6 +51,26 @@ test('it throws if group is private', async () => {
   expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id' })
 })
 
+test('it returns if group is not defined', async () => {
+  getGroupModule.getGroup.mockRejectedValue(new Error('group (group-id) is not defined'))
+
+  await leaveGroup({ currentUser: { id: 'id', groupId: 'group-id' } })
+
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledTimes(0)
+})
+
+test('it throws if error while getting group', async () => {
+  getGroupModule.getGroup.mockRejectedValue(new Error('unknown error'))
+
+  await expect(
+    leaveGroup({ currentUser: { id: 'id', groupId: 'group-id' } })
+  ).rejects.toThrow('unknown error')
+
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledTimes(0)
+})
+
 test('it updates group if more than one user remaining', async () => {
   getGroupModule.getGroup.mockResolvedValue({
     group: { id: 'group-id', isPublic: true, groupSize: 3 },

@@ -72,12 +72,14 @@ test('it returns empty object if no group', async () => {
 test('it returns valid group', async () => {
   ddbMock.on(QueryCommand).resolves({
     Count: 2,
-    Items: [{ id: 'group-id-1' }, { id: 'group-id-2' }]
+    Items: [{ id: 'group-id-1' }, { id: 'group-id-2' }, { id: 'group-id-3' }]
   })
 
   isGroupValidModule.isGroupValid.mockImplementation(({ group }) => {
-    if (group.id === 'group-id-2') {
+    if (group.id === 'group-id-3') {
       return true
+    } else if (group.id === 'group-id-2') {
+      throw new Error('unknown-error')
     }
 
     return false
@@ -95,16 +97,18 @@ test('it returns valid group', async () => {
 
   expect(sort).toHaveBeenCalledTimes(1)
 
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(2)
+  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(3)
   expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-1' })
   expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-2' })
+  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-3' })
 
-  expect(isGroupValidModule.isGroupValid).toHaveBeenCalledTimes(2)
+  expect(isGroupValidModule.isGroupValid).toHaveBeenCalledTimes(3)
   expect(isGroupValidModule.isGroupValid).toHaveBeenCalledWith({ group: { id: 'group-id-1' }, users: [{ id: 'id-1' }, { id: 'id-2' }], currentUser })
   expect(isGroupValidModule.isGroupValid).toHaveBeenCalledWith({ group: { id: 'group-id-2' }, users: [{ id: 'id-1' }, { id: 'id-2' }], currentUser })
+  expect(isGroupValidModule.isGroupValid).toHaveBeenCalledWith({ group: { id: 'group-id-3' }, users: [{ id: 'id-1' }, { id: 'id-2' }], currentUser })
   expect(isGroupValidModule.isGroupValid).toHaveLastReturnedWith(true)
 
-  expect(JSON.stringify(group)).toBe(JSON.stringify({ id: 'group-id-2' }))
+  expect(JSON.stringify(group)).toBe(JSON.stringify({ id: 'group-id-3' }))
   expect(JSON.stringify(users)).toBe(JSON.stringify([{ id: 'id-1' }, { id: 'id-2' }]))
 })
 
