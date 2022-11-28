@@ -14,9 +14,6 @@ const dynamoDBClient = new DynamoDBClient({ region: AWS_REGION })
 const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
 // ===== ==== ====
-// HELPERS
-
-// ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
   console.log('===== ===== ===== ===== ===== =====')
@@ -30,19 +27,13 @@ exports.handler = async (event) => {
     throw new Error('token must be a string')
   }
 
-  const updateCommand = new UpdateCommand({
+  await dynamoDBDocumentClient.send(new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id: jwt.id },
     UpdateExpression: 'SET #firebaseToken = :token',
-    ExpressionAttributeNames: {
-      '#firebaseToken': 'firebaseToken'
-    },
-    ExpressionAttributeValues: {
-      ':token': token
-    }
-  })
-
-  await dynamoDBDocumentClient.send(updateCommand)
+    ExpressionAttributeNames: { '#firebaseToken': 'firebaseToken' },
+    ExpressionAttributeValues: { ':token': token }
+  }))
 
   return {
     statusCode: 200,

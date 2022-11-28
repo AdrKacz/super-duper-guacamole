@@ -11,7 +11,6 @@ exports.handler = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
 
   await dynamoDBDocumentClient.send(new UpdateCommand({
-    ReturnValues: 'ALL_OLD',
     TableName: USERS_TABLE_NAME,
     Key: { id: jwt.id },
     UpdateExpression: 'REMOVE #unreadData',
