@@ -519,7 +519,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             onReportMessage: reportMessage,
             onRefresh: () {
               _channel?.sink.close();
-              // _webSocketConnection.close();
               initConnection();
               setState(() {
                 status = Status.idle;
@@ -535,14 +534,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     if (appLifecycleState != AppLifecycleState.resumed) {
       _channel?.sink.close();
-      // _webSocketConnection.close();
     }
   }
 
   @override
   void dispose() {
     _channel?.sink.close();
-    // _webSocketConnection.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
