@@ -1,8 +1,7 @@
 // ===== ==== ====
 // IMPORTS
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
 const { BatchGetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
-
-const { dynamoDBDocumentClient } = require('../aws-clients')
 
 const { USERS_TABLE_NAME } = process.env
 

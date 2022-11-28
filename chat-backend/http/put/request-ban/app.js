@@ -20,10 +20,12 @@ exports.handler = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const { id, groupId } = await getUser({ id: jwt.id })
 
-  if (typeof groupId === 'string') {
+  if (typeof groupId !== 'string') {
+    console.log(`user (${id}) doesn't have a group`)
     return {
-      message: 'you don\'t have a group',
-      statusCode: 403
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you don\'t have a group' })
     }
   }
 
@@ -40,8 +42,9 @@ exports.handler = async (event) => {
     // cannot ban yourself
     console.log(`user (${id}) tried to ban itself`)
     return {
-      message: `user (${id}) tried to ban itself`,
-      statusCode: 403
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you can\'t ban yourself' })
     }
   }
 
@@ -55,8 +58,9 @@ exports.handler = async (event) => {
     // TODO: warn user banned user is not in group anymore, skipcq: JS-0099
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group`)
     return {
-      message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group`,
-      statusCode: 403
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you are not in the same group as the user banned' })
     }
   }
 
@@ -124,6 +128,8 @@ SET #confirmationRequired = :confirmationRequired
   await Promise.allSettled(promises)
 
   return {
-    statusCode: 200
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
   }
 }

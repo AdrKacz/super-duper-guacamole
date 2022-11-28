@@ -135,9 +135,6 @@ Resources:
           AttributeName: "id"
           AttributeType: "S"
         - 
-          AttributeName: "isWaiting"
-          AttributeType: "N"
-        - 
           AttributeName: "bubble"
           AttributeType: "S"
         - 
@@ -148,18 +145,6 @@ Resources:
           AttributeName: "id"
           KeyType: "HASH"
       GlobalSecondaryIndexes:
-        -
-          IndexName: "IsWaitingIndex"
-          KeySchema:
-            -
-              AttributeName: "isWaiting"
-              KeyType: "HASH"
-          Projection:
-            NonKeyAttributes:
-              - "users"
-              - "questions"
-              - "bannedUsers"
-            ProjectionType: "INCLUDE"
         -
           IndexName: "BubbleIndex"
           KeySchema:
@@ -271,7 +256,7 @@ Resources:
     Properties:
       CodeUri: http/get/status
       Policies:
-      - DynamoDBReadPolicy:
+      - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
@@ -480,7 +465,7 @@ Resources:
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
-      - DynamoDBReadPolicy:
+      - DynamoDBCrudPolicy:
           TableName: !Ref GroupsTable
       - Statement:
         - Effect: Allow

@@ -23,10 +23,9 @@ const { sendMessages } = require('chat-backend-package/src/send-messages') // sk
 const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 const { leaveGroup } = require('chat-backend-package/src/leave-group') // skipcq: JS-0260
 
-const { closeVote } = require('./src/close-vote')
 const { getUserAndBannedUser } = require('./src/get-user-and-banned-user')
 
-const { USERS_TABLE_NAME } = process.env
+const { USERS_TABLE_NAME, GROUPS_TABLE_NAME } = process.env
 
 // ===== ==== ====
 // HANDLER
@@ -38,8 +37,9 @@ exports.handler = async (event) => {
 
   if (typeof groupId !== 'string') {
     return {
-      message: 'you don\'t have a group',
-      statusCode: 403
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you don\'t have a group' })
     }
   }
 
@@ -63,8 +63,9 @@ exports.handler = async (event) => {
     // NOTE: you should warn banned user is not in group anymore
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group or confirmationRequired is not defined (not in an active ban)`)
     return {
-      message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group or confirmationRequired is not defined (not in an active ban)`,
-      statusCode: 403
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: 'you are not in the same group as the user banned or banned user is not in a ban vote' })
     }
   }
 
@@ -77,8 +78,9 @@ exports.handler = async (event) => {
     console.log(`user (${id}) is not in banVotingUsers (below) of banned user (${bannedUserId})`)
     console.log(banVotingUsers)
     return {
-      message: `user (${id}) is not in banVotingUsers (below) of banned user (${bannedUserId})`,
-      statusCode: 403
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: `you cannot vote against (${bannedUserId})` })
     }
   }
 
@@ -116,11 +118,26 @@ DELETE #banVotingUsers :id
   if (voteConfirmed || voteDenied) {
     const promises = []
     const otherUsers = users.filter(({ id: userId }) => (userId !== id && userId !== bannedUserId))
-    promises.push(closeVote({ user, bannedUser, otherUsers }))
+
+    promises.push(sendNotifications({
+      users: otherUsers.concat([user]),
+      notification: {
+        title: 'Le vote est terminé 🗳',
+        body: 'Viens voir le résultat !'
+      }
+    }))
 
     if (voteConfirmed) {
       console.log(`Vote confirmed with ${updatedBanConfirmerUsers.size} confirmation (${bannedUser.confirmationRequired} needed)`)
       promises.push(leaveGroup({ currentUser: bannedUser }))
+      promises.push(
+        dynamoDBDocumentClient.send(new UpdateCommand({
+          TableName: GROUPS_TABLE_NAME,
+          Key: { id: bannedUser.groupId },
+          UpdateExpression: 'ADD #bannedUserIds :bannedUserId',
+          ExpressionAttributeNames: { '#bannedUserIds': 'bannedUserIds' },
+          ExpressionAttributeValues: { ':bannedUserId': new Set([bannedUser.id]) }
+        })))
 
       promises.push(sendMessages({
         users: otherUsers.concat([user, bannedUser]),
@@ -141,6 +158,16 @@ DELETE #banVotingUsers :id
       }))
     } else {
       console.log(`Vote denied with ${updatedBanConfirmerUsers.size + updatedBanVotingUsers.size} confirmation at most (${bannedUser.confirmationRequired} needed)`)
+      promises.push(dynamoDBDocumentClient.send(new UpdateCommand({
+        TableName: USERS_TABLE_NAME,
+        Key: { id: bannedUser.id },
+        UpdateExpression: 'REMOVE #banVotingUsers, #banConfirmedUsers, #confirmationRequired',
+        ExpressionAttributeNames: {
+          '#banVotingUsers': 'banVotingUsers',
+          '#banConfirmedUsers': 'banConfirmedUsers',
+          '#confirmationRequired': 'confirmationRequired'
+        }
+      })))
       promises.push(sendMessages({
         users: otherUsers.concat([user]),
         message: {
@@ -152,10 +179,12 @@ DELETE #banVotingUsers :id
       }))
     }
 
-    await Promise.allSettled(promises)
+    await Promise.allSettled(promises).then((results) => (console.log(results)))
   }
 
   return {
-    statusCode: 200
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
   }
 }

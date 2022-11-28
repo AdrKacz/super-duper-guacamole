@@ -18,13 +18,30 @@ exports.leaveGroup = async ({ currentUser }) => {
   if (typeof currentUser.groupId !== 'string') {
     return
   }
-  // handle 'group (f8830129-fc8f-4d0e-b43c-ee27ec982234) is not defined'
+  console.log('leave group', currentUser.groupId)
+
+  // remove user from group
+  await dynamoDBDocumentClient.send(new UpdateCommand({
+    TableName: USERS_TABLE_NAME,
+    Key: { id: currentUser.id },
+    ConditionExpression: '#groupId = :groupId',
+    UpdateExpression: 'REMOVE #groupId, #banVotingUsers, #banConfirmedUsers, #confirmationRequired',
+    ExpressionAttributeNames: {
+      '#groupId': 'groupId',
+      '#banVotingUsers': 'banVotingUsers',
+      '#banConfirmedUsers': 'banConfirmedUsers',
+      '#confirmationRequired': 'confirmationRequired'
+    },
+    ExpressionAttributeValues: { ':groupId': currentUser.groupId }
+  }))
+
   let group = null
   let users = null
   try {
     ({ group, users } = await getGroup({ groupId: currentUser.groupId }))
   } catch (error) {
-    if (error.message !== `group (${currentUser.groupId}) is not defined`) {
+    if (error.message === `group (${currentUser.groupId}) is not defined`) {
+      console.log('group is not defined')
       return
     }
     throw error
@@ -35,19 +52,11 @@ exports.leaveGroup = async ({ currentUser }) => {
   }
 
   const usersWithoutCurrentUser = users.filter(({ id }) => (currentUser.id !== id))
+
   if (usersWithoutCurrentUser.length <= 1) {
     console.log('leave and delete group', group)
     // delete group
     await Promise.all([
-      // remove user from group
-      dynamoDBDocumentClient.send(new UpdateCommand({
-        TableName: USERS_TABLE_NAME,
-        Key: { id: currentUser.id },
-        ConditionExpression: '#groupId = :groupId',
-        UpdateExpression: 'REMOVE #groupId',
-        ExpressionAttributeNames: { '#groupId': 'groupId' },
-        ExpressionAttributeValues: { ':groupId': currentUser.groupId }
-      })),
       // delete group
       dynamoDBDocumentClient.send(new DeleteCommand({
         TableName: GROUPS_TABLE_NAME,
@@ -70,15 +79,6 @@ exports.leaveGroup = async ({ currentUser }) => {
     console.log('leave group', group)
     // update group
     await Promise.all([
-      // remove user from group
-      dynamoDBDocumentClient.send(new UpdateCommand({
-        TableName: USERS_TABLE_NAME,
-        Key: { id: currentUser.id },
-        ConditionExpression: '#groupId = :groupId',
-        UpdateExpression: 'REMOVE #groupId',
-        ExpressionAttributeNames: { '#groupId': 'groupId' },
-        ExpressionAttributeValues: { ':groupId': currentUser.groupId }
-      })),
       // update group
       dynamoDBDocumentClient.send(new UpdateCommand({
         TableName: GROUPS_TABLE_NAME,

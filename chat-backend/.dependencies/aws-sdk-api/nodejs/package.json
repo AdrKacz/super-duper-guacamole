@@ -1,5 +1,0 @@
-{
-  "dependencies": {
-    "@aws-sdk/client-apigatewaymanagementapi": "^3.72.0"
-  }
-}

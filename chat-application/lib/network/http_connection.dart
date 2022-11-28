@@ -83,7 +83,7 @@ class HttpConnection {
       print('$path: $e');
       // Incorrect headers from AWS on 401
       // See https://github.com/dart-lang/sdk/issues/46442
-      if (n < 3) {
+      if (e == 'Unauthorized' && n < 3) {
         print('re-sign');
         await signIn();
         return _request(getResponse: getResponse, path: path, n: n + 1);
@@ -107,7 +107,7 @@ class HttpConnection {
   }
 
   Future<Map> post({required String path, required Map body}) async {
-    print('POST /$path');
+    print('POST /$path, body $body');
     return _request(
         getResponse: () {
           return http.post(Uri.parse('$_httpEndpoint/$path'),
@@ -122,7 +122,7 @@ class HttpConnection {
   }
 
   Future<Map> put({required String path, required Map body}) async {
-    print('PUT /$path');
+    print('PUT /$path, body $body');
     return _request(
         getResponse: () {
           return http.put(Uri.parse('$_httpEndpoint/$path'),

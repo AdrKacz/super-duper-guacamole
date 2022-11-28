@@ -21,7 +21,7 @@ test.each([
   },
   {
     details: 'not banned, no blocked users',
-    group: { bannedUsers: new Set() },
+    group: { bannedUserIds: new Set() },
     users: [{ id: 'id-1' }, { id: 'id-2' }],
     currentUser: { id: 'id', blockedUserIds: new Set() },
     expectedValid: true
@@ -35,14 +35,14 @@ test.each([
   },
   {
     details: 'banned, no blocked users',
-    group: { bannedUsers: new Set(['id']) },
+    group: { bannedUserIds: new Set(['id']) },
     users: [{ id: 'id-1' }, { id: 'id-2' }],
     currentUser: { id: 'id', blockedUserIds: new Set() },
     expectedValid: false
   },
   {
     details: 'banned, blocked users',
-    group: { bannedUsers: new Set(['id']) },
+    group: { bannedUserIds: new Set(['id']) },
     users: [{ id: 'id-1' }, { id: 'id-2' }],
     currentUser: { id: 'id', blockedUserIds: new Set(['id-2']) },
     expectedValid: false

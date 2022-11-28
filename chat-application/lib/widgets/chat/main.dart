@@ -86,6 +86,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     ];
 
     if (banneduserid == User().id && status == 'confirmed') {
+      changeGroup();
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -117,6 +118,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     messageKeysToDelete.add(k);
                   }
                 }
+                print('Delete message: $messageKeysToDelete');
                 Memory().boxMessages.deleteAll(messageKeysToDelete);
 
                 Navigator.of(context).pop();
@@ -207,8 +209,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     return null;
   }
 
-  void blockUser(String userId) {
-    Memory().addBlockedUser(userId);
+  void blockUser(String userId) async {
+    await Memory().boxBlockedUsers.add(userId);
     changeGroup();
   }
 
@@ -217,7 +219,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     HttpConnection().post(path: 'change-group', body: {
       'questions': Memory().boxAnswers.toMap(),
-      'blockedUsers': Memory().getBlockedUsers()
+      'blockedUserIds': Memory().boxBlockedUsers.values.toList()
     });
 
     setState(() {

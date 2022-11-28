@@ -48,12 +48,4 @@ class Memory {
       rsaKeyPairBox.clear(),
     ]);
   }
-
-  void addBlockedUser(String id) {
-    boxBlockedUsers.add(id);
-  }
-
-  List<String> getBlockedUsers() {
-    return boxBlockedUsers.values.toList();
-  }
 }

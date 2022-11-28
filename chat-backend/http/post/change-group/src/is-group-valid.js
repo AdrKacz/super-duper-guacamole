@@ -2,7 +2,7 @@
 // EXPORTS
 exports.isGroupValid = ({ group, users, currentUser }) => {
   // verify if user is not banned from group
-  if (typeof group.bannedUsers === 'object' && group.bannedUsers.has(currentUser.id)) {
+  if (typeof group.bannedUserIds === 'object' && group.bannedUserIds.has(currentUser.id)) {
     return false
   }
 
