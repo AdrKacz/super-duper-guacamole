@@ -19,3 +19,9 @@ flag_management:
     - name: chat-application
       paths:
         - chat-application/
+      statuses:
+        - type: project
+          target: auto
+          threshold: 1%
+        - type: patch
+          informational: true
