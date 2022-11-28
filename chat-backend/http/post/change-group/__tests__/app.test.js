@@ -2,40 +2,28 @@
 // IMPORTS
 const { handler } = require('../app')
 
-const chatBackendPackageModule = require('chat-backend-package')
-jest.mock('chat-backend-package', () => ({
-  getUser: jest.fn()
-}))
+const getUserModule = require('chat-backend-package/src/get-user')
+jest.mock('chat-backend-package/src/get-user', () => ({ getUser: jest.fn() }))
+
+const leaveGroupModule = require('chat-backend-package/src/leave-group')
+jest.mock('chat-backend-package/src/leave-group', () => ({ leaveGroup: jest.fn() }))
 
 const findGroupModule = require('../src/find-group')
-jest.mock('../src/find-group', () => ({
-  findGroup: jest.fn()
-}))
-
-const leaveGroupModule = require('../src/leave-group')
-jest.mock('../src/leave-group', () => ({
-  leaveGroup: jest.fn()
-}))
+jest.mock('../src/find-group', () => ({ findGroup: jest.fn() }))
 
 const createGroupModule = require('../src/create-group')
-jest.mock('../src/create-group', () => ({
-  createGroup: jest.fn()
-}))
+jest.mock('../src/create-group', () => ({ createGroup: jest.fn() }))
 
 const joinGroupModule = require('../src/join-group')
-jest.mock('../src/join-group', () => ({
-  joinGroup: jest.fn()
-}))
+jest.mock('../src/join-group', () => ({ joinGroup: jest.fn() }))
 
 const createBubbleModule = require('../src/create-bubble')
-jest.mock('../src/create-bubble', () => ({
-  createBubble: jest.fn()
-}))
+jest.mock('../src/create-bubble', () => ({ createBubble: jest.fn() }))
 
 // ===== ==== ====
 // TESTS
 test('it throws error if leave group failed', async () => {
-  chatBackendPackageModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
   leaveGroupModule.leaveGroup.mockRejectedValue(new Error('leave group rejected'))
 
   const response = await handler({
@@ -43,8 +31,8 @@ test('it throws error if leave group failed', async () => {
     body: JSON.stringify({})
   })
 
-  expect(chatBackendPackageModule.getUser).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.getUser).toHaveBeenCalledWith({ id: 'id' })
+  expect(getUserModule.getUser).toHaveBeenCalledTimes(1)
+  expect(getUserModule.getUser).toHaveBeenCalledWith({ id: 'id' })
 
   expect(leaveGroupModule.leaveGroup).toHaveBeenCalledTimes(1)
   expect(leaveGroupModule.leaveGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', groupId: 'group-id', blockedUserIds: new Set() } })
@@ -55,7 +43,7 @@ test('it throws error if leave group failed', async () => {
 })
 
 test('it creates group if no group found', async () => {
-  chatBackendPackageModule.getUser.mockResolvedValue({ id: 'id' })
+  getUserModule.getUser.mockResolvedValue({ id: 'id' })
   createBubbleModule.createBubble.mockReturnValue('bubble')
   findGroupModule.findGroup.mockResolvedValue({})
 
@@ -94,7 +82,7 @@ test('it creates group if no group found', async () => {
 })
 
 test('it joins group if group found', async () => {
-  chatBackendPackageModule.getUser.mockResolvedValue({ id: 'id' })
+  getUserModule.getUser.mockResolvedValue({ id: 'id' })
   createBubbleModule.createBubble.mockReturnValue('bubble')
   findGroupModule.findGroup.mockResolvedValue({ group: { id: 'group-id' }, users: [{ id: 'id-1' }] })
 

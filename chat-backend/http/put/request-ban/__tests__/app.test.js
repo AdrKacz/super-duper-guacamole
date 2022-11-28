@@ -1,30 +1,26 @@
 // ===== ==== ====
 // IMPORTS
 const { handler } = require('../app')
-const getUserFromConnectionIdModule = require('../src/get-user-from-connection-id')
-const getBannedUserModule = require('../src/get-banned-user')
-
 const { mockClient } = require('aws-sdk-client-mock')
 
-const getGroupModule = require('chat-backend-package/src/get-group')
-jest.mock('chat-backend-package/src/get-group', () => ({
-  getGroup: jest.fn()
-}))
-
-const {
-  DynamoDBDocumentClient,
-  UpdateCommand
-} = require('@aws-sdk/lib-dynamodb')
-
-const { SNSClient, PublishCommand } = require('@aws-sdk/client-sns')
-
-// ===== ==== ====
-// CONSTANTS
-jest.mock('../src/get-user-from-connection-id')
+const getBannedUserModule = require('../src/get-banned-user')
 jest.mock('../src/get-banned-user')
 
-const ddbMock = mockClient(DynamoDBDocumentClient)
-const snsMock = mockClient(SNSClient)
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
+const { UpdateCommand } = require('@aws-sdk/lib-dynamodb')
+const ddbMock = mockClient(dynamoDBDocumentClient)
+
+const getUserModule = require('chat-backend-package/src/get-user')
+jest.mock('chat-backend-package/src/get-user', () => ({ getUser: jest.fn() }))
+
+const getGroupModule = require('chat-backend-package/src/get-group')
+jest.mock('chat-backend-package/src/get-group', () => ({ getGroup: jest.fn() }))
+
+const sendMessagesModule = require('chat-backend-package/src/send-messages')
+jest.mock('chat-backend-package/src/send-messages', () => ({ sendMessages: jest.fn() }))
+
+const sendNotificationsModule = require('chat-backend-package/src/send-notifications')
+jest.mock('chat-backend-package/src/send-notifications', () => ({ sendNotifications: jest.fn() }))
 
 // ===== ==== ====
 // BEFORE EACH
@@ -35,127 +31,106 @@ beforeEach(() => {
 
   // reset mocks
   ddbMock.reset()
-  snsMock.reset()
 
   ddbMock.resolves({})
-  snsMock.resolves({})
 })
 
 // ===== ==== ====
 // TESTS
+test('it returns if no group', async () => {
+  getUserModule.getUser.mockResolvedValue({ id: 'id' })
 
-test('it reads environment variables', () => {
-  expect(process.env.USERS_TABLE_NAME).toBeDefined()
-  expect(process.env.SEND_MESSAGE_TOPIC_ARN).toBeDefined()
-  expect(process.env.SEND_NOTIFICATION_TOPIC_ARN).toBeDefined()
-  expect(process.env.CONFIRMATION_REQUIRED_STRING).toBeDefined()
-  expect(process.env.CONFIRMATION_REQUIRED).toBeDefined()
-})
-
-test.each([
-  { details: 'it rejects on undefined user id', groupId: 'group-id' },
-  { details: 'it rejects on undefined group id', id: 'id' }
-])('.test $details', async ({ id, groupId }) => {
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
-
-  const connectionId = 'connectionId'
+  // call handler
   const response = await handler({
-    requestContext: { connectionId },
-    body: JSON.stringify({})
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
+    body: JSON.stringify({ bannedid: 'banned-user-id', status: 'confirmed' })
   })
 
-  expect(response).toEqual({
-    message: 'user or group cannot be found',
-    statusCode: 403
-  })
-
-  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledTimes(1)
-  expect(getUserFromConnectionIdModule.getUserFromConnectionId).toHaveBeenCalledWith(connectionId)
+  // expect
+  expect(JSON.stringify(response)).toEqual(JSON.stringify({
+    statusCode: 403,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ error: 'you don\'t have a group' })
+  }))
 })
 
 test.each([
   { details: 'it throws on undefined bannedId', messageid: 'message-id' },
   { details: 'it throws on undefined messageId', bannedid: 'banned-id' }
 ])('.test $details', async ({ messageid, bannedid }) => {
-  const id = 'id'
-  const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
 
-  const connectionId = 'connectionId'
   await expect(handler({
-    requestContext: { connectionId },
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
     body: JSON.stringify({ messageid, bannedid })
   })).rejects.toThrow('bannedid and messageid must be defined')
 })
 
 test('it rejects if user id and banned user id are the same', async () => {
-  const id = 'id'
-  const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
 
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
-    body: JSON.stringify({ bannedid: id, messageid: 'message-id' })
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
+    body: JSON.stringify({ bannedid: 'id', messageid: 'message-id' })
   })
 
-  expect(response).toEqual({
-    message: `user (${id}) tried to ban itself`,
-    statusCode: 403
-  })
+  expect(JSON.stringify(response)).toEqual(JSON.stringify({
+    statusCode: 403,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ error: 'you can\'t ban yourself' })
+  }))
 })
 
 test.each([
   { details: 'with groupId', bannedUser: { id: 'banned-user-id', groupId: 'group-id-2' } },
   { details: 'with group', bannedUser: { id: 'banned-user-id', group: 'group-id-2' } }
 ])('it rejects if banned user and user not in the same group ($details)', async ({ bannedUser }) => {
-  const id = 'id'
-  const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
 
   getBannedUserModule.getBannedUser.mockResolvedValue({ bannedUser })
 
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
     body: JSON.stringify({ bannedid: bannedUser.id, messageid: 'message-id' })
   })
 
   // expect
-  expect(response).toEqual({
-    message: `user (${id}) and banned user (${bannedUser.id}) are not in the same group`,
-    statusCode: 403
-  })
+  expect(JSON.stringify(response)).toEqual(JSON.stringify({
+    statusCode: 403,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ error: 'you are not in the same group as the user banned' })
+  }))
 
   expect(getBannedUserModule.getBannedUser).toHaveBeenCalledTimes(1)
   expect(getBannedUserModule.getBannedUser).toHaveBeenCalledWith(bannedUser.id)
 })
 
 test('it updates banned user if no new user in the vote', async () => {
-  const id = 'id'
-  const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue({ id, groupId })
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
 
   const bannedUserId = 'banned-user-id'
   getBannedUserModule.getBannedUser.mockResolvedValue({
-    bannedUser: { id: bannedUserId, groupId, banConfirmedUsers: new Set([id]) }
+    bannedUser: { id: bannedUserId, groupId: 'group-id', banConfirmedUsers: new Set(['id']) }
   })
 
   getGroupModule.getGroup.mockResolvedValue({
-    group: { id: groupId, isPublic: true },
-    users: [{ id }, { id: bannedUserId }]
+    group: { id: 'group-id', isPublic: true },
+    users: [{ id: 'id' }, { id: bannedUserId }]
   })
 
   // call handler
-  const connectionId = 'connectionId'
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
     body: JSON.stringify({ bannedid: bannedUserId, messageid: 'message-id' })
   })
 
   // expect
-  expect(response).toStrictEqual({ statusCode: 200 })
+  expect(JSON.stringify(response)).toEqual(JSON.stringify({
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: 'id' })
+  }))
 
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
@@ -174,31 +149,34 @@ SET #confirmationRequired = :confirmationRequired
 })
 
 test('it updates banned user if new user in the vote', async () => {
-  const id = 'id'
-  const groupId = 'group-id'
-  getUserFromConnectionIdModule.getUserFromConnectionId.mockResolvedValue(Promise.resolve({ id, groupId }))
+  getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
 
   const bannedUserId = 'banned-user-id'
   getBannedUserModule.getBannedUser.mockResolvedValue({
-    bannedUser: { id: bannedUserId, groupId }
+    bannedUser: { id: bannedUserId, groupId: 'group-id' }
   })
 
   // get users
   const firebaseToken = 'firebase-token'
   const connectionId = 'connection-id'
   getGroupModule.getGroup.mockResolvedValue({
-    group: { id: groupId, isPublic: true },
-    users: [{ id, connectionId, firebaseToken }, { id: bannedUserId }]
+    group: { id: 'group-id', isPublic: true },
+    users: [{ id: 'id', connectionId, firebaseToken }, { id: bannedUserId }]
   })
 
   // call handler
   const response = await handler({
-    requestContext: { connectionId },
+    requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
     body: JSON.stringify({ bannedid: bannedUserId, messageid: 'message-id' })
   })
 
   // expect
-  expect(response).toEqual({ statusCode: 200 })
+  expect(JSON.stringify(response)).toEqual(JSON.stringify({
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: 'id' })
+  }))
+
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: bannedUserId },
@@ -212,28 +190,24 @@ SET #confirmationRequired = :confirmationRequired
     },
     ExpressionAttributeValues: {
       ':confirmationRequired': Math.min(process.env.CONFIRMATION_REQUIRED, 1), // groups.users.size - 1 = 2 - 1
-      ':banNewVotingUsers': new Set([id])
+      ':banNewVotingUsers': new Set(['id'])
     }
   })
 
-  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
-    TopicArn: process.env.SEND_MESSAGE_TOPIC_ARN,
-    Message: JSON.stringify({
-      users: [{ id, connectionId, firebaseToken }],
-      message: {
-        action: 'ban-request',
-        messageid: 'message-id'
-      }
-    })
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledWith({
+    users: [{ id: 'id', connectionId, firebaseToken }],
+    message: {
+      action: 'ban-request',
+      messageid: 'message-id'
+    },
+    useSaveMessage: true
   })
-  expect(snsMock).toHaveReceivedCommandWith(PublishCommand, {
-    TopicArn: process.env.SEND_NOTIFICATION_TOPIC_ARN,
-    Message: JSON.stringify({
-      users: [{ id, connectionId, firebaseToken }],
-      notification: {
-        title: "Quelqu'un a mal agi ❌",
-        body: 'Viens donner ton avis !'
-      }
-    })
+
+  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({
+    users: [{ id: 'id', connectionId, firebaseToken }],
+    notification: {
+      title: "Quelqu'un a mal agi ❌",
+      body: 'Viens donner ton avis !'
+    }
   })
 })

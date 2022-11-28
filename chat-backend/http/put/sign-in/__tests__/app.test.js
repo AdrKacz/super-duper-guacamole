@@ -9,10 +9,8 @@ jest.mock('node:crypto', () => ({
   createVerify: jest.fn()
 }))
 
-const jwt = require('jsonwebtoken')
-jest.mock('jsonwebtoken', () => ({
-  sign: jest.fn()
-}))
+const sign = require('jsonwebtoken/sign')
+jest.mock('jsonwebtoken/sign', () => (jest.fn()))
 
 const {
   DynamoDBDocumentClient,
@@ -118,14 +116,14 @@ test('it returns jwt', async () => {
     verify: jest.fn().mockReturnValue(true)
   }
   crypto.createVerify.mockReturnValue(verifier)
-  jwt.sign.mockReturnValue('jwt-token')
+  sign.mockReturnValue('jwt-token')
 
   const response = await handler({
     body: JSON.stringify({ id: 'id', timestamp: 0, signature: 'signature' })
   })
 
-  expect(jwt.sign).toHaveBeenCalledTimes(1)
-  expect(jwt.sign).toHaveBeenCalledWith({ id: 'id' }, process.env.JWK_PRIVATE_KEY, {
+  expect(sign).toHaveBeenCalledTimes(1)
+  expect(sign).toHaveBeenCalledWith({ id: 'id' }, process.env.JWK_PRIVATE_KEY, {
     algorithm: 'RS256',
     keyid: process.env.AUTHENTICATION_STAGE,
     expiresIn: 15 * 60,

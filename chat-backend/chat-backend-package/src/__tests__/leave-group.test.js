@@ -3,16 +3,18 @@
 const { leaveGroup } = require('../leave-group')
 const { mockClient } = require('aws-sdk-client-mock')
 
-const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
+const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
 
 const { UpdateCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb')
 
-const chatBackendPackageModule = require('chat-backend-package')
-jest.mock('chat-backend-package', () => ({
-  getGroup: jest.fn(),
-  sendMessages: jest.fn(),
-  sendNotifications: jest.fn()
-}))
+const getGroupModule = require('../get-group')
+jest.mock('../get-group', () => ({ getGroup: jest.fn() }))
+
+const sendMessagesModule = require('../send-messages')
+jest.mock('../send-messages', () => ({ sendMessages: jest.fn() }))
+
+const sendNotificationsModule = require('../send-notifications')
+jest.mock('../send-notifications', () => ({ sendNotifications: jest.fn() }))
 
 // ===== ==== ====
 // CONSTANTS
@@ -32,11 +34,11 @@ beforeEach(() => {
 test('it returns if group id is not a string', async () => {
   await leaveGroup({ currentUser: { id: 'id' } })
 
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(0)
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(0)
 })
 
 test('it throws if group is private', async () => {
-  chatBackendPackageModule.getGroup.mockResolvedValue({
+  getGroupModule.getGroup.mockResolvedValue({
     group: { id: 'group-id', isPublic: false, groupSize: 2 },
     users: [{ id: 'id' }, { id: 'id-1' }]
   })
@@ -45,12 +47,12 @@ test('it throws if group is private', async () => {
     leaveGroup({ currentUser: { id: 'id', groupId: 'group-id' } })
   ).rejects.toThrow('you cannot change group yet')
 
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id' })
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
+  expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id' })
 })
 
 test('it updates group if more than one user remaining', async () => {
-  chatBackendPackageModule.getGroup.mockResolvedValue({
+  getGroupModule.getGroup.mockResolvedValue({
     group: { id: 'group-id', isPublic: true, groupSize: 3 },
     users: [{ id: 'id' }, { id: 'id-1' }, { id: 'id-2' }]
   })
@@ -62,8 +64,13 @@ test('it updates group if more than one user remaining', async () => {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
     ConditionExpression: '#groupId = :groupId',
-    UpdateExpression: 'REMOVE #groupId',
-    ExpressionAttributeNames: { '#groupId': 'groupId' },
+    UpdateExpression: 'REMOVE #groupId, #banVotingUsers, #banConfirmedUsers, #confirmationRequired',
+    ExpressionAttributeNames: {
+      '#groupId': 'groupId',
+      '#banVotingUsers': 'banVotingUsers',
+      '#banConfirmedUsers': 'banConfirmedUsers',
+      '#confirmationRequired': 'confirmationRequired'
+    },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
   })
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
@@ -75,11 +82,11 @@ test('it updates group if more than one user remaining', async () => {
     ExpressionAttributeValues: { ':groupSize': 2 }
   })
 
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }, { id: 'id-2' }], message: { action: 'update-status' }, useSaveMessage: false })
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledTimes(1)
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }, { id: 'id-2' }], message: { action: 'update-status' }, useSaveMessage: false })
 
-  expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({
+  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledTimes(1)
+  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({
     users: [{ id: 'id-1' }, { id: 'id-2' }],
     notification: {
       title: 'Le groupe rétrécit 😔',
@@ -89,7 +96,7 @@ test('it updates group if more than one user remaining', async () => {
 })
 
 test('it deletes group if less than two user remaining', async () => {
-  chatBackendPackageModule.getGroup.mockResolvedValue({
+  getGroupModule.getGroup.mockResolvedValue({
     group: { id: 'group-id', isPublic: true, groupSize: 2 },
     users: [{ id: 'id' }, { id: 'id-1' }]
   })
@@ -101,25 +108,27 @@ test('it deletes group if less than two user remaining', async () => {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
     ConditionExpression: '#groupId = :groupId',
-    UpdateExpression: 'REMOVE #groupId',
-    ExpressionAttributeNames: { '#groupId': 'groupId' },
+    UpdateExpression: 'REMOVE #groupId, #banVotingUsers, #banConfirmedUsers, #confirmationRequired',
+    ExpressionAttributeNames: {
+      '#groupId': 'groupId',
+      '#banVotingUsers': 'banVotingUsers',
+      '#banConfirmedUsers': 'banConfirmedUsers',
+      '#confirmationRequired': 'confirmationRequired'
+    },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
   })
 
   expect(ddbMock).toHaveReceivedCommandTimes(DeleteCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(DeleteCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: 'group-id' },
-    ConditionExpression: '#groupSize <= :one',
-    ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-    ExpressionAttributeValues: { ':one': 1 }
+    Key: { id: 'group-id' }
   })
 
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }], message: { action: 'update-status' }, useSaveMessage: false })
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledTimes(1)
+  expect(sendMessagesModule.sendMessages).toHaveBeenCalledWith({ users: [{ id: 'id-1' }], message: { action: 'update-status' }, useSaveMessage: false })
 
-  expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({
+  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledTimes(1)
+  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({
     users: [{ id: 'id-1' }],
     notification: {
       title: 'Ton groupe est vide 😔',

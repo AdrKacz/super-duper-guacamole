@@ -10,7 +10,7 @@ if (argv.length > 3) {
   url = argv[2]
   id = argv[3]
 } else {
-  throw new Error('you must provide one parameter for url and one for id (ex: yarn node sign-in-user.js your-url your-id)')
+  throw new Error('you must provide one parameter for url and one for id (ex: yarn node sign-up-user.js your-url your-id)')
 }
 
 readFile('./public.key', { encoding: 'utf-8' }, (_publicKeyErr, publicKey) => {

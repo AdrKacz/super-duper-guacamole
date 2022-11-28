@@ -1,16 +1,15 @@
 // ===== ==== ====
 // IMPORTS
-const { getBannedUser } = require('../src/get-banned-user')
+const { getBannedUser } = require('../get-banned-user')
 const { mockClient } = require('aws-sdk-client-mock')
 
-const {
-  DynamoDBDocumentClient,
-  BatchGetCommand
-} = require('@aws-sdk/lib-dynamodb')
+const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
+
+const { BatchGetCommand } = require('@aws-sdk/lib-dynamodb')
 
 // ===== ==== ====
 // CONSTANTS
-const ddbMock = mockClient(DynamoDBDocumentClient)
+const ddbMock = mockClient(dynamoDBDocumentClient)
 
 // ===== ==== ====
 // BEFORE EACH
