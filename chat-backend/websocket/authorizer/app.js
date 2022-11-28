@@ -1,8 +1,8 @@
 // ===== ==== ====
 // IMPORTS
 const verify = require('jsonwebtoken/verify') // skipcq: JS-0260
-const jwkToPem = require('jwk-to-pem')
-const axios = require('axios')
+const jwkToPem = require('jwk-to-pem') // skipcq: JS-0260
+const axios = require('axios') // skipcq: JS-0260
 
 const { AUTHENTICATION_STAGE } = process.env
 // ===== ==== ====
@@ -61,6 +61,15 @@ const generatePolicy = (principalId, effect, resource, context) => {
   return authResponse
 }
 
+/**
+ * Create allow policy
+ *
+ * @param {string} principalId
+ * @param {string} resource
+ * @param {object} context
+ *
+ * @return {object}
+ */
 const generateAllow = (principalId, resource, context) => {
   return generatePolicy(principalId, 'Allow', resource, context)
 }

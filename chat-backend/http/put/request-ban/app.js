@@ -66,7 +66,7 @@ exports.handler = async (event) => {
 
   const { users } = await getGroup({ groupId })
 
-  const banNewVotingUsers = new Set(users.map(({ id }) => (id)))
+  const banNewVotingUsers = new Set(users.map(({ id: userId }) => (userId)))
   banNewVotingUsers.delete(bannedId) // banned user is not part of the vote
 
   // delete user who have voted and who are voting
@@ -108,7 +108,7 @@ SET #confirmationRequired = :confirmationRequired
 
   if (banNewVotingUsers.size > 0) {
     promises.push(sendMessages({
-      users: users.filter(({ id }) => banNewVotingUsers.has(id)),
+      users: users.filter(({ id: userId }) => banNewVotingUsers.has(userId)),
       message: {
         action: 'ban-request',
         messageid: messageId
@@ -117,7 +117,7 @@ SET #confirmationRequired = :confirmationRequired
     }))
 
     promises.push(sendNotifications({
-      users: users.filter(({ id }) => banNewVotingUsers.has(id)),
+      users: users.filter(({ id: userId }) => banNewVotingUsers.has(userId)),
       notification: {
         title: "Quelqu'un a mal agi ❌",
         body: 'Viens donner ton avis !'
