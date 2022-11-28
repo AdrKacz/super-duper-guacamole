@@ -36,7 +36,7 @@ exports.handler = async (event) => {
   if (typeof groupId === 'string') {
     try {
       const { group: { isPublic }, users } = await getGroup({ groupId })
-      if (!isPublic) {
+      if (isPublic) {
         await sendMessages({
           users: users.filter(({ id: userId }) => (userId !== id)),
           message: {
