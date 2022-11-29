@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
@@ -31,7 +32,7 @@ class HttpConnection {
       if (response.statusCode == 200) {
         return true;
       } else {
-        throw 'you can\'t sign up, status code ${response.statusCode}, response ${response.toString()}';
+        throw 'you can\'t sign up, status code ${response.statusCode}';
       }
     } catch (e) {
       print('sign-up: $e');
@@ -72,6 +73,9 @@ class HttpConnection {
       required String path,
       int n = 0}) async {
     try {
+      if (isTokenExpired(Memory().boxUser.get('jwt') ?? '')) {
+        await signIn();
+      }
       final http.Response response = await getResponse();
       if (response.statusCode == 401) {
         throw 'Unauthorized';
@@ -100,7 +104,7 @@ class HttpConnection {
         getResponse: () {
           return http.get(Uri.parse('$_httpEndpoint/$path'), headers: {
             HttpHeaders.authorizationHeader:
-                'Bearer ${Memory().boxUser.get('jwt', defaultValue: '')}'
+                'Bearer ${Memory().boxUser.get('jwt')}'
           });
         },
         path: path);
@@ -115,7 +119,7 @@ class HttpConnection {
               headers: {
                 HttpHeaders.contentTypeHeader: 'application/json',
                 HttpHeaders.authorizationHeader:
-                    'Bearer ${Memory().boxUser.get('jwt', defaultValue: '')}'
+                    'Bearer ${Memory().boxUser.get('jwt')}'
               });
         },
         path: path);
@@ -130,7 +134,7 @@ class HttpConnection {
               headers: {
                 HttpHeaders.contentTypeHeader: 'application/json',
                 HttpHeaders.authorizationHeader:
-                    'Bearer ${Memory().boxUser.get('jwt', defaultValue: '')}'
+                    'Bearer ${Memory().boxUser.get('jwt')}'
               });
         },
         path: path);
@@ -145,7 +149,7 @@ class HttpConnection {
               headers: {
                 HttpHeaders.contentTypeHeader: 'application/json',
                 HttpHeaders.authorizationHeader:
-                    'Bearer ${Memory().boxUser.get('jwt', defaultValue: '')}'
+                    'Bearer ${Memory().boxUser.get('jwt')}'
               });
         },
         path: path);

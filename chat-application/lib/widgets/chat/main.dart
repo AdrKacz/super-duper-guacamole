@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/network/notification_handler.dart';
@@ -37,11 +38,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   Future<void> initConnection() async {
     print('init connection');
 
-    await HttpConnection().signIn();
+    if (isTokenExpired(Memory().boxUser.get('jwt') ?? '')) {
+      await HttpConnection().signIn();
+    }
 
-    // TODO: don't handle unconnected channel due to too many error)
     _channel = WebSocketChannel.connect(Uri.parse(
-        '${const String.fromEnvironment('WEBSOCKET_ENDPOINT')}?token=${Memory().boxUser.get('jwt', defaultValue: '')}'));
+        '${const String.fromEnvironment('WEBSOCKET_ENDPOINT')}?token=${Memory().boxUser.get('jwt')}'));
     setState(() {
       connectionStatus = ConnectionStatus.connected;
     });
