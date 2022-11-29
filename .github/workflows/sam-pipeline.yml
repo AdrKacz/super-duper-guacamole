@@ -14,6 +14,7 @@ on:
         options:
           - dev-adrien
           - prod
+          - prod-v0
   push:
     branches:
       - main
@@ -36,4 +37,4 @@ jobs:
       # Deploy defined in chat-backend/package.json
       - name: Deploy
         working-directory: ./chat-backend
-        run: yarn deploy ${{ github.event_name == 'push' && 'prod' || inputs.configenv }} --no-confirm-changeset --no-fail-on-empty-changeset
+        run: yarn deploy:skip-ci:force ${{ github.event_name == 'push' && 'prod-v0' || inputs.configenv }} --no-fail-on-empty-changeset

@@ -29,3 +29,15 @@ confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 parameter_overrides = "MinimumGroupSize=\"2\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"1\" WebSocketThrottlingBurstLimit=\"3\" WebSocketThrottlingRateLimit=\"3\" ApiThrottlingBurstLimit=\"3\" ApiThrottlingRateLimit=\"3\" StageName=\"dev-adrien\" AuthenticationStage=\"development\""
 image_repositories = []
+
+[prod-v0]
+[prod-v0.deploy]
+[prod-v0.deploy.parameters]
+stack_name = "prod-v0"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
+s3_prefix = "prod-v0"
+region = "eu-west-3"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"100\" WebSocketThrottlingRateLimit=\"100\" ApiThrottlingBurstLimit=\"100\" ApiThrottlingRateLimit=\"100\" StageName=\"prod-v0\" AuthenticationStage=\"production\""
+image_repositories = []
