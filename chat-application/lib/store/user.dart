@@ -10,15 +10,13 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:image_cropper/image_cropper.dart';
 
 import 'package:pointycastle/export.dart';
-import 'package:http/http.dart' as http;
 
 class User {
-  static User _instance = User._internal();
+  static final User _instance = User._internal();
 
   late AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey> pair;
 
   String? get id => Memory().boxUser.get('id');
-  bool get hasId => Memory().boxUser.containsKey('id');
 
   String? get groupId => Memory().boxUser.get('groupId');
   bool get hasGroup => Memory().boxUser.containsKey('groupId');
@@ -36,7 +34,6 @@ class User {
   User._internal();
 
   Future<void> resetUser() async {
-    // TODO: call a delete user function
     await Memory().boxUser.delete('id');
     await init();
   }

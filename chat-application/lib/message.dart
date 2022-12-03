@@ -181,9 +181,7 @@ Future<void> mailToReportTextMessage(types.TextMessage textMessage) async {
   final String endKey =
       Memory().boxMessages.keyAt(min(i + 5, Memory().boxMessages.length - 1)) ??
           '';
-  print(
-      'from ${max(0, i - 5)} to ${min(i + 5, Memory().boxMessages.length - 1)}');
-  print('start key $startKey, end key $endKey');
+
   final List<types.TextMessage> contextMessages = [];
   for (final String jsonMessage in Memory()
       .boxMessages

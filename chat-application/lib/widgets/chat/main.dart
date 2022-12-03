@@ -36,8 +36,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   WebSocketChannel? _channel;
   Future<void> initConnection() async {
-    print('init connection');
-
     if (isTokenExpired(Memory().boxUser.get('jwt') ?? '')) {
       await HttpConnection().signIn();
     }
@@ -54,7 +52,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       print('channel stream error $error');
       _channel?.sink.close();
     }, onDone: () {
-      print('channel stream done');
       if (mounted) {
         setState(() {
           connectionStatus = ConnectionStatus.disconnected;
@@ -120,7 +117,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                     messageKeysToDelete.add(k);
                   }
                 }
-                print('Delete message: $messageKeysToDelete');
                 Memory().boxMessages.deleteAll(messageKeysToDelete);
 
                 Navigator.of(context).pop();
@@ -244,18 +240,15 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // ===== ===== =====
   // Process message
   Future<void> updateStatus() async {
-    print('Update Status');
     Map userStatus = await HttpConnection().get(path: 'status');
 
     if (userStatus['group'] == null) {
-      print('group is null');
       // you don't have a group and didn't ask for
       changeGroup();
       return;
     }
 
     if (userStatus['group']['isPublic'] == false) {
-      print('group is private');
       // you ask for a group but it has not opened yet
       await User().resetGroup();
       setState(() {
@@ -263,8 +256,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       });
       return;
     }
-    print('group is public');
-
     // you have a group and can start chatting
 
     // update group if necessary
