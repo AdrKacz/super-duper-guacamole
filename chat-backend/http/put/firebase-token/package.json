@@ -1,0 +1,14 @@
+{
+  "name": "put-firebase-token",
+  "version": "1.0.0",
+  "description": "Put Firebase Token in USERS_TABLE_NAME",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AdrKacz",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.216.0",
+    "@aws-sdk/lib-dynamodb": "^3.216.0"
+  }
+}

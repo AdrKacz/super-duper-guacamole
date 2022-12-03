@@ -1,0 +1,14 @@
+{
+  "name": "request-ban",
+  "version": "1.0.0",
+  "description": "Request to ban an user",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AdrKacz",
+  "dependencies": {
+    "@aws-sdk/lib-dynamodb": "^3.216.0",
+    "chat-backend-package": "file:../../../chat-backend-package"
+  }
+}

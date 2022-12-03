@@ -3,6 +3,8 @@ Transform: AWS::Serverless-2016-10-31
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
+    MemorySize: 256
+    Timeout: 5
     Runtime: nodejs16.x
     Handler: app.handler
     Environment:
@@ -67,8 +69,8 @@ Parameters:
     Description: '(Required) The name of the stage of the API. Minimum 3 characters.'
     MinLength: 3
     MaxLength: 50
-    AllowedPattern: ^[A-Za-z_]+$
-    ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
+    AllowedPattern: ^[0-9a-z-]+$
+    ConstraintDescription: 'Required. ^[0-9a-z-]+$.'
   AuthenticationStage:
     Type: String
     Default: 'development'
@@ -79,7 +81,9 @@ Parameters:
     ConstraintDescription: 'Required. Can be characters and underscore only. No numbers or special characters allowed.'
   
 Resources:
-  # Database
+  ##### ##### #####
+  ##### Database
+  ##### ##### #####
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -131,9 +135,6 @@ Resources:
           AttributeName: "id"
           AttributeType: "S"
         - 
-          AttributeName: "isWaiting"
-          AttributeType: "N"
-        - 
           AttributeName: "bubble"
           AttributeType: "S"
         - 
@@ -144,18 +145,6 @@ Resources:
           AttributeName: "id"
           KeyType: "HASH"
       GlobalSecondaryIndexes:
-        -
-          IndexName: "IsWaitingIndex"
-          KeySchema:
-            -
-              AttributeName: "isWaiting"
-              KeyType: "HASH"
-          Projection:
-            NonKeyAttributes:
-              - "users"
-              - "questions"
-              - "bannedUsers"
-            ProjectionType: "INCLUDE"
         -
           IndexName: "BubbleIndex"
           KeySchema:
@@ -170,7 +159,9 @@ Resources:
               - "groupSize"
             ProjectionType: "INCLUDE"
 
-  # HTTP API
+  ##### ##### #####
+  ##### Http
+  ##### ##### #####
   HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -186,7 +177,7 @@ Resources:
               audience:
                 - user
             IdentitySource: "$request.header.Authorization"
-
+  # Sign up
   HttpPutSignUpFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -210,6 +201,7 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutSignUpFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # Sign in
   HttpPutSignInFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -237,25 +229,37 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutSignInFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # DELETE /unread-data
+  HttpDeleteUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/delete/unread-data
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /unread-data
+            Method: DELETE
+  HttpDeleteUnreadDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpDeleteUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # GET /status
   HttpGetStatusFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/get/status
-      Environment:
-        Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
-      - DynamoDBReadPolicy:
+      - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
@@ -263,20 +267,41 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /status
             Method: GET
-
   HttpGetStatusLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${HttpGetStatusFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # GET /unread-data
+  HttpGetUnreadDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/get/unread-data
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /unread-data
+            Method: GET
+  HttpGetUnreadDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpGetUnreadDataFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # POST /text-message
   HttpPostTextMessageFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/post/text-message
       Environment:
         Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
@@ -288,7 +313,7 @@ Resources:
           Action:
           - 'execute-api:ManageConnections'
           Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
@@ -303,13 +328,14 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPostTextMessageFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # POST /change-group
   HttpPostChangeGroupFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/post/change-group
       Environment:
         Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
@@ -321,7 +347,7 @@ Resources:
           Action:
           - 'execute-api:ManageConnections'
           Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
@@ -336,354 +362,11 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPostChangeGroupFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  # Web Socket
-  SimpleChatWebSocket:
-    Type: AWS::ApiGatewayV2::Api
-    Properties:
-      Name: !Sub 'SamGroup-SimpleChatWebSocket-${StageName}'
-      ProtocolType: WEBSOCKET
-      RouteSelectionExpression: "$request.body.action"
-
-  # Routes
-  RegisterRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: register
-      AuthorizationType: NONE
-      OperationName: RegisterRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref RegisterIntegration
-  RegisterIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Register Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionRegisterFunction.Arn}/invocations
-
-  OnDisconnectRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: $disconnect
-      AuthorizationType: NONE
-      OperationName: OnDisconnectRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref OnDisconnectIntegration
-  OnDisconnectIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: On Disconnect Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionOnDisconnectFunction.Arn}/invocations
-
-  SwitchGroupRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: switchgroup
-      AuthorizationType: NONE
-      OperationName: SwitchGroupRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref SwitchGroupIntegration
-  SwitchGroupIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Switch Group Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionSwitchGroupFunction.Arn}/invocations
-
-  TextMessageRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: textmessage
-      AuthorizationType: NONE
-      OperationName: TextMessageRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref TextMessageIntegration
-  TextMessageIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Send Text Message Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionTextMessageFunction.Arn}/invocations
-
-  BanRequestRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: banrequest
-      AuthorizationType: NONE
-      OperationName: BanRequestRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref BanRequestIntegration
-  BanRequestIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Ban Request Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionBanRequestFunction.Arn}/invocations
-
-  BanReplyRoute:
-    Type: AWS::ApiGatewayV2::Route
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      RouteKey: banreply
-      AuthorizationType: NONE
-      OperationName: BanReplyRoute
-      Target: !Join
-        - '/'
-        - - 'integrations'
-          - !Ref BanReplyIntegration
-  BanReplyIntegration:
-    Type: AWS::ApiGatewayV2::Integration
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-      Description: Ban Reply Integration
-      IntegrationType: AWS_PROXY
-      IntegrationUri:
-        Fn::Sub:
-          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ActionBanReplyFunction.Arn}/invocations
-
-  # Deployment
-  Deployment:
-    Type: AWS::ApiGatewayV2::Deployment
-    DependsOn:
-    - RegisterRoute
-    - OnDisconnectRoute
-    - SwitchGroupRoute
-    - TextMessageRoute
-    - BanRequestRoute
-    - BanReplyRoute
-    Properties:
-      ApiId: !Ref SimpleChatWebSocket
-  Stage:
-    Type: AWS::ApiGatewayV2::Stage
-    Properties:
-      StageName: !Ref StageName
-      Description: !Sub '${StageName} Stage'
-      DeploymentId: !Ref Deployment
-      ApiId: !Ref SimpleChatWebSocket
-      DefaultRouteSettings:
-        ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
-        ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
-
-  # Layers Functions
-  AWSSDKApiLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/aws-sdk-api
-      RetentionPolicy: Delete 
-  
-  AWSSDKDdbLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/aws-sdk-ddb
-      RetentionPolicy: Delete 
-
-  AWSSDKSnsLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/aws-sdk-sns
-      RetentionPolicy: Delete 
-
-  FirebaseAdminLayerVersion:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-      ContentUri: .dependencies/firebase-admin
-      RetentionPolicy: Delete 
-
-  # ===== ===== =====
-  # Simple Notification Systems
-  SendMessageSNSTopic:
-    Type: AWS::SNS::Topic
-  
-  SwitchGroupSNSTopic:
-    Type: AWS::SNS::Topic
-
-  SendNotificationSNSTopic:
-    Type: AWS::SNS::Topic
-
-  StoreUnreadDataSNSTopic:
-    Type: AWS::SNS::Topic
-
-  # ===== ===== =====
-  # Backend Functions
-  SendMessageFunction:
+  # PUT /firebase-token
+  HttpPutFirebaseTokenFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: sendmessage/
-      Layers:
-        - !Ref AWSSDKApiLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
-          STORE_UNREAD_DATA_TOPIC_ARN: !Ref StoreUnreadDataSNSTopic
-      Policies:
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt StoreUnreadDataSNSTopic.TopicName
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SimpleChatWebSocket}/${StageName}/POST/*'
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref SendMessageSNSTopic
-  SendMessageLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SendMessageFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  SwitchGroupFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: switchgroup/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-          MINIMUM_GROUP_SIZE_STRING: !Ref MinimumGroupSize
-          MAXIMUM_GROUP_SIZE_STRING: !Ref MaximumGroupSize
-          GROUPS_WAINTING_ID_INDEX_NAME: "IsWaitingIndex"
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref SwitchGroupSNSTopic
-  SwitchGroupLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SwitchGroupFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  SendNotificationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: sendnotification/
-      Layers:
-        - !Ref FirebaseAdminLayerVersion
-      Environment:
-        Variables:
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref SendNotificationSNSTopic
-  SendNotificationLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${SendNotificationFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  StoreUnreadDataFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: storeunreaddata/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      Events:
-        SNSEvent:
-          Type: SNS
-          Properties:
-            Topic: !Ref StoreUnreadDataSNSTopic
-  StoreUnreadDataLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${StoreUnreadDataFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  # ===== ===== =====
-  # Schedule Functions
-  HandleInactiveUsersFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: handle-inactive-users/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          MINIMUM_GROUP_SIZE_STRING: !Ref MinimumGroupSize
-          MAXIMUM_GROUP_SIZE_STRING: !Ref MaximumGroupSize
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBCrudPolicy:
-          TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-      Events:
-        ScheduleEvent:
-          Type: Schedule
-          Properties:
-            Schedule: 'cron(0 16 * * ? *)' # Run at 6:00 pm (UTC+2 - Paris) every day
-            Enabled: true
-  HandleInactiveUsersLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${HandleInactiveUsersFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  # ===== ===== =====
-  # API Functions
-  PutFirebaseTokenFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: put-firebase-token/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
+      CodeUri: http/put/firebase-token/
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
@@ -691,253 +374,283 @@ Resources:
         HttpApiEvent:
           Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /firebase-token
             Method: PUT
-            RouteSettings:
-              ThrottlingBurstLimit: !Ref ApiThrottlingBurstLimit
-              ThrottlingRateLimit: !Ref ApiThrottlingRateLimit
-  PutFirebaseTokenLogGroup:
+
+  HttpPutFirebaseTokenLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${PutFirebaseTokenFunction}'
+      LogGroupName: !Sub '/aws/lambda/${HttpPutFirebaseTokenFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
+  # PUT /share-profile
   HttpPutShareProfileFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: http/put/share-profile
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBReadPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         HttpApiEvent:
           Type: HttpApi
           Properties:
+            ApiId: !Ref HttpApi
             Path: /share-profile
             Method: PUT
-            RouteSettings:
-              ThrottlingBurstLimit: !Ref ApiThrottlingBurstLimit
-              ThrottlingRateLimit: !Ref ApiThrottlingRateLimit
+
   HttpPutShareProfileLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${HttpPutShareProfileFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  # ===== ===== =====
-  # Action Functions
-  ActionRegisterFunction:
+  # PUT /request-ban
+  HttpPutRequestBanFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/register/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
+      CodeUri: http/put/request-ban
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-  ActionRegisterPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ActionRegisterFunction
-      Principal: apigateway.amazonaws.com
-  ActionRegisterLogGroup:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /request-ban
+            Method: PUT
+
+  HttpPutRequestBanLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${ActionRegisterFunction}'
+      LogGroupName: !Sub '/aws/lambda/${HttpPutRequestBanFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  ActionOnDisconnectFunction:
+  # PUT /reply-ban
+  HttpPutReplyBanFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/ondisconnect/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
+      CodeUri: http/put/reply-ban
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /reply-ban
+            Method: PUT
+
+  HttpPutReplyBanLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPutReplyBanFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  ##### ##### #####
+  ##### Web Socket
+  ##### ##### #####
+
+  # Api
+  WebSocketApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub 'WebSocketApi-${StageName}'
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: "$request.body.action"
+
+  # Authorizer
+  WebSocketApiAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties: 
+      Name: !Sub 'WebSocketApiAuthorizer-${StageName}'
+      ApiId: !Ref WebSocketApi
+      AuthorizerType: REQUEST
+      AuthorizerUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketApiAuthorizerFunction.Arn}/invocations
+      IdentitySource: 
+        - route.request.querystring.token
+
+  WebSocketApiAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: websocket/authorizer/
+      Environment:
+        Variables:
+          AUTHENTICATION_STAGE: !Ref AuthenticationStage
+  WebSocketApiAuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WebSocketApiAuthorizerFunction
+      Principal: apigateway.amazonaws.com
+  WebSocketApiAuthorizerFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${WebSocketApiAuthorizerFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # On connect
+  WebSocketOnConnectFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: websocket/on-connect/
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-  ActionOnDisconnectPermission:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
+  WebSocketOnConnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - SimpleChatWebSocket
+       - WebSocketApi
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref ActionOnDisconnectFunction
+      FunctionName: !Ref WebSocketOnConnectFunction
       Principal: apigateway.amazonaws.com
-  ActionOnDisconnectLogGroup:
+  WebSocketOnConnectLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${ActionOnDisconnectFunction}'
+      LogGroupName: !Sub '/aws/lambda/${WebSocketOnConnectFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  ActionSwitchGroupFunction:
-    Type: AWS::Serverless::Function
+  WebSocketOnConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
     Properties:
-      CodeUri: actions/switchgroup/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
-          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
-      Policies:
-      - DynamoDBReadPolicy:
-          TableName: !Ref UsersTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
-  ActionSwitchGroupPermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
+      ApiId: !Ref WebSocketApi
+      RouteKey: $connect
+      AuthorizationType: CUSTOM
+      AuthorizerId: !Ref WebSocketApiAuthorizer
+      OperationName: WebSocketOnConnectRoute
+      Target: !Sub integrations/${WebSocketOnConnectIntegration}
+  WebSocketOnConnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
     Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ActionSwitchGroupFunction
-      Principal: apigateway.amazonaws.com
-  ActionSwitchGroupLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${ActionSwitchGroupFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketOnConnectFunction.Arn}/invocations
 
-  ActionTextMessageFunction:
+  # On disconnect
+  WebSocketOnDisconnectFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: actions/textmessage/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
+      CodeUri: websocket/on-disconnect/
       Environment:
         Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
-      Policies:
-      - DynamoDBReadPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-  ActionTextMessagePermission:
-    Type: AWS::Lambda::Permission
-    DependsOn:
-      - SimpleChatWebSocket
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ActionTextMessageFunction
-      Principal: apigateway.amazonaws.com
-  ActionTextMessageLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${ActionTextMessageFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
-  ActionBanRequestFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: actions/banrequest/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          CONFIRMATION_REQUIRED_STRING: !Ref ConfirmationRequired 
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-  ActionBanRequestPermission:
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/*'
+  WebSocketOnDisconnectPermission:
     Type: AWS::Lambda::Permission
     DependsOn:
-      - SimpleChatWebSocket
+       - WebSocketApi
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref ActionBanRequestFunction
+      FunctionName: !Ref WebSocketOnDisconnectFunction
       Principal: apigateway.amazonaws.com
-  ActionBanRequestLogGroup:
+  WebSocketOnDisconnectLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${ActionBanRequestFunction}'
+      LogGroupName: !Sub '/aws/lambda/${WebSocketOnDisconnectFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  ActionBanReplyFunction:
-    Type: AWS::Serverless::Function
+  WebSocketOnDisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
     Properties:
-      CodeUri: actions/banreply/
-      Layers:
-        - !Ref AWSSDKDdbLayerVersion
-        - !Ref AWSSDKSnsLayerVersion
-      Environment:
-        Variables:
-          SEND_MESSAGE_TOPIC_ARN: !Ref SendMessageSNSTopic
-          SEND_NOTIFICATION_TOPIC_ARN: !Ref SendNotificationSNSTopic
-          SWITCH_GROUP_TOPIC_ARN: !Ref SwitchGroupSNSTopic
-          USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTable
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendMessageSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SendNotificationSNSTopic.TopicName
-      - SNSPublishMessagePolicy:
-          TopicName: !GetAtt SwitchGroupSNSTopic.TopicName
-  ActionBanReplyPermission:
-    Type: AWS::Lambda::Permission
+      ApiId: !Ref WebSocketApi
+      RouteKey: $disconnect
+      AuthorizationType: NONE
+      OperationName: WebSocketOnDisconnectRoute
+      Target: !Sub integrations/${WebSocketOnDisconnectIntegration}
+  WebSocketOnDisconnectIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref WebSocketApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub:
+          arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WebSocketOnDisconnectFunction.Arn}/invocations
+
+  # Stage
+  WebSocketDeployment:
+    Type: AWS::ApiGatewayV2::Deployment
     DependsOn:
-      - SimpleChatWebSocket
+      - WebSocketOnConnectRoute
+      - WebSocketOnDisconnectRoute
     Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !Ref ActionBanReplyFunction
-      Principal: apigateway.amazonaws.com
-  ActionBanReplyLogGroup:
-    Type: AWS::Logs::LogGroup
+      ApiId: !Ref WebSocketApi
+  WebSocketStage:
+    Type: AWS::ApiGatewayV2::Stage
     Properties:
-      LogGroupName: !Sub '/aws/lambda/${ActionBanReplyFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-    
+      StageName: !Ref StageName
+      DeploymentId: !Ref WebSocketDeployment
+      ApiId: !Ref WebSocketApi
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
+        ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
+
 Outputs:
   UsersTableArn:
     Description: "Users table ARN"
@@ -947,14 +660,10 @@ Outputs:
     Description: "Groups table ARN"
     Value: !GetAtt GroupsTable.Arn
 
-  HttpURILegacy:
-    Description: "The HTTPS API URI to connect to"
-    Value: !Sub 'https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
-
   HttpURI:
     Description: "The HTTPS API URI to connect to"
     Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/'
 
   WebSocketURI:
     Description: "The WSS Protocol URI to connect to"
-    Value: !Sub '${SimpleChatWebSocket.ApiEndpoint}/${Stage}'
+    Value: !Sub '${WebSocketApi.ApiEndpoint}/${WebSocketStage}'

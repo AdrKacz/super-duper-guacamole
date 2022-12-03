@@ -44,7 +44,7 @@ test('it fetches group users', async () => {
     ExpressionAttributeValues: {
       ':groupId': 'group-id'
     },
-    Limit: process.env.MAXIMUM_GROUP_SIZE
+    Limit: parseInt(process.env.MAXIMUM_GROUP_SIZE, 10)
   })
   expect(JSON.stringify(users)).toBe(JSON.stringify([{ id: 'id-1' }, { id: 'id-2' }]))
 })

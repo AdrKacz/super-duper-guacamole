@@ -1,10 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
 // ignore: depend_on_referenced_packages
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:awachat/message.dart';
 
 class Memory {
   static const String groupUsers = 'groupUsers';
+  static const String messages = 'messages';
 
   late final Box<String> boxUser;
   late final Box<String> boxAnswers;
@@ -27,27 +26,15 @@ class Memory {
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
     boxUserProfiles = await Hive.openBox<Map>('userProfiles');
     boxGroupUsers = await Hive.openBox<Map>('groupUsers');
-    boxMessages = await Hive.openBox<String>('messages');
+    boxMessages =
+        await Hive.openBox<String>('messages', keyComparator: ((key1, key2) {
+      int date1 = int.tryParse(key1) ?? 0;
+      int date2 = int.tryParse(key2) ?? 0;
+      return date2 - date1;
+    }));
     boxUser = await Hive.openBox<String>('user');
     boxAnswers = await Hive.openBox<String>('answers');
     rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
-  }
-
-  String? get(String box, String field) {
-    switch (box) {
-      case 'user':
-        return boxUser.get(field);
-      default:
-        return null;
-    }
-  }
-
-  void put(String box, String field, String value) {
-    switch (box) {
-      case 'user':
-        boxUser.put(field, value);
-        break;
-    }
   }
 
   Future<void> clear() async {
@@ -60,40 +47,5 @@ class Memory {
       boxGroupUsers.clear(),
       rsaKeyPairBox.clear(),
     ]);
-  }
-
-  void addBlockedUser(String id) {
-    boxBlockedUsers.add(id);
-  }
-
-  List<String> getBlockedUsers() {
-    return boxBlockedUsers.values.toList();
-  }
-
-  void addMessage(String? id, String? text) {
-    if (id == null || text == null) {
-      return;
-    }
-    boxMessages.put(id, text);
-  }
-
-  void deleteMessage(String? id) {
-    if (id == null) {
-      return;
-    }
-    boxMessages.delete(id);
-  }
-
-  List<types.Message> loadMessages() {
-    List<types.Message> messages = [];
-
-    for (final String key in boxMessages.keys) {
-      types.Message? message = messageDecode(boxMessages.get(key));
-      if (message != null) {
-        messages.insert(0, message);
-      }
-    }
-
-    return messages;
   }
 }

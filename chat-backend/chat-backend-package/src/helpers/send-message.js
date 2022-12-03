@@ -1,8 +1,8 @@
 // ===== ==== ====
 // IMPORTS
 const { PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagementapi') // skipcq: JS-0260
-
 const { apiGatewayManagementApiClient } = require('../clients/aws/api-gateway-management-client')
+
 const { saveMessage } = require('./save-message')
 
 // ===== ==== ====
@@ -26,7 +26,7 @@ exports.sendMessage = async ({ user: { id, connectionId }, message, useSaveMessa
     throw new Error('useSaveMessage must be a boolean')
   }
 
-  if (typeof connectionId !== 'string') {
+  if (typeof connectionId !== 'string' && useSaveMessage) {
     console.log(`user (${id}) has no connectionId`)
     saveMessage({ user: { id }, message })
     return

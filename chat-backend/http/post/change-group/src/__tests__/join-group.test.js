@@ -45,22 +45,20 @@ test('it handles already public group', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
-    UpdateExpression: `
-SET #isPublic = :isPublic
-ADD #groupSize :plusOne`,
+    UpdateExpression: 'SET #isPublic = :isPublic, #groupSize = :groupSize',
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
       ':isPublic': true,
-      ':plusOne': +1
+      ':groupSize': 2
     }
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(2)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [currentUser], message: { action: 'status-update' }, useSaveMessage: false })
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users, message: { action: 'status-update' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: [currentUser], message: { action: 'update-status' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users, message: { action: 'update-status' }, useSaveMessage: false })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(2)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({
@@ -96,21 +94,19 @@ test('it handles already private group that turns public', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
-    UpdateExpression: `
-SET #isPublic = :isPublic
-ADD #groupSize :plusOne`,
+    UpdateExpression: 'SET #isPublic = :isPublic, #groupSize = :groupSize',
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
       ':isPublic': true,
-      ':plusOne': +1
+      ':groupSize': 3
     }
   })
 
   expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledTimes(1)
-  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: users.concat([currentUser]), message: { action: 'status-update' }, useSaveMessage: false })
+  expect(chatBackendPackageModule.sendMessages).toHaveBeenCalledWith({ users: users.concat([currentUser]), message: { action: 'update-status' }, useSaveMessage: false })
 
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(chatBackendPackageModule.sendNotifications).toHaveBeenCalledWith({
@@ -139,16 +135,14 @@ test('it handles already private group that keeps private', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
-    UpdateExpression: `
-SET #isPublic = :isPublic
-ADD #groupSize :plusOne`,
+    UpdateExpression: 'SET #isPublic = :isPublic, #groupSize = :groupSize',
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
       ':isPublic': false,
-      ':plusOne': +1
+      ':groupSize': 2
     }
   })
 
@@ -175,8 +169,8 @@ test('it handles blocked users', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     Key: { id: 'group-id' },
     UpdateExpression: `
-SET #isPublic = :isPublic
-ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
+SET #isPublic = :isPublic, #groupSize = :groupSize
+ADD #bannedUserIds :blockedUserIds`,
     ExpressionAttributeNames: {
       '#isPublic': 'isPublic',
       '#groupSize': 'groupSize',
@@ -184,7 +178,7 @@ ADD #groupSize :plusOne, #bannedUserIds :blockedUserIds`,
     },
     ExpressionAttributeValues: {
       ':isPublic': false,
-      ':plusOne': +1,
+      ':groupSize': 2,
       ':blockedUserIds': new Set(['id-3'])
     }
   })

@@ -19,45 +19,54 @@ String randomString() {
   return base64UrlEncode(values);
 }
 
-types.Message? messageDecode(String? encodedMessage, [types.Status? status]) {
-  if (encodedMessage == null) {
-    return null;
+types.Status getStatusFromName(String name,
+    {required types.Status defaultStatus}) {
+  for (final types.Status value in types.Status.values) {
+    if (name == value.name) {
+      return value;
+    }
   }
+  return defaultStatus;
+}
 
-  final List<String> data = encodedMessage.split(RegExp(r'::'));
+types.TextMessage decodeMessage(String encodedMessage) {
+  try {
+    final Map jsonMessage = jsonDecode(encodedMessage);
 
-  if (data.length < 4) {
-    return null;
-  }
-
-  final String author = data[0];
-  final String createdAt = data[1];
-  final String id = data[2];
-  final String text = data.sublist(3).join('::');
-
-  status ??= types.Status.delivered;
-
-  if (int.tryParse(data[1]) != null) {
-    return types.TextMessage(
-      status: status,
-      author: types.User(id: author),
-      createdAt: int.parse(createdAt),
-      id: id,
-      text: text,
-    );
-  } else {
-    // date is not an integer
-    return null;
+    if (jsonMessage['author'] is String &&
+        jsonMessage['createdAt'] is int &&
+        jsonMessage['id'] is String &&
+        jsonMessage['text'] is String) {
+      return types.TextMessage(
+        status: getStatusFromName(jsonMessage['status'],
+            defaultStatus: types.Status.delivered),
+        author: types.User(id: jsonMessage['author']),
+        createdAt: jsonMessage['createdAt'],
+        id: jsonMessage['id'],
+        text: jsonMessage['text'],
+      );
+    } else {
+      //TODO: handle errors
+      throw 'missing value in ($jsonMessage) (expect author, createdAt, id, and text)';
+    }
+  } on FormatException {
+    throw 'cannot decode json';
   }
 }
 
-String messageEncode(types.PartialText partialText) {
-  final String author = User().id;
-  final int createdAt = DateTime.now().millisecondsSinceEpoch;
-  final String id = randomString();
-  final String text = partialText.text;
-
-  return '$author::$createdAt::$id::$text';
+String encodeMessage(
+    {required String text,
+    required types.Status status,
+    String? author,
+    int? createdAt,
+    String? id}) {
+  return jsonEncode({
+    'author': author ?? User().id,
+    'createdAt': createdAt ?? DateTime.now().millisecondsSinceEpoch,
+    'id': id ?? randomString(),
+    'text': text,
+    'status': status.name
+  });
 }
 
 Future<String?> reportActionOnMessage(BuildContext context) async {
@@ -158,17 +167,31 @@ Future<String?> banActionOnMessage(
       });
 }
 
-Future<void> mailToReportMessage(
-    List<types.Message> messages, types.Message message) async {
-  if (message.type != types.MessageType.text) {
-    // TODO: handle others message type
-    return;
+Future<void> mailToReportTextMessage(types.TextMessage textMessage) async {
+  // find index of message
+  int i = 0;
+  for (final String key in Memory().boxMessages.keys) {
+    final int createdAt = int.tryParse(key) ?? 0;
+    if (createdAt <= (textMessage.createdAt ?? 0)) {
+      break;
+    }
+    i++;
   }
+  final String startKey = Memory().boxMessages.keyAt(max(0, i - 5)) ?? '';
+  final String endKey =
+      Memory().boxMessages.keyAt(min(i + 5, Memory().boxMessages.length - 1)) ??
+          '';
 
-  final List<types.Message> contextMessages = messages
-      .where((types.Message e) => e.type == types.MessageType.text)
-      .toList()
-      .sublist(0, min(messages.length, 10));
+  final List<types.TextMessage> contextMessages = [];
+  for (final String jsonMessage in Memory()
+      .boxMessages
+      .valuesBetween(startKey: startKey, endKey: endKey)) {
+    try {
+      contextMessages.add(decodeMessage(jsonMessage));
+    } catch (e) {
+      print('chat page error: $e');
+    }
+  }
 
   final String body = """
   --- --- ---
@@ -178,18 +201,18 @@ Future<void> mailToReportMessage(
   L'utilisateur
   ${User().id}
   signale le comportement de l'utilisateur
-  ${message.author.id}
+  ${textMessage.author.id}
 
   Le message signalé est :
   --- --- ---
-  ${message.toJson()["text"]}
+  ${textMessage.text}
   --- --- ---
 
-  Contexte (dix derniers messages) :
-  ${contextMessages.map((types.Message e) => '''
+  Contexte :
+  ${contextMessages.reversed.map((types.TextMessage e) => '''
 --- --- ---
 (${e.author.id})
-${e.toJson()["text"]}
+${e.text}
 ''').join('')}
 """;
 
@@ -256,7 +279,7 @@ void alertInfo(BuildContext context,
     String defaultAction = 'nothing',
     String acceptString = 'accept',
     String refuseString = 'refuse'}) async {
-  String? arg = Memory().get('user', argString);
+  String? arg = Memory().boxUser.get(argString);
   if (arg == null || arg == 'false') {
     switch (await showDialog(
         context: context,
@@ -282,7 +305,7 @@ void alertInfo(BuildContext context,
               ]);
         })) {
       case 'confirmed':
-        Memory().put('user', argString, 'true');
+        Memory().boxUser.put(argString, 'true');
         Navigator.pop(context, popAction);
         break;
       default:

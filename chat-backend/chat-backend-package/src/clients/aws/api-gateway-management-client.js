@@ -15,9 +15,5 @@ const webSocketEndpointUrl = new URL(WEB_SOCKET_ENDPOINT) // skipcq: JS-0269
 // EXPORTS
 exports.apiGatewayManagementApiClient = new ApiGatewayManagementApiClient({
   region: AWS_REGION,
-  endpoint: {
-    protocol: 'https', // webSocketEndpointUrl.protocol = 'wss' doesn't work
-    hostname: webSocketEndpointUrl.hostname,
-    path: webSocketEndpointUrl.pathname
-  }
+  endpoint: `https://${webSocketEndpointUrl.hostname}${webSocketEndpointUrl.pathname}`
 })

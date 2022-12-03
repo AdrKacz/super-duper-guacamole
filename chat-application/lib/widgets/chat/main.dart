@@ -1,6 +1,7 @@
-import 'dart:collection';
 import 'dart:convert';
+import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/message.dart';
+import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
@@ -10,11 +11,9 @@ import 'package:awachat/widgets/chat/widgets/users_list.dart';
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:awachat/network/web_socket_connection.dart';
 import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
-
-import 'widgets/fake_chat.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 enum Status { idle, switchSent, chatting, error }
 
@@ -31,72 +30,44 @@ class ChatHandler extends StatefulWidget {
 }
 
 class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
-  // Pointer
-  bool _isPointerUp =
-      false; // set default to "you touch the screen" to not change page by error
-
-  // Messages Actions
-  late final Map<String, Function> messageActions;
-
   // ===== ===== =====
   // App state (lifecycle)
   AppLifecycleState? _notification;
 
-  // Channel
-  final WebSocketConnection _webSocketConnection = WebSocketConnection();
-
-  void listenMessage(message) {
-    // receive message
-    print('received message: $message');
-    if (processMessage(message)) {
-      setState(() {});
+  WebSocketChannel? _channel;
+  Future<void> initConnection() async {
+    if (isTokenExpired(Memory().boxUser.get('jwt') ?? '')) {
+      await HttpConnection().signIn();
     }
-  }
 
-  void listenStream() {
-    _webSocketConnection.stream.listen(listenMessage, onDone: () {
+    _channel = WebSocketChannel.connect(Uri.parse(
+        '${const String.fromEnvironment('WEBSOCKET_ENDPOINT')}?token=${Memory().boxUser.get('jwt')}'));
+    setState(() {
+      connectionStatus = ConnectionStatus.connected;
+    });
+
+    _channel!.stream
+        .listen(((event) => (processEvent(event, isUnreadData: false))),
+            onError: (error) {
+      print('channel stream error $error');
+      _channel?.sink.close();
+    }, onDone: () {
       if (mounted) {
         setState(() {
           connectionStatus = ConnectionStatus.disconnected;
         });
       }
     }, cancelOnError: true);
-  }
 
-  // ===== ===== =====
-  // Chat Messages
-  final SplayTreeMap<int, types.Message> _messages = SplayTreeMap(
-      (key1, key2) => key2 - key1); // createdAt is the (sorting) key
+    await updateStatus();
+    await processUnreadData();
+  }
 
   // ===== ===== =====
   // Status
-  Status get status {
-    String statusName =
-        Memory().get('user', 'appChatState') ?? Status.idle.name;
-    for (final Status value in Status.values) {
-      if (statusName == value.name) {
-        return value;
-      }
-    }
-    return Status.error;
-  }
+  Status status = Status.idle;
 
-  set status(Status newStatus) {
-    Memory().put('user', 'appChatState', newStatus.name);
-    setState(() {});
-  }
-
-  ConnectionStatus connectionStatus = ConnectionStatus.connected;
-
-  // ===== ===== =====
-  // Change Group Swipe
-  List<String> items = <String>['real'];
-
-  void _reverse() {
-    setState(() {
-      items = items.reversed.toList();
-    });
-  }
+  ConnectionStatus connectionStatus = ConnectionStatus.disconnected;
 
   // ===== ===== =====
   // Actions
@@ -114,6 +85,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     ];
 
     if (banneduserid == User().id && status == 'confirmed') {
+      changeGroup();
       showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -137,15 +109,15 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             TextButton(
               child: const Text('Supprimer tous ses messages'),
               onPressed: () {
-                final List<types.Message> messagesToRemove = [];
-                for (final types.Message e in _messages.values) {
-                  if (e.author.id == banneduserid) {
-                    messagesToRemove.add(e);
+                final List<String> messageKeysToDelete = [];
+                for (final String k in Memory().boxMessages.keys) {
+                  final types.TextMessage m =
+                      decodeMessage(Memory().boxMessages.get(k)!);
+                  if (m.author.id == banneduserid) {
+                    messageKeysToDelete.add(k);
                   }
                 }
-                for (final types.Message e in messagesToRemove) {
-                  deleteMessage(e);
-                }
+                Memory().boxMessages.deleteAll(messageKeysToDelete);
 
                 Navigator.of(context).pop();
               },
@@ -182,11 +154,17 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     switch (await banActionOnMessage(context, message)) {
       case 'confirmed':
         // ban confirmed
-        _webSocketConnection.banreply(message.author.id, 'confirmed');
+        HttpConnection().put(path: 'reply-ban', body: {
+          'bannedid': message.author.id,
+          'status': 'confirmed',
+        });
         break;
       case 'denied':
         // ban denied
-        _webSocketConnection.banreply(message.author.id, 'denied');
+        HttpConnection().put(path: 'reply-ban', body: {
+          'bannedid': message.author.id,
+          'status': 'denied',
+        });
         break;
       default:
         throw Exception('Ban action not in ["confirmed", "denied"]');
@@ -198,13 +176,17 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     HapticFeedback.mediumImpact();
     switch (await reportActionOnMessage(context)) {
       case 'ban':
-        _webSocketConnection.banrequest(message.author.id, message.id);
+        HttpConnection().put(path: 'request-ban', body: {
+          'bannedid': message.author.id,
+          'messageid': message.id,
+        });
         break;
       case 'report':
-        await mailToReportMessage(_messages.values.toList(), message);
+        await mailToReportTextMessage(
+            types.TextMessage.fromJson(message.toJson()));
         break;
       case 'delete':
-        deleteMessage(message);
+        Memory().boxMessages.delete(message.createdAt);
         break;
       case 'block':
         blockUser(message.author.id);
@@ -217,141 +199,91 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   // ===== ===== =====
   // Helpers
   types.Message? findMessage(String messageid) {
-    for (final types.Message message in _messages.values) {
-      if (message.id == messageid) {
-        return message;
+    for (final String e in Memory().boxMessages.values) {
+      final types.Message m = decodeMessage(e);
+      if (m.id == messageid) {
+        return m;
       }
     }
     return null;
   }
 
-  Future<void> loadMessagesFromMemory() async {
-    final List<types.Message> loadedMessages = Memory().loadMessages();
-    // loaded messages (see loadedMessages.length)
-    _messages.clear();
-    for (final types.Message loadedMessage in loadedMessages) {
-      insertMessage(loadedMessage, useHaptic: false);
-    }
-    setState(() {});
+  void blockUser(String userId) async {
+    await Memory().boxBlockedUsers.add(userId);
+    changeGroup();
   }
 
-  void deleteMessage(types.Message message) {
-    // remove the message locally
-    setState(() {
-      _messages.remove(message);
+  Future<void> changeGroup() async {
+    await User().resetGroup();
+
+    HttpConnection().post(path: 'change-group', body: {
+      'questions': Memory().boxAnswers.toMap(),
+      'blockedUserIds': Memory().boxBlockedUsers.values.toList()
     });
-    // remove the message in memory
-    Memory().deleteMessage(message.id);
+
+    setState(() {
+      status = Status.switchSent;
+    });
   }
 
-  void insertMessage(types.Message message, {bool useHaptic = true}) {
-    if (useHaptic && message.status == types.Status.delivered) {
-      HapticFeedback.lightImpact();
+  Future<void> processUnreadData() async {
+    Map data = await HttpConnection().get(path: 'unread-data');
+
+    for (final data in data['unreadData'] ?? []) {
+      // TODO: make sure you don't refresh screen thousand times here
+      processEvent(jsonEncode(data), isUnreadData: true);
     }
 
-    _messages[message.createdAt ?? 0] = message;
-  }
-
-  void blockUser(String userId) {
-    Memory().addBlockedUser(userId);
-    switchGroup();
-  }
-
-  void sendMessage(types.PartialText partialText) {
-    final String encodedMessage = messageEncode(partialText);
-    final types.Message? message =
-        messageDecode(encodedMessage, types.Status.sending);
-    if (message != null) {
-      insertMessage(message);
-      setState(() {});
-      _webSocketConnection.textmessage(encodedMessage);
-    }
-  }
-
-  void switchGroup() {
-    // NOTE: updating the status trigger setState
-    // THAT SHOULDN'T BE THE CASE
-    // For now, so, no need to setState around switchGroup
-    // remove group locally
-    User().groupId = '';
-    _webSocketConnection.switchgroup();
-    items = ['real'];
-    status = Status.switchSent;
+    await HttpConnection().delete(path: 'unread-data', body: {});
   }
 
   // ===== ===== =====
   // Process message
-  bool messageLogin(data) {
-    User().updateOtherUserStatus(data['id'], true);
-    return true;
-  }
+  Future<void> updateStatus() async {
+    Map userStatus = await HttpConnection().get(path: 'status');
 
-  bool messageLogout(data) {
-    User().updateOtherUserStatus(data['id'], false);
-    return true;
-  }
-
-  bool messageRegister(data) {
-    // register (see status.name)
-    // connection made
-    connectionStatus = ConnectionStatus.connected;
-
-    // needUpdate cannot be false because connectionState changed
-
-    // process unread messages
-    for (final unreadMessage in data['unreadData']) {
-      processMessage(jsonEncode(unreadMessage), isInnerLoop: true);
+    if (userStatus['group'] == null) {
+      // you don't have a group and didn't ask for
+      changeGroup();
+      return;
     }
 
-    final String assignedGroupId = data['group'] ?? '';
-
-    if (status == Status.switchSent && assignedGroupId == '') {
-      // already waiting for a group
-      return true;
+    if (userStatus['group']['isPublic'] == false) {
+      // you ask for a group but it has not opened yet
+      await User().resetGroup();
+      setState(() {
+        status = Status.switchSent;
+      });
+      return;
     }
+    // you have a group and can start chatting
 
-    if (status != Status.switchSent && assignedGroupId == '') {
-      // doesn't have a group yet
-      NotificationHandler().init();
-      switchGroup();
-      _messages.clear();
-
-      return true;
-    }
-
-    // Below, assignedGroupId is not empty
-    status = Status.chatting;
-    items = ['real', 'fake'];
-
-    if (assignedGroupId != User().groupId) {
+    // update group if necessary
+    if (userStatus['group']['id'] != User().groupId) {
       // doesn't have the correct group
-      User().groupId = assignedGroupId;
-      _messages.clear();
+      User().updateGroupId(userStatus['group']['id']);
     }
 
-    // convert assignedGroupUsers to correct type
-    final Map<String, dynamic> users = {};
-    for (final user in data['groupUsers'] ?? []) {
-      if (user['id'] != null) {
-        users[user['id'] ?? ''] = {
-          'id': user['id'],
-          'isActive': user['isOnline']
-        };
-      }
+    final Map<String, Map<dynamic, dynamic>> groupUsers = {};
+    for (final groupUser in userStatus['users']) {
+      groupUsers[groupUser['id']] = {
+        'id': groupUser['id'],
+        'isConnected': groupUser['isConnected']
+      };
     }
+    updateGroupUsers(groupUsers);
 
-    // retrieve messages
-    loadMessagesFromMemory();
-
-    updateGroupUsers(users);
-
-    return true;
+    setState(() {
+      // update status
+      status = Status.chatting;
+      connectionStatus = ConnectionStatus.connected;
+    });
   }
 
-  void updateGroupUsers(Map<String, dynamic> users) {
+  void updateGroupUsers(Map<String, Map<dynamic, dynamic>> groupUsers) {
     // update users
-    final Map<dynamic, Map> oldUsers = Memory().boxGroupUsers.toMap();
-    User().updateOtherUsers(users);
+    final Map<dynamic, Map> oldGroupUsers = Memory().boxGroupUsers.toMap();
+    User().updateGroupUsers(groupUsers);
 
     // is profile already shared?
     if (Memory().boxUser.get('hasSharedProfile') != 'true') {
@@ -359,11 +291,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     // has different users?
-    for (final String userId in oldUsers.keys) {
-      users.remove(userId);
+    for (final String userId in oldGroupUsers.keys) {
+      groupUsers.remove(userId);
     }
 
-    if (users.isEmpty) {
+    if (groupUsers.isEmpty) {
       // different users
       return;
     }
@@ -371,10 +303,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: users.length > 1
+        title: groupUsers.length > 1
             ? const Text('De nouveaux utilisateurs rejoignent le groupe')
             : const Text('Un nouvel utilisateur rejoins le groupe'),
-        content: users.length > 1
+        content: groupUsers.length > 1
             ? const Text(
                 'Les nouveaux utilisateurs ne peuvent pas voir la photo que tu as déjà partagé.')
             : const Text(
@@ -394,11 +326,12 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           )
         ],
       ),
-    ).then((value) {
+    ).then((value) async {
       if (value == 'share-profile') {
-        return User().shareProfile(context);
+        await User().shareProfile(context);
+        setState(() {});
       }
-    }).then((value) => {setState(() {})});
+    });
   }
 
   bool messageShareProfile(data) {
@@ -418,7 +351,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         Uint8List.fromList(List<int>.from(profile['picture']));
 
     Memory().boxUserProfiles.put(userId, {'picture': picture});
-    User().updateOtherUserArgument(userId, 'receivedProfile', true);
+    User().updateGroupUserArgument(userId, 'receivedProfile', true);
 
     showDialog<String?>(
         context: context,
@@ -462,255 +395,129 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     return true;
   }
 
-  bool messageLeaveGroup(data) {
-    // empty string is stored as undefined serverside
-    // (causing a difference when there is not)
-    final String groupId = data['groupid'] ?? '';
-    final String userId = data['id'];
+  void messageTextMessage(data, {required bool isUnreadData}) {
+    try {
+      final types.TextMessage message = decodeMessage(data['message']);
+      final String encodedMessage = encodeMessage(
+          text: message.text,
+          status: types.Status.delivered,
+          author: message.author.id,
+          createdAt: message.createdAt,
+          id: message.id);
+      Memory().boxMessages.put(message.createdAt.toString(), encodedMessage);
 
-    if (groupId != User().groupId) {
-      return false; // don't do anything
-    }
-
-    if (userId == User().id) {
-      // you're the one to leave the group
-      User().groupId = '';
-      _messages.clear();
-      status = Status.switchSent;
-    } else {
-      Memory().boxGroupUsers.delete(userId);
-    }
-    return true;
-  }
-
-  bool messageJoinGroup(data) {
-    final String newGroupId = data['groupid'] ?? '';
-    final Map<String, dynamic> users =
-        Map<String, dynamic>.from(data['users'] ?? {});
-
-    if (users.remove(User().id) == null) {
-      // don't do anything (user not concerted, error)
-      return false;
-    }
-
-    if (newGroupId != User().groupId) {
-      // only join if the group to join is not the group we are in
-      User().groupId = newGroupId;
-      User().updateOtherUsers(users);
-      _messages.clear(); // in case we receive join before leave
-      status = Status.chatting;
-      items = ['real', 'fake']; // prepare for swipe
-    } else {
-      // new users in group (see users)
-      updateGroupUsers(users);
-    }
-
-    return true;
-  }
-
-  bool messageTextMessage(data) {
-    // see message in data['message']
-    types.Message? message = messageDecode(data['message']);
-    if (message != null) {
-      if (!data['_isInnerLoop']) {
-        insertMessage(message);
+      if (!isUnreadData) {
+        HapticFeedback.lightImpact();
       }
-      Memory().addMessage(message.id, data['message']);
+    } catch (e) {
+      print('message text message error: $e');
     }
-    return true;
   }
 
-  bool messageBanRequest(data) {
-    // ban request (see data['messageid'])
-    banRequest(context, data['messageid']);
-    return false;
-  }
-
-  bool messageBanReply(data) {
-    // ban reply (see data['bannedid'] and data['status'])
-    acknowledgeBan(context, data['status'], data['bannedid']);
-    return false;
-  }
-
-  bool processMessage(message, {bool isInnerLoop = false}) {
-    // process message (see message and isInnerLoop)
-    bool needUpdate = true;
+  void processEvent(message, {required bool isUnreadData}) {
+    print('process message (unread data $isUnreadData) $message');
+    // process message
     final data = jsonDecode(message);
 
-    data['_isInnerLoop'] = isInnerLoop;
-
-    if (isInnerLoop &&
-        ['login', 'logout', 'register', 'leavegroup', 'joingroup']
-            .contains(data['action'])) {
-      // skip processing (not needed)
-      return needUpdate;
+    switch (data['action']) {
+      case 'update-status':
+        updateStatus();
+        break;
+      case 'text-message':
+        messageTextMessage(data, isUnreadData: isUnreadData);
+        break;
+      case 'share-profile':
+        messageShareProfile(data);
+        break;
+      case 'ban-request':
+        banRequest(context, data['messageid']);
+        break;
+      case 'ban-reply':
+        acknowledgeBan(context, data['status'], data['bannedid']);
+        break;
+      case 'connect':
+        User().updateGroupUserStatus(data['id'], true);
+        break;
+      case 'disconnect':
+        User().updateGroupUserStatus(data['id'], false);
+        break;
+      default:
+        print('received unknown action $data');
+      // NOTE: do you want to add error on screen here?
+      // NOTE: it could be a 'Internal server error' or other
     }
-    if (messageActions.containsKey(data['action'])) {
-      needUpdate = messageActions[data['action']]!(data);
-    } else {
-      // action not recognised (see data['action'])
-      needUpdate = false;
-      // TODO: Handle 'Too Many Requests' too
-      if (data['message'] == 'Internal server error') {
-        status = Status.error;
-      }
-    }
-
-    return needUpdate;
   }
 
   // ===== ===== =====
   // Widget lifecycle
 
-  void changePage(PageController controller) {
-    if (!_isPointerUp) {
-      // don't change page if you touch the screen
-      return;
-    }
-
-    if (!mounted || controller.page == null) {
-      // should not happen, propably an error
-      return;
-    }
-
-    if (controller.page! > 0.5) {
-      //TODO: update the time so it fits the end of the animation
-      Future.delayed(const Duration(milliseconds: 600), () {
-        if (_isPointerUp && controller.page! > 0.95) {
-          // need to recheck if user manually move the page during the delay
-          // Swith Group
-          switchGroup();
-          // Change Page
-          _reverse();
-          controller.jumpToPage(0);
-        }
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    _webSocketConnection.register();
-    listenStream();
-
-    messageActions = {
-      'login': messageLogin,
-      'logout': messageLogout,
-      'register': messageRegister,
-      'shareprofile': messageShareProfile,
-      'leavegroup': messageLeaveGroup,
-      'joingroup': messageJoinGroup,
-      'textmessage': messageTextMessage,
-      'banrequest': messageBanRequest,
-      'banreply': messageBanReply,
-    };
-  }
-
-  void checkConnection() {
-    if (connectionStatus == ConnectionStatus.disconnected &&
-        (_notification == null || _notification == AppLifecycleState.resumed)) {
-      connectionStatus = ConnectionStatus.reconnecting;
-      _webSocketConnection.reconnect();
-      listenStream();
-      _webSocketConnection.register();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     // see status.name and connectionStatus.name
-    final PageController controller = PageController();
-    checkConnection();
+    if (connectionStatus == ConnectionStatus.disconnected &&
+        (_notification == null || _notification == AppLifecycleState.resumed)) {
+      connectionStatus = ConnectionStatus.reconnecting;
+      initConnection();
+    }
 
     return Scaffold(
-      drawer: UserDrawer(
-        update: () {
-          setState(() {});
-        },
-        seeIntroduction: () {
-          widget.goToPresentation();
-        },
-        resetAccount: () async {
-          // reset account
-          await NotificationHandler().putToken('');
-          User().clear();
-          await Memory().clear();
-          await User().init();
-          await NotificationHandler().init();
-          widget.goToPresentation();
-        },
-      ),
-      appBar: AppBar(
-          leading: Builder(
-            builder: (BuildContext context) {
-              return InkWell(
-                onTap: () {
-                  Scaffold.of(context).openDrawer();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    backgroundImage: User.getUserImageProvider(User().id),
+        drawer: UserDrawer(
+          update: () {
+            setState(() {});
+          },
+          seeIntroduction: () {
+            widget.goToPresentation();
+          },
+          resetAccount: () async {
+            // reset account
+            widget.goToPresentation();
+            await HttpConnection()
+                .put(path: 'firebase-token', body: {'token': ''});
+            await User().resetUser();
+            NotificationHandler().init();
+          },
+        ),
+        appBar: AppBar(
+            leading: Builder(
+              builder: (BuildContext context) {
+                return InkWell(
+                  onTap: () {
+                    Scaffold.of(context).openDrawer();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.transparent,
+                      backgroundImage: User.getUserImageProvider(User().id),
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-          centerTitle: true,
-          title: const UsersList(),
-          actions: <Widget>[
-            SwitchActionButton(
-                isChatting: status == Status.chatting, onPressed: switchGroup),
-          ]),
-      body: Listener(
-        onPointerDown: (PointerDownEvent event) {
-          _isPointerUp = false;
-        },
-        onPointerUp: (PointerUpEvent event) {
-          _isPointerUp = true;
-          changePage(controller);
-        },
-        child: PageView.builder(
-            onPageChanged: (int index) {
-              changePage(controller);
-            },
-            controller: controller,
-            itemBuilder: (BuildContext context, int index) {
-              if (index == 0) {
-                // build chat
-                return ChatPage(
-                    key: Key(items[index]),
-                    messages: _messages.values.toList(),
-                    status: status,
-                    connectionStatus: connectionStatus,
-                    onSendMessage: sendMessage,
-                    onReportMessage: reportMessage,
-                    onRefresh: () {
-                      _webSocketConnection.close();
-                      _webSocketConnection.reconnect();
-                      listenStream();
-                      _webSocketConnection.register();
-                      setState(() {
-                        status = Status.idle;
-                      });
-                    });
-              } else {
-                // build fake chat
-                return FakeChat(key: Key(items[index]));
-              }
-            },
-            itemCount: items.length,
-            findChildIndexCallback: (Key key) {
-              final ValueKey<String> valueKey = key as ValueKey<String>;
-              final String data = valueKey.value;
-              return items.indexOf(data);
-            }),
-      ),
-    );
+                );
+              },
+            ),
+            centerTitle: true,
+            title: const UsersList(),
+            actions: <Widget>[
+              SwitchActionButton(
+                  isChatting: status == Status.chatting,
+                  onPressed: changeGroup),
+            ]),
+        body: ChatPage(
+            status: status,
+            connectionStatus: connectionStatus,
+            onReportMessage: reportMessage,
+            onRefresh: () {
+              _channel?.sink.close();
+              initConnection();
+              setState(() {
+                status = Status.idle;
+              });
+            }));
   }
 
   @override
@@ -720,13 +527,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     });
 
     if (appLifecycleState != AppLifecycleState.resumed) {
-      _webSocketConnection.close();
+      _channel?.sink.close();
     }
   }
 
   @override
   void dispose() {
-    _webSocketConnection.close();
+    _channel?.sink.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }

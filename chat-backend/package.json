@@ -5,21 +5,23 @@
   "author": "AdrKacz",
   "scripts": {
     "lint": "eslint . --fix",
-    "predeploy": "sh ./predeploy.sh $$ sam build",
+    "predeploy": "sh ./scripts/pre-deploy/predeploy.sh $$ sam build",
     "deploy": "sam deploy --config-env",
     "deploy:skip-ci": "sam deploy --config-env",
     "deploy:force": "yarn predeploy && sam deploy --no-confirm-changeset --config-env",
     "deploy:skip-ci:force": "sam deploy --no-confirm-changeset --config-env",
     "test": "jest",
-    "test:silent": "jest --silent"
+    "test:silent": "jest --silent",
+    "install:all": "sh ./scripts/install/install.sh",
+    "upgrade:all": "sh ./scripts/upgrade/upgrade.sh",
+    "local:api": "sam local start-api -t ./template.yaml --warm-containers LAZY --debug --config-env"
   },
   "devDependencies": {
-    "axios": "^1.1.3",
     "@aws-sdk/client-apigatewaymanagementapi": "^3.194.0",
-    "@aws-sdk/client-dynamodb": "^3.113.0",
     "@aws-sdk/client-sns": "^3.112.0",
-    "@aws-sdk/lib-dynamodb": "^3.113.0",
+    "@aws-sdk/lib-dynamodb": "^3.215.0",
     "aws-sdk-client-mock": "^1.0.0",
+    "axios": "^1.1.3",
     "eslint": "^7.32.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.4",
@@ -28,6 +30,5 @@
     "firebase-admin": "^11.2.0",
     "jest": "^28.1.1"
   },
-  "license": "SEE LICENSE IN /LICENSE",
-  "dependencies": {}
+  "license": "SEE LICENSE IN /LICENSE"
 }

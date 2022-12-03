@@ -18,6 +18,10 @@ const {
  * @param {string} event.message
  */
 exports.handler = async (event) => {
+  console.log(`Receives:
+Body:
+${event.body}`)
+
   const body = JSON.parse(event.body)
   const message = body.message
 
@@ -52,9 +56,9 @@ exports.handler = async (event) => {
   }
 
   await Promise.all([
-    sendMessages({ users, message, useSaveMessage: true }),
+    sendMessages({ users, message: { action: 'text-message', message }, useSaveMessage: true }),
     sendNotifications({
-      users,
+      users: users.filter(({ id: userId }) => (userId !== id)),
       notification: {
         title: 'Les gens parlent 🎉',
         body: 'Tu es trop loin pour entendre ...'

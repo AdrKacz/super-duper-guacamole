@@ -29,13 +29,18 @@ beforeEach(() => {
 // ===== ==== ====
 // TEST
 test('it throws if no id provided', () => {
+  process.argv = ['node', 'sign-in-user.js', 'your-url']
+  expect(() => (require('../sign-in-user'))).toThrow('you must provide one parameter for url and one for id (ex: yarn node sign-in-user.js your-url your-id)')
+})
+
+test('it throws if no url provided', () => {
   process.argv = ['node', 'sign-in-user.js']
-  expect(() => (require('../sign-in-user'))).toThrow('you must provide one parameter for id (ex: yarn node sign-in-user.js your-id)')
+  expect(() => (require('../sign-in-user'))).toThrow('you must provide one parameter for url and one for id (ex: yarn node sign-in-user.js your-url your-id)')
 })
 
 test('it sends request', () => {
   Date.now.mockReturnValue(0)
-  process.argv = ['node', 'sign-in-user.js', 'your-id']
+  process.argv = ['node', 'sign-in-user.js', 'your-url', 'your-id']
 
   fs.readFile
     .mockImplementationOnce((_path, _options, callback) => (callback(null, 'public-key')))
@@ -76,7 +81,7 @@ test('it sends request', () => {
   expect(verifier.verify).toHaveBeenCalledWith('public-key', Buffer.from('signature', 'base64'), 'base64')
 
   expect(axios.put).toHaveBeenCalledTimes(1)
-  expect(axios.put).toHaveBeenCalledWith('https://gfskxtf7o3.execute-api.eu-west-3.amazonaws.com/sign-in', {
+  expect(axios.put).toHaveBeenCalledWith('your-url/sign-in', {
     id: 'your-id',
     timestamp: 0,
     signature: Buffer.from('signature', 'base64')
@@ -85,7 +90,7 @@ test('it sends request', () => {
 
 test('it reads error', () => {
   Date.now.mockReturnValue(0)
-  process.argv = ['node', 'sign-in-user.js', 'your-id']
+  process.argv = ['node', 'sign-in-user.js', 'your-id', 'your-url']
 
   fs.readFile
     .mockImplementationOnce((_path, _options, callback) => (callback(null, 'public-key')))

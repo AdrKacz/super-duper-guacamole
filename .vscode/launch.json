@@ -12,11 +12,9 @@
             "program": "lib/main.dart",
             "toolArgs": [
                 "--dart-define",
-                "WEBSOCKET_ENDPOINT=wss://fg66lljx43.execute-api.eu-west-3.amazonaws.com/development",
+                "WEBSOCKET_ENDPOINT=wss://x7k0yih9ed.execute-api.eu-west-3.amazonaws.com/dev-adrien",
                 "--dart-define",
-                "NOTIFICATION_HTTP_ENDPOINT=https://ttvtsnl18k.execute-api.eu-west-3.amazonaws.com/firebase-token",
-                "--dart-define",
-                "HTTP_ENDPOINT=https://ttvtsnl18k.execute-api.eu-west-3.amazonaws.com/",
+                "HTTP_ENDPOINT=https://n5iqzaq0r5.execute-api.eu-west-3.amazonaws.com",
             ]
         },
         {

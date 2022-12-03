@@ -20,11 +20,10 @@ exports.getUser = async ({ id }) => {
     throw new Error('id must be a string')
   }
 
-  const getCommand = new GetCommand({
+  const user = await dynamoDBDocumentClient.send(new GetCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id }
-  })
-  const user = await dynamoDBDocumentClient.send(getCommand).then((response) => (response.Item))
+  })).then((response) => (response.Item))
 
   if (typeof user !== 'object' || typeof user.id !== 'string') {
     return {}
