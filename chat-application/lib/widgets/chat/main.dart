@@ -62,8 +62,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       }
     }, cancelOnError: true);
 
-    updateStatus();
-    processUnreadData();
+    await updateStatus();
+    await processUnreadData();
   }
 
   // ===== ===== =====
