@@ -186,7 +186,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         });
         break;
       case 'report':
-        await mailToReportMessage(message);
+        await mailToReportTextMessage(
+            types.TextMessage.fromJson(message.toJson()));
         break;
       case 'delete':
         Memory().boxMessages.delete(message.createdAt);

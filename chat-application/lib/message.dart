@@ -50,7 +50,6 @@ types.TextMessage decodeMessage(String encodedMessage) {
       throw 'missing value in ($jsonMessage) (expect author, createdAt, id, and text)';
     }
   } on FormatException {
-    // didn't throw because old memory handle author::createdAt:id:text
     throw 'cannot decode json';
   }
 }
@@ -168,18 +167,33 @@ Future<String?> banActionOnMessage(
       });
 }
 
-Future<void> mailToReportMessage(types.Message message) async {
-  if (message.type != types.MessageType.text) {
-    // TODO: handle others message type
-    return;
+Future<void> mailToReportTextMessage(types.TextMessage textMessage) async {
+  // find index of message
+  int i = 0;
+  for (final String key in Memory().boxMessages.keys) {
+    final int createdAt = int.tryParse(key) ?? 0;
+    if (createdAt <= (textMessage.createdAt ?? 0)) {
+      break;
+    }
+    i++;
   }
-
-  final List<types.TextMessage> contextMessages = Memory()
+  final String startKey = Memory().boxMessages.keyAt(max(0, i - 5)) ?? '';
+  final String endKey =
+      Memory().boxMessages.keyAt(min(i + 5, Memory().boxMessages.length - 1)) ??
+          '';
+  print(
+      'from ${max(0, i - 5)} to ${min(i + 5, Memory().boxMessages.length - 1)}');
+  print('start key $startKey, end key $endKey');
+  final List<types.TextMessage> contextMessages = [];
+  for (final String jsonMessage in Memory()
       .boxMessages
-      .values
-      .map((String e) => (decodeMessage(e)))
-      .toList()
-      .sublist(0, min(Memory().boxMessages.length, 10));
+      .valuesBetween(startKey: startKey, endKey: endKey)) {
+    try {
+      contextMessages.add(decodeMessage(jsonMessage));
+    } catch (e) {
+      print('chat page error: $e');
+    }
+  }
 
   final String body = """
   --- --- ---
@@ -189,18 +203,18 @@ Future<void> mailToReportMessage(types.Message message) async {
   L'utilisateur
   ${User().id}
   signale le comportement de l'utilisateur
-  ${message.author.id}
+  ${textMessage.author.id}
 
   Le message signalé est :
   --- --- ---
-  ${message.toJson()["text"]}
+  ${textMessage.text}
   --- --- ---
 
-  Contexte (dix derniers messages) :
-  ${contextMessages.map((types.Message e) => '''
+  Contexte :
+  ${contextMessages.reversed.map((types.TextMessage e) => '''
 --- --- ---
 (${e.author.id})
-${e.toJson()["text"]}
+${e.text}
 ''').join('')}
 """;
 
