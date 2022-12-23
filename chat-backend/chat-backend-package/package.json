@@ -9,6 +9,6 @@
     "@aws-sdk/client-apigatewaymanagementapi": "^3.194.0",
     "@aws-sdk/client-dynamodb": "^3.194.0",
     "@aws-sdk/lib-dynamodb": "^3.194.0",
-    "firebase-admin": "^11.2.0"
+    "firebase-admin": "^11.4.1"
   }
 }
