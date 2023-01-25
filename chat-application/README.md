@@ -130,3 +130,18 @@ flutter build appbundle
 ```
 
 The output is at `build/app/outputs/bundle/app-release.aab`
+
+### What to do when iOS doesn't build
+
+```sh
+curl -sL https://firebase.tools | upgrade=true bash
+cd chat-application/
+flutter clean
+
+rm -rf FLUTTER_PATH/bin/cache/*
+
+rm -rf ios/Podfile
+flutter run
+
+pod install --verbose
+```
