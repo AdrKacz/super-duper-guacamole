@@ -1,7 +1,7 @@
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
-import 'package:badges/badges.dart';
+import 'package:badges/badges.dart' as badges;
 import 'package:hive_flutter/hive_flutter.dart';
 
 class UsersList extends StatelessWidget {
@@ -26,11 +26,13 @@ class UsersList extends StatelessWidget {
                             backgroundImage:
                                 User.getUserImageProvider(user['id']),
                           ),
-                          Badge(
+                          badges.Badge(
                               showBadge: user['isConnected'] ?? false,
-                              badgeColor:
-                                  Theme.of(context).colorScheme.tertiary,
-                              position: BadgePosition.bottomEnd(),
+                              badgeStyle: badges.BadgeStyle(
+                                badgeColor:
+                                    Theme.of(context).colorScheme.tertiary,
+                              ),
+                              position: badges.BadgePosition.bottomEnd(),
                               child: const SizedBox(
                                 width: kToolbarHeight * .5,
                                 height: kToolbarHeight * .5,
