@@ -271,128 +271,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         'isConnected': groupUser['isConnected']
       };
     }
-    updateGroupUsers(groupUsers);
+    User().updateGroupUsers(groupUsers);
 
     setState(() {
       // update status
       status = Status.chatting;
       connectionStatus = ConnectionStatus.connected;
     });
-  }
-
-  void updateGroupUsers(Map<String, Map<dynamic, dynamic>> groupUsers) async {
-    // update users
-    final Map<dynamic, Map> oldGroupUsers = Memory().boxGroupUsers.toMap();
-    User().updateGroupUsers(groupUsers);
-
-    // is profile already shared?
-    if (Memory().boxUser.get('hasSharedProfile') != 'true') {
-      return;
-    }
-
-    // has different users?
-    for (final String userId in oldGroupUsers.keys) {
-      groupUsers.remove(userId);
-    }
-
-    if (groupUsers.isEmpty) {
-      // different users
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: groupUsers.length > 1
-            ? const Text('De nouveaux utilisateurs rejoignent le groupe')
-            : const Text('Un nouvel utilisateur rejoins le groupe'),
-        content: groupUsers.length > 1
-            ? const Text(
-                'Les nouveaux utilisateurs ne peuvent pas voir la photo que tu as déjà partagé.')
-            : const Text(
-                'Le nouvel utilisateur ne peux pas voir la photo que tu as déjà partagé.'),
-        actions: [
-          TextButton(
-            child: const Text('Re-partager ma photo'),
-            onPressed: () {
-              Navigator.of(context).pop('share-profile');
-            },
-          ),
-          TextButton(
-            child: const Text('Ok'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          )
-        ],
-      ),
-    ).then((value) async {
-      if (value == 'share-profile') {
-        await User().shareProfile(context);
-        setState(() {});
-      }
-    });
-  }
-
-  bool messageShareProfile(data) {
-    final String? userId = data['user'];
-
-    if (userId == null) {
-      return false;
-    }
-
-    if (userId == User().id) {
-      return false; // don't do anything
-    }
-
-    final Map profile = data['profile'];
-
-    final Uint8List picture =
-        Uint8List.fromList(List<int>.from(profile['picture']));
-
-    Memory().boxUserProfiles.put(userId, {'picture': picture});
-    User().updateGroupUserArgument(userId, 'receivedProfile', true);
-
-    showDialog<String?>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              title: CircleAvatar(
-                backgroundColor: Colors.transparent,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50.0),
-                  child: User.getUserImage(userId),
-                ),
-              ),
-              content: const Text("Quelqu'un partage son identité !"),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('Ok')),
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop('share-profile');
-                    },
-                    child: const Text('Je partage aussi mon profil !')),
-                TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop('report');
-                    },
-                    child: Text('Je signale la photo',
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSecondary))),
-              ]);
-        }).then((value) {
-      if (value == 'share-profile') {
-        User().shareProfile(context).then((value) => {setState(() {})});
-      } else if (value == 'report') {
-        mailToReportPhoto(userId).then((value) => {setState(() {})});
-      }
-    });
-
-    return true;
   }
 
   void messageTextMessage(data, {required bool isUnreadData}) {
@@ -425,9 +310,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         break;
       case 'text-message':
         messageTextMessage(data, isUnreadData: isUnreadData);
-        break;
-      case 'share-profile':
-        messageShareProfile(data);
         break;
       case 'ban-request':
         banRequest(context, data['messageid']);
@@ -468,9 +350,6 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     return Scaffold(
         drawer: UserDrawer(
-          update: () {
-            setState(() {});
-          },
           seeIntroduction: () {
             widget.goToPresentation();
           },
