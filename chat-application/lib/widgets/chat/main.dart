@@ -280,7 +280,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     });
   }
 
-  void updateGroupUsers(Map<String, Map<dynamic, dynamic>> groupUsers) {
+  void updateGroupUsers(Map<String, Map<dynamic, dynamic>> groupUsers) async {
     // update users
     final Map<dynamic, Map> oldGroupUsers = Memory().boxGroupUsers.toMap();
     User().updateGroupUsers(groupUsers);

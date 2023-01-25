@@ -394,7 +394,7 @@ Resources:
           WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
-      - DynamoDBReadPolicy:
+      - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBReadPolicy:
           TableName: !Ref GroupsTable
