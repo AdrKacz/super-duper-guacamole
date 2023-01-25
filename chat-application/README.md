@@ -145,3 +145,11 @@ flutter run
 
 pod install --verbose
 ```
+
+# Check unused dependencies
+
+```sh
+cd chat-application
+flutter pub run dependency_validator
+# remove the dependencies stated
+```
