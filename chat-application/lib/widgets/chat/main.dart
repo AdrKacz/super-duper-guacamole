@@ -271,7 +271,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         'isConnected': groupUser['isConnected']
       };
     }
-    await updateGroupUsers(groupUsers);
+    updateGroupUsers(groupUsers);
 
     setState(() {
       // update status
@@ -280,11 +280,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> updateGroupUsers(
-      Map<String, Map<dynamic, dynamic>> groupUsers) async {
+  void updateGroupUsers(Map<String, Map<dynamic, dynamic>> groupUsers) async {
     // update users
     final Map<dynamic, Map> oldGroupUsers = Memory().boxGroupUsers.toMap();
-    await User().updateGroupUsers(groupUsers);
+    User().updateGroupUsers(groupUsers);
 
     // is profile already shared?
     if (Memory().boxUser.get('hasSharedProfile') != 'true') {

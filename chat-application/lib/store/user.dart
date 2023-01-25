@@ -81,7 +81,7 @@ class User {
   Future<void> updateGroupUsers(
       Map<String, Map<dynamic, dynamic>> groupUsers) async {
     await Memory().boxGroupUsers.clear();
-    await Memory().boxGroupUsers.putAll(groupUsers);
+    Memory().boxGroupUsers.putAll(groupUsers);
   }
 
   void updateGroupUserArgument(String id, String key, dynamic value) {
