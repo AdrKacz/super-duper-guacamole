@@ -186,7 +186,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             types.TextMessage.fromJson(message.toJson()));
         break;
       case 'delete':
-        Memory().boxMessages.delete(message.createdAt);
+        Memory().boxMessages.delete(message.createdAt.toString());
         break;
       case 'block':
         blockUser(message.author.id);
