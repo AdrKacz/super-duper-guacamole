@@ -384,40 +384,6 @@ Resources:
       LogGroupName: !Sub '/aws/lambda/${HttpPutFirebaseTokenFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
-  # PUT /share-profile
-  HttpPutShareProfileFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: http/put/share-profile
-      Environment:
-        Variables:
-          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
-          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
-      Policies:
-      - DynamoDBCrudPolicy:
-          TableName: !Ref UsersTable
-      - DynamoDBReadPolicy:
-          TableName: !Ref GroupsTable
-      - Statement:
-        - Effect: Allow
-          Action:
-          - 'execute-api:ManageConnections'
-          Resource:
-          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
-      Events:
-        HttpApiEvent:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref HttpApi
-            Path: /share-profile
-            Method: PUT
-
-  HttpPutShareProfileLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub '/aws/lambda/${HttpPutShareProfileFunction}'
-      RetentionInDays: !Ref LogRetentionInDays
-
   # PUT /request-ban
   HttpPutRequestBanFunction:
     Type: AWS::Serverless::Function

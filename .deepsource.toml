@@ -20,7 +20,6 @@ enabled = true
     "chat-backend/http/put/firebase-token/",
     "chat-backend/http/put/reply-ban/",
     "chat-backend/http/put/request-ban/",
-    "chat-backend/http/put/share-profile/",
     "chat-backend/http/put/sign-in/",
     "chat-backend/http/put/sign-up/",
     "chat-backend/manual-setup/",

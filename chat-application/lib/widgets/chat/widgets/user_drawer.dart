@@ -10,15 +10,11 @@ import 'package:url_launcher/url_launcher.dart';
 
 class UserDrawer extends StatelessWidget {
   const UserDrawer(
-      {Key? key,
-      required this.seeIntroduction,
-      required this.resetAccount,
-      required this.update})
+      {Key? key, required this.seeIntroduction, required this.resetAccount})
       : super(key: key);
 
   final VoidCallback seeIntroduction;
   final VoidCallback resetAccount;
-  final VoidCallback update;
 
   Future<String?> showResetDialog(BuildContext context) {
     return showDialog<String>(
@@ -74,14 +70,6 @@ class UserDrawer extends StatelessWidget {
                   builder: (context) => const QuestionsLoader(),
                 ),
               );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.public),
-            title: const Text('Partage ta photo'),
-            subtitle: const Text('Seul ton groupe pourra le voir'),
-            onTap: () {
-              User().shareProfile(context).then((value) => {update()});
             },
           ),
           const Divider(),
