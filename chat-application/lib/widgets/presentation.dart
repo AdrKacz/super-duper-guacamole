@@ -12,15 +12,15 @@ class Presentation extends StatelessWidget {
         text: """Salut, je suis Awa.
         
 Je vais te présenter l'application.""",
-        assetPath: 'assets/images/astronaut-suit.gif',
+        assetPath: 'assets/images/onboard-page-1.gif',
       ),
       const Slide(
           text: """Je vais te faire entrer dans un groupe de conversation.
 
 Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
-          assetPath: 'assets/images/chat.gif'),
+          assetPath: 'assets/images/onboard-page-2.gif'),
       CustomSlide(
-          assetPath: 'assets/images/outer-space.gif',
+          assetPath: 'assets/images/onboard-page-3.gif',
           child: Text.rich(
             TextSpan(
               children: [
@@ -46,10 +46,10 @@ Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
           text: """Si un message t'offense, reste appuyé dessus.
 
 Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
-          assetPath: 'assets/images/taken.gif'),
+          assetPath: 'assets/images/onboard-page-4.gif'),
       SlideWithButton(
         text: 'Hâte de te faire de nouveaux potes ?',
-        assetPath: 'assets/images/launching.gif',
+        assetPath: 'assets/images/onboard-page-5.gif',
         buttonText: "C'est parti !",
         onPressed: () {
           nextAppStatus();

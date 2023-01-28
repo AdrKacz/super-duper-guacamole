@@ -22,7 +22,7 @@ class FirstTimeQuestionsLoader extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/images/decision-questions.gif'),
+                  Image.asset('assets/images/location-first-time.gif'),
                   const Divider(height: 48),
                   const Text(
                       '''Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.

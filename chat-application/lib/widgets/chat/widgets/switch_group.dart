@@ -12,7 +12,7 @@ class SwitchGroupPage extends StatelessWidget {
           shrinkWrap: true,
           padding: const EdgeInsets.all(24.0),
           children: [
-            Image.asset('assets/images/alien-science.gif'),
+            Image.asset('assets/images/load-group.gif'),
             const SizedBox(
               height: 24,
             ),

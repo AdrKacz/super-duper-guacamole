@@ -82,14 +82,14 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/astronaut-suit.gif
-    - assets/images/chat.gif
-    - assets/images/error-lost-in-space.gif
-    - assets/images/launching.gif
-    - assets/images/outer-space.gif
-    - assets/images/taken.gif
-    - assets/images/decision-questions.gif
-    - assets/images/alien-science.gif
+    - assets/images/error.gif
+    - assets/images/load-group.gif
+    - assets/images/location-first-time.gif
+    - assets/images/onboard-page-1.gif
+    - assets/images/onboard-page-2.gif
+    - assets/images/onboard-page-3.gif
+    - assets/images/onboard-page-4.gif
+    - assets/images/onboard-page-5.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
