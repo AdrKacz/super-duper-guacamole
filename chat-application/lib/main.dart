@@ -1,6 +1,6 @@
 import 'package:awachat/application_theme.dart';
 import 'package:awachat/widgets/chat/main.dart';
-import 'package:awachat/widgets/questions.dart';
+import 'package:awachat/widgets/cities/cities_loader.dart';
 import 'package:flutter/material.dart';
 
 import 'package:awachat/network/notification_handler.dart';
@@ -26,7 +26,7 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-enum Status { presentation, agreements, firstTimeQuestions, main, other }
+enum Status { presentation, agreements, main }
 
 class _MyAppState extends State<MyApp> {
   Status get status {
@@ -37,7 +37,7 @@ class _MyAppState extends State<MyApp> {
         return value;
       }
     }
-    return Status.other;
+    return Status.presentation;
   }
 
   set status(Status newStatus) {
@@ -63,21 +63,16 @@ class _MyAppState extends State<MyApp> {
               });
             case Status.agreements:
               return Agreements(nextAppStatus: () {
-                status = Status.firstTimeQuestions;
+                status = Status.main;
               });
-            case Status.firstTimeQuestions:
-              return FirstTimeQuestionsLoader(
-                onConfirmed: () {
-                  status = Status.main;
-                },
-              );
             case Status.main:
-              return ChatHandler(goToPresentation: () {
-                status = Status.presentation;
-              });
-            default:
-              // unknown state
-              return const Placeholder();
+              if (!Memory().boxUser.containsKey('city')) {
+                return const CitiesLoader();
+              } else {
+                return ChatHandler(goToPresentation: () {
+                  status = Status.presentation;
+                });
+              }
           }
         },
       ),

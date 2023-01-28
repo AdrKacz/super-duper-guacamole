@@ -1,6 +1,6 @@
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/widgets/questions.dart';
+import 'package:awachat/widgets/cities/cities_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -35,7 +35,7 @@ class UserDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const QuestionsLoader(),
+                  builder: (context) => const CitiesLoader(),
                 ),
               );
             },
