@@ -21,6 +21,19 @@ const sendNotificationsModule = require('chat-backend-package/src/send-notificat
 jest.mock('chat-backend-package/src/send-notifications', () => ({ sendNotifications: jest.fn() }))
 
 // ===== ==== ====
+// BEFORE EACH
+beforeEach(() => {
+  jest.useFakeTimers()
+  jest.setSystemTime(new Date(Date.UTC(2023, 0, 1, 12, 0, 0)))
+})
+
+// ===== ==== ====
+// AFTER EACH
+afterEach(() => {
+  jest.useRealTimers()
+})
+
+// ===== ==== ====
 // TESTS
 test('it updates connection id', async () => {
   getUserModule.getUser.mockResolvedValue({ id: 'id' })
@@ -37,9 +50,15 @@ test('it updates connection id', async () => {
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
-    UpdateExpression: 'SET #connectionId = :connectionId',
-    ExpressionAttributeNames: { '#connectionId': 'connectionId' },
-    ExpressionAttributeValues: { ':connectionId': 'connection-id' }
+    UpdateExpression: 'SET #connectionId = :connectionId, #lastConnectionDay = :today',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId',
+      '#lastConnectionDay': 'lastConnectionDay'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': 'connection-id',
+      ':today': 'dim. 1 janv. 2023'
+    }
   })
 
   expect(JSON.stringify(response)).toBe(JSON.stringify({

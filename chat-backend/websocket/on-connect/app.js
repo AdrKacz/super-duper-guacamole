@@ -11,6 +11,16 @@ const { sendNotifications } = require('chat-backend-package/src/send-notificatio
 const { USERS_TABLE_NAME } = process.env
 
 // ===== ==== ====
+// CONSTANTS
+const DATE_STRING_OPTIONS = {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC'
+}
+
+// ===== ==== ====
 // EXPORTS
 exports.handler = async (event) => {
   console.log('Received event:', JSON.stringify(event, null, 2))
@@ -22,9 +32,15 @@ exports.handler = async (event) => {
   await dynamoDBDocumentClient.send(new UpdateCommand({
     TableName: USERS_TABLE_NAME,
     Key: { id },
-    UpdateExpression: 'SET #connectionId = :connectionId',
-    ExpressionAttributeNames: { '#connectionId': 'connectionId' },
-    ExpressionAttributeValues: { ':connectionId': connectionId }
+    UpdateExpression: 'SET #connectionId = :connectionId, #lastConnectionDay = :today',
+    ExpressionAttributeNames: {
+      '#connectionId': 'connectionId',
+      '#lastConnectionDay': 'lastConnectionDay'
+    },
+    ExpressionAttributeValues: {
+      ':connectionId': connectionId,
+      ':today': (new Date()).toLocaleDateString('fr-FR', DATE_STRING_OPTIONS)
+    }
   }))
 
   if (typeof groupId === 'string') {
