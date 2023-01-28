@@ -349,19 +349,9 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     return Scaffold(
-        drawer: UserDrawer(
-          seeIntroduction: () {
-            widget.goToPresentation();
-          },
-          resetAccount: () async {
-            // reset account
-            widget.goToPresentation();
-            await HttpConnection()
-                .put(path: 'firebase-token', body: {'token': ''});
-            await User().resetUser();
-            NotificationHandler().init();
-          },
-        ),
+        drawer: UserDrawer(seeIntroduction: () {
+          widget.goToPresentation();
+        }),
         appBar: AppBar(
             leading: Builder(
               builder: (BuildContext context) {

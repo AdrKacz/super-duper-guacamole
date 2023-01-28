@@ -9,41 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 // Drawer
 
 class UserDrawer extends StatelessWidget {
-  const UserDrawer(
-      {Key? key, required this.seeIntroduction, required this.resetAccount})
-      : super(key: key);
+  const UserDrawer({Key? key, required this.seeIntroduction}) : super(key: key);
 
   final VoidCallback seeIntroduction;
-  final VoidCallback resetAccount;
-
-  Future<String?> showResetDialog(BuildContext context) {
-    return showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Attention'),
-          content: const SingleChildScrollView(
-            child: Text(
-                'Es-tu sûr que tu veux supprimer tout ce qui te concerne ? Tu ne pourras pas faire marche arrière.'),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Non'),
-              onPressed: () {
-                Navigator.pop(context, 'nothing');
-              },
-            ),
-            TextButton(
-              child: const Text('Oui'),
-              onPressed: () {
-                Navigator.pop(context, 'confirmed');
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,24 +62,6 @@ class UserDrawer extends StatelessWidget {
             onTap: () async {
               if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
                 throw 'Could not launch https://awa-chat.me/contact/';
-              }
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.delete_forever,
-                color: Theme.of(context).colorScheme.onError),
-            title: Text(
-              'Réinitialiser mon compte',
-              style: TextStyle(color: Theme.of(context).colorScheme.onError),
-            ),
-            onTap: () async {
-              switch (await showResetDialog(context)) {
-                case 'confirmed':
-                  Navigator.of(context).pop();
-                  resetAccount();
-                  break;
-                default:
-                  Navigator.of(context).pop();
               }
             },
           ),

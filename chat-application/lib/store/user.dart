@@ -27,11 +27,6 @@ class User {
 
   User._internal();
 
-  Future<void> resetUser() async {
-    await Memory().boxUser.delete('id');
-    await init();
-  }
-
   Future<void> init() async {
     AsymmetricKeyPair<RSAPublicKey, RSAPrivateKey>? storedPair =
         retreiveRSAkeyPair();
