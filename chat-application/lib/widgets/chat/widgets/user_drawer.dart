@@ -29,8 +29,8 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.question_mark_rounded),
-            title: const Text('Questions'),
-            subtitle: const Text("Quel est ton état d'esprit ?"),
+            title: const Text('Choisis ta ville'),
+            subtitle: const Text('Où seras ta prochaine sortie ?'),
             onTap: () {
               Navigator.push(
                 context,

@@ -5,82 +5,22 @@ import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/store/memory.dart';
 
 // ===== ===== =====
-// First Time Questions Loader
-class FirstTimeQuestionsLoader extends StatelessWidget {
-  const FirstTimeQuestionsLoader({Key? key, required this.onConfirmed})
-      : super(key: key);
+// Cities Loader
 
-  final VoidCallback onConfirmed;
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/images/location-first-time.gif'),
-                  const Divider(height: 48),
-                  const Text(
-                      '''Pour te placer un groupe qui te correspond, je dois en savoir plus sur toi.
-                      
-Tu pourras changer tes réponses à tout moment en touchant ton avatar.''',
-                      textAlign: TextAlign.center),
-                  const Divider(height: 48),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const QuestionsLoader(),
-                        ),
-                      );
-                      onConfirmed();
-                    },
-                    child: const Text('Répondre aux questions'),
-                  ),
-                  const SizedBox(
-                    height: 12,
-                  ),
-                  ElevatedButton(
-                    onPressed: onConfirmed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor:
-                          Theme.of(context).colorScheme.onSecondary,
-                    ),
-                    child: const Text('Ne pas répondre'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ===== ===== =====
-// Questions Loader
-
-class QuestionsLoader extends StatefulWidget {
-  const QuestionsLoader({Key? key}) : super(key: key);
+class CitiesLoader extends StatefulWidget {
+  const CitiesLoader({Key? key}) : super(key: key);
 
   @override
-  State<QuestionsLoader> createState() => _QuestionsLoaderState();
+  State<CitiesLoader> createState() => _CitiesLoaderState();
 }
 
-class _QuestionsLoaderState extends State<QuestionsLoader> {
+class _CitiesLoaderState extends State<CitiesLoader> {
   late Future<YamlMap> object;
 
   Future<YamlMap> readQuestionTree() async {
     http.Response response = await http
         .get(Uri.parse(
-            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/questions/fr-2.yaml'))
+            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/configurations/cities/cities-v0.yml'))
         .catchError((e) {
       return http.Response('', 404);
     });
@@ -280,18 +220,8 @@ class DefaultQuestion extends StatelessWidget {
                     .map((mapEntry) => (Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: ElevatedButton(
-                            style: mapEntry.key == currentAnswer
-                                ? ElevatedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(100),
-                                  )
-                                : ElevatedButton.styleFrom(
-                                    minimumSize: const Size.fromHeight(100),
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.secondary,
-                                    foregroundColor: Theme.of(context)
-                                        .colorScheme
-                                        .onSecondary,
-                                  ),
+                            style: getButtonStyle(
+                                context, mapEntry.key == currentAnswer),
                             onPressed: () {
                               onPressed(mapEntry.key);
                             },
@@ -343,15 +273,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                 .then((value) => {Navigator.pop(context)})
                 .then((value) => {showConfirmDialog(context)});
           },
-          style: isConfirmed
-              ? ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(100),
-                )
-              : ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(100),
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  foregroundColor: Theme.of(context).colorScheme.onSecondary,
-                ),
+          style: getButtonStyle(context, isConfirmed),
           child: const Text('Je valide !'),
         ),
       ),
@@ -375,4 +297,20 @@ void showConfirmDialog(BuildContext context) async {
               ),
             ]);
       });
+}
+
+ButtonStyle getButtonStyle(BuildContext context, bool isActive) {
+  if (isActive) {
+    return ElevatedButton.styleFrom(
+      minimumSize: const Size.fromHeight(100),
+      backgroundColor: Theme.of(context).colorScheme.onSecondary,
+      foregroundColor: Theme.of(context).colorScheme.onBackground,
+    );
+  } else {
+    return ElevatedButton.styleFrom(
+      minimumSize: const Size.fromHeight(100),
+      backgroundColor: Theme.of(context).colorScheme.background,
+      foregroundColor: Theme.of(context).colorScheme.onBackground,
+    );
+  }
 }

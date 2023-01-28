@@ -17,8 +17,9 @@ class SwitchGroupPage extends StatelessWidget {
               height: 24,
             ),
             const Text(
-              """Je te cherche un groupe.                
-Je t'envoie une notification quand j'ai trouvé.""",
+              """Plus qu'à patienter le temps qu'il y ait assez de monde.
+              
+Tu recevras une notification quand tout sera prêt, tu peux t'en aller pour le moment.""",
               textAlign: TextAlign.center,
             ),
             const SizedBox(

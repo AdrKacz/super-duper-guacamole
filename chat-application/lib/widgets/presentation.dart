@@ -9,35 +9,26 @@ class Presentation extends StatelessWidget {
   Widget build(BuildContext context) {
     final slides = <Widget>[
       const Slide(
-        text: """Salut, je suis Awa.
+        text: '''Bienvenue sur Awa !
         
-Je vais te présenter l'application.""",
-        assetPath: 'assets/images/onboard-page-1.gif',
+Tu es au bon endroit pour de nouvelles rencontres.''',
+        assetPath: 'assets/images/onboard-page-1.png',
       ),
       const Slide(
-          text: """Je vais te faire entrer dans un groupe de conversation.
+          text: """Tu vas entrer dans un groupe de conversation.
 
-Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
-          assetPath: 'assets/images/onboard-page-2.gif'),
-      CustomSlide(
-          assetPath: 'assets/images/onboard-page-3.gif',
+C'est le moment idéal pour partager tes points communs et tes activités favorites !""",
+          assetPath: 'assets/images/onboard-page-2.png'),
+      const CustomSlide(
+          assetPath: 'assets/images/onboard-page-3.png',
           child: Text.rich(
             TextSpan(
               children: [
-                const TextSpan(
-                    text: '''Tu ne seras que dans un groupe à la fois.
-          
-'''),
-                TextSpan(
-                    text: 'Swipe',
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold)),
-                const TextSpan(text: ' vers la gauche ou touche la '),
-                const WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
-                const TextSpan(
-                    text:
-                        ' en haut à droite de ton écran pour partir explorer un autre groupe.')
+                TextSpan(text: '''Pour changer de groupe, sélectionne la '''),
+                WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
+                TextSpan(text: ''' en haut à droite de ton écran.
+                    
+Tu ne pourras plus revenir en arrière, ici on préfère la qualité à la quantité.''')
               ],
             ),
             textAlign: TextAlign.center,
@@ -45,11 +36,11 @@ Tu y seras totalement anonyme, tu n'as pas besoin de créer un profil.""",
       const Slide(
           text: """Si un message t'offense, reste appuyé dessus.
 
-Tu pourras le supprimer, me le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
-          assetPath: 'assets/images/onboard-page-4.gif'),
+Tu pourras le supprimer, le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
+          assetPath: 'assets/images/onboard-page-4.png'),
       SlideWithButton(
         text: 'Hâte de te faire de nouveaux potes ?',
-        assetPath: 'assets/images/onboard-page-5.gif',
+        assetPath: 'assets/images/onboard-page-5.png',
         buttonText: "C'est parti !",
         onPressed: () {
           nextAppStatus();

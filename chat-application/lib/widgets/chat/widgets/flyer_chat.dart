@@ -34,8 +34,8 @@ class FlyerChat extends StatelessWidget {
       user: types.User(id: User().id!),
       theme: DefaultChatTheme(
           primaryColor: Theme.of(context).colorScheme.onPrimary,
-          inputBackgroundColor: Theme.of(context).colorScheme.secondary,
-          inputTextColor: Theme.of(context).colorScheme.onSecondary,
+          inputBackgroundColor: Theme.of(context).colorScheme.primary,
+          inputTextColor: Theme.of(context).colorScheme.onBackground,
           inputTextCursorColor: Theme.of(context).disabledColor),
     );
   }

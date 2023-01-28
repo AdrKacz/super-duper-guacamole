@@ -2,48 +2,50 @@ import 'package:flutter/material.dart';
 
 // ===== ===== =====
 // Colors
-const primary = Color(0xff9758f8);
-const secondary = Color(0xfff5f5f7);
+const primary = Color(0xffffde00);
+const secondary = Color(0xffd94556);
 
-const black = Color(0xff1f1c38);
-const grey = Color(0xff9e9cab);
+const customBlack = Color(0xff1f1c38);
+const customWhite = Color(0xfff5f5f7);
+const customGrey = Color(0xff9e9cab);
+
 const green = Colors.green;
 
 // ===== ===== =====
 // Themes
 final applicationTheme = ThemeData(
-  disabledColor: grey,
+  disabledColor: customGrey,
   colorScheme: ColorScheme(
     brightness: Brightness.light,
     // main action
-    primary: secondary,
-    onPrimary: primary,
+    primary: customWhite,
+    onPrimary: secondary,
     // other action
-    secondary: secondary,
-    onSecondary: black,
+    secondary: customWhite,
+    onSecondary: primary,
     // active status
     tertiary: green,
     // error
     error: Colors.white,
     onError: Colors.redAccent.shade100,
     // not used
-    background: Colors.transparent,
-    onBackground: Colors.transparent,
-    surface: Colors.transparent,
-    onSurface: Colors.transparent,
+    background: customWhite,
+    onBackground: customBlack,
+    surface: customWhite,
+    onSurface: customBlack,
   ),
   iconTheme: const IconThemeData(
-    color: primary,
+    color: secondary,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: primary,
-      foregroundColor: secondary,
+      backgroundColor: secondary,
+      foregroundColor: customWhite,
     ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
-      foregroundColor: primary,
+      foregroundColor: secondary,
     ),
   ),
 );

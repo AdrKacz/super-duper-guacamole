@@ -84,12 +84,12 @@ flutter:
   assets:
     - assets/images/error.gif
     - assets/images/load-group.gif
-    - assets/images/location-first-time.gif
-    - assets/images/onboard-page-1.gif
-    - assets/images/onboard-page-2.gif
-    - assets/images/onboard-page-3.gif
-    - assets/images/onboard-page-4.gif
-    - assets/images/onboard-page-5.gif
+    - assets/images/location-first-time.png
+    - assets/images/onboard-page-1.png
+    - assets/images/onboard-page-2.png
+    - assets/images/onboard-page-3.png
+    - assets/images/onboard-page-4.png
+    - assets/images/onboard-page-5.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
