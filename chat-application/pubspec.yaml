@@ -47,6 +47,7 @@ dependencies:
   asn1lib: ^1.2.2
   flutter_email_sender: ^5.1.0
   path_provider: ^2.0.11
+  go_router: ^6.0.1
 
 dev_dependencies:
   dependency_validator: ^3.0.0

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 // Question Tree
 class CitiesQuestion extends StatelessWidget {
@@ -9,6 +10,11 @@ class CitiesQuestion extends StatelessWidget {
   final List<String> cities;
 
   void showConfirmDialog(BuildContext context) async {
+    if (!Memory().boxUser.containsKey('hasSelectedCityOnce')) {
+      Memory().boxUser.put('hasSelectedCityOnce',
+          DateTime.now().millisecondsSinceEpoch.toString());
+      return;
+    }
     return await showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -17,9 +23,7 @@ class CitiesQuestion extends StatelessWidget {
                   'Ton choix sera pris en compte la prochaine fois que tu changes de groupe.'),
               actions: <Widget>[
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => (Navigator.pop(context)),
                   child: const Text('Ok'),
                 ),
               ]);
@@ -53,8 +57,9 @@ class CitiesQuestion extends StatelessWidget {
 
       // quit
       Future.delayed(const Duration(milliseconds: 250))
-          .then((value) => {Navigator.pop(context)})
-          .then((value) => {showConfirmDialog(context)});
+          .then((value) => (context.go('/chat')))
+          .then((value) => (Future.delayed(const Duration(milliseconds: 250))))
+          .then((value) => (showConfirmDialog(context)));
     }
   }
 

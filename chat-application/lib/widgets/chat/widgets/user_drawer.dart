@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
 import 'package:awachat/widgets/cities/cities_loader.dart';
@@ -9,9 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 // Drawer
 
 class UserDrawer extends StatelessWidget {
-  const UserDrawer({Key? key, required this.seeIntroduction}) : super(key: key);
-
-  final VoidCallback seeIntroduction;
+  const UserDrawer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -31,14 +30,7 @@ class UserDrawer extends StatelessWidget {
             leading: const Icon(Icons.question_mark_rounded),
             title: const Text('Choisis ta ville'),
             subtitle: const Text('Où seras ta prochaine sortie ?'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CitiesLoader(),
-                ),
-              );
-            },
+            onTap: () => (context.go('/cities')),
           ),
           const Divider(),
           ListTile(
@@ -46,7 +38,7 @@ class UserDrawer extends StatelessWidget {
             title: const Text(
               'Je veux revoir la présentation',
             ),
-            onTap: seeIntroduction,
+            onTap: () => (context.go('/onboarding')),
           ),
           ListTile(
             leading: const Icon(Icons.copyright),

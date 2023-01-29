@@ -1,6 +1,5 @@
-import 'package:awachat/main.dart';
-import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class Presentation extends StatelessWidget {
   const Presentation({Key? key}) : super(key: key);
@@ -43,7 +42,7 @@ Tu pourras le supprimer, le signaler, ou bien expulser du groupe la personne qui
         assetPath: 'assets/images/onboard-page-5.png',
         buttonText: "C'est parti !",
         onPressed: () {
-          Memory().boxUser.put('appStatus', Status.agreements.name);
+          context.go('/agreements');
         },
       ),
     ];

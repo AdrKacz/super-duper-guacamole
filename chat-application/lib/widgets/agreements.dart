@@ -1,4 +1,4 @@
-import 'package:awachat/main.dart';
+import 'package:go_router/go_router.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -24,9 +24,9 @@ class Agreements extends StatelessWidget {
                   url:
                       'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/agreements/end-user/fr',
                   onNextPressed: () {
-                    Memory().boxUser.put('hasSignedAgreements', 'true');
-                    Memory().boxUser.put('appStatus', Status.main.name);
-                    Navigator.popUntil(context, ModalRoute.withName('/'));
+                    Memory().boxUser.put('hasSignedAgreements',
+                        DateTime.now().millisecondsSinceEpoch.toString());
+                    context.go('/cities');
                   })),
         );
       },
