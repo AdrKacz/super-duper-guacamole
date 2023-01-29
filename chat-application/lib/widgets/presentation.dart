@@ -1,9 +1,9 @@
+import 'package:awachat/main.dart';
+import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 
 class Presentation extends StatelessWidget {
-  const Presentation({Key? key, required this.nextAppStatus}) : super(key: key);
-
-  final Function nextAppStatus;
+  const Presentation({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +43,7 @@ Tu pourras le supprimer, le signaler, ou bien expulser du groupe la personne qui
         assetPath: 'assets/images/onboard-page-5.png',
         buttonText: "C'est parti !",
         onPressed: () {
-          nextAppStatus();
+          Memory().boxUser.put('appStatus', Status.agreements.name);
         },
       ),
     ];

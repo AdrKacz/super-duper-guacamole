@@ -59,6 +59,7 @@ class UserDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Nous contacter'),
+            subtitle: const Text("Un problème, une suggestion, n'hésite pas !"),
             onTap: () async {
               if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
                 throw 'Could not launch https://awa-chat.me/contact/';

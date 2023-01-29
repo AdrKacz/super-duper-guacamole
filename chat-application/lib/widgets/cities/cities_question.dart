@@ -1,117 +1,97 @@
-import 'package:awachat/widgets/cities/confirm_page.dart';
-import 'package:awachat/widgets/cities/question_page.dart';
 import 'package:flutter/material.dart';
 import 'package:awachat/store/memory.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 // Question Tree
-class CitiesQuestion extends StatefulWidget {
+class CitiesQuestion extends StatelessWidget {
   const CitiesQuestion({Key? key, required this.cities}) : super(key: key);
 
   final List<String> cities;
 
-  @override
-  State<CitiesQuestion> createState() => _CitiesQuestionState();
-}
-
-class _CitiesQuestionState extends State<CitiesQuestion> {
-  List<String> pages = [];
-  final PageController controller = PageController();
-
-  dynamic readArgument(String arg, String pageId, String answerId,
-      {dynamic defaultArg}) {
-    return widget.yaml['nodes'][pageId]['answers'][answerId][arg] ??
-        widget.yaml['nodes'][pageId][arg] ??
-        widget.yaml['defaults'][arg] ??
-        defaultArg;
-  }
-
-  void Function(String) createValidateAnswer(String pageId) {
-    return (String answerId) {
-      if (!widget.yaml['nodes'].containsKey(pageId)) {
-        return;
-      }
-
-      if (Memory().boxAnswers.get(pageId) == answerId) {
-        // un-select
-        Memory().boxAnswers.delete(pageId);
-      } else {
-        // select
-        // answer question (recursive flatten)
-        String? currentPageId = pageId;
-        String? currentAnswerId = answerId;
-        while (currentPageId != null && currentAnswerId != null) {
-          // store answer
-          final bool isDiscriminating = readArgument(
-              'isDiscriminating', currentPageId, currentAnswerId,
-              defaultArg: false);
-
-          Memory().boxAnswers.put(
-              currentPageId, '${isDiscriminating ? '_' : ''}$currentAnswerId');
-
-          // move to next page
-          final String lastPageId = currentPageId;
-          currentPageId = readArgument('next', currentPageId, currentAnswerId);
-          if (currentPageId == null) {
-            continue;
-          }
-
-          // remove answers discriminating if going back
-          for (int i = pages.indexOf(currentPageId) + 1;
-              i >= 0 && i <= pages.indexOf(lastPageId);
-              i++) {
-            Memory().boxAnswers.put(
-                currentPageId,
-                (Memory().boxAnswers.get(pages[i]) ?? '')
-                    .replaceFirst(RegExp(r'^_'), ''));
-          }
-
-          // clear current question
-          Memory().boxAnswers.delete(currentPageId);
-
-          // read automatic answer if any
-          currentAnswerId =
-              readArgument('nextAnswer', lastPageId, currentAnswerId);
-        }
-        // animate to next page
-        Future.delayed(const Duration(milliseconds: 250), () {
-          // move to next page
-          setState(() {
-            pages.add(currentPageId ?? 'end');
-          });
-          controller.nextPage(
-              duration: const Duration(milliseconds: 500),
-              curve: Curves.easeInOut);
+  void showConfirmDialog(BuildContext context) async {
+    return await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+              title: const Text(
+                  'Ton choix sera pris en compte la prochaine fois que tu changes de groupe.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Ok'),
+                ),
+              ]);
         });
-      }
+  }
 
-      setState(() {});
-    };
+  ButtonStyle getButtonStyle(BuildContext context, bool isActive) {
+    if (isActive) {
+      return ElevatedButton.styleFrom(
+        minimumSize: const Size.fromHeight(100),
+        backgroundColor: Theme.of(context).colorScheme.onSecondary,
+        foregroundColor: Theme.of(context).colorScheme.onBackground,
+      );
+    } else {
+      return ElevatedButton.styleFrom(
+        minimumSize: const Size.fromHeight(100),
+        backgroundColor: Theme.of(context).colorScheme.background,
+        foregroundColor: Theme.of(context).colorScheme.onBackground,
+      );
+    }
+  }
+
+  void selectCity(
+      BuildContext context, String selectedCity, String currentCity) {
+    if (selectedCity == currentCity) {
+      // un-select
+      Memory().boxUser.delete('city');
+    } else {
+      // save
+      Memory().boxUser.put('city', selectedCity);
+
+      // quit
+      Future.delayed(const Duration(milliseconds: 250))
+          .then((value) => {Navigator.pop(context)})
+          .then((value) => {showConfirmDialog(context)});
+    }
   }
 
   @override
-  void initState() {
-    super.initState();
-    pages.add(widget.yaml['root'] ?? 'end');
-  }
+  Widget build(BuildContext context) => (SafeArea(
+      child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(children: [
+            const Text(
+              'Où est-ce que tu veux sortir ?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16),
+            ),
+            const Divider(
+              height: 24,
+            ),
+            Expanded(
+                child: ValueListenableBuilder(
+                    valueListenable: Hive.box<String>(Memory.user).listenable(),
+                    builder: (BuildContext context, Box box, widget) {
+                      final String currentCity = box.get('city') ?? '';
 
-  @override
-  Widget build(BuildContext context) {
-    return PageView.builder(
-      itemCount: pages.length,
-      physics: const NeverScrollableScrollPhysics(parent: PageScrollPhysics()),
-      controller: controller,
-      itemBuilder: (BuildContext context, int index) {
-        String pageId = pages[index];
-        if (pageId == 'end' || !widget.yaml['nodes'].containsKey(pageId)) {
-          return const ConfirmPage();
-        }
-
-        return QuestionPage(
-          questionId: pageId,
-          question: widget.yaml['nodes'][pageId],
-          onPressed: createValidateAnswer(pageId),
-        );
-      },
-    );
-  }
+                      return ListView(
+                          children: List<Widget>.from(cities.map((city) =>
+                              Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  child: ElevatedButton(
+                                      style: getButtonStyle(
+                                          context, city == currentCity),
+                                      onPressed: () {
+                                        selectCity(context, city, currentCity);
+                                      },
+                                      child: Text(
+                                        city,
+                                        textAlign: TextAlign.center,
+                                      ))))));
+                    }))
+          ]))));
 }

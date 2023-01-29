@@ -29,8 +29,8 @@ class _CitiesLoaderState extends State<CitiesLoader> {
 
     final dynamic yamlMap = loadYaml(response.body);
 
-    if (yamlMap is YamlMap) {
-      return yamlMap['cities'].toList();
+    if (yamlMap is YamlMap && yamlMap['cities'] is YamlList) {
+      return yamlMap['cities'].cast<String>();
     }
 
     return [];

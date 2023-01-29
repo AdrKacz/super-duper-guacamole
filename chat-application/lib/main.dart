@@ -8,6 +8,7 @@ import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/presentation.dart';
 import 'package:awachat/widgets/agreements.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,42 +30,34 @@ class MyApp extends StatefulWidget {
 enum Status { presentation, agreements, main }
 
 class _MyAppState extends State<MyApp> {
-  Status get status {
-    String statusName =
-        Memory().boxUser.get('appStatus') ?? Status.presentation.name;
-    for (final Status value in Status.values) {
-      if (statusName == value.name) {
-        return value;
-      }
-    }
-    return Status.presentation;
-  }
-
-  set status(Status newStatus) {
-    Memory().boxUser.put('appStatus', newStatus.name);
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (status == Status.agreements &&
-        Memory().boxUser.get('hasSignedAgreements') == 'true') {
-      status = Status.main;
-    }
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: applicationTheme,
-      home: Builder(
-        builder: (BuildContext context) {
+      home: ValueListenableBuilder(
+        valueListenable: Memory().boxUser.listenable(),
+        builder: (BuildContext context, Box box, widget) {
+          final String statusName = Memory().boxUser.get('appStatus') ?? '';
+
+          Status status = Status.presentation;
+          for (final Status value in Status.values) {
+            if (statusName == value.name) {
+              status = value;
+              break;
+            }
+          }
+
+          if (status == Status.agreements &&
+              Memory().boxUser.get('hasSignedAgreements') == 'true') {
+            Memory().boxUser.put('appStatus', Status.main.name);
+          }
+
           switch (status) {
             case Status.presentation:
-              return Presentation(nextAppStatus: () {
-                status = Status.agreements;
-              });
+              return const Presentation();
             case Status.agreements:
-              return Agreements(nextAppStatus: () {
-                status = Status.main;
-              });
+              return const Agreements();
             case Status.main:
               if (!Memory().boxUser.containsKey('city')) {
                 return const CitiesLoader();

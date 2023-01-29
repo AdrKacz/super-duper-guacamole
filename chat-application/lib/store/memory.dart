@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 class Memory {
   static const String groupUsers = 'groupUsers';
   static const String messages = 'messages';
+  static const String user = 'user';
 
   late final Box<String> boxUser;
   late final Box<String> boxAnswers;
@@ -25,14 +26,14 @@ class Memory {
     await Hive.initFlutter();
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
     boxUserProfiles = await Hive.openBox<Map>('userProfiles');
-    boxGroupUsers = await Hive.openBox<Map>('groupUsers');
-    boxMessages =
-        await Hive.openBox<String>('messages', keyComparator: ((key1, key2) {
+    boxGroupUsers = await Hive.openBox<Map>(Memory.groupUsers);
+    boxMessages = await Hive.openBox<String>(Memory.messages,
+        keyComparator: ((key1, key2) {
       int date1 = int.tryParse(key1) ?? 0;
       int date2 = int.tryParse(key2) ?? 0;
       return date2 - date1;
     }));
-    boxUser = await Hive.openBox<String>('user');
+    boxUser = await Hive.openBox<String>(Memory.user);
     boxAnswers = await Hive.openBox<String>('answers');
     rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
   }
