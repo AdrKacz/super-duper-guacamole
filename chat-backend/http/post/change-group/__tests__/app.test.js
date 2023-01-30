@@ -45,14 +45,14 @@ test('it creates group if no group found', async () => {
 
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ questions: { key: 'value' } })
+    body: JSON.stringify({ city: 'city' })
   })
 
   expect(findGroupModule.findGroup).toHaveBeenCalledTimes(1)
-  expect(findGroupModule.findGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set(), questions: { key: 'value' } } })
+  expect(findGroupModule.findGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set() } })
 
   expect(createGroupModule.createGroup).toHaveBeenCalledTimes(1)
-  expect(createGroupModule.createGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set(), questions: { key: 'value' } } })
+  expect(createGroupModule.createGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set() } })
 
   expect(response.statusCode).toBe(200)
   expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
@@ -65,11 +65,11 @@ test('it joins group if group found', async () => {
 
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ questions: { key: 'value' } })
+    body: JSON.stringify({ city: 'city' })
   })
 
   expect(joinGroupModule.joinGroup).toHaveBeenCalledTimes(1)
-  expect(joinGroupModule.joinGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set(), questions: { key: 'value' } }, group: { id: 'group-id' }, users: [{ id: 'id-1' }] })
+  expect(joinGroupModule.joinGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set() }, group: { id: 'group-id' }, users: [{ id: 'id-1' }] })
 
   expect(createGroupModule.createGroup).toHaveBeenCalledTimes(0)
 
