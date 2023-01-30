@@ -40,23 +40,23 @@ test('it returns empty object if no group', async () => {
     Items: []
   })
 
-  const { group, users } = await findGroup({ currentUser: { bubble: 'bubble', groupId: 'group-id', blockedUserIds: new Set() } })
+  const { group, users } = await findGroup({ currentUser: { city: 'city', groupId: 'group-id', blockedUserIds: new Set() } })
 
   expect(ddbMock).toHaveReceivedCommandTimes(QueryCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(QueryCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    IndexName: process.env.GROUPS_BUBBLE_INDEX_NAME,
+    IndexName: process.env.GROUPS_CITY_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :maximumGroupSize',
+    KeyConditionExpression: '#city = :city AND #groupSize < :maximumGroupSize',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
       '#id': 'id',
-      '#bubble': 'bubble',
+      '#city': 'city',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
-      ':bubble': 'bubble',
+      ':city': 'city',
       ':maximumGroupSize': parseInt(process.env.MAXIMUM_GROUP_SIZE, 10),
       ':oldGroupId': 'group-id'
     }
@@ -92,7 +92,7 @@ test('it returns valid group', async () => {
 
   sort.mockReturnThis()
 
-  const currentUser = { id: 'id', bubble: 'bubble', groupId: 'group-id', blockedUserIds: new Set() }
+  const currentUser = { id: 'id', city: 'city', groupId: 'group-id', blockedUserIds: new Set() }
   const { group, users } = await findGroup({ currentUser })
 
   expect(sort).toHaveBeenCalledTimes(1)
@@ -127,24 +127,24 @@ test('it returns empty object if no valid group', async () => {
 
   sort.mockReturnThis()
 
-  const currentUser = { id: 'id', bubble: 'bubble', blockedUserIds: new Set() }
+  const currentUser = { id: 'id', city: 'city', blockedUserIds: new Set() }
   const { group, users } = await findGroup({ currentUser })
 
   expect(ddbMock).toHaveReceivedCommandTimes(QueryCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(QueryCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    IndexName: process.env.GROUPS_BUBBLE_INDEX_NAME,
+    IndexName: process.env.GROUPS_CITY_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :maximumGroupSize',
+    KeyConditionExpression: '#city = :city AND #groupSize < :maximumGroupSize',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
       '#id': 'id',
-      '#bubble': 'bubble',
+      '#city': 'city',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
-      ':bubble': 'bubble',
+      ':city': 'city',
       ':maximumGroupSize': parseInt(process.env.MAXIMUM_GROUP_SIZE, 10),
       ':oldGroupId': ''
     }

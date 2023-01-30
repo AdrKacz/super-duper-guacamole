@@ -8,7 +8,6 @@ const { leaveGroup } = require('chat-backend-package/src/leave-group') // skipcq
 const { findGroup } = require('./src/find-group')
 const { createGroup } = require('./src/create-group')
 const { joinGroup } = require('./src/join-group')
-const { createBubble } = require('./src/create-bubble')
 
 // ===== ==== ====
 // EXPORTS
@@ -28,7 +27,7 @@ ${event.body}`)
 
   const currentUser = await getUser({ id: jwt.id })
   currentUser.blockedUserIds = new Set(body.blockedUserIds)
-  currentUser.questions = body.questions
+  currentUser.city = body.city
 
   try {
     await leaveGroup({ currentUser })
@@ -40,7 +39,6 @@ ${event.body}`)
     }
   }
 
-  currentUser.bubble = createBubble({ currentUser })
   const { group, users } = await findGroup({ currentUser })
   console.log('group', group)
   console.log('users', users)

@@ -212,10 +212,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   Future<void> changeGroup() async {
     await User().resetGroup();
 
+    final String city = Memory().boxUser.get('city')!;
+
     HttpConnection().post(path: 'change-group', body: {
-      'questions': Memory().boxAnswers.toMap(),
+      'city': city,
       'blockedUserIds': Memory().boxBlockedUsers.values.toList()
     });
+    Memory().boxUser.put('group-city', city);
 
     setState(() {
       status = Status.switchSent;

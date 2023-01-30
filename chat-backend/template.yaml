@@ -13,7 +13,7 @@ Globals:
         GROUPS_TABLE_NAME: !Ref GroupsTable
         USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
-        GROUPS_BUBBLE_INDEX_NAME: "BubbleIndex"
+        GROUPS_CITY_INDEX_NAME: "CityIndex"
         MINIMUM_GROUP_SIZE: !Ref MinimumGroupSize
         MAXIMUM_GROUP_SIZE: !Ref MaximumGroupSize
 
@@ -135,7 +135,7 @@ Resources:
           AttributeName: "id"
           AttributeType: "S"
         - 
-          AttributeName: "bubble"
+          AttributeName: "city"
           AttributeType: "S"
         - 
           AttributeName: "groupSize"
@@ -146,10 +146,10 @@ Resources:
           KeyType: "HASH"
       GlobalSecondaryIndexes:
         -
-          IndexName: "BubbleIndex"
+          IndexName: "CityIndex"
           KeySchema:
             -
-              AttributeName: "bubble"
+              AttributeName: "city"
               KeyType: "HASH"
             -
               AttributeName: "groupSize"

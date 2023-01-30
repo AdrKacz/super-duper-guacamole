@@ -36,7 +36,7 @@ test.each([
 ])('it creates group and assign user ($details)', async ({ blockedUserIds, expectedBannedUserIds }) => {
   uuid.v4.mockReturnValue('uuidv4')
 
-  await createGroup({ currentUser: { id: 'id', blockedUserIds, bubble: 'bubble' } })
+  await createGroup({ currentUser: { id: 'id', blockedUserIds, city: 'city' } })
 
   expect(ddbMock).toHaveReceivedCommandTimes(PutCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(PutCommand, {
@@ -44,7 +44,7 @@ test.each([
     Item: {
       id: 'uuidv4',
       isPublic: false,
-      bubble: 'bubble',
+      city: 'city',
       bannedUserIds: expectedBannedUserIds
     },
     ConditionExpression: 'attribute_not_exists(id)'
