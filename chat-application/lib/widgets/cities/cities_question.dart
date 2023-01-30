@@ -1,7 +1,9 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Question Tree
 class CitiesQuestion extends StatelessWidget {
@@ -83,20 +85,57 @@ class CitiesQuestion extends StatelessWidget {
                       final String currentCity = box.get('city') ?? '';
 
                       return ListView(
-                          children: List<Widget>.from(cities.map((city) =>
-                              Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                  child: ElevatedButton(
-                                      style: getButtonStyle(
-                                          context, city == currentCity),
-                                      onPressed: () {
-                                        selectCity(context, city, currentCity);
-                                      },
-                                      child: Text(
-                                        city,
-                                        textAlign: TextAlign.center,
-                                      ))))));
-                    }))
+                          children: List<Widget>.from([
+                        ...cities,
+                        'Je ne trouve pas ma ville'
+                      ].map((city) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: ElevatedButton(
+                                  style: getButtonStyle(
+                                      context, city == currentCity),
+                                  onPressed: () {
+                                    selectCity(context, city, currentCity);
+                                  },
+                                  child: Text(
+                                    city,
+                                    textAlign: TextAlign.center,
+                                  ))))));
+                    })),
+            const Divider(
+              height: 24,
+            ),
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(
+                  text: '''Envoie nous un message ''',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.bold),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () async {
+                      if (!await launchUrl(
+                          Uri.parse('https://awa-chat.me/contact/'))) {
+                        throw 'Could not launch https://awa-chat.me/contact/';
+                      }
+                    },
+                ),
+                const TextSpan(
+                  text: ''' si tu ne trouves pas ta ville.
+Choisis ''',
+                ),
+                TextSpan(
+                  text: '''Je ne trouve pas ma ville''',
+                  style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(
+                  text: ''' pour discuter en attendant !''',
+                ),
+              ]),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, height: 1.5),
+            )
           ]))));
 }
