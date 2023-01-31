@@ -1,2 +1,2 @@
-Correction de bugs:
-  - le nombre de personnes dans ton groupe n'étaient pas toujours à jour
+- Changement d'interface
+- Réduction des bugs
