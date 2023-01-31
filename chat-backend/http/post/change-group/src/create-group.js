@@ -20,7 +20,7 @@ exports.createGroup = async ({ currentUser }) => {
   const group = {
     id: groupId,
     isPublic: false,
-    bubble: currentUser.bubble,
+    city: currentUser.city,
     groupSize: 1
   }
 

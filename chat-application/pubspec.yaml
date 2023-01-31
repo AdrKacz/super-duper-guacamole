@@ -47,6 +47,7 @@ dependencies:
   asn1lib: ^1.2.2
   flutter_email_sender: ^5.1.0
   path_provider: ^2.0.11
+  go_router: ^6.0.1
 
 dev_dependencies:
   dependency_validator: ^3.0.0
@@ -82,14 +83,14 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/images/astronaut-suit.gif
-    - assets/images/chat.gif
-    - assets/images/error-lost-in-space.gif
-    - assets/images/launching.gif
-    - assets/images/outer-space.gif
-    - assets/images/taken.gif
-    - assets/images/decision-questions.gif
-    - assets/images/alien-science.gif
+    - assets/images/error.gif
+    - assets/images/load-group.gif
+    - assets/images/location-first-time.png
+    - assets/images/onboard-page-1.png
+    - assets/images/onboard-page-2.png
+    - assets/images/onboard-page-3.png
+    - assets/images/onboard-page-4.png
+    - assets/images/onboard-page-5.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

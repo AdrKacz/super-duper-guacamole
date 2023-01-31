@@ -279,8 +279,7 @@ void alertInfo(BuildContext context,
     String defaultAction = 'nothing',
     String acceptString = 'accept',
     String refuseString = 'refuse'}) async {
-  String? arg = Memory().boxUser.get(argString);
-  if (arg == null || arg == 'false') {
+  if (Memory().boxUser.containsKey(argString)) {
     switch (await showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -305,7 +304,9 @@ void alertInfo(BuildContext context,
               ]);
         })) {
       case 'confirmed':
-        Memory().boxUser.put(argString, 'true');
+        Memory()
+            .boxUser
+            .put(argString, DateTime.now().millisecondsSinceEpoch.toString());
         Navigator.pop(context, popAction);
         break;
       default:

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
-import 'package:awachat/network/notification_handler.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/widgets/switch_action_button.dart';
@@ -20,10 +19,7 @@ enum Status { idle, switchSent, chatting, error }
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
 class ChatHandler extends StatefulWidget {
-  const ChatHandler({Key? key, required this.goToPresentation})
-      : super(key: key);
-
-  final Function goToPresentation;
+  const ChatHandler({Key? key}) : super(key: key);
 
   @override
   State<ChatHandler> createState() => _ChatHandlerState();
@@ -216,10 +212,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   Future<void> changeGroup() async {
     await User().resetGroup();
 
+    final String city = Memory().boxUser.get('city')!;
+
     HttpConnection().post(path: 'change-group', body: {
-      'questions': Memory().boxAnswers.toMap(),
+      'city': city,
       'blockedUserIds': Memory().boxBlockedUsers.values.toList()
     });
+    Memory().boxUser.put('group-city', city);
 
     setState(() {
       status = Status.switchSent;
@@ -349,9 +348,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     }
 
     return Scaffold(
-        drawer: UserDrawer(seeIntroduction: () {
-          widget.goToPresentation();
-        }),
+        drawer: const UserDrawer(),
         appBar: AppBar(
             leading: Builder(
               builder: (BuildContext context) {

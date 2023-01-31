@@ -12,7 +12,7 @@ const { isGroupValid } = require('./is-group-valid')
 // CONSTANTS
 const {
   GROUPS_TABLE_NAME,
-  GROUPS_BUBBLE_INDEX_NAME,
+  GROUPS_CITY_INDEX_NAME,
   MAXIMUM_GROUP_SIZE: MAXIMUM_GROUP_SIZE_STRING
 } = process.env
 const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
@@ -25,18 +25,18 @@ exports.findGroup = async ({ currentUser }) => {
   // look for existing group
   const { Count: queryCount, Items: queryItems } = await dynamoDBDocumentClient.send(new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
-    IndexName: GROUPS_BUBBLE_INDEX_NAME,
+    IndexName: GROUPS_CITY_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#bubble = :bubble AND #groupSize < :maximumGroupSize',
+    KeyConditionExpression: '#city = :city AND #groupSize < :maximumGroupSize',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
       '#id': 'id',
-      '#bubble': 'bubble',
+      '#city': 'city',
       '#groupSize': 'groupSize'
     },
     ExpressionAttributeValues: {
-      ':bubble': currentUser.bubble,
+      ':city': currentUser.city,
       ':maximumGroupSize': MAXIMUM_GROUP_SIZE,
       ':oldGroupId': currentUser.groupId ?? ''
     }

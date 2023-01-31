@@ -211,7 +211,7 @@ process.env = Object.assign(process.env, {
   FIREBASE_SERVICE_ACCOUNT_KEY: '{}',
   JWK_PRIVATE_KEY: 'jwk-private-key',
   AUTHENTICATION_STAGE: 'authentication-stage',
-  GROUPS_BUBBLE_INDEX_NAME: 'groups-bubble-index-name',
+  GROUPS_CITY_INDEX_NAME: 'groups-city-index-name',
   MINIMUM_GROUP_SIZE: '3',
   MAXIMUM_GROUP_SIZE: '5',
   SEND_MESSAGE_TOPIC_ARN: 'send-message-topic-arn',

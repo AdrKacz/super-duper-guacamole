@@ -1,6 +1,7 @@
+import 'package:go_router/go_router.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/widgets/questions.dart';
+import 'package:awachat/widgets/cities/cities_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -9,9 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 // Drawer
 
 class UserDrawer extends StatelessWidget {
-  const UserDrawer({Key? key, required this.seeIntroduction}) : super(key: key);
-
-  final VoidCallback seeIntroduction;
+  const UserDrawer({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -29,16 +28,9 @@ class UserDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(Icons.question_mark_rounded),
-            title: const Text('Questions'),
-            subtitle: const Text("Quel est ton état d'esprit ?"),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const QuestionsLoader(),
-                ),
-              );
-            },
+            title: const Text('Choisis ta ville'),
+            subtitle: const Text('Où seras ta prochaine sortie ?'),
+            onTap: () => (context.go('/cities')),
           ),
           const Divider(),
           ListTile(
@@ -46,7 +38,7 @@ class UserDrawer extends StatelessWidget {
             title: const Text(
               'Je veux revoir la présentation',
             ),
-            onTap: seeIntroduction,
+            onTap: () => (context.go('/onboarding')),
           ),
           ListTile(
             leading: const Icon(Icons.copyright),
@@ -59,6 +51,7 @@ class UserDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('Nous contacter'),
+            subtitle: const Text("Un problème, une suggestion, n'hésite pas !"),
             onTap: () async {
               if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
                 throw 'Could not launch https://awa-chat.me/contact/';

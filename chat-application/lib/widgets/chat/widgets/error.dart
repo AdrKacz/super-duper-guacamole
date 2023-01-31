@@ -15,11 +15,12 @@ class ErrorPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Image.asset('assets/images/error-lost-in-space.gif'),
+                Image.asset('assets/images/error.gif'),
                 const SizedBox(
                   height: 24,
                 ),
-                const Text("Oups ! Il y a quelque chose d'anormal.",
+                const Text("""Oups ! Il y a quelque chose d'anormal.
+Tu peux fermer l'application et de la ré-ouvrir. N'oublie pas de vérifier ta connexion internet.""",
                     textAlign: TextAlign.center),
                 const SizedBox(
                   height: 24,
