@@ -134,30 +134,10 @@ Resources:
         - 
           AttributeName: "id"
           AttributeType: "S"
-        - 
-          AttributeName: "city"
-          AttributeType: "S"
-        - 
-          AttributeName: "groupSize"
-          AttributeType: "N"
       KeySchema:
         -
           AttributeName: "id"
           KeyType: "HASH"
-      GlobalSecondaryIndexes:
-        -
-          IndexName: "CityIndex"
-          KeySchema:
-            -
-              AttributeName: "city"
-              KeyType: "HASH"
-            -
-              AttributeName: "groupSize"
-              KeyType: "RANGE"
-          Projection:
-            NonKeyAttributes:
-              - "groupSize"
-            ProjectionType: "INCLUDE"
 
   ##### ##### #####
   ##### Http
