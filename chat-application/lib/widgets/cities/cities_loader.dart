@@ -18,7 +18,7 @@ class _CitiesLoaderState extends State<CitiesLoader> {
   Future<List<String>> readCities() async {
     http.Response response = await http
         .get(Uri.parse(
-            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/332-change-app-color-to-be-more-playful/configurations/cities/cities-v0.yml'))
+            'https://raw.githubusercontent.com/AdrKacz/super-duper-guacamole/main/configurations/cities/cities-v0.yml'))
         .catchError((e) {
       return http.Response('', 404);
     });
