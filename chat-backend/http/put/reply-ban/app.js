@@ -36,6 +36,11 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Reply to a ban request for an user in the group
+ * @param event.body.bannedid
+ * @param event.body.status
+ */
 const putReplyBan = async (event) => {
   console.log('Received event:', JSON.stringify(event, null, 2))
 

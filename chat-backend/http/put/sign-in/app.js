@@ -38,6 +38,12 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Sign in user
+ * @param event.body.id
+ * @param event.body.timestamp
+ * @param event.body.signature
+ */
 const putSignIn = async (event) => {
   const body = JSON.parse(event.body)
 

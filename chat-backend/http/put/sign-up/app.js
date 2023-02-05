@@ -29,6 +29,11 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Sign up user
+ * @param event.body.id
+ * @param event.body.publicKey
+ */
 const putSignUp = async (event) => {
   const body = JSON.parse(event.body)
 

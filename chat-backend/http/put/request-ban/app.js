@@ -21,6 +21,11 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Request to ban an user in the group
+ * @param event.body.bannedid
+ * @param event.body.messageid
+ */
 const putRequestBan = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const { id, groupId } = await getUser({ id: jwt.id })

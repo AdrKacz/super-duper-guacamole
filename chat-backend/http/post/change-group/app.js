@@ -23,6 +23,11 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Change the group of an user
+ * @param event.body.city
+ * @param event.body.blockedUserIds
+ */
 const postChangeGroup = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
 

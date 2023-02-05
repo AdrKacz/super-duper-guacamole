@@ -14,6 +14,9 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Delete user unread data
+ */
 const deleteUnreadData = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
 

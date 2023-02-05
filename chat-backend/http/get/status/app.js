@@ -24,6 +24,9 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Get user status
+ */
 const getStatus = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const { id, groupId } = await getUser({ id: jwt.id })

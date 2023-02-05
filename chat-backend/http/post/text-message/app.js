@@ -24,6 +24,10 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Send text message to group users
+ * @param event.body.message
+ */
 const postTextMessage = async (event) => {
   console.log(`Receives:
 Body:

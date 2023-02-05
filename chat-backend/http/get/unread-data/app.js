@@ -11,6 +11,9 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Get user unread data
+ */
 const getUnreadData = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const { unreadData } = await getUser({ id: jwt.id })

@@ -23,6 +23,10 @@ exports.handler = async (event) => {
   return response
 }
 
+/**
+ * Put firebase token in the user table
+ * @param event.body.token
+ */
 const putFirebaseToken = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const body = JSON.parse(event.body)
