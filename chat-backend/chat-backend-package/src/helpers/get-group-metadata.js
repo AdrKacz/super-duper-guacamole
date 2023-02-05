@@ -29,7 +29,7 @@ exports.getGroupMetadata = async ({ groupId }) => {
   }
 
   group.isPublic = typeof group.isPublic === 'boolean' ? group.isPublic : true
-  console.log('group', group)
+  console.log('group metadata', group)
 
   return group
 }

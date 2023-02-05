@@ -30,6 +30,18 @@ const { USERS_TABLE_NAME, GROUPS_TABLE_NAME } = process.env
 // ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(event, null, 2))
+  const response = await putReplyBan(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
+
+/**
+ * Reply to a ban request for an user in the group
+ * @param event.body.bannedid
+ * @param event.body.status
+ */
+const putReplyBan = async (event) => {
   console.log('Received event:', JSON.stringify(event, null, 2))
 
   const jwt = event.requestContext.authorizer.jwt.claims

@@ -17,10 +17,18 @@ const { joinGroup } = require('./src/join-group')
    * @param {Object} event
    */
 exports.handler = async (event) => {
-  console.log(`Receives:
-Body:
-${event.body}`)
+  console.log('Receives:', JSON.stringify(event, null, 2))
+  const response = await postChangeGroup(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
 
+/**
+ * Change the group of an user
+ * @param event.body.city
+ * @param event.body.blockedUserIds
+ */
+const postChangeGroup = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
 
   const body = JSON.parse(event.body)

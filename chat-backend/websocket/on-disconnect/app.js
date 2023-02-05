@@ -19,7 +19,7 @@ const { sendMessages } = require('chat-backend-package/src/send-messages') // sk
  * How to remediate it?
  */
 exports.handler = async (event) => {
-  console.log('Received event:', JSON.stringify(event, null, 2))
+  console.log('Receives:', JSON.stringify(event, null, 2))
 
   const { id, groupId } = await getUser({ id: event.requestContext.authorizer.id })
 

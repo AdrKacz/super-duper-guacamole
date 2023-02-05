@@ -32,6 +32,19 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(
  * @param {Object} event
  */
 exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(event, null, 2))
+  const response = await putSignIn(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
+
+/**
+ * Sign in user
+ * @param event.body.id
+ * @param event.body.timestamp
+ * @param event.body.signature
+ */
+const putSignIn = async (event) => {
   const body = JSON.parse(event.body)
 
   const id = body.id

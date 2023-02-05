@@ -20,8 +20,7 @@ const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 // ===== ==== ====
 // EXPORTS
 exports.findGroup = async ({ currentUser }) => {
-  console.log('find group for current user')
-  console.log(currentUser)
+  console.log('find group for current user', currentUser)
   // look for existing group
   const { Count: queryCount, Items: queryItems } = await dynamoDBDocumentClient.send(new QueryCommand({
     TableName: GROUPS_TABLE_NAME,

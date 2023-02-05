@@ -15,10 +15,19 @@ const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient)
 
 // ===== ==== ====
 // HANDLER
-exports.handler = async (event) => {
-  console.log('===== ===== ===== ===== ===== =====')
-  console.log(event)
 
+exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(event, null, 2))
+  const response = await putFirebaseToken(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
+
+/**
+ * Put firebase token in the user table
+ * @param event.body.token
+ */
+const putFirebaseToken = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const body = JSON.parse(event.body)
 
