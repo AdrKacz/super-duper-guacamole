@@ -15,8 +15,13 @@ const { USERS_TABLE_NAME } = process.env
 // ===== ==== ====
 // HANDLER
 exports.handler = async (event) => {
-  console.log('Received event:', JSON.stringify(event, null, 2))
+  console.log('Receives:', JSON.stringify(JSON.parse(event), null, 2))
+  const response = await putRequestBan(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
 
+const putRequestBan = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const { id, groupId } = await getUser({ id: jwt.id })
 
@@ -30,6 +35,7 @@ exports.handler = async (event) => {
   }
 
   const body = JSON.parse(event.body)
+  console.log('Received body:', JSON.stringify(body, null, 2))
 
   const bannedId = body.bannedid
   const messageId = body.messageid

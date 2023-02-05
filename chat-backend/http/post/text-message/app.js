@@ -18,6 +18,13 @@ const {
  * @param {string} event.message
  */
 exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(JSON.parse(event), null, 2))
+  const response = await postTextMessage(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
+
+const postTextMessage = async (event) => {
   console.log(`Receives:
 Body:
 ${event.body}`)

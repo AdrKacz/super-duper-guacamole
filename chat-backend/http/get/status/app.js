@@ -18,6 +18,13 @@ const { USERS_TABLE_NAME } = process.env
  * @param {Object} event
  */
 exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(JSON.parse(event), null, 2))
+  const response = await getStatus(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
+
+const getStatus = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
   const { id, groupId } = await getUser({ id: jwt.id })
 

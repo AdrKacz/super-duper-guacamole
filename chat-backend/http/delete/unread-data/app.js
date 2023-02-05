@@ -8,6 +8,13 @@ const { USERS_TABLE_NAME } = process.env
 // ===== ==== ====
 // EXPORTS
 exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(JSON.parse(event), null, 2))
+  const response = await deleteUnreadData(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
+}
+
+const deleteUnreadData = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
 
   await dynamoDBDocumentClient.send(new UpdateCommand({
