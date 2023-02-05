@@ -37,7 +37,7 @@ exports.sendMessage = async ({ user: { id, connectionId }, message, useSaveMessa
     Data: JSON.stringify(message)
   })
 
-  console.log(`send message to (${id}, ${connectionId})`)
+  console.log(`send message to (${id}, ${connectionId}): ${message}`)
   await apiGatewayManagementApiClient
     .send(postToConnectionCommand)
     .catch(async (err) => {

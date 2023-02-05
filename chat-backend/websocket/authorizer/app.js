@@ -8,7 +8,7 @@ const { AUTHENTICATION_STAGE } = process.env
 // ===== ==== ====
 // EXPORTS
 exports.handler = async (event, _context, callback) => {
-  console.log('Received event:', JSON.stringify(event, null, 2))
+  console.log('Receives:', JSON.stringify(event, null, 2))
 
   // Perform authorization to return the Allow policy for correct parameters and
   // the 'Unauthorized' error, otherwise.

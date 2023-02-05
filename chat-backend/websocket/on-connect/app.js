@@ -23,7 +23,7 @@ const DATE_STRING_OPTIONS = {
 // ===== ==== ====
 // EXPORTS
 exports.handler = async (event) => {
-  console.log('Received event:', JSON.stringify(event, null, 2))
+  console.log('Receives:', JSON.stringify(event, null, 2))
 
   const connectionId = event.requestContext.connectionId
 
