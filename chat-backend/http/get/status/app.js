@@ -44,7 +44,7 @@ const getStatus = async (event) => {
         }))
       }
     } catch (error) {
-      console.log(error)
+      console.log(id, error)
       if (error.message === `group (${groupId}) is not defined`) {
         await dynamoDBDocumentClient.send(new UpdateCommand({
           TableName: USERS_TABLE_NAME,

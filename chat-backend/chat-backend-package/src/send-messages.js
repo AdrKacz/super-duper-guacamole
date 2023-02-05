@@ -27,5 +27,5 @@ exports.sendMessages = async ({ users, message, useSaveMessage = true }) => {
 
   await Promise.allSettled(users.map((user) => (
     sendMessage({ user, message, useSaveMessage })
-  ))).then((results) => (console.log(results)))
+  ))).then((results) => (console.log('send messages', results)))
 }

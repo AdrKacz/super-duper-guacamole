@@ -18,7 +18,7 @@ exports.leaveGroup = async ({ currentUser }) => {
   if (typeof currentUser.groupId !== 'string') {
     return
   }
-  console.log('leave group', currentUser.groupId)
+  console.log('leave group', currentUser)
 
   // remove user from group
   await dynamoDBDocumentClient.send(new UpdateCommand({
@@ -54,7 +54,7 @@ exports.leaveGroup = async ({ currentUser }) => {
   const usersWithoutCurrentUser = users.filter(({ id }) => (currentUser.id !== id))
 
   if (usersWithoutCurrentUser.length <= 1) {
-    console.log('leave and delete group', group)
+    // leave and delete group
     // delete group
     await Promise.all([
       // delete group
@@ -73,10 +73,10 @@ exports.leaveGroup = async ({ currentUser }) => {
           body: 'Reconnecte toi pour demander un nouveau groupe ...'
         }
       })
-    ]).then((results) => (console.log(results)))
-      .catch((error) => (console.error(error)))
+    ]).then((results) => (console.log('leave and delete group', group, results)))
+      .catch((error) => (console.error('leave and delete group', group, error)))
   } else {
-    console.log('leave group', group)
+    // leave group
     // update group
     await Promise.all([
       // update group
@@ -97,7 +97,7 @@ exports.leaveGroup = async ({ currentUser }) => {
           body: 'Quelqu\'un a quitté le groupe ...'
         }
       })
-    ]).then((results) => (console.log(results)))
-      .catch((error) => (console.error(error)))
+    ]).then((results) => (console.log('leave group', group, results)))
+      .catch((error) => (console.error('leave group', group, error)))
   }
 }
