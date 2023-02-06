@@ -5,6 +5,7 @@ class Memory {
   static const String groupUsers = 'groupUsers';
   static const String messages = 'messages';
   static const String user = 'user';
+  static const String blockedUsers = 'blockedUsers';
 
   late final Box<String> boxUser;
   late final Box<String> boxAnswers;
@@ -26,7 +27,7 @@ class Memory {
     await Hive.initFlutter();
 
     // open boxes
-    boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
+    boxBlockedUsers = await Hive.openBox<String>(Memory.blockedUsers);
     boxGroupUsers = await Hive.openBox<Map>(Memory.groupUsers);
     boxMessages = await Hive.openBox<String>(Memory.messages,
         keyComparator: ((key1, key2) {
