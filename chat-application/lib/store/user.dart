@@ -52,17 +52,6 @@ class User {
     Memory().boxMessages.clear();
     // clear users
     Memory().boxGroupUsers.clear();
-    // clear profile (keep your profile)
-    Memory().boxUser.delete('hasSharedProfile');
-    final Map? profile = Memory().boxUserProfiles.get(id);
-
-    await Memory()
-        .boxUserProfiles
-        .clear(); // need to await to not be sure you repopulate on something new
-
-    if (profile != null) {
-      Memory().boxUserProfiles.put(id, profile);
-    }
 
     await Memory().boxUser.delete('groupId');
   }

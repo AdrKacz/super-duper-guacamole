@@ -10,7 +10,6 @@ class Memory {
   late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
-  late final Box<Map> boxUserProfiles;
   late final Box<Map> boxGroupUsers;
   late final Box<String> rsaKeyPairBox;
 
@@ -23,9 +22,11 @@ class Memory {
   Memory._internal();
 
   Future<void> init() async {
+    // init flutter
     await Hive.initFlutter();
+
+    // open boxes
     boxBlockedUsers = await Hive.openBox<String>('blockedUsers');
-    boxUserProfiles = await Hive.openBox<Map>('userProfiles');
     boxGroupUsers = await Hive.openBox<Map>(Memory.groupUsers);
     boxMessages = await Hive.openBox<String>(Memory.messages,
         keyComparator: ((key1, key2) {
@@ -44,7 +45,6 @@ class Memory {
       boxAnswers.clear(),
       boxMessages.clear(),
       boxBlockedUsers.clear(),
-      boxUserProfiles.clear(),
       boxGroupUsers.clear(),
       rsaKeyPairBox.clear(),
     ]);
