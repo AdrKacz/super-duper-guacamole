@@ -34,7 +34,7 @@ const putRequestBan = async (event) => {
     console.log(`user (${id}) doesn't have a group`)
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you don\'t have a group' })
     }
   }
@@ -54,7 +54,7 @@ const putRequestBan = async (event) => {
     console.log(`user (${id}) tried to ban itself`)
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you can\'t ban yourself' })
     }
   }
@@ -70,7 +70,7 @@ const putRequestBan = async (event) => {
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group`)
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you are not in the same group as the user banned' })
     }
   }
@@ -140,7 +140,7 @@ SET #confirmationRequired = :confirmationRequired
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id })
   }
 }

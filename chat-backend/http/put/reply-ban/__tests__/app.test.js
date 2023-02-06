@@ -50,7 +50,7 @@ test('it returns if no group', async () => {
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ error: 'you don\'t have a group' })
   }))
 })
@@ -94,7 +94,7 @@ test.each([
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ error: 'you are not in the same group as the user banned or banned user is not in a ban vote' })
   }))
 
@@ -127,7 +127,7 @@ test.each([
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ error: `you cannot vote against (${bannedUser.id})` })
   }))
 })
@@ -162,7 +162,7 @@ test.each([
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id' })
   }))
 
@@ -213,7 +213,7 @@ test('it notifies user if the vote ended with a confirmation', async () => {
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id' })
   }))
 
@@ -291,7 +291,7 @@ DELETE #banVotingUsers :id
 
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id' })
   }))
 

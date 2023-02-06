@@ -35,7 +35,7 @@ test('it throws error if leave group failed', async () => {
   expect(leaveGroupModule.leaveGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', groupId: 'group-id', blockedUserIds: new Set() } })
 
   expect(response.statusCode).toBe(400)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'leave group rejected' }))
 })
 
@@ -55,7 +55,7 @@ test('it creates group if no group found', async () => {
   expect(createGroupModule.createGroup).toHaveBeenCalledWith({ currentUser: { id: 'id', city: 'city', blockedUserIds: new Set() } })
 
   expect(response.statusCode).toBe(200)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ id: 'id' }))
 })
 
@@ -74,6 +74,6 @@ test('it joins group if group found', async () => {
   expect(createGroupModule.createGroup).toHaveBeenCalledTimes(0)
 
   expect(response.statusCode).toBe(200)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ id: 'id' }))
 })

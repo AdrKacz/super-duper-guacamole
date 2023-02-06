@@ -43,7 +43,7 @@ test.each([
   }
 
   expect(response.statusCode).toBe(200)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ id: expectedId, group: expectedGroup, users: expectedUsers }))
 })
 

@@ -49,7 +49,7 @@ test('it returns if no group', async () => {
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ error: 'you don\'t have a group' })
   }))
 })
@@ -76,7 +76,7 @@ test('it rejects if user id and banned user id are the same', async () => {
 
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ error: 'you can\'t ban yourself' })
   }))
 })
@@ -98,7 +98,7 @@ test.each([
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ error: 'you are not in the same group as the user banned' })
   }))
 
@@ -128,7 +128,7 @@ test('it updates banned user if no new user in the vote', async () => {
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id' })
   }))
 
@@ -173,7 +173,7 @@ test('it updates banned user if new user in the vote', async () => {
   // expect
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id' })
   }))
 

@@ -46,7 +46,7 @@ const putFirebaseToken = async (event) => {
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: jwt.id })
   }
 }

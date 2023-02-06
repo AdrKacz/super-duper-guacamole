@@ -23,7 +23,7 @@ test('it updates firebase token', async () => {
 
   expect(JSON.stringify(response)).toBe(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id' })
   }))
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {

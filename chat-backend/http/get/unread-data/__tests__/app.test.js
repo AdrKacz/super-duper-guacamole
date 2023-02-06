@@ -15,7 +15,7 @@ test('it reads unread data', async () => {
 
   expect(JSON.stringify(response)).toBe(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id', unreadData: ['unread-data'] })
   }))
 })
@@ -28,7 +28,7 @@ test('it returns default unread data', async () => {
 
   expect(JSON.stringify(response)).toBe(JSON.stringify({
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: 'id', unreadData: [] })
   }))
 })

@@ -43,7 +43,7 @@ const putSignUp = async (event) => {
   if (typeof id !== 'string' || typeof publicKey === 'undefined') {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'id and publicKey must be defined with correct type' })
     }
   }

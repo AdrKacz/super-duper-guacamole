@@ -42,7 +42,7 @@ const postChangeGroup = async (event) => {
   } catch (error) {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: error.message })
     }
   }
@@ -59,7 +59,7 @@ const postChangeGroup = async (event) => {
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id: currentUser.id })
   }
 }
