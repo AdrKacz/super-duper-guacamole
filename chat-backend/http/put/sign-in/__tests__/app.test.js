@@ -44,7 +44,7 @@ test.each([
   })
 
   expect(response.statusCode).toBe(400)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'id, timestamp and signature must be defined with correct type' }))
 })
 
@@ -55,7 +55,7 @@ test('it rejects on invalid timestamps', async () => {
   })
 
   expect(response.statusCode).toBe(401)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'timestamp is not valid' }))
 })
 
@@ -72,7 +72,7 @@ test('it rejects on banned user', async () => {
   })
 
   expect(response.statusCode).toBe(403)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'you are banned' }))
 })
 
@@ -101,7 +101,7 @@ test('it rejects on bad signature user', async () => {
   expect(verifier.verify).toHaveBeenCalledWith('public-key', Buffer.from('signature'), 'base64')
 
   expect(response.statusCode).toBe(403)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'signature is not valid' }))
 })
 
@@ -133,6 +133,6 @@ test('it returns jwt', async () => {
   })
 
   expect(response.statusCode).toBe(200)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ jwt: 'jwt-token' }))
 })

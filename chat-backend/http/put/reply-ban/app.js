@@ -50,7 +50,7 @@ const putReplyBan = async (event) => {
   if (typeof groupId !== 'string') {
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you don\'t have a group' })
     }
   }
@@ -76,7 +76,7 @@ const putReplyBan = async (event) => {
     console.log(`user (${id}) and banned user (${bannedUser.id}) are not in the same group or confirmationRequired is not defined (not in an active ban)`)
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you are not in the same group as the user banned or banned user is not in a ban vote' })
     }
   }
@@ -91,7 +91,7 @@ const putReplyBan = async (event) => {
     console.log(banVotingUsers)
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: `you cannot vote against (${bannedUserId})` })
     }
   }
@@ -196,7 +196,7 @@ DELETE #banVotingUsers :id
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id })
   }
 }

@@ -21,7 +21,7 @@ bool isTokenExpired(String token) {
       return false;
     }
   } catch (e) {
-    print('is token expire error: $e');
+    print('is token expired error: $e');
   }
   return true;
 }

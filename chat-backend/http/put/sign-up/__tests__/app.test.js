@@ -32,7 +32,7 @@ test.each([
   })
 
   expect(response.statusCode).toBe(400)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'id and publicKey must be defined with correct type' }))
 })
 

@@ -39,7 +39,7 @@ ${event.body}`)
   if (typeof message !== 'string') {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you didn\'t send a message' })
     }
   }
@@ -51,7 +51,7 @@ ${event.body}`)
   if (typeof groupId !== 'string') {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you don\'t have a group' })
     }
   }
@@ -61,7 +61,7 @@ ${event.body}`)
   if (!group.isPublic) {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you don\'t have a group yet' })
     }
   }
@@ -79,7 +79,7 @@ ${event.body}`)
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id, group, message })
   }
 }

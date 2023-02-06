@@ -18,7 +18,7 @@ test('it rejects when no message', async () => {
   })
 
   expect(response.statusCode).toBe(400)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'you didn\'t send a message' }))
 })
 
@@ -34,7 +34,7 @@ test('it rejects if user has no group', async () => {
   expect(chatBackendPackageModule.getUser).toHaveBeenCalledWith({ id: 'id' })
 
   expect(response.statusCode).toBe(400)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'you don\'t have a group' }))
 })
 
@@ -51,7 +51,7 @@ test('it rejects if user group is private', async () => {
   expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id' })
 
   expect(response.statusCode).toBe(400)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ error: 'you don\'t have a group yet' }))
 })
 
@@ -77,6 +77,6 @@ test('it sends message to group', async () => {
   })
 
   expect(response.statusCode).toBe(200)
-  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json' }))
+  expect(JSON.stringify(response.headers)).toBe(JSON.stringify({ 'Content-Type': 'application/json; charset=utf-8' }))
   expect(response.body).toBe(JSON.stringify({ id: 'id-1', group: { id: 'group-id', isPublic: true }, message: 'message' }))
 })

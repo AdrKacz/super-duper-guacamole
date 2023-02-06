@@ -54,7 +54,7 @@ const putSignIn = async (event) => {
   if (typeof id !== 'string' || typeof timestamp !== 'number' || typeof signature === 'undefined') {
     return {
       statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'id, timestamp and signature must be defined with correct type' })
     }
   }
@@ -63,7 +63,7 @@ const putSignIn = async (event) => {
     // prevent repeat attack
     return {
       statusCode: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'timestamp is not valid' })
     }
   }
@@ -85,7 +85,7 @@ const putSignIn = async (event) => {
   if (typeof isBanned === 'boolean' && isBanned) {
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'you are banned' })
     }
   }
@@ -100,7 +100,7 @@ const putSignIn = async (event) => {
   if (!isVerified) {
     return {
       statusCode: 403,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ error: 'signature is not valid' })
     }
   }
@@ -120,7 +120,7 @@ const putSignIn = async (event) => {
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ jwt })
   }
 }
