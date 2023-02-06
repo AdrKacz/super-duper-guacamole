@@ -6,6 +6,7 @@ class Memory {
   static const String messages = 'messages';
   static const String user = 'user';
   static const String blockedUsers = 'blockedUsers';
+  static const String rsaKeyPair = 'rsaKeyPair';
 
   late final Box<String> boxUser;
   late final Box<String> boxMessages;
@@ -35,7 +36,7 @@ class Memory {
       return date2 - date1;
     }));
     boxUser = await Hive.openBox<String>(Memory.user);
-    rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
+    rsaKeyPairBox = await Hive.openBox<String>(Memory.rsaKeyPair);
   }
 
   Future<void> clear() async {
