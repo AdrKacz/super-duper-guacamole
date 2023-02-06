@@ -8,7 +8,6 @@ class Memory {
   static const String blockedUsers = 'blockedUsers';
 
   late final Box<String> boxUser;
-  late final Box<String> boxAnswers;
   late final Box<String> boxMessages;
   late final Box<String> boxBlockedUsers;
   late final Box<Map> boxGroupUsers;
@@ -36,14 +35,12 @@ class Memory {
       return date2 - date1;
     }));
     boxUser = await Hive.openBox<String>(Memory.user);
-    boxAnswers = await Hive.openBox<String>('answers');
     rsaKeyPairBox = await Hive.openBox<String>('rsaKeyPair');
   }
 
   Future<void> clear() async {
     await Future.wait([
       boxUser.clear(),
-      boxAnswers.clear(),
       boxMessages.clear(),
       boxBlockedUsers.clear(),
       boxGroupUsers.clear(),
