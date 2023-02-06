@@ -42,9 +42,6 @@ class _CitiesLoaderState extends State<CitiesLoader> {
 
     // read cities
     futureCities = readCities();
-
-    // re-init answers
-    Memory().boxAnswers.clear();
   }
 
   @override

@@ -229,46 +229,6 @@ ${e.text}
   }
 }
 
-Future<void> mailToReportPhoto(String userId) async {
-  final Map profile = Memory().boxUserProfiles.get(userId) ?? {};
-
-  if (profile['picture'] is! Uint8List) {
-    return;
-  }
-
-  Directory documentDirectory = await getApplicationDocumentsDirectory();
-  final File imageJpg =
-      await File(join(documentDirectory.path, 'reported-image.jpg'))
-          .writeAsBytes(profile['picture']);
-
-  final String body = """
-  --- --- ---
-  Ajoute tes remarques ici.
-  --- --- ---
-
-  L'utilisateur
-  ${User().id}
-  signale le comportement de l'utilisateur
-  $userId
-
-  La photo signalé est en pièce jointe.
-""";
-  final Email email = Email(
-    body: body,
-    subject: 'Signalement Photo',
-    recipients: ['awachat.app@gmail.com'],
-    attachmentPaths: [imageJpg.path],
-  );
-
-  try {
-    await FlutterEmailSender.send(email);
-  } catch (e) {
-    print('Cannot send email: $e');
-  }
-
-  imageJpg.deleteSync();
-}
-
 // === === ===
 // Show Alert first seen
 
