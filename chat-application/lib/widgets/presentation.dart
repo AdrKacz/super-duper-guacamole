@@ -23,20 +23,33 @@ C'est le moment idéal pour partager tes points communs et tes activités favori
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: '''Pour changer de groupe, sélectionne la '''),
+                TextSpan(text: '''Le moment venu, appuie sur la'''),
                 WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(text: ''' en haut à droite de ton écran.
-                    
-Tu ne pourras plus revenir en arrière, ici on préfère la qualité à la quantité.''')
+                        
+Tu quitteras ton groupe et en rejoindras un nouveau.''')
               ],
             ),
             textAlign: TextAlign.center,
           )),
-      const Slide(
-          text: """Si un message t'offense, reste appuyé dessus.
-
-Tu pourras le supprimer, le signaler, ou bien expulser du groupe la personne qui l'a écrit.""",
-          assetPath: 'assets/images/onboard-page-4.png'),
+      CustomSlide(
+          assetPath: 'assets/images/onboard-page-4.png',
+          child: Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: '''Si un message t'offense, '''),
+                TextSpan(
+                    text: '''reste appuyé''',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimary)),
+                const TextSpan(text: ''' dessus.
+                
+Tu pourras le supprimer, le signaler, ou bien expulser du groupe la personne qui l'a écrit.''')
+              ],
+            ),
+            textAlign: TextAlign.center,
+          )),
       SlideWithButton(
         text: 'Hâte de te faire de nouveaux potes ?',
         assetPath: 'assets/images/onboard-page-5.png',
