@@ -13,9 +13,8 @@ class User {
   String? get id => Memory().boxUser.get('id');
 
   String? get groupId => Memory().boxUser.get('groupId');
-  bool get hasGroup => Memory().boxUser.containsKey('groupId');
 
-  void updateGroupId(String groupId) async {
+  Future<void> updateGroupId(String groupId) async {
     await resetGroup();
 
     Memory().boxUser.put('groupId', groupId);
@@ -48,18 +47,17 @@ class User {
   }
 
   Future<void> resetGroup() async {
-    // clear messages
-    Memory().boxMessages.clear();
-    // clear users
-    Memory().boxGroupUsers.clear();
-
-    await Memory().boxUser.delete('groupId');
+    await Future.wait([
+      Memory().boxMessages.clear(), // clear messages
+      Memory().boxGroupUsers.clear(), // clear users
+      Memory().boxUser.delete('groupId'),
+    ]);
   }
 
   Future<void> updateGroupUsers(
       Map<String, Map<dynamic, dynamic>> groupUsers) async {
     await Memory().boxGroupUsers.clear();
-    Memory().boxGroupUsers.putAll(groupUsers);
+    await Memory().boxGroupUsers.putAll(groupUsers);
   }
 
   void updateGroupUserArgument(String id, String key, dynamic value) {

@@ -260,7 +260,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     // update group if necessary
     if (userStatus['group']['id'] != User().groupId) {
       // doesn't have the correct group
-      User().updateGroupId(userStatus['group']['id']);
+      await User().updateGroupId(userStatus['group']['id']);
     }
 
     final Map<String, Map<dynamic, dynamic>> groupUsers = {};
