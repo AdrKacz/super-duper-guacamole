@@ -38,6 +38,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     _channel = WebSocketChannel.connect(Uri.parse(
         '${const String.fromEnvironment('WEBSOCKET_ENDPOINT')}?token=${Memory().boxUser.get('jwt')}'));
+
     setState(() {
       connectionStatus = ConnectionStatus.connected;
     });
