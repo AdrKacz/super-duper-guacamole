@@ -1,6 +1,7 @@
 import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/widgets/chat/main.dart';
+import 'package:awachat/widgets/chat/widgets/error.dart';
 import 'package:awachat/widgets/chat/widgets/flyer_chat.dart';
 import 'package:awachat/widgets/chat/widgets/glass.dart';
 import 'package:awachat/widgets/chat/widgets/switch_group.dart';
@@ -18,12 +19,14 @@ class ChatPage extends StatelessWidget {
     required this.status,
     required this.connectionStatus,
     required this.onReportMessage,
+    required this.onRefresh,
   }) : super(key: key);
 
   final Status status;
   final ConnectionStatus connectionStatus;
 
   final void Function(BuildContext, types.Message) onReportMessage;
+  final void Function() onRefresh;
 
   void sendMessage(types.PartialText partialText) {
     final int createdAt = DateTime.now().millisecondsSinceEpoch;
@@ -71,6 +74,8 @@ class ChatPage extends StatelessWidget {
                 });
 
             break;
+          case Status.error:
+            child = ErrorPage(refresh: onRefresh);
         }
         switch (connectionStatus) {
           case ConnectionStatus.disconnected:

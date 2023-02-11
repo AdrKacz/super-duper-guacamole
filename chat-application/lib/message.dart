@@ -1,17 +1,12 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_email_sender/flutter_email_sender.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:math';
 import 'dart:convert';
 // ignore: depend_on_referenced_packages
-import 'package:path/path.dart';
 
 String randomString() {
   final random = Random.secure();

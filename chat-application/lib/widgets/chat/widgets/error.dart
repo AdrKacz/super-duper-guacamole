@@ -8,34 +8,27 @@ class ErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(24.0),
+      child: Center(
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Image.asset('assets/images/error.gif'),
-                const SizedBox(
-                  height: 24,
-                ),
-                const Text("""Oups ! Il y a quelque chose d'anormal.
-Tu peux fermer l'application et de la ré-ouvrir. N'oublie pas de vérifier ta connexion internet.""",
-                    textAlign: TextAlign.center),
-                const SizedBox(
-                  height: 24,
-                ),
-                IconButton(
-                  onPressed: refresh,
-                  icon: const Icon(
-                    Icons.refresh,
-                  ),
-                ),
-              ],
-            ),
+        child: Column(children: <Widget>[
+          Image.asset('assets/images/error.gif'),
+          const SizedBox(
+            height: 12,
           ),
-        ),
-      ),
-    );
+          const Text(
+              '''Impossible de se connecter, si le problème persiste ferme et rouvre l'application''',
+              textAlign: TextAlign.center),
+          const Divider(height: 48),
+          IconButton(
+            onPressed: refresh,
+            icon: const Icon(
+              Icons.refresh,
+            ),
+          )
+        ]),
+      )),
+    ));
   }
 }

@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:awachat/store/memory.dart';
@@ -73,7 +72,6 @@ class HttpConnection {
       required String path,
       int n = 0}) async {
     try {
-      throw 'Unknown';
       if (isTokenExpired(Memory().boxUser.get('jwt') ?? '')) {
         await signIn();
       }
@@ -93,7 +91,7 @@ class HttpConnection {
         await signIn();
         return _request(getResponse: getResponse, path: path, n: n + 1);
       } else {
-        rethrow;
+        return {}; // TODO: change route from here, for now only updateStatus benefits it
       }
     }
   }

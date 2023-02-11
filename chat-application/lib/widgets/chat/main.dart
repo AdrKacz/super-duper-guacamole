@@ -14,7 +14,7 @@ import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-enum Status { idle, switchSent, chatting }
+enum Status { idle, switchSent, chatting, error }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -241,6 +241,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   Future<void> updateStatus() async {
     Map userStatus = await HttpConnection().get(path: 'status');
 
+    if (userStatus.isEmpty) {
+      setState(() {
+        status = Status.error;
+      });
+      return;
+    }
+
     if (userStatus['group'] == null) {
       // you don't have a group and didn't ask for
       changeGroup();
@@ -377,6 +384,13 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
           status: status,
           connectionStatus: connectionStatus,
           onReportMessage: reportMessage,
+          onRefresh: () {
+            _channel?.sink.close();
+            initConnection();
+            setState(() {
+              status = Status.idle;
+            });
+          },
         ));
   }
 
