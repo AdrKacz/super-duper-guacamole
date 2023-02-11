@@ -357,41 +357,35 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     return Scaffold(
         drawer: const UserDrawer(),
         appBar: AppBar(
-            leading: Builder(
-              builder: (BuildContext context) {
-                return InkWell(
+            leading: Builder(builder: (BuildContext context) {
+              return InkWell(
                   onTap: () {
                     Scaffold.of(context).openDrawer();
                   },
                   child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.transparent,
-                      backgroundImage: User.getUserImageProvider(User().id),
-                    ),
-                  ),
-                );
-              },
-            ),
+                      padding: const EdgeInsets.all(2),
+                      child: CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          backgroundImage:
+                              User.getUserImageProvider(User().id))));
+            }),
             centerTitle: true,
             title: const UsersList(),
             actions: <Widget>[
               SwitchActionButton(
-                  isChatting: status == Status.chatting,
-                  onPressed: changeGroup),
+                  isChatting: status == Status.chatting, onPressed: changeGroup)
             ]),
         body: ChatPage(
-          status: status,
-          connectionStatus: connectionStatus,
-          onReportMessage: reportMessage,
-          onRefresh: () {
-            _channel?.sink.close();
-            initConnection();
-            setState(() {
-              status = Status.idle;
-            });
-          },
-        ));
+            status: status,
+            connectionStatus: connectionStatus,
+            onReportMessage: reportMessage,
+            onRefresh: () {
+              _channel?.sink.close();
+              initConnection();
+              setState(() {
+                status = Status.idle;
+              });
+            }));
   }
 
   @override
