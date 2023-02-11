@@ -33,13 +33,12 @@ types.TextMessage decodeMessage(String encodedMessage) {
         jsonMessage['id'] is String &&
         jsonMessage['text'] is String) {
       return types.TextMessage(
-        status: getStatusFromName(jsonMessage['status'],
-            defaultStatus: types.Status.delivered),
-        author: types.User(id: jsonMessage['author']),
-        createdAt: jsonMessage['createdAt'],
-        id: jsonMessage['id'],
-        text: jsonMessage['text'],
-      );
+          status: getStatusFromName(jsonMessage['status'],
+              defaultStatus: types.Status.delivered),
+          author: types.User(id: jsonMessage['author']),
+          createdAt: jsonMessage['createdAt'],
+          id: jsonMessage['id'],
+          text: jsonMessage['text']);
     } else {
       //TODO: handle errors
       throw 'missing value in ($jsonMessage) (expect author, createdAt, id, and text)';
@@ -69,61 +68,55 @@ Future<String?> reportActionOnMessage(BuildContext context) async {
       context: context,
       builder: (BuildContext context) {
         return SimpleDialog(
-          title: const Text('Que souhaites-tu faire avec ce message ?'),
-          children: <Widget>[
-            SimpleDialogOption(
-              onPressed: () {
-                alertInfo(context,
-                    argString: 'hasSeenBanInformation',
-                    popAction: 'ban',
-                    info: const Text("""Tu vas lancer un vote.
+            title: const Text('Que souhaites-tu faire avec ce message ?'),
+            children: <Widget>[
+              SimpleDialogOption(
+                  onPressed: () {
+                    alertInfo(context,
+                        argString: 'hasSeenBanInformation',
+                        popAction: 'ban',
+                        info: const Text("""Tu vas lancer un vote.
 
 Toutes les personnes présentes, sauf la personne ciblée, pourront accepter ou refuser ta proposition.
 
 Si tu reçois suffisament d'acceptation, la personne ciblée sera envoyée dans un autre groupe."""),
-                    acceptString: 'Ok',
-                    refuseString: 'Ne pas bannir');
-              },
-              child: const Text("Bannir la personne qui l'a écrit"),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, 'report');
-              },
-              child: const Text('Signaler le message'),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                alertInfo(context,
-                    argString: 'hasSeenDeleteInformation',
-                    popAction: 'delete',
-                    info: const Text(
-                        'Le message ne sera supprimé que chez toi. Les autres personnes du groupe pourront toujours le voir.'),
-                    acceptString: 'Ok',
-                    refuseString: 'Ne pas supprimer');
-              },
-              child: const Text('Supprimer le message'),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                alertInfo(context,
-                    argString: 'hasSeenBlockInformation',
-                    popAction: 'block',
-                    info: const Text(
-                        'Tu vas changer de groupe. Tu ne seras plus avec cette personne dans tes prochains groupes.'),
-                    acceptString: 'Ok',
-                    refuseString: 'Ne pas bloquer');
-              },
-              child: const Text("Bloquer la personne qui l'a écrit"),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, 'nothing');
-              },
-              child: const Text('Rien'),
-            ),
-          ],
-        );
+                        acceptString: 'Ok',
+                        refuseString: 'Ne pas bannir');
+                  },
+                  child: const Text("Bannir la personne qui l'a écrit")),
+              SimpleDialogOption(
+                  onPressed: () {
+                    Navigator.pop(context, 'report');
+                  },
+                  child: const Text('Signaler le message')),
+              SimpleDialogOption(
+                  onPressed: () {
+                    alertInfo(context,
+                        argString: 'hasSeenDeleteInformation',
+                        popAction: 'delete',
+                        info: const Text(
+                            'Le message ne sera supprimé que chez toi. Les autres personnes du groupe pourront toujours le voir.'),
+                        acceptString: 'Ok',
+                        refuseString: 'Ne pas supprimer');
+                  },
+                  child: const Text('Supprimer le message')),
+              SimpleDialogOption(
+                  onPressed: () {
+                    alertInfo(context,
+                        argString: 'hasSeenBlockInformation',
+                        popAction: 'block',
+                        info: const Text(
+                            'Tu vas changer de groupe. Tu ne seras plus avec cette personne dans tes prochains groupes.'),
+                        acceptString: 'Ok',
+                        refuseString: 'Ne pas bloquer');
+                  },
+                  child: const Text("Bloquer la personne qui l'a écrit")),
+              SimpleDialogOption(
+                  onPressed: () {
+                    Navigator.pop(context, 'nothing');
+                  },
+                  child: const Text('Rien'))
+            ]);
       });
 }
 
@@ -139,26 +132,23 @@ Future<String?> banActionOnMessage(
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
-              'Souhaites-tu bannir du groupe la personne qui a écrit ce message ?'),
-          content: SingleChildScrollView(
-            child: Text(message.toJson()['text'], textAlign: TextAlign.center),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Non'),
-              onPressed: () {
-                Navigator.pop(context, 'denied');
-              },
-            ),
-            TextButton(
-              child: const Text('Oui'),
-              onPressed: () {
-                Navigator.pop(context, 'confirmed');
-              },
-            ),
-          ],
-        );
+            title: const Text(
+                'Souhaites-tu bannir du groupe la personne qui a écrit ce message ?'),
+            content: SingleChildScrollView(
+                child: Text(message.toJson()['text'],
+                    textAlign: TextAlign.center)),
+            actions: <Widget>[
+              TextButton(
+                  child: const Text('Non'),
+                  onPressed: () {
+                    Navigator.pop(context, 'denied');
+                  }),
+              TextButton(
+                  child: const Text('Oui'),
+                  onPressed: () {
+                    Navigator.pop(context, 'confirmed');
+                  })
+            ]);
       });
 }
 
@@ -212,10 +202,9 @@ ${e.text}
 """;
 
   final Email email = Email(
-    body: body,
-    subject: 'Signalement',
-    recipients: ['awachat.app@gmail.com'],
-  );
+      body: body,
+      subject: 'Signalement',
+      recipients: ['awachat.app@gmail.com']);
 
   try {
     await FlutterEmailSender.send(email);
@@ -240,22 +229,18 @@ void alertInfo(BuildContext context,
         builder: (BuildContext context) {
           return AlertDialog(
               title: const Text('Attention'),
-              content: SingleChildScrollView(
-                child: info,
-              ),
+              content: SingleChildScrollView(child: info),
               actions: [
                 TextButton(
-                  child: Text(refuseString),
-                  onPressed: () {
-                    Navigator.pop(context, 'nothing');
-                  },
-                ),
+                    child: Text(refuseString),
+                    onPressed: () {
+                      Navigator.pop(context, 'nothing');
+                    }),
                 TextButton(
-                  child: Text(acceptString),
-                  onPressed: () {
-                    Navigator.pop(context, 'confirmed');
-                  },
-                )
+                    child: Text(acceptString),
+                    onPressed: () {
+                      Navigator.pop(context, 'confirmed');
+                    })
               ]);
         })) {
       case 'confirmed':

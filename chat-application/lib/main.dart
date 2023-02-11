@@ -55,7 +55,7 @@ class MyApp extends StatelessWidget {
                   builder: (context, state) => const CitiesLoader()),
               GoRoute(
                   path: '/agreements',
-                  builder: (context, state) => const Agreements()),
+                  builder: (context, state) => const Agreements())
             ]));
   }
 }

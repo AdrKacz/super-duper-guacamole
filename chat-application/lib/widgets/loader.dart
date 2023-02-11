@@ -6,11 +6,8 @@ class Loader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
-        child: CircularProgressIndicator(
-          color: Theme.of(context).colorScheme.onPrimary,
-        ),
-      ),
-    );
+        child: Center(
+            child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.onPrimary)));
   }
 }

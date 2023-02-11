@@ -16,31 +16,27 @@ class UsersList extends StatelessWidget {
           users.remove(User().id);
           if (users.isNotEmpty) {
             return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: users.values
-                  .map((user) => Stack(
-                        alignment: AlignmentDirectional.center,
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Colors.transparent,
-                            backgroundImage:
-                                User.getUserImageProvider(user['id']),
-                          ),
-                          badges.Badge(
-                              showBadge: user['isConnected'] ?? false,
-                              badgeStyle: badges.BadgeStyle(
-                                badgeColor:
-                                    Theme.of(context).colorScheme.tertiary,
-                              ),
-                              position: badges.BadgePosition.bottomEnd(),
-                              child: const SizedBox(
-                                width: kToolbarHeight * .5,
-                                height: kToolbarHeight * .5,
-                              )),
-                        ],
-                      ))
-                  .toList(),
-            );
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: users.values
+                    .map((user) => Stack(
+                            alignment: AlignmentDirectional.center,
+                            children: [
+                              CircleAvatar(
+                                  backgroundColor: Colors.transparent,
+                                  backgroundImage:
+                                      User.getUserImageProvider(user['id'])),
+                              badges.Badge(
+                                  showBadge: user['isConnected'] ?? false,
+                                  badgeStyle: badges.BadgeStyle(
+                                      badgeColor: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary),
+                                  position: badges.BadgePosition.bottomEnd(),
+                                  child: const SizedBox(
+                                      width: kToolbarHeight * .5,
+                                      height: kToolbarHeight * .5))
+                            ]))
+                    .toList());
           } else {
             return const SizedBox.shrink();
           }

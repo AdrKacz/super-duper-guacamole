@@ -43,61 +43,48 @@ class ChatPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print('status ${status.name}, connection status ${connectionStatus.name}');
-    return Builder(
-      builder: (BuildContext context) {
-        late Widget child;
-        switch (status) {
-          case Status.idle:
-            child = const Loader();
-            break;
-          case Status.switchSent:
-            child = const SwitchGroupPage();
-            break;
-          case Status.chatting:
-            child = ValueListenableBuilder(
-                valueListenable: Hive.box<String>(Memory.messages).listenable(),
-                builder: (BuildContext context, Box box, widget) {
-                  // Store object in a more convenient way
-                  List<types.Message> messages = [];
-                  for (final String jsonMessage in box.values) {
-                    try {
-                      messages.add(decodeMessage(jsonMessage));
-                    } catch (e) {
-                      print('chat page error: $e');
-                    }
+    return Builder(builder: (BuildContext context) {
+      late Widget child;
+      switch (status) {
+        case Status.idle:
+          child = const Loader();
+          break;
+        case Status.switchSent:
+          child = const SwitchGroupPage();
+          break;
+        case Status.chatting:
+          child = ValueListenableBuilder(
+              valueListenable: Hive.box<String>(Memory.messages).listenable(),
+              builder: (BuildContext context, Box box, widget) {
+                // Store object in a more convenient way
+                List<types.Message> messages = [];
+                for (final String jsonMessage in box.values) {
+                  try {
+                    messages.add(decodeMessage(jsonMessage));
+                  } catch (e) {
+                    print('chat page error: $e');
                   }
+                }
 
-                  return FlyerChat(
-                      messages: messages,
-                      onSendPressed: sendMessage,
-                      onMessageLongPress: onReportMessage);
-                });
+                return FlyerChat(
+                    messages: messages,
+                    onSendPressed: sendMessage,
+                    onMessageLongPress: onReportMessage);
+              });
 
-            break;
-          case Status.error:
-            child = ErrorPage(refresh: onRefresh);
-        }
-        switch (connectionStatus) {
-          case ConnectionStatus.disconnected:
-            return Stack(
-              children: [
-                child,
-                const Glass(),
-              ],
-            );
-          case ConnectionStatus.reconnecting:
-            // TODO: create an action to retry if an error occurs or the network is not reachable
-            return Stack(
-              children: [
-                child,
-                const Glass(),
-                const Loader(),
-              ],
-            );
-          default:
-            return child;
-        }
-      },
-    );
+          break;
+        case Status.error:
+          child = ErrorPage(refresh: onRefresh);
+      }
+      switch (connectionStatus) {
+        case ConnectionStatus.disconnected:
+          return Stack(children: [child, const Glass()]);
+        case ConnectionStatus.reconnecting:
+          // TODO: create an action to retry if an error occurs or the network is not reachable
+          return Stack(children: [child, const Glass(), const Loader()]);
+        default:
+          return child;
+      }
+    });
   }
 }

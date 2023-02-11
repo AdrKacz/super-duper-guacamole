@@ -27,28 +27,20 @@ Tu recevras une notification quand tout sera prêt, tu peux t'en aller pour le m
     }
 
     return SafeArea(
-      child: Center(
-        child: ListView(
-          physics: const ClampingScrollPhysics(),
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(24.0),
-          children: [
-            Image.asset('assets/images/load-group.gif'),
-            const SizedBox(
-              height: 24,
-            ),
-            Text.rich(TextSpan(children: textSpanChildren),
-                textAlign: TextAlign.center),
-            const SizedBox(
-              height: 24,
-            ),
-            Center(
+        child: Center(
+            child: ListView(
+                physics: const ClampingScrollPhysics(),
+                shrinkWrap: true,
+                padding: const EdgeInsets.all(24.0),
+                children: [
+          Image.asset('assets/images/load-group.gif'),
+          const SizedBox(height: 24),
+          Text.rich(TextSpan(children: textSpanChildren),
+              textAlign: TextAlign.center),
+          const SizedBox(height: 24),
+          Center(
               child: CircularProgressIndicator(
-                  color: Theme.of(context).colorScheme.onPrimary),
-            ),
-          ],
-        ),
-      ),
-    );
+                  color: Theme.of(context).colorScheme.onPrimary))
+        ])));
   }
 }

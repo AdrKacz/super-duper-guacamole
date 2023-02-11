@@ -19,15 +19,12 @@ class FlyerUserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsetsDirectional.only(end: 8),
-      child: GestureDetector(
-        onTap: () => onAvatarTap?.call(userId),
-        child: CircleAvatar(
-          backgroundColor: Colors.transparent,
-          backgroundImage: User.getUserImageProvider(userId),
-          radius: 16,
-        ),
-      ),
-    );
+        margin: const EdgeInsetsDirectional.only(end: 8),
+        child: GestureDetector(
+            onTap: () => onAvatarTap?.call(userId),
+            child: CircleAvatar(
+                backgroundColor: Colors.transparent,
+                backgroundImage: User.getUserImageProvider(userId),
+                radius: 16)));
   }
 }

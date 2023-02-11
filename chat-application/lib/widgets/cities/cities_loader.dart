@@ -46,19 +46,16 @@ class _CitiesLoaderState extends State<CitiesLoader> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        body: FutureBuilder(
-          future: futureCities,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
-              return CitiesQuestion(cities: snapshot.data);
-            }
+        onWillPop: () async => false,
+        child: Scaffold(
+            body: FutureBuilder(
+                future: futureCities,
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (snapshot.hasData) {
+                    return CitiesQuestion(cities: snapshot.data);
+                  }
 
-            return const Loader();
-          },
-        ),
-      ),
-    );
+                  return const Loader();
+                })));
   }
 }

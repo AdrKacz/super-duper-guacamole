@@ -14,52 +14,39 @@ class UserDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          DrawerHeader(
-            child: CircleAvatar(
+        child: ListView(padding: EdgeInsets.zero, children: <Widget>[
+      DrawerHeader(
+          child: CircleAvatar(
               backgroundColor: Colors.transparent,
               child: SizedBox(
-                child: ClipOval(child: User.getUserImage(User().id)),
-              ),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.question_mark_rounded),
-            title: const Text('Choisis ta ville'),
-            subtitle: const Text('Où seras ta prochaine sortie ?'),
-            onTap: () => (context.go('/cities')),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.nature),
-            title: const Text(
-              'Je veux revoir la présentation',
-            ),
-            onTap: () => (context.go('/onboarding')),
-          ),
-          ListTile(
-            leading: const Icon(Icons.copyright),
-            title: const Text('Sources'),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const Credits()));
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Nous contacter'),
-            subtitle: const Text("Un problème, une suggestion, n'hésite pas !"),
-            onTap: () async {
-              if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
-                throw 'Could not launch https://awa-chat.me/contact/';
-              }
-            },
-          ),
-        ],
-      ),
-    );
+                  child: ClipOval(child: User.getUserImage(User().id))))),
+      ListTile(
+          leading: const Icon(Icons.question_mark_rounded),
+          title: const Text('Choisis ta ville'),
+          subtitle: const Text('Où seras ta prochaine sortie ?'),
+          onTap: () => (context.go('/cities'))),
+      const Divider(),
+      ListTile(
+          leading: const Icon(Icons.nature),
+          title: const Text('Je veux revoir la présentation'),
+          onTap: () => (context.go('/onboarding'))),
+      ListTile(
+          leading: const Icon(Icons.copyright),
+          title: const Text('Sources'),
+          onTap: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const Credits()));
+          }),
+      ListTile(
+          leading: const Icon(Icons.info_outline),
+          title: const Text('Nous contacter'),
+          subtitle: const Text("Un problème, une suggestion, n'hésite pas !"),
+          onTap: () async {
+            if (!await launchUrl(Uri.parse('https://awa-chat.me/contact/'))) {
+              throw 'Could not launch https://awa-chat.me/contact/';
+            }
+          })
+    ]));
   }
 }
 
@@ -85,36 +72,27 @@ class _CreditsState extends State<Credits> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sources'),
-      ),
-      body: FutureBuilder(
-        future: text,
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.hasData) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Text(
-                          snapshot.data.body,
-                          textAlign: TextAlign.left,
-                          style: const TextStyle(height: 1.5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-          return const Loader();
-        },
-      ),
-    );
+        appBar: AppBar(
+          title: const Text('Sources'),
+        ),
+        body: FutureBuilder(
+            future: text,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.hasData) {
+                return SafeArea(
+                    child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                  child: SingleChildScrollView(
+                                      child: Text(snapshot.data.body,
+                                          textAlign: TextAlign.left,
+                                          style: const TextStyle(height: 1.5))))
+                            ])));
+              }
+              return const Loader();
+            }));
   }
 }

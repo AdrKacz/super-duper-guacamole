@@ -8,11 +8,10 @@ class Presentation extends StatelessWidget {
   Widget build(BuildContext context) {
     final slides = <Widget>[
       const Slide(
-        text: '''Bienvenue sur Awa !
+          text: '''Bienvenue sur Awa !
         
 Tu es au bon endroit pour de nouvelles rencontres.''',
-        assetPath: 'assets/images/onboard-page-1.png',
-      ),
+          assetPath: 'assets/images/onboard-page-1.png'),
       const Slide(
           text: """Tu vas entrer dans un groupe de conversation.
 
@@ -21,22 +20,18 @@ C'est le moment idéal pour partager tes points communs et tes activités favori
       const CustomSlide(
           assetPath: 'assets/images/onboard-page-3.png',
           child: Text.rich(
-            TextSpan(
-              children: [
+              TextSpan(children: [
                 TextSpan(text: '''Le moment venu, appuie sur la '''),
                 WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(text: ''' en haut à droite de ton écran.
 
 Tu quitteras ton groupe et en rejoindras un nouveau.''')
-              ],
-            ),
-            textAlign: TextAlign.center,
-          )),
+              ]),
+              textAlign: TextAlign.center)),
       CustomSlide(
           assetPath: 'assets/images/onboard-page-4.png',
           child: Text.rich(
-            TextSpan(
-              children: [
+              TextSpan(children: [
                 const TextSpan(text: '''Si un message t'offense, '''),
                 TextSpan(
                     text: '''reste appuyé''',
@@ -47,36 +42,29 @@ Tu quitteras ton groupe et en rejoindras un nouveau.''')
 Tu pourras le supprimer ou nous le signaler
 
 Tu pourras aussi bloquer la personne qui l'a écrit ou proposer de l'expulser de ton groupe.''')
-              ],
-            ),
-            textAlign: TextAlign.center,
-          )),
+              ]),
+              textAlign: TextAlign.center)),
       SlideWithButton(
-        text: 'Hâte de te faire de nouveaux potes ?',
-        assetPath: 'assets/images/onboard-page-5.png',
-        buttonText: "C'est parti !",
-        onPressed: () {
-          context.go('/agreements');
-        },
-      ),
+          text: 'Hâte de te faire de nouveaux potes ?',
+          assetPath: 'assets/images/onboard-page-5.png',
+          buttonText: "C'est parti !",
+          onPressed: () {
+            context.go('/agreements');
+          })
     ];
     return Scaffold(
-      body: SafeArea(
-        child: DefaultTabController(
-          length: slides.length,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Expanded(child: TabBarView(children: slides)),
-              TabPageSelector(
-                color: Theme.of(context).colorScheme.primary,
-                selectedColor: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        body: SafeArea(
+            child: DefaultTabController(
+                length: slides.length,
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Expanded(child: TabBarView(children: slides)),
+                      TabPageSelector(
+                          color: Theme.of(context).colorScheme.primary,
+                          selectedColor:
+                              Theme.of(context).colorScheme.onPrimary)
+                    ]))));
   }
 }
 
@@ -92,11 +80,8 @@ class SlideContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Center(
-        child: SingleChildScrollView(child: child),
-      ),
-    );
+        padding: const EdgeInsets.all(24.0),
+        child: Center(child: SingleChildScrollView(child: child)));
   }
 }
 
@@ -109,14 +94,11 @@ class Slide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SlideContainer(
-        child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(assetPath),
-        const Divider(height: 48),
-        Text(text, textAlign: TextAlign.center),
-      ],
-    ));
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Image.asset(assetPath),
+      const Divider(height: 48),
+      Text(text, textAlign: TextAlign.center)
+    ]));
   }
 }
 
@@ -129,14 +111,11 @@ class CustomSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SlideContainer(
-        child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(assetPath),
-        const Divider(height: 48),
-        child,
-      ],
-    ));
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Image.asset(assetPath),
+      const Divider(height: 48),
+      child
+    ]));
   }
 }
 
@@ -157,18 +136,12 @@ class SlideWithButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SlideContainer(
-        child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Image.asset(assetPath),
-        const Divider(height: 48),
-        Text(text, textAlign: TextAlign.center),
-        const Divider(height: 48),
-        ElevatedButton(
-          onPressed: onPressed,
-          child: Text(buttonText),
-        ),
-      ],
-    ));
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Image.asset(assetPath),
+      const Divider(height: 48),
+      Text(text, textAlign: TextAlign.center),
+      const Divider(height: 48),
+      ElevatedButton(onPressed: onPressed, child: Text(buttonText))
+    ]));
   }
 }
