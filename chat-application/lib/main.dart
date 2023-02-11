@@ -7,6 +7,7 @@ import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/presentation.dart';
 import 'package:awachat/widgets/agreements.dart';
+import 'package:awachat/routes/error/error.dart';
 import 'package:go_router/go_router.dart';
 
 void main() async {
@@ -55,6 +56,8 @@ class MyApp extends StatelessWidget {
               GoRoute(
                   path: '/agreements',
                   builder: (context, state) => const Agreements()),
+              GoRoute(
+                  path: '/error', builder: (context, state) => const Error())
             ]));
   }
 }

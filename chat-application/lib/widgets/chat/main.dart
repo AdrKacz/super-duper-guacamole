@@ -14,7 +14,7 @@ import 'package:awachat/widgets/chat/chat_page.dart';
 import 'package:flutter/material.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-enum Status { idle, switchSent, chatting, error }
+enum Status { idle, switchSent, chatting }
 
 enum ConnectionStatus { connected, disconnected, reconnecting }
 
@@ -374,16 +374,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
                   onPressed: changeGroup),
             ]),
         body: ChatPage(
-            status: status,
-            connectionStatus: connectionStatus,
-            onReportMessage: reportMessage,
-            onRefresh: () {
-              _channel?.sink.close();
-              initConnection();
-              setState(() {
-                status = Status.idle;
-              });
-            }));
+          status: status,
+          connectionStatus: connectionStatus,
+          onReportMessage: reportMessage,
+        ));
   }
 
   @override

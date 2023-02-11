@@ -73,6 +73,7 @@ class HttpConnection {
       required String path,
       int n = 0}) async {
     try {
+      throw 'Unknown';
       if (isTokenExpired(Memory().boxUser.get('jwt') ?? '')) {
         await signIn();
       }
@@ -92,8 +93,7 @@ class HttpConnection {
         await signIn();
         return _request(getResponse: getResponse, path: path, n: n + 1);
       } else {
-        print('return null');
-        return {}; // TODO: display error on screen to force re-sign up/in manually
+        rethrow;
       }
     }
   }

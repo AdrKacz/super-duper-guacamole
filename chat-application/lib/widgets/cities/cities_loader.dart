@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/store/memory.dart';
 
 class CitiesLoader extends StatefulWidget {
   const CitiesLoader({Key? key}) : super(key: key);
