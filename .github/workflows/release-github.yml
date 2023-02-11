@@ -1,0 +1,32 @@
+# This workflow take the latest app an submit it for review (to go in production)
+
+name: Publish Github Release
+
+# Controls when the workflow will run
+on:
+  workflow_run:
+    workflows: ["Release App"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  publish-github-release:
+    if: github.triggering_actor == github.repository_owner
+    name: Publish Github Release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup fastlane
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          working-directory: chat-application/ios
+      
+      - name: Publish Github Release with Fastlane
+        working-directory: chat-application/ios
+        run: bundle exec fastlane release
+        env:
+          GITHUB_TOKEN: ${{ secrets.FL_GITHUB_RELEASE_API_TOKEN }}
