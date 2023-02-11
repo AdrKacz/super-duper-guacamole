@@ -23,7 +23,7 @@ C'est le moment idéal pour partager tes points communs et tes activités favori
           child: Text.rich(
             TextSpan(
               children: [
-                TextSpan(text: '''Le moment venu, appuie sur la'''),
+                TextSpan(text: '''Le moment venu, appuie sur la '''),
                 WidgetSpan(child: Icon(Icons.door_front_door_outlined)),
                 TextSpan(text: ''' en haut à droite de ton écran.
                         
@@ -41,11 +41,12 @@ Tu quitteras ton groupe et en rejoindras un nouveau.''')
                 TextSpan(
                     text: '''reste appuyé''',
                     style: TextStyle(
-                        fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.onPrimary)),
                 const TextSpan(text: ''' dessus.
                 
-Tu pourras le supprimer, le signaler, ou bien expulser du groupe la personne qui l'a écrit.''')
+Tu pourras le supprimer ou nous le signaler
+
+Tu pourras aussi bloquer la personne qui l'a écrit ou proposer de l'expulser de ton groupe.''')
               ],
             ),
             textAlign: TextAlign.center,
