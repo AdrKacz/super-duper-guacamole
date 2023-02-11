@@ -25,9 +25,8 @@ class CitiesQuestion extends StatelessWidget {
                   'Ton choix sera pris en compte la prochaine fois que tu changes de groupe.'),
               actions: <Widget>[
                 TextButton(
-                  onPressed: () => (Navigator.pop(context)),
-                  child: const Text('Ok'),
-                ),
+                    onPressed: () => (Navigator.pop(context)),
+                    child: const Text('Ok'))
               ]);
         });
   }
@@ -35,16 +34,14 @@ class CitiesQuestion extends StatelessWidget {
   ButtonStyle getButtonStyle(BuildContext context, bool isActive) {
     if (isActive) {
       return ElevatedButton.styleFrom(
-        minimumSize: const Size.fromHeight(100),
-        backgroundColor: Theme.of(context).colorScheme.onSecondary,
-        foregroundColor: Theme.of(context).colorScheme.onBackground,
-      );
+          minimumSize: const Size.fromHeight(100),
+          backgroundColor: Theme.of(context).colorScheme.onSecondary,
+          foregroundColor: Theme.of(context).colorScheme.onBackground);
     } else {
       return ElevatedButton.styleFrom(
-        minimumSize: const Size.fromHeight(100),
-        backgroundColor: Theme.of(context).colorScheme.background,
-        foregroundColor: Theme.of(context).colorScheme.onBackground,
-      );
+          minimumSize: const Size.fromHeight(100),
+          backgroundColor: Theme.of(context).colorScheme.background,
+          foregroundColor: Theme.of(context).colorScheme.onBackground);
     }
   }
 
@@ -70,14 +67,9 @@ class CitiesQuestion extends StatelessWidget {
       child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(children: [
-            const Text(
-              'Où est-ce que tu veux sortir ?',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-            const Divider(
-              height: 24,
-            ),
+            const Text('Où est-ce que tu veux sortir ?',
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+            const Divider(height: 24),
             Expanded(
                 child: ValueListenableBuilder(
                     valueListenable: Hive.box<String>(Memory.user).listenable(),
@@ -96,46 +88,37 @@ class CitiesQuestion extends StatelessWidget {
                                   onPressed: () {
                                     selectCity(context, city, currentCity);
                                   },
-                                  child: Text(
-                                    city,
-                                    textAlign: TextAlign.center,
-                                  ))))));
+                                  child: Text(city,
+                                      textAlign: TextAlign.center))))));
                     })),
             const Divider(
               height: 24,
             ),
             Text.rich(
-              TextSpan(children: [
-                TextSpan(
-                  text: '''Envoie nous un message ''',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      decoration: TextDecoration.underline,
-                      fontWeight: FontWeight.bold),
-                  recognizer: TapGestureRecognizer()
-                    ..onTap = () async {
-                      if (!await launchUrl(
-                          Uri.parse('https://awa-chat.me/contact/'))) {
-                        throw 'Could not launch https://awa-chat.me/contact/';
-                      }
-                    },
-                ),
-                const TextSpan(
-                  text: ''' si tu ne trouves pas ta ville.
-Choisis ''',
-                ),
-                TextSpan(
-                  text: '''Je ne trouve pas ma ville''',
-                  style: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold),
-                ),
-                const TextSpan(
-                  text: ''' pour discuter en attendant !''',
-                ),
-              ]),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, height: 1.5),
-            )
+                TextSpan(children: [
+                  TextSpan(
+                      text: '''Envoie nous un message ''',
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          decoration: TextDecoration.underline,
+                          fontWeight: FontWeight.bold),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () async {
+                          if (!await launchUrl(
+                              Uri.parse('https://awa-chat.me/contact/'))) {
+                            throw 'Could not launch https://awa-chat.me/contact/';
+                          }
+                        }),
+                  const TextSpan(text: ''' si tu ne trouves pas ta ville.
+Choisis '''),
+                  TextSpan(
+                      text: '''Je ne trouve pas ma ville''',
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold)),
+                  const TextSpan(text: ''' pour discuter en attendant !'''),
+                ]),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 12, height: 1.5))
           ]))));
 }

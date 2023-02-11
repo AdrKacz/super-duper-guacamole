@@ -21,22 +21,19 @@ class FlyerChat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chat(
-      avatarBuilder: (String userId) => FlyerUserAvatar(
-        userId: userId,
-      ),
-      showUserNames: true,
-      showUserAvatars: true,
-      textMessageOptions: const TextMessageOptions(isTextSelectable: false),
-      l10n: const ChatL10nFr(),
-      messages: messages,
-      onSendPressed: onSendPressed,
-      onMessageLongPress: onMessageLongPress,
-      user: types.User(id: User().id!),
-      theme: DefaultChatTheme(
-          primaryColor: Theme.of(context).colorScheme.onPrimary,
-          inputBackgroundColor: Theme.of(context).colorScheme.primary,
-          inputTextColor: Theme.of(context).colorScheme.onBackground,
-          inputTextCursorColor: Theme.of(context).disabledColor),
-    );
+        avatarBuilder: (String userId) => FlyerUserAvatar(userId: userId),
+        showUserNames: true,
+        showUserAvatars: true,
+        textMessageOptions: const TextMessageOptions(isTextSelectable: false),
+        l10n: const ChatL10nFr(),
+        messages: messages,
+        onSendPressed: onSendPressed,
+        onMessageLongPress: onMessageLongPress,
+        user: types.User(id: User().id!),
+        theme: DefaultChatTheme(
+            primaryColor: Theme.of(context).colorScheme.onPrimary,
+            inputBackgroundColor: Theme.of(context).colorScheme.primary,
+            inputTextColor: Theme.of(context).colorScheme.onBackground,
+            inputTextCursorColor: Theme.of(context).disabledColor));
   }
 }

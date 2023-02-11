@@ -18,9 +18,8 @@ class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+          'DefaultFirebaseOptions have not been configured for web - '
+          'you can reconfigure this by running the FlutterFire CLI again.');
     }
     // ignore: missing_enum_constant_in_switch
     switch (defaultTargetPlatform) {
@@ -30,31 +29,28 @@ class DefaultFirebaseOptions {
         return ios;
       case TargetPlatform.macOS:
         throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+            'DefaultFirebaseOptions have not been configured for macos - '
+            'you can reconfigure this by running the FlutterFire CLI again.');
     }
 
     throw UnsupportedError(
-      'DefaultFirebaseOptions are not supported for this platform.',
-    );
+        'DefaultFirebaseOptions are not supported for this platform.');
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCubth7gSmp1wk6Sa3lBsrXZs_Pk_mfoOk',
-    appId: '1:114631492097:android:28f91d6afabec80f6d7600',
-    messagingSenderId: '114631492097',
-    projectId: 'awa-chat-f689f',
-    storageBucket: 'awa-chat-f689f.appspot.com',
-  );
+      apiKey: 'AIzaSyCubth7gSmp1wk6Sa3lBsrXZs_Pk_mfoOk',
+      appId: '1:114631492097:android:28f91d6afabec80f6d7600',
+      messagingSenderId: '114631492097',
+      projectId: 'awa-chat-f689f',
+      storageBucket: 'awa-chat-f689f.appspot.com');
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDGE1kTjWTVQMwXetF44EQvJKuNHI_Y5ik',
-    appId: '1:114631492097:ios:eaf734ae23ad23656d7600',
-    messagingSenderId: '114631492097',
-    projectId: 'awa-chat-f689f',
-    storageBucket: 'awa-chat-f689f.appspot.com',
-    iosClientId: '114631492097-toaa3ml04fgjl9qjdimurt2oqu1n035p.apps.googleusercontent.com',
-    iosBundleId: 'com.awama.awa.dev',
-  );
+      apiKey: 'AIzaSyDGE1kTjWTVQMwXetF44EQvJKuNHI_Y5ik',
+      appId: '1:114631492097:ios:eaf734ae23ad23656d7600',
+      messagingSenderId: '114631492097',
+      projectId: 'awa-chat-f689f',
+      storageBucket: 'awa-chat-f689f.appspot.com',
+      iosClientId:
+          '114631492097-toaa3ml04fgjl9qjdimurt2oqu1n035p.apps.googleusercontent.com',
+      iosBundleId: 'com.awama.awa.dev');
 }

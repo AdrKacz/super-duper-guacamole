@@ -25,6 +25,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+        title: 'Awa',
         theme: applicationTheme,
         routerConfig: GoRouter(
             initialLocation: '/chat',
@@ -54,7 +55,7 @@ class MyApp extends StatelessWidget {
                   builder: (context, state) => const CitiesLoader()),
               GoRoute(
                   path: '/agreements',
-                  builder: (context, state) => const Agreements()),
+                  builder: (context, state) => const Agreements())
             ]));
   }
 }

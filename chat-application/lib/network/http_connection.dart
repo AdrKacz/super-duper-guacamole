@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
 import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/pointycastle/helpers.dart';
 import 'package:awachat/store/memory.dart';
@@ -92,8 +91,7 @@ class HttpConnection {
         await signIn();
         return _request(getResponse: getResponse, path: path, n: n + 1);
       } else {
-        print('return null');
-        return {}; // TODO: display error on screen to force re-sign up/in manually
+        return {}; // TODO: change route from here, for now only updateStatus benefits it
       }
     }
   }

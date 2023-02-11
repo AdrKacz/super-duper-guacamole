@@ -14,38 +14,28 @@ const green = Colors.green;
 // ===== ===== =====
 // Themes
 final applicationTheme = ThemeData(
-  disabledColor: customGrey,
-  colorScheme: ColorScheme(
-    brightness: Brightness.light,
-    // main action
-    primary: customWhite,
-    onPrimary: secondary,
-    // other action
-    secondary: customWhite,
-    onSecondary: primary,
-    // active status
-    tertiary: green,
-    // error
-    error: Colors.white,
-    onError: Colors.redAccent.shade100,
-    // not used
-    background: customWhite,
-    onBackground: customBlack,
-    surface: customWhite,
-    onSurface: customBlack,
-  ),
-  iconTheme: const IconThemeData(
-    color: secondary,
-  ),
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: secondary,
-      foregroundColor: customWhite,
-    ),
-  ),
-  textButtonTheme: TextButtonThemeData(
-    style: TextButton.styleFrom(
-      foregroundColor: secondary,
-    ),
-  ),
-);
+    disabledColor: customGrey,
+    colorScheme: ColorScheme(
+        brightness: Brightness.light,
+        // main action
+        primary: customWhite,
+        onPrimary: secondary,
+        // other action
+        secondary: customWhite,
+        onSecondary: primary,
+        // active status
+        tertiary: green,
+        // error
+        error: Colors.white,
+        onError: Colors.redAccent.shade100,
+        // not used
+        background: customWhite,
+        onBackground: customBlack,
+        surface: customWhite,
+        onSurface: customBlack),
+    iconTheme: const IconThemeData(color: secondary),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+            backgroundColor: secondary, foregroundColor: customWhite)),
+    textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: secondary)));

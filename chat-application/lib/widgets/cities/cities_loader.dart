@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:yaml/yaml.dart';
 import 'package:http/http.dart' as http;
 import 'package:awachat/widgets/loader.dart';
-import 'package:awachat/store/memory.dart';
 
 class CitiesLoader extends StatefulWidget {
   const CitiesLoader({Key? key}) : super(key: key);
@@ -47,19 +46,16 @@ class _CitiesLoaderState extends State<CitiesLoader> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => false,
-      child: Scaffold(
-        body: FutureBuilder(
-          future: futureCities,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasData) {
-              return CitiesQuestion(cities: snapshot.data);
-            }
+        onWillPop: () async => false,
+        child: Scaffold(
+            body: FutureBuilder(
+                future: futureCities,
+                builder: (BuildContext context, AsyncSnapshot snapshot) {
+                  if (snapshot.hasData) {
+                    return CitiesQuestion(cities: snapshot.data);
+                  }
 
-            return const Loader();
-          },
-        ),
-      ),
-    );
+                  return const Loader();
+                })));
   }
 }
