@@ -52,7 +52,7 @@ do
   width=${width//$'\n'/}
   height=${height//$'\n'/}
   # If the dimensions of the first image for the current suffix have not been set yet, set them
-  if [ -z "$(get_value $suffix)" ]
+  if [ -z "$(get_value "$suffix")" ]
   then
     set_value "$suffix" "$width x $height,1"
   else
@@ -77,7 +77,7 @@ done
 last_count=$(get_value "$suffix" | cut -d , -f2)
 for pair in "${suffix_info[@]}"; do
   count=$(echo "${pair#*:}" | cut -d , -f2)
-  if [ $count != $last_count ]; then
+  if [ "$count" != "$last_count" ]; then
     echo "Error: all values in the dictionary should be the same, but got different values" >&2
     exit 1
   fi
