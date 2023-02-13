@@ -54,17 +54,17 @@ do
   # If the dimensions of the first image for the current suffix have not been set yet, set them
   if [ -z "$(get_value $suffix)" ]
   then
-    set_value $suffix "$width x $height,1"
+    set_value "$suffix" "$width x $height,1"
   else
     # Increment the number of images for the current suffix
-    dimensions=$(echo "$(get_value $suffix)" | cut -d , -f1)
-    count=$(echo "$(get_value $suffix)" | cut -d , -f2)
+    dimensions=$(get_value "$suffix" | cut -d , -f1)
+    count=$(get_value "$suffix" | cut -d , -f2)
     count=$((count + 1))
-    set_value $suffix "$dimensions,$count"
+    set_value "$suffix" "$dimensions,$count"
   fi
 
   # Compare the dimensions of the current image with the dimensions of the first image for the current suffix
-  dimensions=$(echo "$(get_value $suffix)" | cut -d , -f1)
+  dimensions=$(get_value "$suffix" | cut -d , -f1)
   if [ "$dimensions" != "$width x $height" ]
   then
     # If the dimensions are different, print an error message and exit the script
@@ -74,7 +74,7 @@ do
 done
 
 # If all the images have the same dimensions, check if they have the same number
-last_count=$(echo "$(get_value $suffix)" | cut -d , -f2)
+last_count=$(get_value "$suffix" | cut -d , -f2)
 for pair in "${suffix_info[@]}"; do
   count=$(echo "${pair#*:}" | cut -d , -f2)
   if [ $count != $last_count ]; then
