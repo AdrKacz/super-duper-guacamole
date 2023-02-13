@@ -10,7 +10,7 @@ on:
 
 jobs:
   check-screenshots-dimensions-apple-store:
-    name: Verify DeepSource config
+    name: Check screenshots Dimensions Apple Store
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,7 +18,7 @@ jobs:
         run: bash ./scripts/check-screenshots-dimensions/check-screenshots-dimensions.sh ./chat-application/ios/fastlane/screenshots/fr-FR/
         shell: bash
   check-screenshots-dimensions-google-play-store:
-    name: Verify DeepSource config
+    name: Check screenshots Dimensions Google Play Store
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
