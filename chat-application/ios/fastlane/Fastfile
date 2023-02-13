@@ -58,10 +58,6 @@ platform :ios do
         add_id_info_uses_idfa: false
       },
     )
-  
-    # create release
-    puts "I will create GitHub release"
-    release
   end
 
   desc "Verify the version is highter than the latest in the App Store"
@@ -97,6 +93,10 @@ platform :ios do
 end
 
 lane :release do
+  ensure_env_vars(
+    env_vars: ["GITHUB_TOKEN"]
+  )
+
   # get pubspec
   pubspec = YAML.load_file("../../pubspec.yaml")
 
@@ -106,6 +106,7 @@ lane :release do
 
   # create release
   set_github_release(
+    api_token: ENV["GITHUB_TOKEN"],
     repository_name: "AdrKacz/super-duper-guacamole",
     tag_name: pubspec["version"],
     name: "Awa v.#{pubspec["version"]}",
