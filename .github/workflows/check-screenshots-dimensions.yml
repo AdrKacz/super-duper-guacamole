@@ -9,7 +9,7 @@ on:
 jobs:
   check-screenshots-dimensions-apple-store:
     name: Check screenshots Dimensions Apple Store
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - name: Check Screenshots Dimensions for Apple Store
@@ -17,7 +17,7 @@ jobs:
         shell: bash
   check-screenshots-dimensions-google-play-store:
     name: Check screenshots Dimensions Google Play Store
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - name: Check Screenshots Dimensions for Google Play Store Phone Screenshots
