@@ -1,11 +1,82 @@
-#!/usr/local/bin/bash
+#!/bin/bash
+
+# Store the key-value pairs as elements in an array
+declare -a dict
+
+# Function to get the value of a key
+function get_value() {
+  local key=$1
+  for pair in "${dict[@]}"; do
+    local k="${pair%%:*}"
+    local v="${pair#*:}"
+    if [[ "$k" == "$key" ]]; then
+      echo "$v"
+      return 0
+    fi
+  done
+  echo "Key not found: $key" >&2
+  return 1
+}
+
+# Function to set the value of a key
+function set_value() {
+  local key=$1
+  local value=$2
+  local found=0
+  for i in "${!dict[@]}"; do
+    local k="${dict[$i]%%:*}"
+    if [[ "$k" == "$key" ]]; then
+      dict[$i]="$key:$value"
+      found=1
+      break
+    fi
+  done
+  if [[ "$found" == 0 ]]; then
+    dict+=("$key:$value")
+  fi
+}
+
+# Example usage
+set_value "key1" "value1"
+set_value "key2" "value2"
+set_value "key3" "value3"
+
+value=$(get_value "key1")
+echo "Key1: $value"
+
+value=$(get_value "key2")
+echo "Key2: $value"
+
+value=$(get_value "key3")
+echo "Key3: $value"
+
+value=$(get_value "key4")
+echo "Key4: $value"
+
+# Function to set the value of a key
+function set_value() {
+  local key=$1
+  local value=$2
+  local found=0
+  for i in "${!dict[@]}"; do
+    local k="${dict[$i]%%:*}"
+    if [[ "$k" == "$key" ]]; then
+      dict[$i]="$key:$value"
+      found=1
+      break
+    fi
+  done
+  if [[ "$found" == 0 ]]; then
+    dict+=("$key:$value")
+  fi
+}
 
 # Store the folder path in a variable
 folder=$1
 
 # Initialize an associative array to store the suffixes, the dimensions of the first image, and the number of images for each suffix
 declare -A suffix_info
-
+echo "$BASH_VERSION"
 # Loop through all the images in the folder
 for file in "$folder"/*
 do
