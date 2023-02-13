@@ -1,0 +1,33 @@
+# This workflow verify deepsource config is correctly setup
+
+name: Check Screenshots Dimensions for Apple Store and Google Play Store
+
+# Controls when the workflow will run
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-screenshots-dimensions-apple-store:
+    name: Verify DeepSource config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Screenshots Dimensions for Apple Store
+        run: bash ./scripts/check-screenshots-dimensions/check-screenshots-dimensions.sh ./chat-application/ios/fastlane/screenshots/fr-FR/
+        shell: bash
+  check-screenshots-dimensions-google-play-store:
+    name: Verify DeepSource config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Screenshots Dimensions for Google Play Store Phone Screenshots
+        run: bash ./scripts/check-screenshots-dimensions/check-screenshots-dimensions.sh ./chat-application/android/fastlane/metadata/android/fr-FR/images/phoneScreenshots/
+        shell: bash
+      - name: Check Screenshots Dimensions for Google Play Store Seven Inch Screenshots
+        run: bash ./scripts/check-screenshots-dimensions/check-screenshots-dimensions.sh ./chat-application/android/fastlane/metadata/android/fr-FR/images/sevenInchScreenshots/
+        shell: bash
+      - name: Check Screenshots Dimensions for Google Play Store Ten Inch Screenshots
+        run: bash ./scripts/check-screenshots-dimensions/check-screenshots-dimensions.sh ./chat-application/android/fastlane/metadata/android/fr-FR/images/tenInchScreenshots/
+        shell: bash
