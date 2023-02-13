@@ -35,7 +35,7 @@ do
   if [ "$dimensions" != "$width x $height" ]
   then
     # If the dimensions are different, print an error message and exit the script
-    echo "Error: Images with suffix $suffix in the folder have different dimensions."
+    echo "Error: Images with suffix $suffix in $folder have different dimensions."
     exit 1
   fi
 done
