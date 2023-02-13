@@ -1,5 +1,3 @@
-# This workflow verify deepsource config is correctly setup
-
 name: Check Screenshots Dimensions for Apple Store and Google Play Store
 
 # Controls when the workflow will run
