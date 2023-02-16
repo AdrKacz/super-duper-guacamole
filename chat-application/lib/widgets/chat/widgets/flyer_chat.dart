@@ -30,6 +30,7 @@ class FlyerChat extends StatelessWidget {
         onSendPressed: onSendPressed,
         onMessageLongPress: onMessageLongPress,
         user: types.User(id: User().id!),
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         theme: DefaultChatTheme(
             primaryColor: Theme.of(context).colorScheme.onPrimary,
             inputBackgroundColor: Theme.of(context).colorScheme.primary,
