@@ -1,4 +1,4 @@
-# This workflow take the latest app an submit it for review (to go in production)
+# This workflow verify the code version is compatible with the one in the stores
 
 name: Verify Code Version
 
@@ -14,8 +14,15 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Get changed files in the chat-application folder
+        id: changed-files-application
+        uses: tj-actions/changed-files@v35
+        with:
+          files: chat-application/**
 
       - name: Setup fastlane
+        if: steps.changed-files-application.outputs.any_changed == 'true'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.0'
@@ -23,6 +30,7 @@ jobs:
           working-directory: chat-application/ios
       
       - name: Verify app version in App Store
+        if: steps.changed-files-application.outputs.any_changed == 'true'
         working-directory: chat-application/ios
         run: bundle exec fastlane verify_version
         env:
