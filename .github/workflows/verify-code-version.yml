@@ -13,12 +13,13 @@ jobs:
     name: Verify iOS App
     runs-on: macos-latest
     steps:
+      - uses: actions/checkout@v3
+      
       - name: Get changed files in the chat-application folder
         id: changed-files-application
         uses: tj-actions/changed-files@v35
         with:
           files: chat-application/**
-      - uses: actions/checkout@v3
 
       - name: Setup fastlane
         if: steps.changed-files-application.outputs.any_changed == 'true'
