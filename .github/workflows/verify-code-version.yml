@@ -1,4 +1,4 @@
-# This workflow take the latest app an submit it for review (to go in production)
+# This workflow verify the code version is compatible with the one in the stores
 
 name: Verify Code Version
 
@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - chat-application/**
 
 jobs:
   verify-ios-app:
