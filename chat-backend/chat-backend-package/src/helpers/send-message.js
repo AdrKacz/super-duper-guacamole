@@ -4,6 +4,7 @@ const { PostToConnectionCommand } = require('@aws-sdk/client-apigatewaymanagemen
 const { apiGatewayManagementApiClient } = require('../clients/aws/api-gateway-management-client')
 
 const { saveMessage } = require('./save-message')
+const { disconnectUser } = require('../disconnect-user')
 
 // ===== ==== ====
 // EXPORTS
@@ -42,8 +43,9 @@ exports.sendMessage = async ({ user: { id, connectionId }, message, useSaveMessa
     .send(postToConnectionCommand)
     .catch(async (err) => {
       console.log(`error sending message to (${id}, ${connectionId})`, err)
-      if (useSaveMessage) {
-        await saveMessage({ user: { id }, message })
-      }
+      await Promise.allSettled([
+        disconnectUser({ id, connectionId }),
+        useSaveMessage ? saveMessage({ user: { id }, message }) : Promise.resolve()
+      ])
     })
 }
