@@ -1,5 +1,6 @@
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/typing_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:hive_flutter/hive_flutter.dart';
@@ -19,6 +20,7 @@ class UsersList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: users.values
                     .map((user) => Stack(
+                            clipBehavior: Clip.none,
                             alignment: AlignmentDirectional.center,
                             children: [
                               CircleAvatar(
@@ -34,7 +36,11 @@ class UsersList extends StatelessWidget {
                                   position: badges.BadgePosition.bottomEnd(),
                                   child: const SizedBox(
                                       width: kToolbarHeight * .5,
-                                      height: kToolbarHeight * .5))
+                                      height: kToolbarHeight * .5)),
+                              const Positioned(
+                                  top: kToolbarHeight * .5,
+                                  left: kToolbarHeight * .5,
+                                  child: TypingIndicator())
                             ]))
                     .toList());
           } else {
