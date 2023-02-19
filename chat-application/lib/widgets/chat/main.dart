@@ -4,6 +4,7 @@ import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/avatar.dart';
 import 'package:awachat/widgets/chat/widgets/switch_action_button.dart';
 import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/chat/widgets/users_list.dart';
@@ -359,16 +360,11 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         drawer: const UserDrawer(),
         appBar: AppBar(
             leading: Builder(builder: (BuildContext context) {
-              return InkWell(
-                  onTap: () {
-                    Scaffold.of(context).openDrawer();
-                  },
-                  child: Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: CircleAvatar(
-                          backgroundColor: Colors.transparent,
-                          backgroundImage:
-                              User.getUserImageProvider(User().id))));
+              return Padding(
+                  padding: const EdgeInsets.only(left: 2.0),
+                  child: Avatar(
+                      userId: User().id!,
+                      onTap: () => (Scaffold.of(context).openDrawer())));
             }),
             centerTitle: true,
             title: const UsersList(),

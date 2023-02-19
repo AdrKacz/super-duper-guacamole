@@ -1,3 +1,4 @@
+import 'package:awachat/widgets/avatar.dart';
 import 'package:go_router/go_router.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/loader.dart';
@@ -15,11 +16,7 @@ class UserDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
         child: ListView(padding: EdgeInsets.zero, children: <Widget>[
-      DrawerHeader(
-          child: CircleAvatar(
-              backgroundColor: Colors.transparent,
-              child: SizedBox(
-                  child: ClipOval(child: User.getUserImage(User().id))))),
+      DrawerHeader(child: FittedBox(child: Avatar(userId: User().id!))),
       ListTile(
           leading: const Icon(Icons.location_city),
           title: const Text('Choisir ma ville'),

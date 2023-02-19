@@ -77,17 +77,7 @@ class User {
     updateGroupUserArgument(id, 'profile', profile);
   }
 
-  static T _getUserImageOrImageProvider<T>(id,
-      {required T Function(String) networkImage}) {
-    return networkImage('https://avatars.dicebear.com/api/bottts/$id.png');
-  }
-
   static ImageProvider getUserImageProvider(id) {
-    return _getUserImageOrImageProvider<ImageProvider>(id,
-        networkImage: NetworkImage.new);
-  }
-
-  static Image getUserImage(id) {
-    return _getUserImageOrImageProvider<Image>(id, networkImage: Image.network);
+    return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
   }
 }
