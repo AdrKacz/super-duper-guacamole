@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:image_cropper/image_cropper.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,7 +41,23 @@ class _UploadPhotoState extends State<UploadPhoto> {
     }
   }
 
-  void _addPhoto() async {
+  Future<CroppedFile?> _cropImage(XFile image,
+      {Color? toolbarColor, Color? toolbarWidgetColor}) {
+    return ImageCropper().cropImage(
+        sourcePath: image.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        cropStyle: CropStyle.circle,
+        uiSettings: [
+          AndroidUiSettings(
+              toolbarTitle: '',
+              toolbarColor: toolbarColor,
+              toolbarWidgetColor: toolbarWidgetColor,
+              initAspectRatio: CropAspectRatioPreset.original,
+              lockAspectRatio: false),
+        ]);
+  }
+
+  void _addImage(Color? toolbarColor, Color? toolbarWidgetColor) async {
     XFile? image;
     try {
       // NOTE: Looks like it crashed if you don't ask for permission first
@@ -59,17 +75,26 @@ class _UploadPhotoState extends State<UploadPhoto> {
       return;
     }
 
+    final CroppedFile? croppedImage = await _cropImage(image,
+        toolbarColor: toolbarColor, toolbarWidgetColor: toolbarWidgetColor);
+
+    if (croppedImage == null) {
+      return;
+    }
+
+    final File croppedImageFile = File(croppedImage.path);
+
     print('Get Application Documents Directory');
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
 
     print('Copy Image');
-    final String fileExtension = p.extension(image.path);
+    final String fileExtension = p.extension(croppedImageFile.path);
     final String path = '$directoryPath/photos';
     await Directory(path).create(recursive: true);
     final filePath = '$path/me$fileExtension';
     print('Will save to $filePath');
-    await image.saveTo(filePath);
+    await croppedImageFile.copy(filePath);
     Memory().boxUser.put('photoPath', filePath);
   }
 
@@ -86,6 +111,10 @@ class _UploadPhotoState extends State<UploadPhoto> {
                   Text? text;
                   ButtonStyle? buttonStyle;
                   void Function()? function;
+                  addPhotoWithTheme() {
+                    _addImage(Theme.of(context).colorScheme.primary,
+                        Theme.of(context).colorScheme.onPrimary);
+                  }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     child = const Center(child: CircularProgressIndicator());
@@ -105,7 +134,7 @@ class _UploadPhotoState extends State<UploadPhoto> {
                       function = _onPressed;
                     } else {
                       child = IconButton(
-                          onPressed: _addPhoto,
+                          onPressed: addPhotoWithTheme,
                           icon: const Icon(Icons.add_a_photo));
                       text = const Text('''Prendre une photo''');
                     }
@@ -133,7 +162,7 @@ class _UploadPhotoState extends State<UploadPhoto> {
                             margin: const EdgeInsets.only(bottom: 12),
                             child: ElevatedButton(
                                 style: buttonStyle,
-                                onPressed: _addPhoto,
+                                onPressed: addPhotoWithTheme,
                                 child: text)),
                         ElevatedButton(
                             onPressed: function,
