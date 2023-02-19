@@ -11,7 +11,7 @@ class UsersList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
         valueListenable: Hive.box<Map>(Memory.groupUsers).listenable(),
-        builder: (BuildContext context, Box box, widget) {
+        builder: (BuildContext context, Box box, Widget? widget) {
           final Map users = box.toMap();
           users.remove(User().id);
           if (users.isNotEmpty) {
