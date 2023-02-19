@@ -31,7 +31,6 @@ class MyApp extends StatelessWidget {
         routerConfig: GoRouter(
             initialLocation: '/chat',
             redirect: (BuildContext context, GoRouterState state) {
-              return '/upload-photo';
               if (state.location == '/chat' &&
                   !Memory().boxUser.containsKey('hasSignedAgreements')) {
                 return '/onboarding';

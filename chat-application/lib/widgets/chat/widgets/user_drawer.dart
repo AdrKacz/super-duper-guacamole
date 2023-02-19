@@ -21,18 +21,17 @@ class UserDrawer extends StatelessWidget {
               child: SizedBox(
                   child: ClipOval(child: User.getUserImage(User().id))))),
       ListTile(
-          leading: const Icon(Icons.question_mark_rounded),
-          title: const Text('Choisis ta ville'),
-          subtitle: const Text('Où seras ta prochaine sortie ?'),
+          leading: const Icon(Icons.location_city),
+          title: const Text('Choisir ma ville'),
           onTap: () => (context.go('/cities'))),
+      ListTile(
+          leading: const Icon(Icons.account_circle),
+          title: const Text('Mettre mon profil à jour'),
+          onTap: () => (context.go('/upload-photo'))),
       const Divider(),
       ListTile(
-          leading: const Icon(Icons.nature),
-          title: const Text('Je veux revoir la présentation'),
-          onTap: () => (context.go('/onboarding'))),
-      ListTile(
           leading: const Icon(Icons.copyright),
-          title: const Text('Sources'),
+          title: const Text('Voir les sources'),
           onTap: () {
             Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const Credits()));
