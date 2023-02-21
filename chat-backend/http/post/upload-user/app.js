@@ -10,10 +10,12 @@ const { DATA_BUCKET_NAME } = process.env
 exports.handler = async (event) => {
   console.log('Receives:', JSON.stringify(event, null, 2))
   const jwt = event.requestContext.authorizer.jwt.claims
+  const id = jwt.id
 
   const body = JSON.parse(event.body)
   const base64Image = body.image
   const imageExtension = body.imageExtension
+  const timestamp = Date.now()
 
   if (typeof imageExtension !== 'string' || imageExtension[0] !== '.') {
     return {
@@ -23,16 +25,27 @@ exports.handler = async (event) => {
     }
   }
 
+  // upload image
+  const imagePath = `users/${id}/image${imageExtension}`
   const imageBuffer = Buffer.from(base64Image, 'base64')
-
-  const data = await s3Client.send(new PutObjectCommand({
+  await s3Client.send(new PutObjectCommand({
     Bucket: DATA_BUCKET_NAME,
     Body: imageBuffer,
-    Key: `users/${jwt.id}/image${imageExtension}`,
+    Key: imagePath,
     ContentType: `image/${imageExtension.substring(1)}`
   }))
 
-  console.log('Success', data)
+  // upload data
+  const data = {
+    lastUpdate: timestamp,
+    imagePath
+  }
+  await s3Client.send(new PutObjectCommand({
+    Bucket: DATA_BUCKET_NAME,
+    Body: JSON.stringify(data),
+    Key: `users/${id}/data.json`,
+    ContentType: 'application/json'
+  }))
 
   return {
     statusCode: 200,

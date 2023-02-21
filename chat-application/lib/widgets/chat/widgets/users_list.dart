@@ -10,7 +10,7 @@ class UsersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: Hive.box<Map>(Memory.groupUsers).listenable(),
+        valueListenable: Memory().boxGroupUsers.listenable(),
         builder: (BuildContext context, Box box, Widget? widget) {
           final Map users = box.toMap();
           users.remove(User().id);

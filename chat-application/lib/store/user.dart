@@ -1,9 +1,14 @@
+import 'dart:io';
+
 import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/pointycastle/helpers.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:pointycastle/export.dart';
+// ignore: depend_on_referenced_packages
+import 'package:path/path.dart' as p;
 
 class User {
   static final User _instance = User._internal();
@@ -54,10 +59,58 @@ class User {
     ]);
   }
 
-  Future<void> updateGroupUsers(
-      Map<String, Map<dynamic, dynamic>> groupUsers) async {
-    await Memory().boxGroupUsers.clear();
-    await Memory().boxGroupUsers.putAll(groupUsers);
+  Future<void> updateGroupUsers(Map<String, Map> groupUsers) async {
+    final Set<String> newGroupUsersKeys = groupUsers.keys.toSet();
+    final Set<String> oldGroupUsersKeys =
+        Memory().boxGroupUsers.keys.toSet().cast<String>();
+
+    final Set<String> unionGroupUsersKeys =
+        newGroupUsersKeys.union(oldGroupUsersKeys);
+
+    for (final String groupUserKey in unionGroupUsersKeys) {
+      if (newGroupUsersKeys.contains(groupUserKey)) {
+        Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
+        Map groupUser = groupUsers[groupUserKey]!;
+
+        Map userData = await HttpConnection().post(
+            path: 'download-user',
+            body: {'id': groupUser['id'], 'lastUpdate': user['lastUpdate']});
+
+        user.addAll(
+            {'id': groupUser['id'], 'isConnected': groupUser['isConnected']});
+
+        if (userData['data'] != null) {
+          user.addAll({
+            'data': userData['data'],
+            'lastUpdate': userData['data']?['lastUpdate']
+          });
+        }
+
+        if (userData['image'] != null) {
+          final String directoryPath =
+              (await getApplicationDocumentsDirectory()).path;
+          final imageExtension = p.extension(userData['data']?['imagePath']);
+          final String path =
+              '$directoryPath/${groupUser['id']}/image$imageExtension';
+
+          user.addAll({'imagePath': path});
+        }
+
+        print('newUser $user');
+
+        Memory().boxGroupUsers.put(groupUser['id'], user);
+      } else {
+        // delete image if any
+        Map? user = Memory().boxGroupUsers.get(groupUserKey);
+        if (user == null) {
+          continue;
+        }
+        if (user['imagePath'] is String) {
+          await File(user['imagePath']).delete();
+        }
+        await Memory().boxGroupUsers.delete(groupUserKey);
+      }
+    }
   }
 
   void updateGroupUserArgument(String id, String key, dynamic value) {

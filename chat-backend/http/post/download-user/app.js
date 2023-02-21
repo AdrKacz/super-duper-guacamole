@@ -12,18 +12,42 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body)
   const id = body.id
+  const lastUpdate = body.lastUpdate ?? 0
 
-  const data = await s3Client.send(new GetObjectCommand({
-    Bucket: DATA_BUCKET_NAME,
-    Key: `users/${id}/image.png`
-  }))
+  let data
+  try {
+    const dataRaw = await s3Client.send(new GetObjectCommand({
+      Bucket: DATA_BUCKET_NAME,
+      Key: `users/${id}/data.json`
+    }))
+    data = JSON.parse(dataRaw)
+  } catch (error) {
+    console.log('Error while getting user data', error)
+  }
 
-  console.log('Success', data)
+  if (lastUpdate >= data.lastUpdate) {
+    console.log('You already have the latest version')
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ id: id })
+    }
+  }
 
-  const image = await data.Body.transformToString()
+  let image
+  try {
+    const imageRaw = await s3Client.send(new GetObjectCommand({
+      Bucket: DATA_BUCKET_NAME,
+      Key: data.imagePath
+    }))
+    image = await imageRaw.Body.transformToString()
+  } catch (error) {
+    console.log('Error while getting user image', error)
+  }
 
   return {
     id,
+    data,
     image
   }
 }

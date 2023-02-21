@@ -29,7 +29,7 @@ class _UploadPhotoState extends State<UploadPhoto> {
     _getFile(Memory().boxUser.get('imagePath'))
         .then((File? imageFile) {
           if (imageFile == null) {
-            throw Exception('Image File is not defined');
+            throw Exception('Image file is not defined');
           }
           imageExtension = p.extension(imageFile.path);
           return imageFile.readAsBytes();
