@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:awachat/network/http_connection.dart';
@@ -52,9 +53,14 @@ class User {
   }
 
   Future<void> resetGroup() async {
+    final Map? user = Memory().boxGroupUsers.get(id);
     await Future.wait([
       Memory().boxMessages.clear(), // clear messages
-      Memory().boxGroupUsers.clear(), // clear users
+      Memory().boxGroupUsers.clear().then((value) {
+        if (user != null) {
+          Memory().boxGroupUsers.put(id, user);
+        }
+      }), // clear users
       Memory().boxUser.delete('groupId'),
     ]);
   }
@@ -63,19 +69,21 @@ class User {
     final Set<String> newGroupUsersKeys = groupUsers.keys.toSet();
     final Set<String> oldGroupUsersKeys =
         Memory().boxGroupUsers.keys.toSet().cast<String>();
-
     final Set<String> unionGroupUsersKeys =
         newGroupUsersKeys.union(oldGroupUsersKeys);
 
+    unionGroupUsersKeys.remove(id); // no need to update yourself
     for (final String groupUserKey in unionGroupUsersKeys) {
       if (newGroupUsersKeys.contains(groupUserKey)) {
         Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
         Map groupUser = groupUsers[groupUserKey]!;
 
+        // TODO: DON'T UPDATE after manual redo, looks like the lastUpdate timestamp
+        // don't work well, to debug
         Map userData = await HttpConnection().post(
             path: 'download-user',
             body: {'id': groupUser['id'], 'lastUpdate': user['lastUpdate']});
-
+        print('===== userData $userData');
         user.addAll(
             {'id': groupUser['id'], 'isConnected': groupUser['isConnected']});
 
@@ -91,7 +99,12 @@ class User {
               (await getApplicationDocumentsDirectory()).path;
           final imageExtension = p.extension(userData['data']?['imagePath']);
           final String path =
-              '$directoryPath/${groupUser['id']}/image$imageExtension';
+              '$directoryPath/users/${groupUser['id']}/image$imageExtension';
+
+          print('Update to $path');
+          final File file = File(path);
+          await Directory(p.dirname(path)).create(recursive: true);
+          file.writeAsBytesSync(base64Decode(userData['image']));
 
           user.addAll({'imagePath': path});
         }
@@ -122,12 +135,26 @@ class User {
     Memory().boxGroupUsers.put(id, groupUser);
   }
 
+  void updateGroupUserArguments(String id, Map values) {
+    Map? groupUser = Memory().boxGroupUsers.get(id);
+    if (groupUser == null) {
+      return;
+    }
+    groupUser.addAll(values);
+    Memory().boxGroupUsers.put(id, groupUser);
+  }
+
   void updateGroupUserStatus(String id, bool isConnected) {
     updateGroupUserArgument(id, 'isConnected', isConnected);
   }
 
-  void updateGroupUserProfile(String id, String profile) {
-    updateGroupUserArgument(id, 'profile', profile);
+  dynamic getGroupUserArgument(String id, String key) {
+    Map? groupUser = Memory().boxGroupUsers.get(id);
+    if (groupUser == null) {
+      return;
+    }
+
+    return groupUser[key];
   }
 
   static ImageProvider getUserImageProvider(id) {

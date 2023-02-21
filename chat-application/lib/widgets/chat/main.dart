@@ -243,7 +243,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   Future<void> updateStatus() async {
     Map userStatus = await HttpConnection().get(path: 'status');
 
-    if (userStatus.isEmpty) {
+    if (userStatus.isEmpty || userStatus['id'] != User().id) {
       setState(() {
         status = Status.error;
       });

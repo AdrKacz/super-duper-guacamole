@@ -26,7 +26,7 @@ class _UploadPhotoState extends State<UploadPhoto> {
 
   void _onPressed() {
     String? imageExtension;
-    _getFile(Memory().boxUser.get('imagePath'))
+    _getFile(User().getGroupUserArgument(User().id!, 'imagePath'))
         .then((File? imageFile) {
           if (imageFile == null) {
             throw Exception('Image file is not defined');
@@ -130,27 +130,28 @@ class _UploadPhotoState extends State<UploadPhoto> {
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
     final imageExtension = p.extension(croppedImageFile.path);
-    final String path = '$directoryPath/${User().id}/image$imageExtension';
+    final String path =
+        '$directoryPath/users/${User().id}/image$imageExtension';
 
     await Directory(p.dirname(path)).create(recursive: true);
 
     print('Copy Image to $path');
     await croppedImageFile.copy(path);
 
-    Memory().boxUser.put('imagePath', path);
-
-    Memory()
-        .boxUser
-        .put('lastUpdate', DateTime.now().millisecondsSinceEpoch.toString());
+    User().updateGroupUserArguments(User().id!, {
+      'imagePath': path,
+      'lastUpdate': DateTime.now().millisecondsSinceEpoch.toString()
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: Memory().boxUser.listenable(keys: ['imagePath']),
+        valueListenable: Memory().boxGroupUsers.listenable(keys: [User().id]),
         builder: (BuildContext context, Box box, Widget? widget) =>
             (FutureBuilder(
-                future: _getFile(Memory().boxUser.get('imagePath')),
+                future: _getFile(
+                    User().getGroupUserArgument(User().id!, 'imagePath')),
                 builder: (BuildContext context, AsyncSnapshot snapshot) {
                   DecorationImage? decorationImage;
                   Widget? child;

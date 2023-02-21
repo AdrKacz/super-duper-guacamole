@@ -1,4 +1,5 @@
 import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/avatar.dart';
 import 'package:flutter/material.dart';
 
 /// Renders user's avatar or initials next to a message
@@ -19,12 +20,10 @@ class FlyerUserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsetsDirectional.only(end: 8),
-        child: GestureDetector(
+        margin: const EdgeInsetsDirectional.only(end: 8.0),
+        child: Avatar(
+            userId: userId,
             onTap: () => onAvatarTap?.call(userId),
-            child: CircleAvatar(
-                backgroundColor: Colors.transparent,
-                backgroundImage: User.getUserImageProvider(userId),
-                radius: 16)));
+            radius: 16));
   }
 }

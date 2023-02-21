@@ -20,12 +20,15 @@ exports.handler = async (event) => {
       Bucket: DATA_BUCKET_NAME,
       Key: `users/${id}/data.json`
     }))
-    data = JSON.parse(dataRaw)
+    const dataRawString = await dataRaw.Body.transformToString()
+    console.log(`Get data for user ${id}`, dataRawString)
+    data = JSON.parse(dataRawString)
   } catch (error) {
     console.log('Error while getting user data', error)
   }
 
-  if (lastUpdate >= data.lastUpdate) {
+  console.log(typeof data, lastUpdate, data?.lastUpdate, typeof data !== 'object' || lastUpdate >= data.lastUpdate)
+  if (typeof data !== 'object' || lastUpdate >= data.lastUpdate) {
     console.log('You already have the latest version')
     return {
       statusCode: 200,
@@ -40,7 +43,7 @@ exports.handler = async (event) => {
       Bucket: DATA_BUCKET_NAME,
       Key: data.imagePath
     }))
-    image = await imageRaw.Body.transformToString()
+    image = await imageRaw.Body.transformToString('base64')
   } catch (error) {
     console.log('Error while getting user image', error)
   }
