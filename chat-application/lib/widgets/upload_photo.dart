@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:awachat/store/user.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
@@ -84,27 +85,30 @@ class _UploadPhotoState extends State<UploadPhoto> {
 
     final File croppedImageFile = File(croppedImage.path);
 
-    print('Get Application Documents Directory');
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
+    final String path =
+        '$directoryPath/${User().id}/image${p.extension(croppedImageFile.path)}';
 
-    print('Copy Image');
-    final String fileExtension = p.extension(croppedImageFile.path);
-    final String path = '$directoryPath/photos';
-    await Directory(path).create(recursive: true);
-    final filePath = '$path/me$fileExtension';
-    print('Will save to $filePath');
-    await croppedImageFile.copy(filePath);
-    Memory().boxUser.put('photoPath', filePath);
+    await Directory(p.dirname(path)).create(recursive: true);
+
+    print('Copy Image to $path');
+    await croppedImageFile.copy(path);
+
+    Memory().boxUser.put('imagePath', path);
+
+    Memory()
+        .boxUser
+        .put('lastUpdate', DateTime.now().millisecondsSinceEpoch.toString());
   }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: Memory().boxUser.listenable(keys: ['photoPath']),
+        valueListenable: Memory().boxUser.listenable(keys: ['imagePath']),
         builder: (BuildContext context, Box box, Widget? widget) =>
             (FutureBuilder(
-                future: _getFile(Memory().boxUser.get('photoPath')),
+                future: _getFile(Memory().boxUser.get('imagePath')),
                 builder: (BuildContext context, AsyncSnapshot snapshot) {
                   DecorationImage? decorationImage;
                   Widget? child;

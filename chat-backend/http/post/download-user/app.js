@@ -20,5 +20,10 @@ exports.handler = async (event) => {
 
   console.log('Success', data)
 
-  return await data.Body.transformToString()
+  const image = await data.Body.transformToString()
+
+  return {
+    id,
+    image
+  }
 }

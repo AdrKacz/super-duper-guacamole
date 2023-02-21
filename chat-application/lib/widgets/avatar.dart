@@ -29,10 +29,10 @@ class Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: Memory().boxUser.listenable(keys: ['photoPath']),
+        valueListenable: Memory().boxUser.listenable(keys: ['imagePath']),
         builder: (BuildContext context, Box box, Widget? widget) =>
             (FutureBuilder(
-                future: _getImageProvider(Memory().boxUser.get('photoPath')),
+                future: _getImageProvider(Memory().boxUser.get('imagePath')),
                 builder: (BuildContext context, AsyncSnapshot snapshot) {
                   Color? backgroundColor = Colors.transparent;
                   ImageProvider? backgroundImage;
