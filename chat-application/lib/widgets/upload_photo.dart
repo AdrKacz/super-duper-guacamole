@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/store/user.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:awachat/store/memory.dart';
@@ -23,8 +25,48 @@ class _UploadPhotoState extends State<UploadPhoto> {
   final ImagePicker _picker = ImagePicker();
 
   void _onPressed() {
-    print('On Pressed');
+    String? imageExtension;
+    _getFile(Memory().boxUser.get('imagePath'))
+        .then((File? imageFile) {
+          if (imageFile == null) {
+            throw Exception('Image File is not defined');
+          }
+          imageExtension = p.extension(imageFile.path);
+          return imageFile.readAsBytes();
+        })
+        .then((Uint8List imageBytes) => (base64Encode(imageBytes)))
+        .then((String base64Image) => (HttpConnection().post(
+            path: 'upload-user',
+            body: {'image': base64Image, 'imageExtension': imageExtension})))
+        .catchError((error) => (print('Error while uploading image: $error')));
+
     context.go('/chat');
+    /*
+      image length is approx 2 MB, Amazon recommends to use Multipart Form when
+      data becomes larger than 100 MB - print(await croppedImageFile.length())
+      Resources:
+      https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html
+      https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-payload-encodings-configure-with-console.html
+      https://stackoverflow.com/questions/41756190/api-gateway-post-multipart-form-data
+      https://pub.dev/documentation/http/latest/http/MultipartRequest-class.html
+      Multipart Upload Sample:
+        final http.MultipartRequest request =
+            http.MultipartRequest('POST', Uri.parse('$_httpEndpoint/$path'));
+        request.fields['hello'] = 'world';
+        request.files
+            .add(await http.MultipartFile.fromPath('image', filePath));
+
+        request.headers.addAll({
+          HttpHeaders.contentTypeHeader: 'multipart/form-data',
+          HttpHeaders.authorizationHeader:
+              'Bearer ${Memory().boxUser.get('jwt')}'
+        });
+
+        final http.StreamedResponse response = await request.send();
+        print(
+            'MULTIPART POST statusCode (${response.statusCode}) - reasonPhrase (${response.reasonPhrase})');
+        return response;
+    */
   }
 
   Future<File?> _getFile(String? path) async {
@@ -87,8 +129,8 @@ class _UploadPhotoState extends State<UploadPhoto> {
 
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
-    final String path =
-        '$directoryPath/${User().id}/image${p.extension(croppedImageFile.path)}';
+    final imageExtension = p.extension(croppedImageFile.path);
+    final String path = '$directoryPath/${User().id}/image$imageExtension';
 
     await Directory(p.dirname(path)).create(recursive: true);
 
