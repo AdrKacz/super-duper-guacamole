@@ -99,6 +99,8 @@ class User {
               (await getApplicationDocumentsDirectory()).path;
           final imageExtension = p.extension(userData['data']?['imagePath']);
           final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+
+          // NOTE: file name need to be different, if not the old image remains (probably Flutter caches under the hood)
           final String path =
               '$directoryPath/users/${groupUser['id']}/images/$timestamp$imageExtension';
           final File file = File(path);
