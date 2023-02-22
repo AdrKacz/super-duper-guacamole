@@ -77,13 +77,13 @@ class User {
       if (newGroupUsersKeys.contains(groupUserKey)) {
         Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
         Map groupUser = groupUsers[groupUserKey]!;
-
+        print('===== =====Old User $user');
         // TODO: DON'T UPDATE after manual redo, looks like the lastUpdate timestamp
         // don't work well, to debug
         Map userData = await HttpConnection().post(
             path: 'download-user',
             body: {'id': groupUser['id'], 'lastUpdate': user['lastUpdate']});
-        print('===== userData $userData');
+        print('===== ===== User Data $userData');
         user.addAll(
             {'id': groupUser['id'], 'isConnected': groupUser['isConnected']});
 
@@ -98,18 +98,27 @@ class User {
           final String directoryPath =
               (await getApplicationDocumentsDirectory()).path;
           final imageExtension = p.extension(userData['data']?['imagePath']);
+          final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
           final String path =
-              '$directoryPath/users/${groupUser['id']}/image$imageExtension';
-
-          print('Update to $path');
+              '$directoryPath/users/${groupUser['id']}/images/$timestamp$imageExtension';
           final File file = File(path);
-          await Directory(p.dirname(path)).create(recursive: true);
-          file.writeAsBytesSync(base64Decode(userData['image']));
+
+          final Directory directory = Directory(p.dirname(path));
+          directory.createSync(recursive: true);
+          for (final FileSystemEntity entity
+              in directory.listSync(recursive: true)) {
+            print('Deleted ${entity.path}');
+            entity.deleteSync(recursive: true);
+          }
+
+          file.writeAsBytesSync(base64Decode(userData['image']),
+              mode: FileMode.writeOnly);
+          print('Wrote image for user ${groupUser['id']} in $path');
 
           user.addAll({'imagePath': path});
         }
 
-        print('newUser $user');
+        print('===== ===== New User $user');
 
         Memory().boxGroupUsers.put(groupUser['id'], user);
       } else {

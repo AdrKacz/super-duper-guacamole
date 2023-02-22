@@ -21,8 +21,8 @@ exports.handler = async (event) => {
       Key: `users/${id}/data.json`
     }))
     const dataRawString = await dataRaw.Body.transformToString()
-    console.log(`Get data for user ${id}`, dataRawString)
     data = JSON.parse(dataRawString)
+    console.log(`Got data for user ${id}`, dataRawString)
   } catch (error) {
     console.log('Error while getting user data', error)
   }
@@ -44,6 +44,7 @@ exports.handler = async (event) => {
       Key: data.imagePath
     }))
     image = await imageRaw.Body.transformToString('base64')
+    console.log(`Got image for user ${id}`)
   } catch (error) {
     console.log('Error while getting user image', error)
   }

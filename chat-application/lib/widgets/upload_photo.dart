@@ -105,7 +105,7 @@ class _UploadPhotoState extends State<UploadPhoto> {
     try {
       // NOTE: Looks like it crashed if you don't ask for permission first
       image = await _picker.pickImage(
-          source: ImageSource.camera,
+          source: ImageSource.gallery,
           preferredCameraDevice: CameraDevice.front);
     } on PlatformException catch (e) {
       print(e);
@@ -130,8 +130,9 @@ class _UploadPhotoState extends State<UploadPhoto> {
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
     final imageExtension = p.extension(croppedImageFile.path);
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     final String path =
-        '$directoryPath/users/${User().id}/image$imageExtension';
+        '$directoryPath/users/${User().id}/images/$timestamp$imageExtension';
 
     await Directory(p.dirname(path)).create(recursive: true);
 

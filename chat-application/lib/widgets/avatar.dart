@@ -15,11 +15,6 @@ class Avatar extends StatelessWidget {
 
   Future<ImageProvider> _getImageProvider(String? path) async {
     if (path == null) {
-      // remove user image as error occurs
-      User().updateGroupUserArguments(userId, {
-        'imagePath': null,
-        'lastUpdate': null,
-      });
       return User.getUserImageProvider(userId);
     }
 
