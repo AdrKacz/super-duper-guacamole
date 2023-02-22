@@ -14,7 +14,7 @@ exports.handler = async (event) => {
   const id = body.id
   const lastUpdate = body.lastUpdate ?? 0
 
-  let data
+  let data = null
   try {
     const dataRaw = await s3Client.send(new GetObjectCommand({
       Bucket: DATA_BUCKET_NAME,
@@ -37,7 +37,7 @@ exports.handler = async (event) => {
     }
   }
 
-  let image
+  let image = null
   try {
     const imageRaw = await s3Client.send(new GetObjectCommand({
       Bucket: DATA_BUCKET_NAME,
