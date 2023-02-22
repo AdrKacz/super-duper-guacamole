@@ -105,7 +105,8 @@ class _UploadPhotoState extends State<UploadPhoto> {
     try {
       // NOTE: Looks like it crashed if you don't ask for permission first
       image = await _picker.pickImage(
-          source: ImageSource.gallery,
+          source: ImageSource
+              .camera, // how to handle Server Errors "Request Entity Tool Large" (enforce max size or multipart upload)
           preferredCameraDevice: CameraDevice.front);
     } on PlatformException catch (e) {
       print(e);
