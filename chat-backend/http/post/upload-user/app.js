@@ -84,7 +84,11 @@ exports.handler = async (event) => {
   }
 
   await Promise.all([
-    sendMessages({ users, message: { action: 'update-status' }, useSaveMessage: false }),
+    sendMessages({
+      users: users.filter(({ id: userId }) => (userId !== id)),
+      message: { action: 'update-status' },
+      useSaveMessage: false
+    }),
     sendNotifications({
       users: users.filter(({ id: userId }) => (userId !== id)),
       notification: {
