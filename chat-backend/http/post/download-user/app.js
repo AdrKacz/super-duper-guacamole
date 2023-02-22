@@ -27,13 +27,12 @@ exports.handler = async (event) => {
     console.log('Error while getting user data', error)
   }
 
-  console.log(typeof data, lastUpdate, data?.lastUpdate, typeof data !== 'object' || lastUpdate >= data.lastUpdate)
-  if (typeof data !== 'object' || lastUpdate >= data.lastUpdate) {
+  if (data === null || lastUpdate >= data.lastUpdate) {
     console.log('You already have the latest version')
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id, message: 'You already have the latest version' })
     }
   }
 
@@ -50,8 +49,8 @@ exports.handler = async (event) => {
   }
 
   return {
-    id,
-    data,
-    image
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ id, data, image })
   }
 }
