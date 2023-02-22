@@ -1,5 +1,6 @@
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
+import 'package:awachat/widgets/avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:hive_flutter/hive_flutter.dart';
@@ -10,7 +11,7 @@ class UsersList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: Hive.box<Map>(Memory.groupUsers).listenable(),
+        valueListenable: Memory().boxGroupUsers.listenable(),
         builder: (BuildContext context, Box box, Widget? widget) {
           final Map users = box.toMap();
           users.remove(User().id);
@@ -21,10 +22,7 @@ class UsersList extends StatelessWidget {
                     .map((user) => Stack(
                             alignment: AlignmentDirectional.center,
                             children: [
-                              CircleAvatar(
-                                  backgroundColor: Colors.transparent,
-                                  backgroundImage:
-                                      User.getUserImageProvider(user['id'])),
+                              Avatar(userId: user['id']),
                               badges.Badge(
                                   showBadge: user['isConnected'] ?? false,
                                   badgeStyle: badges.BadgeStyle(

@@ -11,6 +11,7 @@ Globals:
       Variables:
         USERS_TABLE_NAME: !Ref UsersTable
         GROUPS_TABLE_NAME: !Ref GroupsTable
+        DATA_BUCKET_NAME: !Ref DataBucket
         USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
         GROUPS_CITY_INDEX_NAME: "CityIndex"
@@ -158,6 +159,9 @@ Resources:
             NonKeyAttributes:
               - "groupSize"
             ProjectionType: "INCLUDE"
+
+  DataBucket:
+    Type: AWS::S3::Bucket
 
   ##### ##### #####
   ##### Http
@@ -360,6 +364,64 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${HttpPostChangeGroupFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # POST /upload-user
+  HttpPostUploadUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/post/upload-user
+      Environment:
+        Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref DataBucket
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /upload-user
+            Method: POST
+
+  HttpPostUploadUserLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPostUploadUserFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # POST /download-user
+  HttpPostDownloadUserFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/post/download-user
+      Policies:
+      - S3CrudPolicy:
+          BucketName: !Ref DataBucket
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /download-user
+            Method: POST
+
+  HttpPostDownloadUserLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPostDownloadUserFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   # PUT /firebase-token

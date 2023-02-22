@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:awachat/network/http_connection.dart';
+import 'package:awachat/store/user.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +25,48 @@ class _UploadPhotoState extends State<UploadPhoto> {
   final ImagePicker _picker = ImagePicker();
 
   void _onPressed() {
-    print('On Pressed');
+    String? imageExtension;
+    _getFile(User().getGroupUserArgument(User().id!, 'imagePath'))
+        .then((File? imageFile) {
+          if (imageFile == null) {
+            throw Exception('Image file is not defined');
+          }
+          imageExtension = p.extension(imageFile.path);
+          return imageFile.readAsBytes();
+        })
+        .then((Uint8List imageBytes) => (base64Encode(imageBytes)))
+        .then((String base64Image) => (HttpConnection().post(
+            path: 'upload-user',
+            body: {'image': base64Image, 'imageExtension': imageExtension})))
+        .catchError((error) => (print('Error while uploading image: $error')));
+
     context.go('/chat');
+    /*
+      image length is approx 2 MB, Amazon recommends to use Multipart Form when
+      data becomes larger than 100 MB - print(await croppedImageFile.length())
+      Resources:
+      https://docs.aws.amazon.com/AmazonS3/latest/userguide/mpuoverview.html
+      https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-payload-encodings-configure-with-console.html
+      https://stackoverflow.com/questions/41756190/api-gateway-post-multipart-form-data
+      https://pub.dev/documentation/http/latest/http/MultipartRequest-class.html
+      Multipart Upload Sample:
+        final http.MultipartRequest request =
+            http.MultipartRequest('POST', Uri.parse('$_httpEndpoint/$path'));
+        request.fields['hello'] = 'world';
+        request.files
+            .add(await http.MultipartFile.fromPath('image', filePath));
+
+        request.headers.addAll({
+          HttpHeaders.contentTypeHeader: 'multipart/form-data',
+          HttpHeaders.authorizationHeader:
+              'Bearer ${Memory().boxUser.get('jwt')}'
+        });
+
+        final http.StreamedResponse response = await request.send();
+        print(
+            'MULTIPART POST statusCode (${response.statusCode}) - reasonPhrase (${response.reasonPhrase})');
+        return response;
+    */
   }
 
   Future<File?> _getFile(String? path) async {
@@ -62,7 +105,8 @@ class _UploadPhotoState extends State<UploadPhoto> {
     try {
       // NOTE: Looks like it crashed if you don't ask for permission first
       image = await _picker.pickImage(
-          source: ImageSource.camera,
+          source: ImageSource
+              .camera, // how to handle Server Errors "Request Entity Tool Large" (enforce max size or multipart upload)
           preferredCameraDevice: CameraDevice.front);
     } on PlatformException catch (e) {
       print(e);
@@ -84,27 +128,32 @@ class _UploadPhotoState extends State<UploadPhoto> {
 
     final File croppedImageFile = File(croppedImage.path);
 
-    print('Get Application Documents Directory');
     final String directoryPath =
         (await getApplicationDocumentsDirectory()).path;
+    final imageExtension = p.extension(croppedImageFile.path);
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final String path =
+        '$directoryPath/users/${User().id}/images/$timestamp$imageExtension';
 
-    print('Copy Image');
-    final String fileExtension = p.extension(croppedImageFile.path);
-    final String path = '$directoryPath/photos';
-    await Directory(path).create(recursive: true);
-    final filePath = '$path/me$fileExtension';
-    print('Will save to $filePath');
-    await croppedImageFile.copy(filePath);
-    Memory().boxUser.put('photoPath', filePath);
+    await Directory(p.dirname(path)).create(recursive: true);
+
+    print('Copy Image to $path');
+    await croppedImageFile.copy(path);
+
+    User().updateGroupUserArguments(User().id!, {
+      'imagePath': path,
+      'lastUpdate': DateTime.now().millisecondsSinceEpoch.toString()
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
-        valueListenable: Memory().boxUser.listenable(keys: ['photoPath']),
+        valueListenable: Memory().boxGroupUsers.listenable(keys: [User().id]),
         builder: (BuildContext context, Box box, Widget? widget) =>
             (FutureBuilder(
-                future: _getFile(Memory().boxUser.get('photoPath')),
+                future: _getFile(
+                    User().getGroupUserArgument(User().id!, 'imagePath')),
                 builder: (BuildContext context, AsyncSnapshot snapshot) {
                   DecorationImage? decorationImage;
                   Widget? child;

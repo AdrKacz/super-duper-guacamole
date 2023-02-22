@@ -109,7 +109,7 @@ class HttpConnection {
   }
 
   Future<Map> post({required String path, required Map body}) async {
-    print('POST /$path, body $body');
+    print('POST /$path, body ${body.keys}');
     return _request(
         getResponse: () {
           return http.post(Uri.parse('$_httpEndpoint/$path'),

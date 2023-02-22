@@ -217,5 +217,6 @@ process.env = Object.assign(process.env, {
   SEND_MESSAGE_TOPIC_ARN: 'send-message-topic-arn',
   SEND_NOTIFICATION_TOPIC_ARN: 'send-notification-topic-arn',
   SWITCH_GROUP_TOPIC_ARN: 'switch-group-topic-arn',
-  STORE_UNREAD_DATA_TOPIC_ARN: 'store-unread-data-topic-arn'
+  STORE_UNREAD_DATA_TOPIC_ARN: 'store-unread-data-topic-arn',
+  DATA_BUCKET_NAME: 'data-bucket-name'
 })

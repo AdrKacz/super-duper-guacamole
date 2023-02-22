@@ -243,7 +243,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   Future<void> updateStatus() async {
     Map userStatus = await HttpConnection().get(path: 'status');
 
-    if (userStatus.isEmpty) {
+    if (userStatus.isEmpty || userStatus['id'] != User().id) {
       setState(() {
         status = Status.error;
       });
@@ -272,7 +272,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       await User().updateGroupId(userStatus['group']['id']);
     }
 
-    final Map<String, Map<dynamic, dynamic>> groupUsers = {};
+    final Map<String, Map> groupUsers = {};
     for (final groupUser in userStatus['users']) {
       groupUsers[groupUser['id']] = {
         'id': groupUser['id'],
