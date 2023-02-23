@@ -5,7 +5,7 @@
   "author": "AdrKacz",
   "scripts": {
     "lint": "eslint . --fix",
-    "predeploy": "yarn ci:all && sam build",
+    "predeploy": "yarn install:all && sam build",
     "deploy": "sam deploy --config-env",
     "deploy:skip-ci": "sam deploy --config-env",
     "deploy:force": "yarn predeploy && sam deploy --no-confirm-changeset --config-env",
