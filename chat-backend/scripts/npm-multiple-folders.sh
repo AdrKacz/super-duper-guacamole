@@ -20,5 +20,5 @@ for DIR in $DIRS
 do
   echo "Running $2 in $DIR"
   cd "$DIR"
-  npm $2
+  npm "$2"
 done
