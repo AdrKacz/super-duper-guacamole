@@ -24,7 +24,7 @@ class UserDrawer extends StatelessWidget {
       ListTile(
           leading: const Icon(Icons.account_circle),
           title: const Text('Mettre mon profil à jour'),
-          onTap: () => (context.go('/upload-photo'))),
+          onTap: () => (context.go('/update-user'))),
       const Divider(),
       ListTile(
           leading: const Icon(Icons.copyright),
