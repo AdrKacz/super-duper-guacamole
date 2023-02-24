@@ -85,20 +85,36 @@ class _UpdateUserState extends State<UpdateUser> {
               padding: const EdgeInsets.all(12.0),
               child: Center(
                   child: SingleChildScrollView(
-                      child: Form(
-                          key: _formKey,
-                          child: Column(children: [
-                            const PhotoField(),
-                            const NameField(),
-                            Container(
-                                margin: const EdgeInsets.only(top: 12),
-                                child: ElevatedButton(
-                                    onPressed: () {
-                                      if (_formKey.currentState!.validate()) {
-                                        _uploadUserData();
-                                        context.go('/chat');
-                                      }
-                                    },
-                                    child: const Text('''C'est parti !''')))
-                          ]))))))));
+                      child: FutureBuilder(
+                          future: _getFile(User()
+                              .getGroupUserArgument(User().id!, 'imagePath')),
+                          builder:
+                              (BuildContext context, AsyncSnapshot snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return CircularProgressIndicator(
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary);
+                            }
+                            return Form(
+                                key: _formKey,
+                                child: Column(children: [
+                                  PhotoField(
+                                    initialValue: snapshot.data,
+                                  ),
+                                  const NameField(),
+                                  Container(
+                                      margin: const EdgeInsets.only(top: 12),
+                                      child: ElevatedButton(
+                                          onPressed: () {
+                                            if (_formKey.currentState!
+                                                .validate()) {
+                                              _uploadUserData();
+                                              context.go('/chat');
+                                            }
+                                          },
+                                          child:
+                                              const Text('''C'est parti !''')))
+                                ]));
+                          })))))));
 }

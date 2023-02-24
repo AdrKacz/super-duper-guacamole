@@ -12,7 +12,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
 
 class PhotoField extends StatefulWidget {
-  const PhotoField({Key? key}) : super(key: key);
+  const PhotoField({Key? key, this.initialValue}) : super(key: key);
+
+  final File? initialValue;
 
   @override
   State<PhotoField> createState() => _PhotoFieldState();
@@ -52,7 +54,8 @@ class _PhotoFieldState extends State<PhotoField> {
         ]);
   }
 
-  void _addImage(Color? toolbarColor, Color? toolbarWidgetColor) async {
+  Future<File?> _addImage(
+      Color? toolbarColor, Color? toolbarWidgetColor) async {
     XFile? image;
     try {
       // NOTE: Looks like it crashed if you don't ask for permission first
@@ -68,14 +71,14 @@ class _PhotoFieldState extends State<PhotoField> {
     }
 
     if (image == null) {
-      return;
+      return null;
     }
 
     final CroppedFile? croppedImage = await _cropImage(image,
         toolbarColor: toolbarColor, toolbarWidgetColor: toolbarWidgetColor);
 
     if (croppedImage == null) {
-      return;
+      return null;
     }
 
     final File croppedImageFile = File(croppedImage.path);
@@ -96,83 +99,73 @@ class _PhotoFieldState extends State<PhotoField> {
       'imagePath': path,
       'lastUpdate': DateTime.now().millisecondsSinceEpoch.toString()
     });
+
+    return croppedImageFile;
   }
 
   bool hasFile = false;
   @override
   Widget build(BuildContext context) {
     return FormField(
-        validator: (dynamic value) {
-          if (!hasFile) {
+        initialValue: widget.initialValue,
+        validator: (File? value) {
+          if (value is! File) {
             return 'Tu dois prendre une photo.';
           }
+          return null;
         },
-        builder: (FormFieldState<dynamic> state) => (ValueListenableBuilder(
-            valueListenable:
-                Memory().boxGroupUsers.listenable(keys: [User().id]),
-            builder: (BuildContext context, Box box, Widget? widget) =>
-                (FutureBuilder(
-                    future: _getFile(
-                        User().getGroupUserArgument(User().id!, 'imagePath')),
-                    builder: (BuildContext context, AsyncSnapshot snapshot) {
-                      DecorationImage? decorationImage;
-                      Widget? child;
-                      Text? text;
-                      ButtonStyle? buttonStyle;
-                      addPhotoWithTheme() {
-                        _addImage(Theme.of(context).colorScheme.primary,
-                            Theme.of(context).colorScheme.onPrimary);
-                      }
+        builder: (FormFieldState<File?> state) {
+          DecorationImage? decorationImage;
+          Widget? child;
+          Text? text;
+          ButtonStyle? buttonStyle;
+          addPhotoWithTheme() async {
+            File? file = await _addImage(Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.onPrimary);
+            if (file is File) {
+              state.didChange(file);
+            }
+          }
 
-                      hasFile = false; // reset has file on re-render
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        child =
-                            const Center(child: CircularProgressIndicator());
-                        text = const Text('''Prendre une photo''');
-                      } else {
-                        if (snapshot.hasData && snapshot.data is File) {
-                          decorationImage = DecorationImage(
-                            fit: BoxFit.cover,
-                            image: FileImage(snapshot.data),
-                          );
-                          text = const Text('''Reprendre une photo''');
-                          buttonStyle = ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.background,
-                              foregroundColor:
-                                  Theme.of(context).colorScheme.onBackground);
-                          hasFile = true; // a valid file is available
-                        } else {
-                          child = IconButton(
-                              onPressed: addPhotoWithTheme,
-                              icon: const Icon(Icons.add_a_photo));
-                          text = const Text('''Prendre une photo''');
-                        }
-                      }
+          if (state.value is File) {
+            decorationImage = DecorationImage(
+              fit: BoxFit.cover,
+              image: FileImage(state.value!),
+            );
+            text = const Text('''Reprendre une photo''');
+            buttonStyle = ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.background,
+                foregroundColor: Theme.of(context).colorScheme.onBackground);
+          } else {
+            child = IconButton(
+                onPressed: addPhotoWithTheme,
+                icon: const Icon(Icons.add_a_photo));
+            text = const Text('''Prendre une photo''');
+          }
 
-                      return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            AspectRatio(
-                                aspectRatio: 3 / 4,
-                                child: Container(
-                                  margin: const EdgeInsets.all(24.0),
-                                  decoration: BoxDecoration(
-                                      image: decorationImage,
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.circular(8.0)),
-                                      color: Colors.grey.shade300),
-                                  child: child,
-                                )),
-                            ElevatedButton(
-                                style: buttonStyle,
-                                onPressed: addPhotoWithTheme,
-                                child: text),
-                            state.hasError
-                                ? Text(state.errorText!,
-                                    style: const TextStyle(color: Colors.red))
-                                : Container()
-                          ]);
-                    })))));
+          return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                AspectRatio(
+                    aspectRatio: 3 / 4,
+                    child: Container(
+                      margin: const EdgeInsets.all(24.0),
+                      decoration: BoxDecoration(
+                          image: decorationImage,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(8.0)),
+                          color: Colors.grey.shade300),
+                      child: child,
+                    )),
+                ElevatedButton(
+                    style: buttonStyle,
+                    onPressed: addPhotoWithTheme,
+                    child: text),
+                state.hasError
+                    ? Text(state.errorText!,
+                        style: const TextStyle(color: Colors.red))
+                    : Container()
+              ]);
+        });
   }
 }
