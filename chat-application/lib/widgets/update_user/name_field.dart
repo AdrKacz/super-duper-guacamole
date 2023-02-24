@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class NameField extends StatelessWidget {
   const NameField({Key? key}) : super(key: key);
-
+  // TODO: hgandle problem when you type it freezes the photo above
+  // TODO: save and send the name along with the photo
   @override
   Widget build(BuildContext context) => (TextFormField(
         validator: (value) {
