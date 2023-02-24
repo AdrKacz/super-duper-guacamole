@@ -12,7 +12,7 @@ if [[ $# -ne 2 ]] ; then
 fi
 
 # Find all directories containing the specified file within the root directory, excluding the root directory itself
-DIRS=$(find "$ROOT_DIR" -name "$1" -type f -not -path "*/node_modules/*" -exec dirname {} \; | sort -u | grep -v "^$ROOT_DIR$")
+DIRS=$(find "$ROOT_DIR" -name "$1" -type f -not -path "*/node_modules/*" -not -path "*/.aws-sam/*" -exec dirname {} \; | sort -u | grep -v "^$ROOT_DIR$")
 
 
 # Loop through each directory and run the specified npm command

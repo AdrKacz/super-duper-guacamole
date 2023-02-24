@@ -75,7 +75,7 @@ class _UpdateUserState extends State<UpdateUser> {
       'image': base64Image,
       'imageExtension': imageExtension
     }).catchError((error) => (print('Error while uploading image: $error')));
-
+    print('Done Uploading User Data');
     /*
       image length is approx 2 MB, Amazon recommends to use Multipart Form when
       data becomes larger than 100 MB - print(await croppedImageFile.length())
@@ -145,7 +145,7 @@ class _UpdateUserState extends State<UpdateUser> {
                                                     .toString()
                                               });
                                               print('Done Saving');
-                                              // _uploadUserData(); // TODO: WRITE THE UPLOAD USER DATA
+                                              _uploadUserData();
                                               context.go('/chat');
                                             }
                                           },

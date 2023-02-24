@@ -4,14 +4,13 @@
   "description": "Groups chat managed with AWS SAM",
   "author": "AdrKacz",
   "scripts": {
-    "lint": "eslint . --fix",
-    "predeploy": "yarn install:all && sam build",
-    "deploy": "sam deploy --config-env",
-    "deploy:skip-ci": "sam deploy --config-env",
-    "deploy:force": "yarn install:all && sam deploy --no-confirm-changeset --config-env",
-    "deploy:skip-ci:force": "sam deploy --no-confirm-changeset --config-env",
-    "test": "jest",
-    "test:silent": "jest --silent",
+    "lint": "nx exec -- eslint . --fix",
+    "build": "nx exec -- sam build",
+    "deploy:skip-ci": "yarn build && sam deploy --config-env",
+    "deploy:force": "yarn ci:all && yarn build && yarn predeploy && sam deploy --no-confirm-changeset --config-env",
+    "deploy:skip-ci:force": "yarn build && sam deploy --no-confirm-changeset --config-env",
+    "test": "nx exec -- jest",
+    "test:silent": "nx exec -- jest --silent",
     "ci:all": "bash ./scripts/npm-multiple-folders.sh package-lock.json ci",
     "install:all": "bash ./scripts/npm-multiple-folders.sh package.json install",
     "upgrade:all": "bash ./scripts/npm-multiple-folders.sh package.json upgrade",
@@ -31,7 +30,28 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.2.0",
     "firebase-admin": "^11.2.0",
-    "jest": "^28.1.1"
+    "jest": "^28.1.1",
+    "nx": "15.7.2",
+    "@nrwl/nx-cloud": "latest"
   },
-  "license": "SEE LICENSE IN /LICENSE"
+  "license": "SEE LICENSE IN /LICENSE",
+  "nx": {
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/.aws-sam"
+        ]
+      },
+      "test": {
+        "outputs": [
+          "{projectRoot}/.coverage"
+        ]
+      },
+      "test:silent": {
+        "outputs": [
+          "{projectRoot}/.coverage"
+        ]
+      }
+    }
+  }
 }
