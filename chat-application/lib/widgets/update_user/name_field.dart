@@ -1,10 +1,23 @@
+import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 
 class NameField extends StatelessWidget {
-  const NameField({Key? key}) : super(key: key);
-  // TODO: save and send the name along with the photo
+  const NameField({Key? key, this.initialValue}) : super(key: key);
+
+  final String? initialValue;
+
+  void _onSaved(String? name) {
+    print('===== ===== Try to save name');
+    if (name is! String) {
+      return;
+    }
+    User().updateGroupUserArguments(User().id!, {'name': name});
+  }
+
   @override
   Widget build(BuildContext context) => (TextFormField(
+        initialValue: initialValue,
+        onSaved: _onSaved,
         validator: (value) {
           if (value == null || value.isEmpty || value.length < 3) {
             return 'Ton prénom doit faire au moins trois lettres.';

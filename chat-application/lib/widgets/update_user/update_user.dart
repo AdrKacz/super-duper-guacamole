@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:awachat/network/http_connection.dart';
+import 'package:awachat/store/memory.dart';
 import 'package:awachat/widgets/update_user/name_field.dart';
 import 'package:awachat/widgets/update_user/photo_field.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:awachat/store/user.dart';
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class UpdateUser extends StatefulWidget {
   const UpdateUser({Key? key}) : super(key: key);
@@ -18,6 +20,22 @@ class UpdateUser extends StatefulWidget {
 }
 
 class _UpdateUserState extends State<UpdateUser> {
+  Future<Map> _getInitialValues() async {
+    Map initialValues = {};
+
+    initialValues['_directoryPath'] =
+        (await getApplicationDocumentsDirectory()).path;
+
+    // get photo
+    initialValues['photo'] =
+        await _getFile(User().getGroupUserArgument(User().id!, 'imagePath'));
+
+    // get name
+    initialValues['name'] = User().getGroupUserArgument(User().id!, 'name');
+
+    return initialValues;
+  }
+
   Future<File?> _getFile(String? path) async {
     if (path == null) {
       return null;
@@ -33,21 +51,30 @@ class _UpdateUserState extends State<UpdateUser> {
     }
   }
 
-  void _uploadUserData() {
-    String? imageExtension;
-    _getFile(User().getGroupUserArgument(User().id!, 'imagePath'))
-        .then((File? imageFile) {
-          if (imageFile == null) {
-            throw Exception('Image file is not defined');
-          }
-          imageExtension = p.extension(imageFile.path);
-          return imageFile.readAsBytes();
-        })
-        .then((Uint8List imageBytes) => (base64Encode(imageBytes)))
-        .then((String base64Image) => (HttpConnection().post(
-            path: 'upload-user',
-            body: {'image': base64Image, 'imageExtension': imageExtension})))
-        .catchError((error) => (print('Error while uploading image: $error')));
+  void _uploadUserData() async {
+    // get name
+    String? name = User().getGroupUserArgument(User().id!, 'name');
+    if (name is! String) {
+      throw Exception('Name is not defined');
+    }
+
+    // get image
+    File? imageFile =
+        await _getFile(User().getGroupUserArgument(User().id!, 'imagePath'));
+    if (imageFile is! File) {
+      throw Exception('Image file is not defined');
+    }
+    String imageExtension = p.extension(imageFile.path);
+
+    Uint8List imageBytes = await imageFile.readAsBytes();
+    String base64Image = await base64Encode(imageBytes);
+
+    // upload data
+    await HttpConnection().post(path: 'upload-user', body: {
+      'name': name,
+      'image': base64Image,
+      'imageExtension': imageExtension
+    }).catchError((error) => (print('Error while uploading image: $error')));
 
     /*
       image length is approx 2 MB, Amazon recommends to use Multipart Form when
@@ -86,8 +113,7 @@ class _UpdateUserState extends State<UpdateUser> {
               child: Center(
                   child: SingleChildScrollView(
                       child: FutureBuilder(
-                          future: _getFile(User()
-                              .getGroupUserArgument(User().id!, 'imagePath')),
+                          future: _getInitialValues(),
                           builder:
                               (BuildContext context, AsyncSnapshot snapshot) {
                             if (snapshot.connectionState ==
@@ -100,16 +126,26 @@ class _UpdateUserState extends State<UpdateUser> {
                                 key: _formKey,
                                 child: Column(children: [
                                   PhotoField(
-                                    initialValue: snapshot.data,
-                                  ),
-                                  const NameField(),
+                                      directoryPath:
+                                          snapshot.data['_directoryPath'],
+                                      initialValue: snapshot.data['photo']),
+                                  NameField(
+                                      initialValue: snapshot.data['name']),
                                   Container(
                                       margin: const EdgeInsets.only(top: 12),
                                       child: ElevatedButton(
                                           onPressed: () {
                                             if (_formKey.currentState!
                                                 .validate()) {
-                                              _uploadUserData();
+                                              _formKey.currentState!.save();
+                                              User().updateGroupUserArguments(
+                                                  User().id!, {
+                                                'lastUpdate': DateTime.now()
+                                                    .millisecondsSinceEpoch
+                                                    .toString()
+                                              });
+                                              print('Done Saving');
+                                              // _uploadUserData(); // TODO: WRITE THE UPLOAD USER DATA
                                               context.go('/chat');
                                             }
                                           },

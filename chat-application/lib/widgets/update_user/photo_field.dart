@@ -1,19 +1,18 @@
 import 'dart:io';
 import 'package:awachat/store/user.dart';
 import 'package:image_cropper/image_cropper.dart';
-import 'package:awachat/store/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
 
 class PhotoField extends StatefulWidget {
-  const PhotoField({Key? key, this.initialValue}) : super(key: key);
+  const PhotoField({Key? key, required this.directoryPath, this.initialValue})
+      : super(key: key);
 
+  final String directoryPath;
   final File? initialValue;
 
   @override
@@ -22,21 +21,6 @@ class PhotoField extends StatefulWidget {
 
 class _PhotoFieldState extends State<PhotoField> {
   final ImagePicker _picker = ImagePicker();
-
-  Future<File?> _getFile(String? path) async {
-    if (path == null) {
-      return null;
-    }
-
-    final File file = File(path);
-
-    try {
-      await file.length();
-      return file;
-    } catch (e) {
-      return null;
-    }
-  }
 
   Future<CroppedFile?> _cropImage(XFile image,
       {Color? toolbarColor, Color? toolbarWidgetColor}) {
@@ -83,30 +67,41 @@ class _PhotoFieldState extends State<PhotoField> {
 
     final File croppedImageFile = File(croppedImage.path);
 
-    final String directoryPath =
-        (await getApplicationDocumentsDirectory()).path;
-    final imageExtension = p.extension(croppedImageFile.path);
-    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-    final String path =
-        '$directoryPath/users/${User().id}/images/$timestamp$imageExtension';
+    return croppedImageFile;
+  }
 
-    await Directory(p.dirname(path)).create(recursive: true);
+  void _onSaved(File? file) {
+    print('===== ===== Try to save photo');
+    if (file is! File) {
+      return;
+    }
+
+    final imageExtension = p.extension(file.path);
+    final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+
+    final String path =
+        '${widget.directoryPath}/users/${User().id}/images/$timestamp$imageExtension';
+
+    final Directory directory = Directory(p.dirname(path));
+    directory.createSync(recursive: true);
 
     print('Copy Image to $path');
-    await croppedImageFile.copy(path);
+    file.copySync(path);
+    for (final FileSystemEntity entity in directory.listSync(recursive: true)) {
+      if (entity.path != path) {
+        print('Deleted ${entity.path}');
+        entity.deleteSync(recursive: true);
+      }
+    }
 
-    User().updateGroupUserArguments(User().id!, {
-      'imagePath': path,
-      'lastUpdate': DateTime.now().millisecondsSinceEpoch.toString()
-    });
-
-    return croppedImageFile;
+    User().updateGroupUserArguments(User().id!, {'imagePath': path});
   }
 
   bool hasFile = false;
   @override
   Widget build(BuildContext context) {
     return FormField(
+        onSaved: _onSaved,
         initialValue: widget.initialValue,
         validator: (File? value) {
           if (value is! File) {
