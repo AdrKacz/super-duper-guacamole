@@ -54,6 +54,8 @@ class _UpdateUserState extends State<UpdateUser> {
   void _uploadUserData() async {
     // get name
     String? name = User().getGroupUserArgument(User().id!, 'name');
+    print('Get Name <$name>');
+    print(Memory().boxGroupUsers.values);
     if (name is! String) {
       throw Exception('Name is not defined');
     }

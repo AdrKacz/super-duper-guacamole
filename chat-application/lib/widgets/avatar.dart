@@ -1,17 +1,16 @@
 import 'dart:io';
 
+import 'package:awachat/dialogs/user.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class Avatar extends StatelessWidget {
-  const Avatar({Key? key, required this.userId, this.onTap, this.radius})
-      : super(key: key);
+  const Avatar({Key? key, required this.userId, this.radius}) : super(key: key);
 
   final String userId;
   final double? radius;
-  final void Function()? onTap;
 
   Future<ImageProvider> _getImageProvider(String? path) async {
     if (path == null) {
@@ -50,7 +49,7 @@ class Avatar extends StatelessWidget {
                   }
 
                   return InkWell(
-                      onTap: onTap,
+                      onTap: () => (dialogUser(context, userId)),
                       customBorder: const CircleBorder(),
                       child: CircleAvatar(
                         backgroundColor: backgroundColor,

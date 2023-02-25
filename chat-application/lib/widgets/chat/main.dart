@@ -359,13 +359,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
     return Scaffold(
         drawer: const UserDrawer(),
         appBar: AppBar(
-            leading: Builder(builder: (BuildContext context) {
-              return Padding(
-                  padding: const EdgeInsets.only(left: 2.0),
-                  child: Avatar(
-                      userId: User().id!,
-                      onTap: () => (Scaffold.of(context).openDrawer())));
-            }),
+            leading: Builder(
+                builder: (BuildContext context) => (IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () => (Scaffold.of(context).openDrawer())))),
             centerTitle: true,
             title: const UsersList(),
             actions: <Widget>[
