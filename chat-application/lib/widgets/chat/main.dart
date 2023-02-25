@@ -329,7 +329,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         GroupUser(data['id']).updateStatus(true);
         break;
       case 'disconnect':
-        GroupUser(data['id']).updateStatus(true);
+        GroupUser(data['id']).updateStatus(false);
         break;
       default:
         print('received unknown action $data');
