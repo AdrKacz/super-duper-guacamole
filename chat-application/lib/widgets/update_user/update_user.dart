@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:awachat/network/http_connection.dart';
-import 'package:awachat/store/memory.dart';
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/widgets/update_user/name_field.dart';
 import 'package:awachat/widgets/update_user/photo_field.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +20,8 @@ class UpdateUser extends StatefulWidget {
 }
 
 class _UpdateUserState extends State<UpdateUser> {
+  final GroupUser groupUser = GroupUser(User().id!);
+
   Future<Map> _getInitialValues() async {
     Map initialValues = {};
 
@@ -27,11 +29,10 @@ class _UpdateUserState extends State<UpdateUser> {
         (await getApplicationDocumentsDirectory()).path;
 
     // get photo
-    initialValues['photo'] =
-        await _getFile(User().getGroupUserArgument(User().id!, 'imagePath'));
+    initialValues['photo'] = await _getFile(groupUser.getArgument('imagePath'));
 
     // get name
-    initialValues['name'] = User().getGroupUserArgument(User().id!, 'name');
+    initialValues['name'] = groupUser.getArgument('name');
 
     return initialValues;
   }
@@ -53,23 +54,21 @@ class _UpdateUserState extends State<UpdateUser> {
 
   void _uploadUserData() async {
     // get name
-    String? name = User().getGroupUserArgument(User().id!, 'name');
-    print('Get Name <$name>');
-    print(Memory().boxGroupUsers.values);
+    String? name = groupUser.getArgument('name');
+
     if (name is! String) {
       throw Exception('Name is not defined');
     }
 
     // get image
-    File? imageFile =
-        await _getFile(User().getGroupUserArgument(User().id!, 'imagePath'));
+    File? imageFile = await _getFile(groupUser.getArgument('imagePath'));
     if (imageFile is! File) {
       throw Exception('Image file is not defined');
     }
     String imageExtension = p.extension(imageFile.path);
 
     Uint8List imageBytes = await imageFile.readAsBytes();
-    String base64Image = await base64Encode(imageBytes);
+    String base64Image = base64Encode(imageBytes);
 
     // upload data
     await HttpConnection().post(path: 'upload-user', body: {
@@ -77,7 +76,7 @@ class _UpdateUserState extends State<UpdateUser> {
       'image': base64Image,
       'imageExtension': imageExtension
     }).catchError((error) => (print('Error while uploading image: $error')));
-    print('Done Uploading User Data');
+
     /*
       image length is approx 2 MB, Amazon recommends to use Multipart Form when
       data becomes larger than 100 MB - print(await croppedImageFile.length())
@@ -109,6 +108,7 @@ class _UpdateUserState extends State<UpdateUser> {
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) => (Scaffold(
+      appBar: AppBar(title: const Text('Mon Profil')),
       body: SafeArea(
           child: Padding(
               padding: const EdgeInsets.all(12.0),
@@ -140,13 +140,11 @@ class _UpdateUserState extends State<UpdateUser> {
                                             if (_formKey.currentState!
                                                 .validate()) {
                                               _formKey.currentState!.save();
-                                              User().updateGroupUserArguments(
-                                                  User().id!, {
+                                              groupUser.forceUpdateArguments({
                                                 'lastUpdate': DateTime.now()
                                                     .millisecondsSinceEpoch
-                                                    .toString()
                                               });
-                                              print('Done Saving');
+                                              print('Saved user data form');
                                               _uploadUserData();
                                               context.go('/chat');
                                             }

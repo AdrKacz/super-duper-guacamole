@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/user.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +72,6 @@ class _PhotoFieldState extends State<PhotoField> {
   }
 
   void _onSaved(File? file) {
-    print('===== ===== Try to save photo');
     if (file is! File) {
       return;
     }
@@ -94,7 +94,7 @@ class _PhotoFieldState extends State<PhotoField> {
       }
     }
 
-    User().updateGroupUserArguments(User().id!, {'imagePath': path});
+    GroupUser(User().id!).forceUpdateArguments({'imagePath': path});
   }
 
   bool hasFile = false;

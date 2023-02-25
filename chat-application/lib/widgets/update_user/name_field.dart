@@ -1,4 +1,4 @@
-import 'package:awachat/store/memory.dart';
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 
@@ -12,9 +12,7 @@ class NameField extends StatelessWidget {
     if (name is! String) {
       return;
     }
-    User().updateGroupUserArguments(User().id!, {'name': name});
-    print('Has updated name');
-    print(Memory().boxGroupUsers.values);
+    GroupUser(User().id!).forceUpdateArguments({'name': name});
   }
 
   @override

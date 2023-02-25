@@ -1,3 +1,4 @@
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
@@ -35,7 +36,7 @@ types.TextMessage decodeMessage(String encodedMessage) {
       return types.TextMessage(
           status: getStatusFromName(jsonMessage['status'],
               defaultStatus: types.Status.delivered),
-          author: types.User(id: jsonMessage['author']),
+          author: GroupUser(jsonMessage['author']).flyerUser,
           createdAt: jsonMessage['createdAt'],
           id: jsonMessage['id'],
           text: jsonMessage['text']);

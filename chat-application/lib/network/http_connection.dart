@@ -27,7 +27,7 @@ class HttpConnection {
             'id': User().id,
             'publicKey': encodePublicKeyToPem(User().pair.publicKey)
           }));
-      print('response ${response.statusCode} - ${response.body}');
+      print('/sign-up response status code ${response.statusCode}');
       if (response.statusCode == 200) {
         return true;
       } else {
@@ -56,7 +56,7 @@ class HttpConnection {
             'timestamp': timestamp,
             'signature': signature
           }));
-      print('response ${response.statusCode} - ${response.body}');
+      print('/sign-in response status code ${response.statusCode}');
       if (response.statusCode == 200) {
         Memory().boxUser.put('jwt', jsonDecode(response.body)['jwt']);
       } else {
@@ -79,7 +79,7 @@ class HttpConnection {
       if (response.statusCode == 401) {
         throw 'Unauthorized';
       } else {
-        print('$path: ${response.body}');
+        print('$path: ${response.statusCode}');
         return jsonDecode(response.body);
       }
     } catch (e) {
@@ -109,7 +109,7 @@ class HttpConnection {
   }
 
   Future<Map> post({required String path, required Map body}) async {
-    print('POST /$path, body ${body.keys}');
+    print('POST /$path, body keys ${body.keys}');
     return _request(
         getResponse: () {
           return http.post(Uri.parse('$_httpEndpoint/$path'),

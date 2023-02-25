@@ -1,3 +1,4 @@
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/widgets/chat/main.dart';
 import 'package:awachat/widgets/cities/cities_loader.dart';
 import 'package:awachat/widgets/update_user/update_user.dart';
@@ -31,15 +32,18 @@ class MyApp extends StatelessWidget {
         routerConfig: GoRouter(
             initialLocation: '/chat',
             redirect: (BuildContext context, GoRouterState state) {
-              if (state.location == '/chat' &&
-                  !Memory().boxUser.containsKey('hasSignedAgreements')) {
-                return '/onboarding';
-              } else if (state.location == '/chat' &&
-                  !Memory().boxUser.containsKey('city')) {
-                return '/cities';
-              } else if (state.location == '/agreements' &&
+              if (state.location == '/agreements' &&
                   Memory().boxUser.containsKey('hasSignedAgreements')) {
                 return '/chat';
+              } else if (state.location != '/chat') {
+                return null;
+              } else if (!Memory().boxUser.containsKey('hasSignedAgreements')) {
+                return '/onboarding';
+              } else if (GroupUser(User().id!).getArgument('lastUpdate')
+                  is! int) {
+                return '/update-user';
+              } else if (!Memory().boxUser.containsKey('city')) {
+                return '/cities';
               } else {
                 return null;
               }

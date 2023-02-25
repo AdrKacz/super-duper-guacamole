@@ -6,7 +6,6 @@ import 'package:awachat/pointycastle/helpers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:awachat/store/memory.dart';
-import 'package:flutter/material.dart';
 import 'package:pointycastle/export.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
@@ -130,40 +129,5 @@ class User {
         await Memory().boxGroupUsers.delete(groupUserKey);
       }
     }
-  }
-
-  void updateGroupUserArgument(String id, String key, dynamic value) {
-    Map? groupUser = Memory().boxGroupUsers.get(id);
-    if (groupUser == null) {
-      return;
-    }
-    groupUser[key] = value;
-    Memory().boxGroupUsers.put(id, groupUser);
-  }
-
-  void updateGroupUserArguments(String id, Map values) {
-    Map? groupUser = Memory().boxGroupUsers.get(id);
-    if (groupUser == null) {
-      return;
-    }
-    groupUser.addAll(values);
-    Memory().boxGroupUsers.put(id, groupUser);
-  }
-
-  void updateGroupUserStatus(String id, bool isConnected) {
-    updateGroupUserArgument(id, 'isConnected', isConnected);
-  }
-
-  dynamic getGroupUserArgument(String id, String key) {
-    Map? groupUser = Memory().boxGroupUsers.get(id);
-    if (groupUser == null) {
-      return;
-    }
-
-    return groupUser[key];
-  }
-
-  static ImageProvider getUserImageProvider(id) {
-    return NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png');
   }
 }

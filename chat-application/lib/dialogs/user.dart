@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:awachat/store/user.dart';
+import 'package:awachat/store/group_user.dart';
 import 'package:flutter/material.dart';
 
 Future<File?> _getFile(String? path) async {
@@ -20,13 +20,13 @@ Future<File?> _getFile(String? path) async {
 
 Future<Map> _getUserData(String userId) async {
   Map initialValues = {};
+  final GroupUser groupUser = GroupUser(userId);
 
   // get photo
-  initialValues['photo'] =
-      await _getFile(User().getGroupUserArgument(userId, 'imagePath'));
+  initialValues['photo'] = await _getFile(groupUser.getArgument('imagePath'));
 
   // get name
-  initialValues['name'] = User().getGroupUserArgument(userId, 'name');
+  initialValues['name'] = groupUser.getArgument('name');
 
   return initialValues;
 }
@@ -70,5 +70,11 @@ void dialogUser(BuildContext context, String userId) => (showDialog(
                     fontSize: 18.0)));
           }
 
-          return SimpleDialog(children: children);
+          Widget? title;
+          if (children.isEmpty) {
+            title = const Text(
+                'Impossible de récupérer les informations de cet utilisateur.');
+          }
+
+          return SimpleDialog(title: title, children: children);
         }))));

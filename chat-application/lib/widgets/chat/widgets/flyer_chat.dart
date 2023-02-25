@@ -1,4 +1,5 @@
 import 'package:awachat/l10n/flyer_l10n.dart';
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/widgets/flyer_user_avatar.dart';
@@ -46,7 +47,7 @@ class _FlyerChatState extends State<FlyerChat> {
           Memory().boxUser.delete('typingMessage');
         },
         onMessageLongPress: widget.onMessageLongPress,
-        user: types.User(id: User().id!),
+        user: GroupUser(User().id!).flyerUser,
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         inputOptions: InputOptions(
             textEditingController: _controller,
