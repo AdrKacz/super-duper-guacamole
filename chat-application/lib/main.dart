@@ -32,18 +32,18 @@ class MyApp extends StatelessWidget {
         routerConfig: GoRouter(
             initialLocation: '/chat',
             redirect: (BuildContext context, GoRouterState state) {
-              if (state.location == '/chat' &&
-                  !Memory().boxUser.containsKey('hasSignedAgreements')) {
-                return '/onboarding';
-              } else if (state.location == '/chat' &&
-                  GroupUser(User().id!).getArgument('lastUpdate') is! int) {
-                return '/update-user';
-              } else if (state.location == '/chat' &&
-                  !Memory().boxUser.containsKey('city')) {
-                return '/cities';
-              } else if (state.location == '/agreements' &&
+              if (state.location == '/agreements' &&
                   Memory().boxUser.containsKey('hasSignedAgreements')) {
                 return '/chat';
+              } else if (state.location != '/chat') {
+                return null;
+              } else if (!Memory().boxUser.containsKey('hasSignedAgreements')) {
+                return '/onboarding';
+              } else if (GroupUser(User().id!).getArgument('lastUpdate')
+                  is! int) {
+                return '/update-user';
+              } else if (!Memory().boxUser.containsKey('city')) {
+                return '/cities';
               } else {
                 return null;
               }

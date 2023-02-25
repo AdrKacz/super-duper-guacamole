@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:awachat/store/group_user.dart';
-import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 
 Future<File?> _getFile(String? path) async {
@@ -71,5 +70,11 @@ void dialogUser(BuildContext context, String userId) => (showDialog(
                     fontSize: 18.0)));
           }
 
-          return SimpleDialog(children: children);
+          Widget? title;
+          if (children.isEmpty) {
+            title = const Text(
+                'Impossible de récupérer les informations de cet utilisateur.');
+          }
+
+          return SimpleDialog(title: title, children: children);
         }))));

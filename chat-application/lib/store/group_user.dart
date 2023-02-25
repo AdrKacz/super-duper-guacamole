@@ -12,7 +12,7 @@ class GroupUser {
       (types.User(id: id, firstName: getArgument('name')));
 
   ImageProvider get imageProvider =>
-      (NetworkImage('https://avatars.dicebear.com/api/bottts/$id.png'));
+      (NetworkImage('https://api.dicebear.com/5.x/fun-emoji/png?seed=$id'));
 
   void updateArgument(String key, dynamic value) {
     Map? groupUser = Memory().boxGroupUsers.get(id);
