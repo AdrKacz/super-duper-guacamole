@@ -1,5 +1,5 @@
 {
-  "name": "reply-ban",
+  "name": "http-put-reply-ban",
   "version": "1.0.0",
   "description": "Reply to a ban request",
   "main": "app.js",
@@ -9,6 +9,6 @@
   "author": "AdrKacz",
   "dependencies": {
     "@aws-sdk/lib-dynamodb": "^3.216.0",
-    "chat-backend-package": "file:../../../chat-backend-package"
+    "chat-backend-package": "link:../../../chat-backend-package"
   }
 }

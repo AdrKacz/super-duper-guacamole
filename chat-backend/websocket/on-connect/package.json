@@ -1,5 +1,5 @@
 {
-  "name": "on-connect",
+  "name": "websocket-on-connect",
   "version": "1.0.0",
   "description": "Handle Web Socket Connection",
   "main": "app.js",
@@ -7,6 +7,6 @@
   "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
     "@aws-sdk/lib-dynamodb": "^3.215.0",
-    "chat-backend-package": "file:../../chat-backend-package"
+    "chat-backend-package": "link:../../chat-backend-package"
   }
 }

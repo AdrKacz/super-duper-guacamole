@@ -1,5 +1,5 @@
 {
-  "name": "authorizer",
+  "name": "websocket-authorizer",
   "version": "1.0.0",
   "description": "Authorise connection to WebSocket",
   "main": "app.js",

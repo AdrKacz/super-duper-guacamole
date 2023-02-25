@@ -1,11 +1,12 @@
 {
-  "name": "on-disconnect",
+  "name": "web-socket-on-disconnect",
   "version": "1.0.0",
   "description": "Disconnect from channel",
   "main": "app.js",
   "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
   "dependencies": {
     "@aws-sdk/lib-dynamodb": "^3.216.0",
-    "chat-backend-package": "file:../../chat-backend-package"
+    "chat-backend-package": "link:../../chat-backend-package"
   }
 }

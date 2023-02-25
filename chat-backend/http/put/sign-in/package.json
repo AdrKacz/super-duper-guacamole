@@ -1,5 +1,5 @@
 {
-  "name": "sign-in",
+  "name": "http-put-sign-in",
   "version": "1.0.0",
   "description": "Sign user in",
   "main": "app.js",
