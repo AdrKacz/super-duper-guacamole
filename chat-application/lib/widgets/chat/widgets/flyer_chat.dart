@@ -46,7 +46,7 @@ class _FlyerChatState extends State<FlyerChat> {
           Memory().boxUser.delete('typingMessage');
         },
         onMessageLongPress: widget.onMessageLongPress,
-        user: types.User(id: User().id!),
+        user: User().getFlyerUser(User().id!),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         inputOptions: InputOptions(
             textEditingController: _controller,

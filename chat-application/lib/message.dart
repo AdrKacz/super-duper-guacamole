@@ -35,7 +35,7 @@ types.TextMessage decodeMessage(String encodedMessage) {
       return types.TextMessage(
           status: getStatusFromName(jsonMessage['status'],
               defaultStatus: types.Status.delivered),
-          author: types.User(id: jsonMessage['author']),
+          author: User().getFlyerUser(jsonMessage['author']),
           createdAt: jsonMessage['createdAt'],
           id: jsonMessage['id'],
           text: jsonMessage['text']);

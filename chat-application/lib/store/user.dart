@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:pointycastle/export.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
+// ignore: depend_on_referenced_packages
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 
 class User {
   static final User _instance = User._internal();
@@ -156,6 +158,9 @@ class User {
     groupUser.addAll(values);
     Memory().boxGroupUsers.put(id, groupUser);
   }
+
+  types.User getFlyerUser(String id) =>
+      (types.User(id: id, firstName: User().getGroupUserArgument(id, 'name')));
 
   void updateGroupUserStatus(String id, bool isConnected) {
     updateGroupUserArgument(id, 'isConnected', isConnected);
