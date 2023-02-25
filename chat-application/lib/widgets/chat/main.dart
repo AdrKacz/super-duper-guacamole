@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
+import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/chat/widgets/switch_action_button.dart';
@@ -325,10 +326,10 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         acknowledgeBan(context, data['status'], data['bannedid']);
         break;
       case 'connect':
-        User().updateGroupUserStatus(data['id'], true);
+        GroupUser(data['id']).updateStatus(true);
         break;
       case 'disconnect':
-        User().updateGroupUserStatus(data['id'], false);
+        GroupUser(data['id']).updateStatus(true);
         break;
       default:
         print('received unknown action $data');
