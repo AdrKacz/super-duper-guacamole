@@ -1,6 +1,6 @@
 import 'package:awachat/widgets/chat/main.dart';
 import 'package:awachat/widgets/cities/cities_loader.dart';
-import 'package:awachat/widgets/upload_photo.dart';
+import 'package:awachat/widgets/update_user/update_user.dart';
 import 'package:flutter/material.dart';
 import 'package:awachat/application_theme.dart';
 import 'package:awachat/network/notification_handler.dart';
@@ -58,8 +58,8 @@ class MyApp extends StatelessWidget {
                   path: '/agreements',
                   builder: (context, state) => const Agreements()),
               GoRoute(
-                  path: '/upload-photo',
-                  builder: (context, state) => const UploadPhoto()),
+                  path: '/update-user',
+                  builder: (context, state) => const UpdateUser()),
             ]));
   }
 }

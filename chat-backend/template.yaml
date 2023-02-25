@@ -543,7 +543,7 @@ Resources:
   WebSocketApiAuthorizerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: websocket/authorizer/
+      CodeUri: websocket/authorizer
       Environment:
         Variables:
           AUTHENTICATION_STAGE: !Ref AuthenticationStage
@@ -563,7 +563,7 @@ Resources:
   WebSocketOnConnectFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: websocket/on-connect/
+      CodeUri: websocket/on-connect
       Environment:
         Variables:
           WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
@@ -615,7 +615,7 @@ Resources:
   WebSocketOnDisconnectFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: websocket/on-disconnect/
+      CodeUri: websocket/on-disconnect
       Environment:
         Variables:
           WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'

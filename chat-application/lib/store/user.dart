@@ -77,13 +77,11 @@ class User {
       if (newGroupUsersKeys.contains(groupUserKey)) {
         Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
         Map groupUser = groupUsers[groupUserKey]!;
-        print('===== =====Old User $user');
-        // TODO: DON'T UPDATE after manual redo, looks like the lastUpdate timestamp
-        // don't work well, to debug
+
         Map userData = await HttpConnection().post(
             path: 'download-user',
             body: {'id': groupUser['id'], 'lastUpdate': user['lastUpdate']});
-        print('===== ===== User Data $userData');
+
         user.addAll(
             {'id': groupUser['id'], 'isConnected': groupUser['isConnected']});
 
@@ -119,8 +117,6 @@ class User {
 
           user.addAll({'imagePath': path});
         }
-
-        print('===== ===== New User $user');
 
         Memory().boxGroupUsers.put(groupUser['id'], user);
       } else {

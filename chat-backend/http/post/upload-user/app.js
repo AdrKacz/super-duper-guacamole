@@ -20,6 +20,7 @@ const { DATA_BUCKET_NAME } = process.env
  * @param {string} event.id
  * @param {string} event.image
  * @param {string} event.imageExtension
+ * @param {string} event.name
  */
 exports.handler = async (event) => {
   console.log('Receives:', JSON.stringify(event, null, 2))
@@ -27,6 +28,7 @@ exports.handler = async (event) => {
   const id = jwt.id
 
   const body = JSON.parse(event.body)
+  const name = body.name
   const base64Image = body.image
   const imageExtension = body.imageExtension
   const timestamp = Date.now()
@@ -52,7 +54,8 @@ exports.handler = async (event) => {
   // upload data
   const data = {
     lastUpdate: timestamp,
-    imagePath
+    imagePath,
+    name
   }
   await s3Client.send(new PutObjectCommand({
     Bucket: DATA_BUCKET_NAME,

@@ -1,5 +1,5 @@
 {
-  "name": "sign-up",
+  "name": "http-put-sign-up",
   "version": "1.0.0",
   "description": "Sign user up",
   "main": "app.js",
