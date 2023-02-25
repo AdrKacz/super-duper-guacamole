@@ -72,7 +72,6 @@ class User {
     final Set<String> unionGroupUsersKeys =
         newGroupUsersKeys.union(oldGroupUsersKeys);
 
-    unionGroupUsersKeys.remove(id); // no need to update yourself
     for (final String groupUserKey in unionGroupUsersKeys) {
       if (newGroupUsersKeys.contains(groupUserKey)) {
         Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
@@ -87,7 +86,7 @@ class User {
 
         if (userData['data'] != null) {
           user.addAll({
-            'data': userData['data'],
+            ...userData['data'],
             'lastUpdate': userData['data']?['lastUpdate']
           });
         }

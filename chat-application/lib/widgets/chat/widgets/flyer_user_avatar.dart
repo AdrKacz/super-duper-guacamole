@@ -21,9 +21,6 @@ class FlyerUserAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
         margin: const EdgeInsetsDirectional.only(end: 8.0),
-        child: Avatar(
-            userId: userId,
-            onTap: () => onAvatarTap?.call(userId),
-            radius: 16));
+        child: Avatar(userId: userId, radius: 16));
   }
 }
