@@ -71,7 +71,6 @@ class _PhotoFieldState extends State<PhotoField> {
   }
 
   void _onSaved(File? file) {
-    print('===== ===== Try to save photo');
     if (file is! File) {
       return;
     }
@@ -94,7 +93,7 @@ class _PhotoFieldState extends State<PhotoField> {
       }
     }
 
-    User().updateGroupUserArguments(User().id!, {'imagePath': path});
+    User().forceUpdateGroupUserArguments(User().id!, {'imagePath': path});
   }
 
   bool hasFile = false;

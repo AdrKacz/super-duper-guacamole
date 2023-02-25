@@ -150,6 +150,13 @@ class User {
     Memory().boxGroupUsers.put(id, groupUser);
   }
 
+  void forceUpdateGroupUserArguments(String id, Map values) {
+    Map groupUser = Memory().boxGroupUsers.get(id) ?? {'id': id};
+
+    groupUser.addAll(values);
+    Memory().boxGroupUsers.put(id, groupUser);
+  }
+
   void updateGroupUserStatus(String id, bool isConnected) {
     updateGroupUserArgument(id, 'isConnected', isConnected);
   }

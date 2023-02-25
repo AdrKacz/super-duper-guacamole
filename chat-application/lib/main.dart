@@ -35,6 +35,10 @@ class MyApp extends StatelessWidget {
                   !Memory().boxUser.containsKey('hasSignedAgreements')) {
                 return '/onboarding';
               } else if (state.location == '/chat' &&
+                  User().getGroupUserArgument(User().id!, 'lastUpdate')
+                      is! int) {
+                return '/update-user';
+              } else if (state.location == '/chat' &&
                   !Memory().boxUser.containsKey('city')) {
                 return '/cities';
               } else if (state.location == '/agreements' &&

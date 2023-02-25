@@ -4,7 +4,6 @@ import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
-import 'package:awachat/widgets/avatar.dart';
 import 'package:awachat/widgets/chat/widgets/switch_action_button.dart';
 import 'package:awachat/widgets/chat/widgets/user_drawer.dart';
 import 'package:awachat/widgets/chat/widgets/users_list.dart';

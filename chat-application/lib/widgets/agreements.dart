@@ -26,7 +26,7 @@ class Agreements extends StatelessWidget {
                       onNextPressed: () {
                         Memory().boxUser.put('hasSignedAgreements',
                             DateTime.now().millisecondsSinceEpoch.toString());
-                        context.go('/cities');
+                        context.go('/chat');
                       })));
         });
   }

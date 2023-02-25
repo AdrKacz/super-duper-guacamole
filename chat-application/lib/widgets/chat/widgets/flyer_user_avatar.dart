@@ -1,4 +1,3 @@
-import 'package:awachat/store/user.dart';
 import 'package:awachat/widgets/avatar.dart';
 import 'package:flutter/material.dart';
 
