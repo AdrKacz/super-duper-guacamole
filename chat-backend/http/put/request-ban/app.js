@@ -12,15 +12,6 @@ const { getBannedUser } = require('./src/get-banned-user')
 
 const { USERS_TABLE_NAME } = process.env
 
-// ===== ==== ====
-// HANDLER
-exports.handler = async (event) => {
-  console.log('Receives:', JSON.stringify(event, null, 2))
-  const response = await putRequestBan(event)
-  console.log('Returns:', JSON.stringify(response, null, 2))
-  return response
-}
-
 /**
  * Request to ban an user in the group
  * @param event.body.bannedid
@@ -147,4 +138,13 @@ SET #confirmationRequired = :confirmationRequired
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id })
   }
+}
+
+// ===== ==== ====
+// HANDLER
+exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(event, null, 2))
+  const response = await putRequestBan(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
 }
