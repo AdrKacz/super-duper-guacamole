@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:awachat/dialogs/message_actions.dart';
+import 'package:awachat/dialogs/user_actions.dart';
 import 'package:awachat/helpers/decode_jwt.dart';
 import 'package:awachat/message.dart';
 import 'package:awachat/network/http_connection.dart';
@@ -82,13 +84,15 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
       ),
     ];
 
+    // TODO: how to display name of ban user? As it will be remove from box because they will leave group
+
     if (banneduserid == User().id && status == 'confirmed') {
       changeGroup();
       showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: const Text("Tu t'es fait banir de ton groupe"),
+              title: const Text('Tu es bani du groupe'),
               actions: actions,
             );
           });
@@ -101,7 +105,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
     switch (status) {
       case 'confirmed':
-        title = 'La personne est banie de ton groupe';
+        title = 'Un utilisateur est bani du groupe';
         actions.insert(
             0,
             TextButton(
@@ -123,7 +127,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
         break;
       case 'denied':
-        title = "La personne n'est pas banie de ton groupe";
+        title = '''L'utilisateur n'est pas bani du groupe''';
         break;
       default:
         return;
@@ -139,88 +143,33 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
   }
 
   // Ban request
-  void banRequest(BuildContext context, String messageid) async {
-    // find message
-    types.Message? message = findMessage(messageid);
-    if (message == null) {
-      // message (messageId) wasn't found
+  void banRequest(BuildContext context, String userId) async {
+    // verify user is in group
+    if (!Memory().boxGroupUsers.containsKey(userId)) {
+      print('user $userId is not in your group');
       return;
     }
-    // found message
 
     HapticFeedback.mediumImpact();
-    switch (await banActionOnMessage(context, message)) {
-      case 'confirmed':
-        // ban confirmed
-        HttpConnection().put(path: 'reply-ban', body: {
-          'bannedid': message.author.id,
-          'status': 'confirmed',
-        });
-        break;
-      case 'denied':
-        // ban denied
-        HttpConnection().put(path: 'reply-ban', body: {
-          'bannedid': message.author.id,
-          'status': 'denied',
-        });
-        break;
-      default:
-        throw Exception('Ban action not in ["confirmed", "denied"]');
-    }
+    dialogBanUserActions(context, userId);
   }
 
   // Report message
   void reportMessage(BuildContext context, types.Message message) async {
     HapticFeedback.mediumImpact();
-    switch (await reportActionOnMessage(context)) {
-      case 'ban':
-        HttpConnection().put(path: 'request-ban', body: {
-          'bannedid': message.author.id,
-          'messageid': message.id,
-        });
-        break;
-      case 'report':
-        await mailToReportTextMessage(
-            types.TextMessage.fromJson(message.toJson()));
-        break;
-      case 'delete':
-        Memory().boxMessages.delete(message.createdAt.toString());
-        break;
-      case 'block':
-        blockUser(message.author.id);
-        break;
-      default:
-      // dismiss
+    final String? action = await dialogMessageActions(context, message);
+
+    if (action == 'block') {
+      setState(() {
+        status = Status.switchSent;
+      });
     }
   }
 
   // ===== ===== =====
   // Helpers
-  types.Message? findMessage(String messageid) {
-    for (final String e in Memory().boxMessages.values) {
-      final types.Message m = decodeMessage(e);
-      if (m.id == messageid) {
-        return m;
-      }
-    }
-    return null;
-  }
-
-  void blockUser(String userId) async {
-    await Memory().boxBlockedUsers.add(userId);
-    changeGroup();
-  }
-
   Future<void> changeGroup() async {
-    await User().resetGroup();
-
-    final String city = Memory().boxUser.get('city')!;
-
-    HttpConnection().post(path: 'change-group', body: {
-      'city': city,
-      'blockedUserIds': Memory().boxBlockedUsers.values.toList()
-    });
-    Memory().boxUser.put('group-city', city);
+    await User().changeGroup();
 
     setState(() {
       status = Status.switchSent;
@@ -320,7 +269,7 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
         messageTextMessage(data, isUnreadData: isUnreadData);
         break;
       case 'ban-request':
-        banRequest(context, data['messageid']);
+        banRequest(context, data['id']);
         break;
       case 'ban-reply':
         acknowledgeBan(context, data['status'], data['bannedid']);

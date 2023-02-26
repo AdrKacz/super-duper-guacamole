@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:awachat/dialogs/user_actions.dart';
 import 'package:awachat/store/group_user.dart';
+import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 
 Future<File?> _getFile(String? path) async {
@@ -12,6 +14,7 @@ Future<File?> _getFile(String? path) async {
 
   try {
     await file.length();
+    print('+++++ +++++ +++++ File size: ${(await file.length()) / 1e6} Mb');
     return file;
   } catch (e) {
     return null;
@@ -74,6 +77,15 @@ void dialogUser(BuildContext context, String userId) => (showDialog(
           if (children.isEmpty) {
             title = const Text(
                 'Impossible de récupérer les informations de cet utilisateur.');
+          }
+
+          if (userId != User().id) {
+            children.add(SimpleDialogOption(
+              padding: const EdgeInsets.only(top: 12.0),
+              child: const Text('Cet utilisateur me dérange',
+                  textAlign: TextAlign.center),
+              onPressed: () => (dialogUserActions(context, userId)),
+            ));
           }
 
           return SimpleDialog(title: title, children: children);

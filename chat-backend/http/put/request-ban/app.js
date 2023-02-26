@@ -12,19 +12,10 @@ const { getBannedUser } = require('./src/get-banned-user')
 
 const { USERS_TABLE_NAME } = process.env
 
-// ===== ==== ====
-// HANDLER
-exports.handler = async (event) => {
-  console.log('Receives:', JSON.stringify(event, null, 2))
-  const response = await putRequestBan(event)
-  console.log('Returns:', JSON.stringify(response, null, 2))
-  return response
-}
-
 /**
  * Request to ban an user in the group
  * @param event.body.bannedid
- * @param event.body.messageid
+ * @param event.body.messageid [DEPRECATED]
  */
 const putRequestBan = async (event) => {
   const jwt = event.requestContext.authorizer.jwt.claims
@@ -43,10 +34,13 @@ const putRequestBan = async (event) => {
   console.log('Received body:', JSON.stringify(body, null, 2))
 
   const bannedId = body.bannedid
-  const messageId = body.messageid
 
-  if (typeof bannedId === 'undefined' || typeof messageId === 'undefined') {
-    throw new Error('bannedid and messageid must be defined')
+  if (typeof bannedId !== 'string') {
+    return {
+      statusCode: 403,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ error: 'you didn\'t send a valid bannedid' })
+    }
   }
 
   if (id === bannedId) {
@@ -122,7 +116,8 @@ SET #confirmationRequired = :confirmationRequired
       users: users.filter(({ id: userId }) => banNewVotingUsers.has(userId)),
       message: {
         action: 'ban-request',
-        messageid: messageId
+        id: bannedId,
+        messageid: body.messageid
       },
       useSaveMessage: true
     }))
@@ -143,4 +138,13 @@ SET #confirmationRequired = :confirmationRequired
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
     body: JSON.stringify({ id })
   }
+}
+
+// ===== ==== ====
+// HANDLER
+exports.handler = async (event) => {
+  console.log('Receives:', JSON.stringify(event, null, 2))
+  const response = await putRequestBan(event)
+  console.log('Returns:', JSON.stringify(response, null, 2))
+  return response
 }

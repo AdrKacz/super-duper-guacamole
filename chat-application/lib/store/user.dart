@@ -51,6 +51,18 @@ class User {
     await HttpConnection().signIn();
   }
 
+  Future<void> changeGroup() async {
+    await User().resetGroup();
+
+    final String city = Memory().boxUser.get('city')!;
+
+    HttpConnection().post(path: 'change-group', body: {
+      'city': city,
+      'blockedUserIds': Memory().boxBlockedUsers.values.toList()
+    });
+    Memory().boxUser.put('group-city', city);
+  }
+
   Future<void> resetGroup() async {
     final Map? user = Memory().boxGroupUsers.get(id);
     await Future.wait([

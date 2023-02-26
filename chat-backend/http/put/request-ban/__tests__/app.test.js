@@ -54,16 +54,19 @@ test('it returns if no group', async () => {
   }))
 })
 
-test.each([
-  { details: 'it throws on undefined bannedId', messageid: 'message-id' },
-  { details: 'it throws on undefined messageId', bannedid: 'banned-id' }
-])('.test $details', async ({ messageid, bannedid }) => {
+test('it rejects on undefined bannedId', async () => {
   getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
 
-  await expect(handler({
+  const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ messageid, bannedid })
-  })).rejects.toThrow('bannedid and messageid must be defined')
+    body: JSON.stringify({})
+  })
+
+  expect(JSON.stringify(response)).toEqual(JSON.stringify({
+    statusCode: 403,
+    headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    body: JSON.stringify({ error: 'you didn\'t send a valid bannedid' })
+  }))
 })
 
 test('it rejects if user id and banned user id are the same', async () => {
@@ -71,7 +74,7 @@ test('it rejects if user id and banned user id are the same', async () => {
 
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ bannedid: 'id', messageid: 'message-id' })
+    body: JSON.stringify({ bannedid: 'id' })
   })
 
   expect(JSON.stringify(response)).toEqual(JSON.stringify({
@@ -92,7 +95,7 @@ test.each([
   // call handler
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ bannedid: bannedUser.id, messageid: 'message-id' })
+    body: JSON.stringify({ bannedid: bannedUser.id })
   })
 
   // expect
@@ -122,7 +125,7 @@ test('it updates banned user if no new user in the vote', async () => {
   // call handler
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ bannedid: bannedUserId, messageid: 'message-id' })
+    body: JSON.stringify({ bannedid: bannedUserId })
   })
 
   // expect
@@ -167,7 +170,7 @@ test('it updates banned user if new user in the vote', async () => {
   // call handler
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ bannedid: bannedUserId, messageid: 'message-id' })
+    body: JSON.stringify({ bannedid: bannedUserId })
   })
 
   // expect
@@ -196,10 +199,7 @@ SET #confirmationRequired = :confirmationRequired
 
   expect(sendMessagesModule.sendMessages).toHaveBeenCalledWith({
     users: [{ id: 'id', connectionId, firebaseToken }],
-    message: {
-      action: 'ban-request',
-      messageid: 'message-id'
-    },
+    message: { action: 'ban-request', id: 'banned-user-id' },
     useSaveMessage: true
   })
 
