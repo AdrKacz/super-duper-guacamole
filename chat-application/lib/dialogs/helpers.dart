@@ -4,10 +4,11 @@ void dialogAction(BuildContext context,
         {required String content,
         required Future<void> Function() action,
         Future<void> Function()? negativeAction,
-        bool? dismissible,
+        bool dismissible = true,
         bool popParent = true,
         String? popReturn}) =>
-    _dialogConfirm(context, content: content).then((bool? value) {
+    _dialogConfirm(context, content: content, dismissible: dismissible)
+        .then((bool? value) {
       final confirmed = value is bool && value;
       if (popParent && confirmed) {
         // TODO: use a removeRoute with correct RouteSetting to remove the correct one
@@ -28,7 +29,7 @@ void dialogAction(BuildContext context,
     });
 
 Future<bool?> _dialogConfirm(BuildContext context,
-        {required String content, bool dismissible = true}) =>
+        {required String content, required bool dismissible}) =>
     (showDialog<bool>(
         barrierDismissible: dismissible,
         context: context,
