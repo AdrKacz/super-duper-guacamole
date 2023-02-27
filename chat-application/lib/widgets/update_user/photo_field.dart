@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as p;
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class PhotoField extends StatefulWidget {
   const PhotoField({Key? key, required this.directoryPath, this.initialValue})
@@ -22,6 +23,25 @@ class PhotoField extends StatefulWidget {
 
 class _PhotoFieldState extends State<PhotoField> {
   final ImagePicker _picker = ImagePicker();
+
+  Future<File?> _compressFile(File file) async {
+    final String path =
+        '${widget.directoryPath}/users/${User().id}/images/tmp.jpeg';
+    final File? result = await FlutterImageCompress.compressAndGetFile(
+        file.absolute.path, path,
+        quality: 50);
+
+    try {
+      await result!.length(); // from the docs: The returned file may be null. In addition, please decide for yourself whether the file exists.
+      print(
+          'Compress file from ${(await file.length()) / 1e6} Mb to ${(await result.length()) / 1e6} Mb');
+    } catch (e) {
+      print('Error while compressing file: $e');
+      return null;
+    }
+
+    return result;
+  }
 
   Future<CroppedFile?> _cropImage(XFile image,
       {Color? toolbarColor, Color? toolbarWidgetColor}) {
@@ -68,7 +88,7 @@ class _PhotoFieldState extends State<PhotoField> {
 
     final File croppedImageFile = File(croppedImage.path);
 
-    return croppedImageFile;
+    return _compressFile(croppedImageFile);
   }
 
   void _onSaved(File? file) {
