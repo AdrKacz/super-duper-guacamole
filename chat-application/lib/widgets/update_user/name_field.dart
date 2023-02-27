@@ -8,7 +8,6 @@ class NameField extends StatelessWidget {
   final String? initialValue;
 
   void _onSaved(String? name) {
-    print('===== ===== Try to save name <$name>');
     if (name is! String) {
       return;
     }

@@ -14,7 +14,7 @@ Future<File?> _getFile(String? path) async {
 
   try {
     await file.length();
-    print('+++++ +++++ +++++ File size: ${(await file.length()) / 1e6} Mb');
+    print('Avatar file size: ${(await file.length()) / 1e6} Mb');
     return file;
   } catch (e) {
     return null;
