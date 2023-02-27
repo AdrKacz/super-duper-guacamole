@@ -1,1 +1,2 @@
+- Tu peux maintenant partager ta photo et ton nom
 - Amélioration de la zone de saisie de texte
