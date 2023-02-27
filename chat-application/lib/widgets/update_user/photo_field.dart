@@ -32,7 +32,7 @@ class _PhotoFieldState extends State<PhotoField> {
         quality: 50);
 
     try {
-      await result!.length();
+      await result!.length(); // from the docs: The returned file may be null. In addition, please decide for yourself whether the file exists.
       print(
           'Compress file from ${(await file.length()) / 1e6} Mb to ${(await result.length()) / 1e6} Mb');
     } catch (e) {
@@ -40,7 +40,7 @@ class _PhotoFieldState extends State<PhotoField> {
       return null;
     }
 
-    return result; // from the docs: The returned file may be null. In addition, please decide for yourself whether the file exists.
+    return result;
   }
 
   Future<CroppedFile?> _cropImage(XFile image,
