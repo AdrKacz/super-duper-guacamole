@@ -1,3 +1,14 @@
+##### ##### INDICATION [FRANÇAIS] ##### #####
+
+Lorsque tu testes l'application, choisis "Je ne vois pas ma ville", ainsi tu auras moins de change de venir perturber la rencontre de vrais utilisateurs.
+
+Si tu choisis une ville, par exemple Dublin, tu vas être mis en relation avec des utilisateurs à Dublin. Or tu seras très rapidement inactif. Sur un groupe de cinq, avoir une ou deux personnes inactives est handicapant et peux freiner la rencontre.
+
+Nous te remerçions pour ta collaboration.
+
+##### ##### INFORMATION GÉNÉRALE [FRANÇAIS] ##### #####
+
+
 Sur Awa, tu seras dans un petit groupe de conversation. Lorsque tu rentres dans l'application, tu vas être mis en attente le temps qu'Awa te trouve un groupe. Plus il y a de monde sur l'application moins ce temps est long.
 
 Awa t'empêche de n'être que 2 au début sur la conversation. Si tu veux commencer à envoyer des messages, il faudra être au moins 3 ! (nous avons aussi installé l'application, il est possible que tu tombes sur des groupes où nous sommes déjà présents)
