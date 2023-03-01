@@ -4,17 +4,21 @@ import 'package:awachat/dialogs/user_actions.dart';
 import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
-Future<File?> _getFile(String? path) async {
-  if (path == null) {
+Future<File?> _getFile(String? relativePath) async {
+  if (relativePath == null) {
     return null;
   }
+
+  final String directoryPath = (await getApplicationDocumentsDirectory()).path;
+
+  final String path = '$directoryPath$relativePath';
 
   final File file = File(path);
 
   try {
     await file.length();
-    print('Avatar file size: ${(await file.length()) / 1e6} Mb');
     return file;
   } catch (e) {
     return null;
@@ -26,7 +30,8 @@ Future<Map> _getUserData(String userId) async {
   final GroupUser groupUser = GroupUser(userId);
 
   // get photo
-  initialValues['photo'] = await _getFile(groupUser.getArgument('imagePath'));
+  initialValues['photo'] =
+      await _getFile(groupUser.getArgument('imageRelativePath'));
 
   // get name
   initialValues['name'] = groupUser.getArgument('name');

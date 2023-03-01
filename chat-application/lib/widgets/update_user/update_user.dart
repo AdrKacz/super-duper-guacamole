@@ -29,7 +29,8 @@ class _UpdateUserState extends State<UpdateUser> {
         (await getApplicationDocumentsDirectory()).path;
 
     // get photo
-    initialValues['photo'] = await _getFile(groupUser.getArgument('imagePath'));
+    initialValues['photo'] =
+        await _getFile(groupUser.getArgument('imageRelativePath'));
 
     // get name
     initialValues['name'] = groupUser.getArgument('name');
@@ -37,10 +38,15 @@ class _UpdateUserState extends State<UpdateUser> {
     return initialValues;
   }
 
-  Future<File?> _getFile(String? path) async {
-    if (path == null) {
+  Future<File?> _getFile(String? relativePath) async {
+    if (relativePath == null) {
       return null;
     }
+
+    final String directoryPath =
+        (await getApplicationDocumentsDirectory()).path;
+
+    final String path = '$directoryPath$relativePath';
 
     final File file = File(path);
 
@@ -61,7 +67,8 @@ class _UpdateUserState extends State<UpdateUser> {
     }
 
     // get image
-    File? imageFile = await _getFile(groupUser.getArgument('imagePath'));
+    File? imageFile =
+        await _getFile(groupUser.getArgument('imageRelativePath'));
     if (imageFile is! File) {
       throw Exception('Image file is not defined');
     }

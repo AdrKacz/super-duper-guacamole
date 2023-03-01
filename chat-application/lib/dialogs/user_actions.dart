@@ -7,6 +7,7 @@ import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:path_provider/path_provider.dart';
 
 SimpleDialogOption dialogUserReportOption(
         BuildContext context, String userId) =>
@@ -74,7 +75,7 @@ Future<void> _sendReportMail(String userId) async {
   GroupUser groupUser = GroupUser(userId);
 
   // get photo
-  File? file = await _getFile(groupUser.getArgument('imagePath'));
+  File? file = await _getFile(groupUser.getArgument('imageRelativePath'));
 
   final String body = '''
   --- --- ---
@@ -107,16 +108,19 @@ Future<void> _sendReportMail(String userId) async {
   }
 }
 
-Future<File?> _getFile(String? path) async {
-  if (path == null) {
+Future<File?> _getFile(String? relativePath) async {
+  if (relativePath == null) {
     return null;
   }
+
+  final String directoryPath = (await getApplicationDocumentsDirectory()).path;
+
+  final String path = '$directoryPath$relativePath';
 
   final File file = File(path);
 
   try {
     await file.length();
-    print('File size: ${(await file.length()) / 1e6} Mb');
     return file;
   } catch (e) {
     return null;

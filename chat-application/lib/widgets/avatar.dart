@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:awachat/dialogs/user.dart';
 import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/memory.dart';
-import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 class Avatar extends StatelessWidget {
   const Avatar({Key? key, required this.userId, this.radius}) : super(key: key);
@@ -13,10 +13,15 @@ class Avatar extends StatelessWidget {
   final String userId;
   final double? radius;
 
-  Future<ImageProvider> _getImageProvider(String? path) async {
-    if (path == null) {
+  Future<ImageProvider> _getImageProvider(String? relativePath) async {
+    if (relativePath == null) {
       return GroupUser(userId).imageProvider;
     }
+
+    final String directoryPath =
+        (await getApplicationDocumentsDirectory()).path;
+
+    final String path = '$directoryPath$relativePath';
 
     final File file = File(path);
     try {
@@ -26,7 +31,7 @@ class Avatar extends StatelessWidget {
       print('Error with Avatar for user $userId: $e');
       // remove user image as error occurs
       GroupUser(userId).updateArguments({
-        'imagePath': null,
+        'imageRelativePath': null,
         'lastUpdate': null,
       });
       // display placeholder
@@ -41,7 +46,7 @@ class Avatar extends StatelessWidget {
         builder: (BuildContext context, Box box, Widget? widget) =>
             (FutureBuilder(
                 future: _getImageProvider(
-                    GroupUser(userId).getArgument('imagePath')),
+                    GroupUser(userId).getArgument('imageRelativePath')),
                 builder: (BuildContext context, AsyncSnapshot snapshot) {
                   Color? backgroundColor = Colors.transparent;
                   ImageProvider? backgroundImage;

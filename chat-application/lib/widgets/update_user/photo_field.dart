@@ -32,7 +32,8 @@ class _PhotoFieldState extends State<PhotoField> {
         quality: 50);
 
     try {
-      await result!.length(); // from the docs: The returned file may be null. In addition, please decide for yourself whether the file exists.
+      await result!
+          .length(); // from the docs: The returned file may be null. In addition, please decide for yourself whether the file exists.
       print(
           'Compress file from ${(await file.length()) / 1e6} Mb to ${(await result.length()) / 1e6} Mb');
     } catch (e) {
@@ -99,8 +100,10 @@ class _PhotoFieldState extends State<PhotoField> {
     final imageExtension = p.extension(file.path);
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
 
-    final String path =
-        '${widget.directoryPath}/users/${User().id}/images/$timestamp$imageExtension';
+    final String relativePath =
+        '/users/${User().id}/images/$timestamp$imageExtension';
+
+    final String path = '${widget.directoryPath}$relativePath';
 
     final Directory directory = Directory(p.dirname(path));
     directory.createSync(recursive: true);
@@ -114,7 +117,8 @@ class _PhotoFieldState extends State<PhotoField> {
       }
     }
 
-    GroupUser(User().id!).forceUpdateArguments({'imagePath': path});
+    GroupUser(User().id!)
+        .forceUpdateArguments({'imageRelativePath': relativePath});
   }
 
   bool hasFile = false;
