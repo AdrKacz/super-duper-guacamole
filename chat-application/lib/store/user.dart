@@ -83,6 +83,9 @@ class User {
     final Set<String> unionGroupUsersKeys =
         newGroupUsersKeys.union(oldGroupUsersKeys);
 
+    final String directoryPath =
+        (await getApplicationDocumentsDirectory()).path;
+
     for (final String groupUserKey in unionGroupUsersKeys) {
       if (newGroupUsersKeys.contains(groupUserKey)) {
         Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
@@ -103,14 +106,13 @@ class User {
         }
 
         if (userData['image'] != null) {
-          final String directoryPath =
-              (await getApplicationDocumentsDirectory()).path;
           final imageExtension = p.extension(userData['data']?['imagePath']);
           final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
 
           // NOTE: file name need to be different, if not the old image remains (probably Flutter caches under the hood)
-          final String path =
-              '$directoryPath/users/${groupUser['id']}/images/$timestamp$imageExtension';
+          final String relativePath =
+              '/users/${groupUser['id']}/images/$timestamp$imageExtension';
+          final String path = '$directoryPath$relativePath';
           final File file = File(path);
 
           final Directory directory = Directory(p.dirname(path));
@@ -125,7 +127,7 @@ class User {
               mode: FileMode.writeOnly);
           print('Wrote image for user ${groupUser['id']} in $path');
 
-          user.addAll({'imagePath': path});
+          user.addAll({'imageRelativePath': relativePath});
         }
 
         Memory().boxGroupUsers.put(groupUser['id'], user);
@@ -135,8 +137,14 @@ class User {
         if (user == null) {
           continue;
         }
-        if (user['imagePath'] is String) {
-          await File(user['imagePath']).delete();
+        if (user['imageRelativePath'] is String) {
+          final String relativePath = user['imageRelativePath'];
+          try {
+            final String path = '$directoryPath$relativePath';
+            await File(path).delete();
+          } catch (e) {
+            print('Cannot delete file $relativePath: $e');
+          }
         }
         await Memory().boxGroupUsers.delete(groupUserKey);
       }
