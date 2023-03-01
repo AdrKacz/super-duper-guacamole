@@ -1,9 +1,23 @@
+import 'dart:io';
+
 import 'package:awachat/dialogs/helpers.dart';
 import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+
+SimpleDialogOption dialogUserReportOption(
+        BuildContext context, String userId) =>
+    SimpleDialogOption(
+        child: const Text('''Signaler l'utilisateur'''),
+        onPressed: () => dialogAction(context,
+                content:
+                    '''Tu vas nous envoyer un e-mail avec l'identité de cet utilisateur. Nous te contacterons pour t'informer des mesures prises.''',
+                action: () async {
+              await _sendReportMail(userId);
+            }));
 
 SimpleDialogOption dialogUserBlockOption(BuildContext context, String userId) =>
     (SimpleDialogOption(
@@ -27,9 +41,8 @@ Toutes les utilisateurs présents, sauf celui-ci, pourront accepter ou refuser t
 
 Si la majorité accepte, cet utilisateur sera envoyé dans un autre groupe.''',
                 action: () async {
-              await HttpConnection().put(path: 'request-ban', body: {
-                'bannedid': userId
-              }); // TODO: doesnt pop the context for an unknown reason
+              await HttpConnection()
+                  .put(path: 'request-ban', body: {'bannedid': userId});
             }));
 
 void dialogUserActions(BuildContext context, String userId) => (showDialog(
@@ -37,6 +50,7 @@ void dialogUserActions(BuildContext context, String userId) => (showDialog(
     builder: (BuildContext context) => (SimpleDialog(children: <Widget>[
           dialogUserBlockOption(context, userId),
           dialogUserBanOption(context, userId),
+          dialogUserReportOption(context, userId),
           SimpleDialogOption(
             child: const Text('Retour'),
             onPressed: () => (Navigator.pop(context)),
@@ -54,4 +68,57 @@ void dialogBanUserActions(BuildContext context, String userId) {
     await HttpConnection()
         .put(path: 'reply-ban', body: {'bannedid': userId, 'status': 'denied'});
   }, dismissible: false, popParent: false);
+}
+
+Future<void> _sendReportMail(String userId) async {
+  GroupUser groupUser = GroupUser(userId);
+
+  // get photo
+  File? file = await _getFile(groupUser.getArgument('imagePath'));
+
+  final String body = '''
+  --- --- ---
+  Ajoute tes remarques ici.
+  --- --- ---
+
+  L'utilisateur
+  ${User().id}
+  signale l'identité de l'utilisateur
+  ${groupUser.id}
+
+  Le nom de l'utilisateur signalé est :
+  --- --- ---
+  ${groupUser.getArgument('name') ?? 'Impossible de récupérer le nom de cet utilisateur.'}
+  --- --- ---
+
+  ${file is File ? 'La photo de profil de cet utilisateur est en pièce jointe.' : 'Impossible de récupérer la photo de l\'utilisateur signalé.'}
+''';
+
+  final Email email = Email(
+      body: body,
+      subject: 'Signalement',
+      recipients: ['awachat.app@gmail.com'],
+      attachmentPaths: file is File ? [file.path] : null);
+
+  try {
+    await FlutterEmailSender.send(email);
+  } catch (e) {
+    print('Cannot send email: $e');
+  }
+}
+
+Future<File?> _getFile(String? path) async {
+  if (path == null) {
+    return null;
+  }
+
+  final File file = File(path);
+
+  try {
+    await file.length();
+    print('File size: ${(await file.length()) / 1e6} Mb');
+    return file;
+  } catch (e) {
+    return null;
+  }
 }

@@ -13,10 +13,16 @@ class Presentation extends StatelessWidget {
 Tu es au bon endroit pour de nouvelles rencontres.''',
           assetPath: 'assets/images/onboard-page-1.png'),
       const Slide(
-          text: """Tu vas entrer dans un groupe de conversation.
+          text: '''Tu vas entrer dans un groupe de conversation.
 
-C'est le moment idéal pour partager tes points communs et tes activités favorites !""",
+C'est le moment idéal pour partager tes points communs et tes activités favorites !''',
           assetPath: 'assets/images/onboard-page-2.png'),
+      const Slide(
+          text:
+              '''Si la présence ou le comportement d'un utilisateur te dérange, tu auras plusieurs options pour y remédier.
+          
+Tu pourras, par exemple, proposer aux autres membres du groupe de l'expulser.''',
+          assetPath: 'assets/images/onboard-page-4.png'),
       const CustomSlide(
           assetPath: 'assets/images/onboard-page-3.png',
           child: Text.rich(
@@ -26,22 +32,6 @@ C'est le moment idéal pour partager tes points communs et tes activités favori
                 TextSpan(text: ''' en haut à droite de ton écran.
 
 Tu quitteras ton groupe et en rejoindras un nouveau.''')
-              ]),
-              textAlign: TextAlign.center)),
-      CustomSlide(
-          assetPath: 'assets/images/onboard-page-4.png',
-          child: Text.rich(
-              TextSpan(children: [
-                const TextSpan(text: '''Si un message t'offense, '''),
-                TextSpan(
-                    text: '''reste appuyé''',
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary)),
-                const TextSpan(text: ''' dessus.
-
-Tu pourras le supprimer ou nous le signaler
-
-Tu pourras aussi bloquer la personne qui l'a écrit ou proposer de l'expulser de ton groupe.''')
               ]),
               textAlign: TextAlign.center)),
       SlideWithButton(

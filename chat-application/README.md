@@ -153,3 +153,11 @@ cd chat-application
 flutter pub run dependency_validator
 # remove the dependencies stated
 ```
+
+# Images in Onboarding
+
+1. Go to [storyset](https://storyset.com)
+2. Select [Cuate](https://storyset.com/cuate)
+3. Change the color to **#ffde00**
+4. Select a **Simple** background
+5. Download as **PNG** *(you will download a 2000x2000 image with transparent background)*
