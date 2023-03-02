@@ -56,7 +56,7 @@ exports.handler = async (event) => {
       for (const user of users) {
         const id = user.id
         const lastConnectionDayString = user.lastConnectionDay
-        const lastConnectionDay = new Date(lastConnectionDayString)
+        const lastConnectionDay = new Date(lastConnectionDayString) // TODO: need a try / catch here if no date
         const differenceInDay = Math.floor((today - lastConnectionDay) / MILLISECONDS_PER_DAY)
         console.log(`user (${id}) difference in day is ${differenceInDay} (last connection day is ${lastConnectionDay})`)
         if (differenceInDay > 0) {
