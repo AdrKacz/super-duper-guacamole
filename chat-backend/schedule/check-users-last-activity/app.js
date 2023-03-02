@@ -18,7 +18,8 @@ exports.handler = async (event) => {
   // scan all users
   const groups = []
   let previousLastEvaluatedKey = null
-  while (true) {
+  let hasReachLastPage = false
+  while (!hasReachLastPage) {
     const scanCommandInputOptions = {
       TableName: GROUPS_TABLE_NAME,
       ProjectionExpression: '#id',
@@ -39,7 +40,7 @@ exports.handler = async (event) => {
     groups.push(...items)
 
     if (lastEvaluatedKey !== null) {
-      break
+      hasReachLastPage = true
     } else {
       previousLastEvaluatedKey = lastEvaluatedKey
     }
