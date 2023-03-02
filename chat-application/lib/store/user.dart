@@ -91,7 +91,7 @@ class User {
         Map? user = Memory().boxGroupUsers.get(groupUserKey) ?? {};
         Map groupUser = groupUsers[groupUserKey]!;
 
-        // TODO: need to force update if cannot retrieve the name or the photo
+        // TODO: need to force update if cannot retrieve the name or the photo from memory
         Map userData = await HttpConnection().post(
             path: 'download-user',
             body: {'id': groupUser['id'], 'lastUpdate': user['lastUpdate']});
