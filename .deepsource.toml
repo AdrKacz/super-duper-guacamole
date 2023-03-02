@@ -25,6 +25,7 @@ enabled = true
     "chat-backend/http/put/sign-in/",
     "chat-backend/http/put/sign-up/",
     "chat-backend/manual-setup/",
+    "chat-backend/schedule/check-users-last-activity/",
     "chat-backend/websocket/authorizer/",
     "chat-backend/websocket/on-connect/",
     "chat-backend/websocket/on-disconnect/",
