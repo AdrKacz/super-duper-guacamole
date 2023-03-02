@@ -17,9 +17,6 @@ jest.mock('chat-backend-package/src/get-group', () => ({ getGroup: jest.fn() }))
 const sendMessagesModule = require('chat-backend-package/src/send-messages')
 jest.mock('chat-backend-package/src/send-messages', () => ({ sendMessages: jest.fn() }))
 
-const sendNotificationsModule = require('chat-backend-package/src/send-notifications')
-jest.mock('chat-backend-package/src/send-notifications', () => ({ sendNotifications: jest.fn() }))
-
 // ===== ==== ====
 // BEFORE EACH
 beforeEach(() => {
@@ -57,7 +54,7 @@ test('it updates connection id', async () => {
     },
     ExpressionAttributeValues: {
       ':connectionId': 'connection-id',
-      ':today': 'dim. 1 janv. 2023'
+      ':today': '2023-01-01'
     }
   })
 
@@ -89,14 +86,6 @@ test('it send messages and notification to group', async () => {
     },
     useSaveMessage: false
   })
-
-  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({
-    users: [{ id: 'id-2' }],
-    notification: {
-      title: 'Quelqu\'un se connecte !',
-      body: 'Viens discuter 💬'
-    }
-  })
 })
 
 test('it throws unknown error', async () => {
@@ -114,5 +103,4 @@ test('it throws unknown error', async () => {
   expect(getGroupModule.getGroup).toHaveBeenCalledTimes(1)
 
   expect(sendMessagesModule.sendMessages).toHaveBeenCalledTimes(0)
-  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledTimes(0)
 })

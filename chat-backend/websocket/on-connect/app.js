@@ -6,19 +6,8 @@ const { UpdateCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
 const { sendMessages } = require('chat-backend-package/src/send-messages') // skipcq: JS-0260
-const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 
 const { USERS_TABLE_NAME } = process.env
-
-// ===== ==== ====
-// CONSTANTS
-const DATE_STRING_OPTIONS = {
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  timeZone: 'UTC'
-}
 
 // ===== ==== ====
 // EXPORTS
@@ -39,7 +28,7 @@ exports.handler = async (event) => {
     },
     ExpressionAttributeValues: {
       ':connectionId': connectionId,
-      ':today': (new Date()).toLocaleDateString('fr-FR', DATE_STRING_OPTIONS)
+      ':today': (new Date()).toISOString().split('T')[0]
     }
   }))
 
@@ -55,13 +44,6 @@ exports.handler = async (event) => {
               id
             },
             useSaveMessage: false
-          }),
-          sendNotifications({
-            users: users.filter(({ id: userId }) => (userId !== id)),
-            notification: {
-              title: 'Quelqu\'un se connecte !',
-              body: 'Viens discuter 💬'
-            }
           })
         ]).then((results) => (console.log(results)))
       }
