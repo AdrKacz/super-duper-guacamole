@@ -7,8 +7,8 @@ const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws
 
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb')
 
-const chatBackendPackageModule = require('chat-backend-package')
-jest.mock('chat-backend-package', () => ({
+const getGroupModule = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+jest.mock('chat-backend-package/src/get-group', () => ({
   getGroup: jest.fn()
 }))
 
@@ -85,7 +85,7 @@ test('it returns valid group', async () => {
     return false
   })
 
-  chatBackendPackageModule.getGroup.mockImplementation(({ groupId }) => ({
+  getGroupModule.getGroup.mockImplementation(({ groupId }) => ({
     group: { id: groupId },
     users: [{ id: 'id-1' }, { id: 'id-2' }]
   }))
@@ -97,10 +97,10 @@ test('it returns valid group', async () => {
 
   expect(sort).toHaveBeenCalledTimes(1)
 
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledTimes(3)
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-1' })
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-2' })
-  expect(chatBackendPackageModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-3' })
+  expect(getGroupModule.getGroup).toHaveBeenCalledTimes(3)
+  expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-1' })
+  expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-2' })
+  expect(getGroupModule.getGroup).toHaveBeenCalledWith({ groupId: 'group-id-3' })
 
   expect(isGroupValidModule.isGroupValid).toHaveBeenCalledTimes(3)
   expect(isGroupValidModule.isGroupValid).toHaveBeenCalledWith({ group: { id: 'group-id-1' }, users: [{ id: 'id-1' }, { id: 'id-2' }], currentUser })
@@ -120,7 +120,7 @@ test('it returns empty object if no valid group', async () => {
 
   isGroupValidModule.isGroupValid.mockReturnValue(false)
 
-  chatBackendPackageModule.getGroup.mockImplementation(({ groupId }) => ({
+  getGroupModule.getGroup.mockImplementation(({ groupId }) => ({
     group: { id: groupId },
     users: [{ id: 'id-1' }, { id: 'id-2' }]
   }))

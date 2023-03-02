@@ -24,8 +24,13 @@ exports.handler = async (event) => {
     const scanCommandInputOptions = {
       TableName: GROUPS_TABLE_NAME,
       ProjectionExpression: '#id',
+      FilterExpression: '#isPublic = :true',
       ExpressionAttributeNames: {
-        '#id': 'id'
+        '#id': 'id',
+        '#isPublic': 'isPublic'
+      },
+      ExpressionAttributeValues: {
+        ':true': true
       }
     }
 
