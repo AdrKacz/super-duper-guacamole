@@ -13,6 +13,8 @@ const MILLISECONDS_PER_DAY = 86400000
 // ===== ==== ====
 // EXPORTS
 exports.handler = async (event) => {
+  // TODO: need to only loop on active group
+  // TODO: What to do with users that don't have a group at all (didnt ask for one)
   console.log('Receives:', JSON.stringify(event, null, 2))
 
   // scan all users
