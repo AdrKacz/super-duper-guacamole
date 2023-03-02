@@ -13,7 +13,6 @@ const MILLISECONDS_PER_DAY = 86400000
 // ===== ==== ====
 // EXPORTS
 exports.handler = async (event) => {
-  // TODO: What to do with users that don't have a group at all (didnt ask for one)
   console.log('Receives:', JSON.stringify(event, null, 2))
 
   // scan all users
@@ -46,7 +45,7 @@ exports.handler = async (event) => {
     }
   }
 
-  console.log(`scanned ${groups.length()} groups`)
+  console.log(`scanned ${groups.length} groups`)
 
   // look for users without activity
   const todayString = (new Date()).toISOString().split('T')[0]
