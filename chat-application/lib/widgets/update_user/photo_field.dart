@@ -38,7 +38,7 @@ class _PhotoFieldState extends State<PhotoField> {
           'Compress file from ${(await file.length()) / 1e6} Mb to ${(await result.length()) / 1e6} Mb');
     } catch (e) {
       print('Error while compressing file: $e');
-      return null;
+      return file;
     }
 
     return result;
@@ -56,7 +56,7 @@ class _PhotoFieldState extends State<PhotoField> {
               toolbarColor: toolbarColor,
               toolbarWidgetColor: toolbarWidgetColor,
               initAspectRatio: CropAspectRatioPreset.original,
-              lockAspectRatio: false),
+              lockAspectRatio: false)
         ]);
   }
 
