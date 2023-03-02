@@ -36,17 +36,18 @@ exports.handler = async (event) => {
     if (previousLastEvaluatedKey !== null) {
       scanCommandInputOptions.ExclusiveStartKey = previousLastEvaluatedKey
     }
+
     const { Items: items, LastEvaluatedKey: lastEvaluatedKey } = await dynamoDBDocumentClient.send(new ScanCommand(scanCommandInputOptions))
     groups.push(...items)
 
-    if (lastEvaluatedKey !== null) {
+    if (typeof lastEvaluatedKey === 'undefined') {
       hasReachLastPage = true
     } else {
       previousLastEvaluatedKey = lastEvaluatedKey
     }
   }
 
-  console.log(`scanned ${groups.length} groups`)
+  console.log(`scanned ${groups.length} groups`, groups)
 
   // look for users without activity
   const todayString = (new Date()).toISOString().split('T')[0]
@@ -59,7 +60,7 @@ exports.handler = async (event) => {
       console.log('analyse group', group, users)
       for (const user of users) {
         const id = user.id
-        const lastConnectionDayString = user.lastConnectionDay
+        const lastConnectionDayString = user.lastConnectionDay ?? 0
         const lastConnectionDay = new Date(lastConnectionDayString) // TODO: need a try / catch here if no date
         const differenceInDay = Math.floor((today - lastConnectionDay) / MILLISECONDS_PER_DAY)
         console.log(`user (${id}) difference in day is ${differenceInDay} (last connection day is ${lastConnectionDay})`)
