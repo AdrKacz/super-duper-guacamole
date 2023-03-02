@@ -2,7 +2,7 @@
 // IMPORTS
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
-const { getGroup } = require('chat-backend-package') // skipcq: JS-0260
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
 
@@ -54,7 +54,7 @@ exports.findGroup = async ({ currentUser }) => {
           return { group, users }
         }
       } catch (error) {
-        console.log(`find group (${groupId}) error`, error)
+        console.log(`error while getting group (${groupId})`, error)
       }
     }
   }
