@@ -4,6 +4,7 @@ const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws
 const { ScanCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+const { leaveGroup } = require('chat-backend-package/src/leave-group') // skipcq: JS-0260
 const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 
 const { GROUPS_TABLE_NAME } = process.env
@@ -52,7 +53,8 @@ exports.handler = async (event) => {
   // look for users without activity
   const todayString = (new Date()).toISOString().split('T')[0]
   const today = new Date(todayString)
-  const usersWithoutActivity = []
+  const usersToNotify = []
+  const usersToRemove = []
   console.log('start analysis for today', today)
   for (const { id: groupId } of groups) {
     try {
@@ -64,9 +66,12 @@ exports.handler = async (event) => {
         const lastConnectionDay = new Date(lastConnectionDayString)
         const differenceInDay = Math.floor((today - lastConnectionDay) / MILLISECONDS_PER_DAY)
         console.log(`user (${id}) difference in day is ${differenceInDay} (last connection day is ${lastConnectionDay})`)
-        if (differenceInDay > 0) {
+        if (differenceInDay > 2) {
+          console.log('too long before last activity, remove user from its group', id)
+          usersToRemove.push(user)
+        } else if (differenceInDay > 0) {
           console.log('too long before last activity, send notification to user', id)
-          usersWithoutActivity.push(user)
+          usersToNotify.push(user)
         }
       }
     } catch (error) {
@@ -74,12 +79,24 @@ exports.handler = async (event) => {
     }
   }
 
-  // notify users
-  await sendNotifications({
-    users: usersWithoutActivity,
-    notification: {
-      title: 'Viens donner de tes nouvelles 🎉',
-      body: 'Ton groupe a besoin de toi !'
-    }
-  })
+  await Promise.allSettled([
+    // notify users
+    sendNotifications({
+      users: usersToNotify,
+      notification: {
+        title: 'Viens donner de tes nouvelles 🎉',
+        body: 'Ton groupe a besoin de toi !'
+      }
+    }),
+    // notify users who will leave their group
+    sendNotifications({
+      users: usersToRemove,
+      notification: {
+        title: 'Viens demander un nouveau groupe 🔥',
+        body: 'Ça fait longtemps qu\'on ne t\'as pas vu !'
+      }
+    }),
+    // leave groups if any
+    Promise.allSettled(usersToRemove.map((user) => (leaveGroup({ currentUser: user }))))
+  ])
 }
