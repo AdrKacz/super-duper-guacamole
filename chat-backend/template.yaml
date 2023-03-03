@@ -679,6 +679,36 @@ Resources:
         ThrottlingBurstLimit: !Ref WebSocketThrottlingBurstLimit
         ThrottlingRateLimit: !Ref WebSocketThrottlingRateLimit
 
+  ##### ##### #####
+  ##### Other
+  ##### ##### #####
+
+  # SCHEDULE /check-users-last-activity
+  ScheduleCheckUsersLastActivityFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: schedule/check-users-last-activity
+      Environment:
+        Variables:
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBCrudPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        ScheduleEvent:
+          Type: Schedule
+          Properties:
+            Schedule: 'cron(0 17 * * ? *)' # runs every day at 5:00 pm UTC
+            Enabled: true
+
+  ScheduleCheckUsersLastActivityLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${ScheduleCheckUsersLastActivityFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
 Outputs:
   UsersTableArn:
     Description: "Users table ARN"

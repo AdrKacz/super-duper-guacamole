@@ -1,0 +1,12 @@
+{
+  "name": "check-users-last-activity",
+  "version": "1.0.0",
+  "description": "Check when users last connection and take actions",
+  "main": "app.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "@aws-sdk/lib-dynamodb": "^3.215.0",
+    "chat-backend-package": "link:../../chat-backend-package"
+  }
+}
