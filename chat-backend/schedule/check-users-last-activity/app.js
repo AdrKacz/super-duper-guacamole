@@ -66,7 +66,7 @@ exports.handler = async (event) => {
         const lastConnectionDay = new Date(lastConnectionDayString)
         const differenceInDay = Math.floor((today - lastConnectionDay) / MILLISECONDS_PER_DAY)
         console.log(`user (${id}) difference in day is ${differenceInDay} (last connection day is ${lastConnectionDay})`)
-        if (differenceInDay > 2) {
+        if (differenceInDay > 6) {
           console.log('too long before last activity, remove user from its group', id)
           usersToRemove.push(user)
         } else if (differenceInDay > 0) {
