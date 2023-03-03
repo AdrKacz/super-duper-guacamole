@@ -690,12 +690,19 @@ Resources:
       CodeUri: schedule/check-users-last-activity
       Environment:
         Variables:
+          WEB_SOCKET_ENDPOINT: !Sub '${WebSocketApi.ApiEndpoint}/${StageName}'
           FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
       Policies:
       - DynamoDBCrudPolicy:
           TableName: !Ref UsersTable
       - DynamoDBCrudPolicy:
           TableName: !Ref GroupsTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - 'execute-api:ManageConnections'
+          Resource:
+          - !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebSocketApi}/${StageName}/POST/*'
       Events:
         ScheduleEvent:
           Type: Schedule
