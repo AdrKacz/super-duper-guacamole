@@ -12,11 +12,6 @@ jest.mock('chat-backend-package/src/get-group', () => ({
   getGroup: jest.fn()
 }))
 
-const leaveGroupModule = require('chat-backend-package/src/leave-group') // skipcq: JS-0260
-jest.mock('chat-backend-package/src/leave-group', () => ({
-  leaveGroup: jest.fn()
-}))
-
 const sendNotificationsModule = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 jest.mock('chat-backend-package/src/send-notifications', () => ({
   sendNotifications: jest.fn()
@@ -62,9 +57,9 @@ test('it loops over all impacted users', async () => {
     })
 
   const groups = {
-    'id-1': [{ id: 'id-11', lastConnectionDay: '2023-01-13' }, { id: 'id-12', lastConnectionDay: '2023-01-16' }],
+    'id-1': [{ id: 'id-11', lastConnectionDay: '2023-01-15' }, { id: 'id-12', lastConnectionDay: '2023-01-16' }],
     'id-2': [{ id: 'id-21' }],
-    'id-3': [{ id: 'id-31', lastConnectionDay: '2023-01-09' }, { id: 'id-32' }]
+    'id-3': [{ id: 'id-31', lastConnectionDay: '2023-01-13' }, { id: 'id-32' }]
   }
 
   getGroupModule.getGroup.mockImplementation(({ groupId }) => {
@@ -82,22 +77,14 @@ test('it loops over all impacted users', async () => {
 
   expect(ddbMock).toHaveReceivedCommandTimes(ScanCommand, 2)
   expect(getGroupModule.getGroup).toHaveBeenCalledTimes(3)
-  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledTimes(2)
+  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({
-    users: [{ id: 'id-11', lastConnectionDay: '2023-01-13' }],
+    users: [{ id: 'id-11', lastConnectionDay: '2023-01-15' },
+      { id: 'id-31', lastConnectionDay: '2023-01-13' },
+      { id: 'id-32' }],
     notification: {
       title: 'Viens donner de tes nouvelles 🎉',
       body: 'Ton groupe a besoin de toi !'
     }
   })
-  expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({
-    users: [{ id: 'id-31', lastConnectionDay: '2023-01-09' }, { id: 'id-32' }],
-    notification: {
-      title: 'Viens demander un nouveau groupe 🔥',
-      body: 'Ça fait longtemps qu\'on ne t\'as pas vu !'
-    }
-  })
-  expect(leaveGroupModule.leaveGroup).toHaveBeenCalledTimes(2)
-  expect(leaveGroupModule.leaveGroup).toHaveBeenCalledWith({ currentUser: { id: 'id-31', lastConnectionDay: '2023-01-09' } })
-  expect(leaveGroupModule.leaveGroup).toHaveBeenCalledWith({ currentUser: { id: 'id-32' } })
 })
