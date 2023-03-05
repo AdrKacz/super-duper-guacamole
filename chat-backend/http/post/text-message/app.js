@@ -2,12 +2,11 @@
 
 // ===== ==== ====
 // IMPORTS
-const {
-  getGroup,
-  getUser,
-  sendMessages,
-  sendNotifications
-} = require('chat-backend-package') // skipcq: JS-0260
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
+const { sendMessages } = require('chat-backend-package/src/send-messages') // skipcq: JS-0260
+const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
+const { getUserData } = require('chat-backend-package/src/get-user-data') // skipcq: JS-0260
 
 // ===== ==== ====
 // EXPORTS
@@ -44,6 +43,26 @@ ${event.body}`)
     }
   }
 
+  let messageData = null
+  try {
+    messageData = JSON.parse(message)
+  } catch (error) {
+    console.log('cannot parse message data:', error)
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ error: 'your message is unvalid' })
+    }
+  }
+
+  if (typeof messageData.text !== 'string') {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({ error: 'your message is unvalid' })
+    }
+  }
+
   const jwt = event.requestContext.authorizer.jwt.claims
 
   const { id, groupId } = await getUser({ id: jwt.id })
@@ -66,13 +85,23 @@ ${event.body}`)
     }
   }
 
+  // get user info
+  const data = await getUserData({ id })
+
+  let notificationTitle = null
+  if (typeof data.name === 'string') {
+    notificationTitle = `${data.name} a envoyé un message 🔥`
+  } else {
+    notificationTitle = 'Quelqu\'un a envoyé un message 🔥'
+  }
+
   await Promise.all([
     sendMessages({ users, message: { action: 'text-message', message }, useSaveMessage: true }),
     sendNotifications({
       users: users.filter(({ id: userId }) => (userId !== id)),
       notification: {
-        title: 'Les gens parlent 🎉',
-        body: 'Tu es trop loin pour entendre ...'
+        title: notificationTitle,
+        body: messageData.text.trim()
       }
     })
   ])
