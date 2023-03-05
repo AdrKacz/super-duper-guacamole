@@ -23,7 +23,6 @@ function getSdkStream (str) {
 beforeEach(() => {
   // reset mocks
   s3Mock.reset()
-
   s3Mock.resolves({})
 })
 
