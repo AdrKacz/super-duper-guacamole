@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:awachat/dialogs/change_group.dart';
 import 'package:awachat/dialogs/message_actions.dart';
 import 'package:awachat/dialogs/user_actions.dart';
 import 'package:awachat/helpers/decode_jwt.dart';
@@ -168,6 +169,14 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
 
   // ===== ===== =====
   // Helpers
+  Future<void> pressedChangeGroup() async {
+    final bool isConfirmed = (await dialogChangeGroup(context)) ?? false;
+
+    if (isConfirmed) {
+      await changeGroup();
+    }
+  }
+
   Future<void> changeGroup() async {
     await User().changeGroup();
 
@@ -316,7 +325,8 @@ class _ChatHandlerState extends State<ChatHandler> with WidgetsBindingObserver {
             title: const UsersList(),
             actions: <Widget>[
               SwitchActionButton(
-                  isChatting: status == Status.chatting, onPressed: changeGroup)
+                  isChatting: status == Status.chatting,
+                  onPressed: pressedChangeGroup)
             ]),
         body: ChatPage(
             status: status,
