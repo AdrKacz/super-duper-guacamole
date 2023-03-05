@@ -1,0 +1,11 @@
+{
+  "name": "other-action",
+  "version": "1.0.0",
+  "description": "None essential action for the app but that worth being notified of",
+  "main": "app.js",
+  "author": "AdrKacz",
+  "license": "SEE LICENSE IN /LICENSE",
+  "dependencies": {
+    "chat-backend-package": "link:../../../chat-backend-package"
+  }
+}

@@ -408,7 +408,7 @@ Resources:
     Properties:
       CodeUri: http/post/download-user
       Policies:
-      - S3CrudPolicy:
+      - S3ReadPolicy:
           BucketName: !Ref DataBucket
       Events:
         HttpApiEvent:
@@ -422,6 +422,35 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub '/aws/lambda/${HttpPostDownloadUserFunction}'
+      RetentionInDays: !Ref LogRetentionInDays
+
+  # POST /other-action
+  HttpPostOtherActionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: http/post/other-action
+      Environment:
+        Variables:
+          FIREBASE_SERVICE_ACCOUNT_KEY: '{{resolve:ssm:firebase_service_account_key:1}}'
+      Policies:
+      - S3ReadPolicy:
+          BucketName: !Ref DataBucket
+      - DynamoDBReadPolicy:
+          TableName: !Ref UsersTable
+      - DynamoDBReadPolicy:
+          TableName: !Ref GroupsTable
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /other-action
+            Method: POST
+
+  HttpPostOtherActionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${HttpPostOtherActionFunction}'
       RetentionInDays: !Ref LogRetentionInDays
 
   # PUT /firebase-token

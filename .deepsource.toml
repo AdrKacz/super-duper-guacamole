@@ -17,6 +17,7 @@ enabled = true
     "chat-backend/http/get/unread-data/",
     "chat-backend/http/post/change-group/",
     "chat-backend/http/post/download-user/",
+    "chat-backend/http/post/other-action/",
     "chat-backend/http/post/text-message/",
     "chat-backend/http/post/upload-user/",
     "chat-backend/http/put/firebase-token/",

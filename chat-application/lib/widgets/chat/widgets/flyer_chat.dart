@@ -1,4 +1,5 @@
 import 'package:awachat/l10n/flyer_l10n.dart';
+import 'package:awachat/network/http_connection.dart';
 import 'package:awachat/store/group_user.dart';
 import 'package:awachat/store/memory.dart';
 import 'package:awachat/store/user.dart';
@@ -52,6 +53,11 @@ class _FlyerChatState extends State<FlyerChat> {
         inputOptions: InputOptions(
             textEditingController: _controller,
             onTextChanged: (String text) {
+              if (!Memory().boxUser.containsKey('typingMessage') &&
+                  text.isNotEmpty) {
+                HttpConnection().post(
+                    path: 'other-action', body: {'action': 'startTyping'});
+              }
               Memory().boxUser.put('typingMessage', text);
             }),
         theme: DefaultChatTheme(

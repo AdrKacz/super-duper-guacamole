@@ -28,7 +28,7 @@ exports.handler = async (event) => {
   const id = jwt.id
 
   const body = JSON.parse(event.body)
-  const name = body.name
+  const name = body.name?.trim()
   const base64Image = body.image
   const imageExtension = body.imageExtension
   const timestamp = Date.now()

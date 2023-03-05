@@ -66,7 +66,7 @@ test('it uploads and returns when no group', async () => {
 
   const response = await handler({
     requestContext: { authorizer: { jwt: { claims: { id: 'id' } } } },
-    body: JSON.stringify({ image, imageExtension: '.extension' })
+    body: JSON.stringify({ name: 'name ', image, imageExtension: '.extension' })
   })
 
   expect(s3Mock).toHaveReceivedCommandWith(PutObjectCommand, {
@@ -80,7 +80,8 @@ test('it uploads and returns when no group', async () => {
     Bucket: process.env.DATA_BUCKET_NAME,
     Body: JSON.stringify({
       lastUpdate: 0,
-      imagePath: 'users/id/image.extension'
+      imagePath: 'users/id/image.extension',
+      name: 'name'
     }),
     Key: 'users/id/data.json',
     ContentType: 'application/json'
@@ -114,7 +115,7 @@ test('it uploads and returns when group but not opened', async () => {
   expect(response.body).toBe(JSON.stringify({ id: 'id', message: 'you don\'t have a group to share with' }))
 })
 
-test('it uploads and informs userw when group', async () => {
+test('it uploads and informs users when group', async () => {
   Date.now.mockReturnValue(0)
   getUserModule.getUser.mockResolvedValue({ id: 'id', groupId: 'group-id' })
   getGroupModule.getGroup.mockResolvedValue({ group: { isPublic: true }, users: [{ id: 'id' }, { id: 'id-2' }] })
