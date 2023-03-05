@@ -1,6 +1,5 @@
 // ===== ==== ====
 // IMPORTS
-const { sendMessages } = require('chat-backend-package/src/send-messages') // skipcq: JS-0260
 const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 const { s3Client } = require('chat-backend-package/src/clients/aws/s3-client') // skipcq: JS-0260
 const { GetObjectCommand } = require('@aws-sdk/client-s3')
@@ -16,6 +15,7 @@ const { DATA_BUCKET_NAME } = process.env
  * @param {string} users
  */
 exports.startTyping = async ({ id, users }) => {
+  console.log('start typing', id, users)
   let data = null
   try {
     const dataRaw = await s3Client.send(new GetObjectCommand({
@@ -29,21 +29,18 @@ exports.startTyping = async ({ id, users }) => {
     console.log('Error while getting user data', error)
   }
 
-  let notificationTitle
+  let notificationTitle = null
   if (data !== null && typeof data.name === 'string') {
     notificationTitle = `${data.name} est entrain d'écrire...`
   } else {
     notificationTitle = 'Quelqu\'un est entrain d\'écrire...'
   }
 
-  await Promise.all([
-    sendMessages({ users, message: { action: 'start-typing', message: { id } }, useSaveMessage: false }),
-    sendNotifications({
-      users: users.filter(({ id: userId }) => (userId !== id)),
-      notification: {
-        title: notificationTitle,
-        body: 'Viens jeter un œil 👀'
-      }
-    })
-  ])
+  await sendNotifications({
+    users: users.filter(({ id: userId }) => (userId !== id)),
+    notification: {
+      title: notificationTitle,
+      body: 'Viens jeter un œil 👀'
+    }
+  })
 }

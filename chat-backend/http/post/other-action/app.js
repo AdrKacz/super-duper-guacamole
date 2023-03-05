@@ -3,7 +3,7 @@
 const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 
-const { startTyping } = require('chat-backend-package/src/get-group')
+const { startTyping } = require('./src/start-typing')
 
 // ===== ==== ====
 // CONSTANTS
@@ -54,9 +54,8 @@ exports.handler = async (event) => {
 
   switch (action) {
     case 'startTyping':
-      startTyping({ id, users })
+      await startTyping({ id, users })
       break
-
     default:
       console.log('No method defined yet for this action:', action)
       break
