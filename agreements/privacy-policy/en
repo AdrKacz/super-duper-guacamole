@@ -1,7 +1,13 @@
 PRIVACY POLICY
 
-AWA doesn't store your data.
+When you first use the app, the app automatically assigns you a random ID and key. This identifier and this key do not contain any personal information. 
 
-ROOM SERVER broadcasts your message without reading them.
+AWA saves the following data:
+  - your username,
+  - your key, which allows AWA to check that no one is sending a message pretending to be you,
+  - your mobile ID, which allows AWA to send you notifications. It does not enable AWA to deduce your identity, and only AWA can use it if you have the application installed, 
+  - your current group,
+  - messages that you have NOT YET received,
+  - the information filled in your profile.
 
-RECOMMENDER SYSTEM is not used in our application yet. Thus, it doesn't store your data.
+AWA does not record your conversations.
