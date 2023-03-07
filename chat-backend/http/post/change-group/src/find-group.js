@@ -12,10 +12,8 @@ const { isGroupValid } = require('./is-group-valid')
 // CONSTANTS
 const {
   GROUPS_TABLE_NAME,
-  GROUPS_CITY_INDEX_NAME,
-  MAXIMUM_GROUP_SIZE: MAXIMUM_GROUP_SIZE_STRING
+  GROUPS_CITY_INDEX_NAME
 } = process.env
-const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS
@@ -26,17 +24,17 @@ exports.findGroup = async ({ currentUser }) => {
     TableName: GROUPS_TABLE_NAME,
     IndexName: GROUPS_CITY_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#city = :city AND #groupSize < :maximumGroupSize',
+    KeyConditionExpression: '#city = :city AND #isPublic = :false',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
-      '#id': 'id',
       '#city': 'city',
-      '#groupSize': 'groupSize'
+      '#isPublic': 'isPublic',
+      '#id': 'id'
     },
     ExpressionAttributeValues: {
       ':city': currentUser.city,
-      ':maximumGroupSize': MAXIMUM_GROUP_SIZE,
+      ':false': false,
       ':oldGroupId': currentUser.groupId ?? ''
     }
   }))

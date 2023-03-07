@@ -47,17 +47,17 @@ test('it returns empty object if no group', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     IndexName: process.env.GROUPS_CITY_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#city = :city AND #groupSize < :maximumGroupSize',
+    KeyConditionExpression: '#city = :city AND #isPublic = :false',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
-      '#id': 'id',
       '#city': 'city',
-      '#groupSize': 'groupSize'
+      '#isPublic': 'isPublic',
+      '#id': 'id'
     },
     ExpressionAttributeValues: {
       ':city': 'city',
-      ':maximumGroupSize': parseInt(process.env.MAXIMUM_GROUP_SIZE, 10),
+      ':false': false,
       ':oldGroupId': 'group-id'
     }
   })
@@ -135,17 +135,17 @@ test('it returns empty object if no valid group', async () => {
     TableName: process.env.GROUPS_TABLE_NAME,
     IndexName: process.env.GROUPS_CITY_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#city = :city AND #groupSize < :maximumGroupSize',
+    KeyConditionExpression: '#city = :city AND #isPublic = :false',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
-      '#id': 'id',
       '#city': 'city',
-      '#groupSize': 'groupSize'
+      '#isPublic': 'isPublic',
+      '#id': 'id'
     },
     ExpressionAttributeValues: {
       ':city': 'city',
-      ':maximumGroupSize': parseInt(process.env.MAXIMUM_GROUP_SIZE, 10),
+      ':false': false,
       ':oldGroupId': ''
     }
   })

@@ -16,7 +16,6 @@ Globals:
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
         GROUPS_CITY_INDEX_NAME: "CityIndex"
         MINIMUM_GROUP_SIZE: !Ref MinimumGroupSize
-        MAXIMUM_GROUP_SIZE: !Ref MaximumGroupSize
 
 Description: >
   Awa
@@ -28,11 +27,6 @@ Parameters:
     Type: Number
     Default: 3
     Description: '(Required) The minimum number of users on a group to be opened.'
-    ConstraintDescription: 'Required. Must be an integer.'
-  MaximumGroupSize:
-    Type: Number
-    Default: 5
-    Description: '(Required) The maximum number of users on a group'
     ConstraintDescription: 'Required. Must be an integer.'
   ConfirmationRequired:
     Type: Number
@@ -139,8 +133,8 @@ Resources:
           AttributeName: "city"
           AttributeType: "S"
         - 
-          AttributeName: "groupSize"
-          AttributeType: "N"
+          AttributeName: "isPublic"
+          AttributeType: "B"
       KeySchema:
         -
           AttributeName: "id"
@@ -153,12 +147,10 @@ Resources:
               AttributeName: "city"
               KeyType: "HASH"
             -
-              AttributeName: "groupSize"
+              AttributeName: "isPublic"
               KeyType: "RANGE"
           Projection:
-            NonKeyAttributes:
-              - "groupSize"
-            ProjectionType: "INCLUDE"
+            ProjectionType: "KEYS_ONLY"
 
   DataBucket:
     Type: AWS::S3::Bucket

@@ -20,8 +20,7 @@ exports.createGroup = async ({ currentUser }) => {
   const group = {
     id: groupId,
     isPublic: false,
-    city: currentUser.city,
-    groupSize: 1
+    city: currentUser.city
   }
 
   if (currentUser.blockedUserIds.size > 0) {
