@@ -1,7 +1,7 @@
 ---
-name: Feature request
+name: Feature
 about: Suggest an idea for this project
-title: "\U0001F31F Enter your new feature here"
+title: "⭐️ Enter your new feature here"
 labels: feature
 assignees: ''
 
