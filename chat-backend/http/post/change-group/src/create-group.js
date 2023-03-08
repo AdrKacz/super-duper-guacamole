@@ -2,6 +2,7 @@
 // IMPORTS
 const { v4: uuidv4 } = require('uuid') // skipcq: JS-0260
 
+const { CONSTANTS } = require('chat-backend-package') // skipcq: JS-0260
 const { UpdateCommand, PutCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
@@ -19,7 +20,7 @@ exports.createGroup = async ({ currentUser }) => {
   const groupId = uuidv4()
   const group = {
     id: groupId,
-    isPublic: false,
+    isPublic: CONSTANTS.FALSE,
     city: currentUser.city
   }
 

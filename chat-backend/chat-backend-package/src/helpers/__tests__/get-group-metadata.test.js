@@ -28,8 +28,8 @@ test('it throws on undefined returned group', async () => {
 })
 
 test.each([
-  { details: 'public', isPublic: true, expected: true },
-  { details: 'private', isPublic: false, expected: false },
+  { details: 'public', isPublic: 'true', expected: true },
+  { details: 'private', isPublic: 'false', expected: false },
   { details: 'public status not defined', expected: true }
 ])('it gets group ($details)', async ({ isPublic, expected }) => {
   ddbMock.on(GetCommand).resolves({

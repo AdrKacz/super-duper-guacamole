@@ -45,19 +45,19 @@ test('it returns empty object if no group', async () => {
   expect(ddbMock).toHaveReceivedCommandTimes(QueryCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(QueryCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    IndexName: process.env.GROUPS_CITY_INDEX_NAME,
+    IndexName: process.env.GROUPS_IS_PUBLIC_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#city = :city AND #isPublic = :false',
+    KeyConditionExpression: '#isPublic = :false AND #city = :city',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
-      '#city': 'city',
       '#isPublic': 'isPublic',
+      '#city': 'city',
       '#id': 'id'
     },
     ExpressionAttributeValues: {
       ':city': 'city',
-      ':false': false,
+      ':false': 'false',
       ':oldGroupId': 'group-id'
     }
   })
@@ -133,19 +133,19 @@ test('it returns empty object if no valid group', async () => {
   expect(ddbMock).toHaveReceivedCommandTimes(QueryCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(QueryCommand, {
     TableName: process.env.GROUPS_TABLE_NAME,
-    IndexName: process.env.GROUPS_CITY_INDEX_NAME,
+    IndexName: process.env.GROUPS_IS_PUBLIC_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#city = :city AND #isPublic = :false',
+    KeyConditionExpression: '#isPublic = :false AND #city = :city',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
-      '#city': 'city',
       '#isPublic': 'isPublic',
+      '#city': 'city',
       '#id': 'id'
     },
     ExpressionAttributeValues: {
       ':city': 'city',
-      ':false': false,
+      ':false': 'false',
       ':oldGroupId': ''
     }
   })

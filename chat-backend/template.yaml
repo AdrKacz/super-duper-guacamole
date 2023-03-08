@@ -14,8 +14,8 @@ Globals:
         DATA_BUCKET_NAME: !Ref DataBucket
         USERS_CONNECTION_ID_INDEX_NAME: "ConnectionIdIndex"
         USERS_GROUP_ID_INDEX_NAME: "GroupIdIndex"
-        GROUPS_CITY_INDEX_NAME: "CityIndex"
-        MINIMUM_GROUP_SIZE: !Ref MinimumGroupSize
+        GROUPS_IS_PUBLIC_INDEX_NAME: "IsPublicIndex"
+        GROUP_SIZE: !Ref GroupSize
 
 Description: >
   Awa
@@ -23,10 +23,10 @@ Description: >
   Users, groups
 
 Parameters:
-  MinimumGroupSize:
+  GroupSize:
     Type: Number
     Default: 3
-    Description: '(Required) The minimum number of users on a group to be opened.'
+    Description: '(Required) The number of users on a group to be opened.'
     ConstraintDescription: 'Required. Must be an integer.'
   ConfirmationRequired:
     Type: Number
@@ -130,24 +130,24 @@ Resources:
           AttributeName: "id"
           AttributeType: "S"
         - 
-          AttributeName: "city"
+          AttributeName: "isPublic"
           AttributeType: "S"
         - 
-          AttributeName: "isPublic"
-          AttributeType: "B"
+          AttributeName: "city"
+          AttributeType: "S"
       KeySchema:
         -
           AttributeName: "id"
           KeyType: "HASH"
       GlobalSecondaryIndexes:
         -
-          IndexName: "CityIndex"
+          IndexName: "IsPublicIndex"
           KeySchema:
             -
-              AttributeName: "city"
+              AttributeName: "isPublic"
               KeyType: "HASH"
             -
-              AttributeName: "isPublic"
+              AttributeName: "city"
               KeyType: "RANGE"
           Projection:
             ProjectionType: "KEYS_ONLY"

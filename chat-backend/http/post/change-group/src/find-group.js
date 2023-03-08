@@ -2,6 +2,7 @@
 // IMPORTS
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
+const { CONSTANTS } = require('chat-backend-package') // skipcq: JS-0260
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
@@ -12,7 +13,7 @@ const { isGroupValid } = require('./is-group-valid')
 // CONSTANTS
 const {
   GROUPS_TABLE_NAME,
-  GROUPS_CITY_INDEX_NAME
+  GROUPS_IS_PUBLIC_INDEX_NAME
 } = process.env
 
 // ===== ==== ====
@@ -22,19 +23,19 @@ exports.findGroup = async ({ currentUser }) => {
   // look for existing group
   const { Count: queryCount, Items: queryItems } = await dynamoDBDocumentClient.send(new QueryCommand({
     TableName: GROUPS_TABLE_NAME,
-    IndexName: GROUPS_CITY_INDEX_NAME,
+    IndexName: GROUPS_IS_PUBLIC_INDEX_NAME,
     Limit: 10,
-    KeyConditionExpression: '#city = :city AND #isPublic = :false',
+    KeyConditionExpression: '#isPublic = :false AND #city = :city',
     ProjectionExpression: '#id',
     FilterExpression: '#id <> :oldGroupId',
     ExpressionAttributeNames: {
-      '#city': 'city',
       '#isPublic': 'isPublic',
+      '#city': 'city',
       '#id': 'id'
     },
     ExpressionAttributeValues: {
       ':city': currentUser.city,
-      ':false': false,
+      ':false': CONSTANTS.FALSE,
       ':oldGroupId': currentUser.groupId ?? ''
     }
   }))

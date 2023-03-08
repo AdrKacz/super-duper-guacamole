@@ -7,9 +7,9 @@ const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
 const {
   USERS_TABLE_NAME,
   USERS_GROUP_ID_INDEX_NAME,
-  MAXIMUM_GROUP_SIZE: MAXIMUM_GROUP_SIZE_STRING
+  GROUP_SIZE: GROUP_SIZE_STRING
 } = process.env
-const MAXIMUM_GROUP_SIZE = parseInt(MAXIMUM_GROUP_SIZE_STRING, 10)
+const GROUP_SIZE = parseInt(GROUP_SIZE_STRING, 10)
 
 // ===== ==== ====
 // EXPORTS
@@ -33,7 +33,7 @@ exports.getGroupUsers = async ({ groupId }) => {
     ExpressionAttributeValues: {
       ':groupId': groupId
     },
-    Limit: MAXIMUM_GROUP_SIZE
+    Limit: GROUP_SIZE
   })
 
   const users = await dynamoDBDocumentClient.send(queryCommand).then((response) => (response.Items))

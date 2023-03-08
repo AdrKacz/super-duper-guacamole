@@ -43,7 +43,7 @@ test.each([
     TableName: process.env.GROUPS_TABLE_NAME,
     Item: {
       id: 'uuidv4',
-      isPublic: false,
+      isPublic: 'false',
       city: 'city',
       bannedUserIds: expectedBannedUserIds
     },
