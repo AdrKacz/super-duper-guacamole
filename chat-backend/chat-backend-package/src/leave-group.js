@@ -79,15 +79,6 @@ exports.leaveGroup = async ({ currentUser }) => {
     // leave group
     // update group
     await Promise.all([
-      // update group
-      dynamoDBDocumentClient.send(new UpdateCommand({
-        TableName: GROUPS_TABLE_NAME,
-        Key: { id: currentUser.groupId },
-        ReturnValues: 'UPDATED_NEW',
-        UpdateExpression: 'SET #groupSize = :groupSize',
-        ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-        ExpressionAttributeValues: { ':groupSize': usersWithoutCurrentUser.length }
-      })),
       // warn remaining users
       sendMessages({ users: usersWithoutCurrentUser, message: { action: 'update-status' }, useSaveMessage: false }),
       sendNotifications({

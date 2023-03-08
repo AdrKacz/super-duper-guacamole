@@ -3,6 +3,7 @@
 const { GetCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
 const { dynamoDBDocumentClient } = require('../clients/aws/dynamo-db-client')
+const { CONSTANTS } = require('chat-backend-package') // skipcq: JS-0260
 
 const { GROUPS_TABLE_NAME } = process.env
 
@@ -28,7 +29,7 @@ exports.getGroupMetadata = async ({ groupId }) => {
     throw new Error(`group (${groupId}) is not defined`)
   }
 
-  group.isPublic = typeof group.isPublic === 'boolean' ? group.isPublic : true
+  group.isPublic = typeof group.isPublic === 'string' ? group.isPublic === CONSTANTS.TRUE : true
   console.log('group metadata', group)
 
   return group

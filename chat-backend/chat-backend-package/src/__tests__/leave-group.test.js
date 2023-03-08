@@ -39,7 +39,7 @@ test('it returns if group id is not a string', async () => {
 
 test('it throws if group is private', async () => {
   getGroupModule.getGroup.mockResolvedValue({
-    group: { id: 'group-id', isPublic: false, groupSize: 2 },
+    group: { id: 'group-id', isPublic: false },
     users: [{ id: 'id' }, { id: 'id-1' }]
   })
 
@@ -73,13 +73,13 @@ test('it throws if error while getting group', async () => {
 
 test('it updates group if more than one user remaining', async () => {
   getGroupModule.getGroup.mockResolvedValue({
-    group: { id: 'group-id', isPublic: true, groupSize: 3 },
+    group: { id: 'group-id', isPublic: true },
     users: [{ id: 'id' }, { id: 'id-1' }, { id: 'id-2' }]
   })
 
   await leaveGroup({ currentUser: { id: 'id', groupId: 'group-id' } })
 
-  expect(ddbMock).toHaveReceivedCommandTimes(UpdateCommand, 2)
+  expect(ddbMock).toHaveReceivedCommandTimes(UpdateCommand, 1)
   expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
     TableName: process.env.USERS_TABLE_NAME,
     Key: { id: 'id' },
@@ -92,14 +92,6 @@ test('it updates group if more than one user remaining', async () => {
       '#confirmationRequired': 'confirmationRequired'
     },
     ExpressionAttributeValues: { ':groupId': 'group-id' }
-  })
-  expect(ddbMock).toHaveReceivedCommandWith(UpdateCommand, {
-    TableName: process.env.GROUPS_TABLE_NAME,
-    Key: { id: 'group-id' },
-    ReturnValues: 'UPDATED_NEW',
-    UpdateExpression: 'SET #groupSize = :groupSize',
-    ExpressionAttributeNames: { '#groupSize': 'groupSize' },
-    ExpressionAttributeValues: { ':groupSize': 2 }
   })
 
   expect(sendMessagesModule.sendMessages).toHaveBeenCalledTimes(1)
@@ -117,7 +109,7 @@ test('it updates group if more than one user remaining', async () => {
 
 test('it deletes group if less than two user remaining', async () => {
   getGroupModule.getGroup.mockResolvedValue({
-    group: { id: 'group-id', isPublic: true, groupSize: 2 },
+    group: { id: 'group-id', isPublic: true },
     users: [{ id: 'id' }, { id: 'id-1' }]
   })
 

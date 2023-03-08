@@ -2,12 +2,10 @@
 // IMPORTS
 const { s3Client } = require('chat-backend-package/src/clients/aws/s3-client') // skipcq: JS-0260
 const { PutObjectCommand } = require('@aws-sdk/client-s3')
-const {
-  getGroup,
-  getUser,
-  sendMessages,
-  sendNotifications
-} = require('chat-backend-package') // skipcq: JS-0260
+const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
+const { getUser } = require('chat-backend-package/src/get-user') // skipcq: JS-0260
+const { sendMessages } = require('chat-backend-package/src/send-messages') // skipcq: JS-0260
+const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 
 const { DATA_BUCKET_NAME } = process.env
 

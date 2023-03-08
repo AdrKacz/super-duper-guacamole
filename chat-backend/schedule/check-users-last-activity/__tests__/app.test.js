@@ -5,7 +5,7 @@ const { handler } = require('../app')
 const { mockClient } = require('aws-sdk-client-mock')
 
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client')
-const { ScanCommand } = require('@aws-sdk/lib-dynamodb')
+const { QueryCommand } = require('@aws-sdk/lib-dynamodb')
 
 const getGroupModule = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 jest.mock('chat-backend-package/src/get-group', () => ({
@@ -44,12 +44,12 @@ afterEach(() => {
 // TESTS
 test('it loops over all impacted users', async () => {
   ddbMock
-    .on(ScanCommand)
+    .on(QueryCommand)
     .resolves({
       Items: [{ id: 'id-1' }, { id: 'id-2' }],
       LastEvaluatedKey: 'id-2'
     })
-    .on(ScanCommand, {
+    .on(QueryCommand, {
       ExclusiveStartKey: 'id-2'
     })
     .resolves({
@@ -75,7 +75,7 @@ test('it loops over all impacted users', async () => {
 
   await handler()
 
-  expect(ddbMock).toHaveReceivedCommandTimes(ScanCommand, 2)
+  expect(ddbMock).toHaveReceivedCommandTimes(QueryCommand, 2)
   expect(getGroupModule.getGroup).toHaveBeenCalledTimes(3)
   expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledTimes(1)
   expect(sendNotificationsModule.sendNotifications).toHaveBeenCalledWith({

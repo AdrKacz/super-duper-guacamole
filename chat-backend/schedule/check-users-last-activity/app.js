@@ -1,12 +1,16 @@
 // ===== ==== ====
 // IMPORTS
 const { dynamoDBDocumentClient } = require('chat-backend-package/src/clients/aws/dynamo-db-client') // skipcq: JS-0260
-const { ScanCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
+const { QueryCommand } = require('@aws-sdk/lib-dynamodb') // skipcq: JS-0260
 
+const { CONSTANTS } = require('chat-backend-package') // skipcq: JS-0260
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 
-const { GROUPS_TABLE_NAME } = process.env
+const {
+  GROUPS_TABLE_NAME,
+  GROUPS_IS_PUBLIC_INDEX_NAME
+} = process.env
 
 const MILLISECONDS_PER_DAY = 86400000
 
@@ -20,24 +24,25 @@ exports.handler = async (event) => {
   let previousLastEvaluatedKey = null
   let hasReachLastPage = false
   while (!hasReachLastPage) {
-    const scanCommandInputOptions = {
+    const queryCommandInputOptions = {
       TableName: GROUPS_TABLE_NAME,
+      IndexName: GROUPS_IS_PUBLIC_INDEX_NAME,
+      KeyConditionExpression: '#isPublic = :true',
       ProjectionExpression: '#id',
-      FilterExpression: '#isPublic = :true',
       ExpressionAttributeNames: {
         '#id': 'id',
         '#isPublic': 'isPublic'
       },
       ExpressionAttributeValues: {
-        ':true': true
+        ':true': CONSTANTS.TRUE
       }
     }
 
     if (previousLastEvaluatedKey !== null) {
-      scanCommandInputOptions.ExclusiveStartKey = previousLastEvaluatedKey
+      queryCommandInputOptions.ExclusiveStartKey = previousLastEvaluatedKey
     }
 
-    const { Items: items, LastEvaluatedKey: lastEvaluatedKey } = await dynamoDBDocumentClient.send(new ScanCommand(scanCommandInputOptions))
+    const { Items: items, LastEvaluatedKey: lastEvaluatedKey } = await dynamoDBDocumentClient.send(new QueryCommand(queryCommandInputOptions))
     groups.push(...items)
 
     if (typeof lastEvaluatedKey === 'undefined') {
@@ -47,7 +52,7 @@ exports.handler = async (event) => {
     }
   }
 
-  console.log(`scanned ${groups.length} groups`, groups)
+  console.log(`queried ${groups.length} groups`, groups)
 
   // look for users without activity
   const todayString = (new Date()).toISOString().split('T')[0]
