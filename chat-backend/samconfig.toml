@@ -6,6 +6,18 @@ beta_features = true
 [default.sync.parameters]
 beta_features = true
 
+[prod]
+[prod.deploy]
+[prod.deploy.parameters]
+stack_name = "sam-group-production"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-kr1fyr344qo1"
+s3_prefix = "sam-group-production"
+region = "eu-west-3"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "MinimumGroupSize=\"3\" MaximumGroupSize=\"5\" ConfirmationRequired=\"2\" LogRetentionInDays=\"7\" WebSocketThrottlingBurstLimit=\"100\" WebSocketThrottlingRateLimit=\"100\" ApiThrottlingBurstLimit=\"100\" ApiThrottlingRateLimit=\"100\" StageName=\"prod\" AuthenticationStage=\"production\""
+image_repositories = []
+
 [dev-adrien]
 [dev-adrien.deploy]
 [dev-adrien.deploy.parameters]

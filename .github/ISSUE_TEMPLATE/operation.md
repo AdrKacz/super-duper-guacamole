@@ -2,7 +2,7 @@
 name: Operation
 about: Suggest an idea to improve operations
 title: "📈 Enter your improvement here"
-labels: feature
+labels: operation
 assignees: ''
 
 ---

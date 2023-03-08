@@ -2,7 +2,7 @@
 name: Question
 about: Question about the future of the project
 title: "❓ Enter your question here"
-labels: feature
+labels: question
 assignees: ''
 
 ---

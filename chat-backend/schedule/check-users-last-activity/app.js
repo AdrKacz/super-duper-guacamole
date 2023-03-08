@@ -21,7 +21,6 @@ exports.handler = async (event) => {
   let previousLastEvaluatedKey = null
   let hasReachLastPage = false
   while (!hasReachLastPage) {
-    // TODO: update to query on CONSTANTS.TRUE
     const queryCommandInputOptions = {
       TableName: GROUPS_TABLE_NAME,
       KeyConditionExpression: '#isPublic = :true',
