@@ -7,7 +7,10 @@ const { CONSTANTS } = require('chat-backend-package') // skipcq: JS-0260
 const { getGroup } = require('chat-backend-package/src/get-group') // skipcq: JS-0260
 const { sendNotifications } = require('chat-backend-package/src/send-notifications') // skipcq: JS-0260
 
-const { GROUPS_TABLE_NAME } = process.env
+const {
+  GROUPS_TABLE_NAME,
+  GROUPS_IS_PUBLIC_INDEX_NAME
+} = process.env
 
 const MILLISECONDS_PER_DAY = 86400000
 
@@ -23,6 +26,7 @@ exports.handler = async (event) => {
   while (!hasReachLastPage) {
     const queryCommandInputOptions = {
       TableName: GROUPS_TABLE_NAME,
+      IndexName: GROUPS_IS_PUBLIC_INDEX_NAME,
       KeyConditionExpression: '#isPublic = :true',
       ProjectionExpression: '#id',
       ExpressionAttributeNames: {
