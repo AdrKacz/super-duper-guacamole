@@ -25,7 +25,7 @@ Description: >
 Parameters:
   GroupSize:
     Type: Number
-    Default: 3
+    Default: 5
     Description: '(Required) The number of users on a group to be opened.'
     ConstraintDescription: 'Required. Must be an integer.'
   ConfirmationRequired:
