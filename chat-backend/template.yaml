@@ -129,10 +129,28 @@ Resources:
         - 
           AttributeName: "id"
           AttributeType: "S"
+        - 
+          AttributeName: "isPublic"
+          AttributeType: "S"
+        - 
+          AttributeName: "city"
+          AttributeType: "S"
       KeySchema:
         -
           AttributeName: "id"
           KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        -
+          IndexName: "IsPublicIndex"
+          KeySchema:
+            -
+              AttributeName: "isPublic"
+              KeyType: "HASH"
+            -
+              AttributeName: "city"
+              KeyType: "RANGE"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
 
   DataBucket:
     Type: AWS::S3::Bucket
